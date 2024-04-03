@@ -2,10 +2,10 @@
 
 require 'rails_helper'
 
-RSpec.describe ARTService::RegimenEngine do
-  let(:regimen_service) { ARTService::RegimenEngine.new program: program('HIV Program') }
+RSpec.describe ArtService::RegimenEngine do
+  let(:regimen_service) { ArtService::RegimenEngine.new program: program('HIV Program') }
   let(:patient) { create :patient }
-  let(:vitals_encounter) { create :encounter_vitals, patient: patient }
+  let(:vitals_encounter) { create :encounter_vitals, patient: }
   let(:dtg_ids) { Drug.where(concept_id: ConceptName.find_by_name('Dolutegravir').concept_id).collect(&:drug_id) }
 
   def set_patient_weight(patient, weight)
@@ -51,7 +51,7 @@ RSpec.describe ARTService::RegimenEngine do
       expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A]
 
       expect(regimens.size).to be expected_regimens.size
-      regimens.keys.each { |k| expect(expected_regimens).to include k }
+      regimens.each_key { |k| expect(expected_regimens).to include k }
     end
 
     it 'retrieves all regimens for women above 45 years' do
@@ -60,7 +60,7 @@ RSpec.describe ARTService::RegimenEngine do
       expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A]
 
       expect(regimens.size).to be expected_regimens.size
-      regimens.keys.each { |k| expect(expected_regimens).to include k }
+      regimens.each_key { |k| expect(expected_regimens).to include k }
     end
 
     it 'retrieves regimens [0A 2A 4P 9P 11P] for women under 30 kilos' do
@@ -78,7 +78,7 @@ RSpec.describe ARTService::RegimenEngine do
       expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A]
 
       expect(regimens.size).to be expected_regimens.size
-      regimens.keys.each { |k| expect(expected_regimens).to include k }
+      regimens.each_key { |k| expect(expected_regimens).to include k }
     end
 
     it 'retrieves regimens [0A 2A 4P 9P 11P] for men under 30 kilos' do
@@ -88,7 +88,7 @@ RSpec.describe ARTService::RegimenEngine do
       expected_regimens = Set.new(%w[0A 2A 4P 9P 11P])
 
       expect(Set.new(regimens.keys)).to eq(expected_regimens)
-      regimens.keys.each { |k| expect(expected_regimens).to include k }
+      regimens.each_key { |k| expect(expected_regimens).to include k }
     end
 
     it 'retrieves all regimens for men at least 35 kilos' do
@@ -98,14 +98,14 @@ RSpec.describe ARTService::RegimenEngine do
       expected_regimens = %w[0A 2A 4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A]
 
       expect(regimens.size).to be expected_regimens.size
-      regimens.keys.each { |k| expect(expected_regimens).to include k }
+      regimens.each_key { |k| expect(expected_regimens).to include k }
     end
 
     def put_patient_on_tb_treatment(patient)
       tb_status_concept_id = ConceptName.find_by_name('TB Status').concept_id
       rx_concept_id = concept('Rx').concept_id
 
-      encounter = create(:encounter, program_id: 1, patient: patient)
+      encounter = create(:encounter, program_id: 1, patient:)
 
       create(:observation, person_id: patient.id,
                            concept_id: tb_status_concept_id,

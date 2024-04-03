@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AppointmentService
   ENGINES = {
     'HIV PROGRAM' => ARTService::AppointmentEngine,
@@ -39,6 +41,6 @@ class AppointmentService
     engine_clazz = ENGINES[engine_name]
     raise NotFoundError, "'#{engine_name}' engine not found" unless engine_clazz
 
-    engine_clazz.new program: program, patient: patient, retro_date: date
+    engine_clazz.new program:, patient:, retro_date: date
   end
 end

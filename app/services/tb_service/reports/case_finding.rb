@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-module TBService::Reports::CaseFinding
+module TbService::Reports::CaseFinding
   class << self
-    def new_pulmonary_clinically_diagnosed (start_date, end_date)
+    def new_pulmonary_clinically_diagnosed(start_date, end_date)
       new_patients = patients_query.new_patients(start_date, end_date)
       return [] if new_patients.empty?
 
@@ -17,7 +17,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(patients)
     end
 
-    def new_eptb (start_date, end_date)
+    def new_eptb(start_date, end_date)
       new_patients = patients_query.new_patients(start_date, end_date)
       return [] if new_patients.empty?
 
@@ -32,7 +32,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(persons)
     end
 
-    def new_mtb_detected_xpert (start_date, end_date)
+    def new_mtb_detected_xpert(start_date, end_date)
       new_patients = patients_query.new_patients(start_date, end_date)
       return [] if new_patients.empty?
 
@@ -47,7 +47,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(persons)
     end
 
-    def new_smear_positive (start_date, end_date)
+    def new_smear_positive(start_date, end_date)
       new_patients = patients_query.new_patients(start_date, end_date)
       return [] if new_patients.empty?
 
@@ -62,7 +62,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(persons)
     end
 
-    def relapse_bacteriologically_confirmed (start_date, end_date)
+    def relapse_bacteriologically_confirmed(start_date, end_date)
       patients = relapse_patients_query.bacteriologically_confirmed(start_date, end_date)
 
       return [] if patients.empty?
@@ -72,7 +72,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(ids)
     end
 
-    def relapse_clinical_pulmonary (start_date, end_date)
+    def relapse_clinical_pulmonary(start_date, end_date)
       patients = relapse_patients_query.clinical_pulmonary(start_date, end_date)
 
       return [] if patients.empty?
@@ -82,7 +82,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(ids)
     end
 
-    def relapse_eptb (start_date, end_date)
+    def relapse_eptb(start_date, end_date)
       patients = relapse_patients_query.eptb(start_date, end_date)
 
       return [] if patients.empty?
@@ -92,7 +92,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(ids)
     end
 
-    def treatment_failure_bacteriologically_confirmed (start_date, end_date)
+    def treatment_failure_bacteriologically_confirmed(start_date, end_date)
       patients = obs_query.with('TB Status', 'Positive')
 
       return [] if patients.empty?
@@ -106,7 +106,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(fails)
     end
 
-    def treatment_ltf_bacteriologically_confirmed (start_date, end_date)
+    def treatment_ltf_bacteriologically_confirmed(start_date, end_date)
       bact = obs_query.with('TB Status', 'Positive')
 
       return [] if bact.empty?
@@ -120,7 +120,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(ltf)
     end
 
-    def treatment_ltf_clinically_diagnosed_pulmonary (start_date, end_date)
+    def treatment_ltf_clinically_diagnosed_pulmonary(start_date, end_date)
       with_pulm = obs_query.with('Type of Tuberculosis', 'Pulmonary Tuberculosis')
 
       return [] if with_pulm.empty?
@@ -134,7 +134,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(ltf)
     end
 
-    def treatment_ltf_eptb (start_date, end_date)
+    def treatment_ltf_eptb(start_date, end_date)
       with_eptb = obs_query.with('Type of Tuberculosis', 'Extrapulmonary Tuberculosis (EPTB)')
 
       return [] if with_eptb.empty?
@@ -148,7 +148,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(ltf)
     end
 
-    def other_previuosly_treated_bacteriologically_confirmed (start_date, end_date)
+    def other_previuosly_treated_bacteriologically_confirmed(start_date, end_date)
       type = encounter_type('Lab Results')
       program = program('TB Program')
       status = concept('TB Status')
@@ -173,7 +173,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(ids)
     end
 
-    def other_previuosly_treated_clinical_pulmonary (start_date, end_date)
+    def other_previuosly_treated_clinical_pulmonary(start_date, end_date)
       type = encounter_type('Diagnosis')
       program = program('TB Program')
       status = concept('TB Status')
@@ -198,7 +198,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(ids)
     end
 
-    def other_previuosly_treated_eptb (start_date, end_date)
+    def other_previuosly_treated_eptb(start_date, end_date)
       type = encounter_type('Lab Results')
       program = program('TB Program')
       status = concept('Type of Tuberculosis')
@@ -223,7 +223,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(ids)
     end
 
-    def unknown_previous_treatment_history_bacteriological (start_date, end_date)
+    def unknown_previous_treatment_history_bacteriological(start_date, end_date)
       patients = patients_query.with_obs('Lab Results', 'TB Status', 'Positive', start_date, end_date)
                                .without_encounters(['Treatment'])
 
@@ -234,8 +234,9 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(ids)
     end
 
-    def unknown_previous_treatment_history_pulmonary_clinical (start_date, end_date)
-      patients = patients_query.with_obs('Diagnosis', 'Type of Tuberculosis', 'Pulmonary Tuberculosis', start_date, end_date)\
+    def unknown_previous_treatment_history_pulmonary_clinical(start_date, end_date)
+      patients = patients_query.with_obs('Diagnosis', 'Type of Tuberculosis', 'Pulmonary Tuberculosis', start_date,
+                                         end_date)\
                                .without_encounters(['Treatment'])
 
       return [] if patients.empty?
@@ -245,8 +246,9 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(ids)
     end
 
-    def unknown_previous_treatment_history_eptb (start_date, end_date)
-      patients = patients_query.with_obs('Diagnosis', 'Type of Tuberculosis', 'Extrapulmonary Tuberculosis (EPTB)', start_date, end_date)\
+    def unknown_previous_treatment_history_eptb(start_date, end_date)
+      patients = patients_query.with_obs('Diagnosis', 'Type of Tuberculosis', 'Extrapulmonary Tuberculosis (EPTB)',
+                                         start_date, end_date)\
                                .without_encounters(['Treatment'])
 
       return [] if patients.empty?
@@ -256,7 +258,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(ids)
     end
 
-    def patients_with_presumptive_tb_undergoing_bacteriological_examination (start_date, end_date)
+    def patients_with_presumptive_tb_undergoing_bacteriological_examination(start_date, end_date)
       patients = patients_query.with_encounters(['TB_Initial', 'Lab Orders'], start_date, end_date)\
                                .without_encounters(['Lab Results'], start_date, end_date)
 
@@ -267,7 +269,7 @@ module TBService::Reports::CaseFinding
       patients_query.ntp_age_groups(patient_ids)
     end
 
-    def patients_with_presumptive_tb_with_positive_bacteriological_examination (start_date, end_date)
+    def patients_with_presumptive_tb_with_positive_bacteriological_examination(start_date, end_date)
       patients = patients_query.with_encounters(['TB_Initial', 'Lab Orders', 'Lab Results'], start_date, end_date)\
                                .without_encounters(['Treatment'], start_date, end_date)\
                                .with_obs('Lab Results', 'TB Status', 'Positive', start_date, end_date)
@@ -280,24 +282,25 @@ module TBService::Reports::CaseFinding
     end
 
     private
+
     def patients_query
-      TBQueries::PatientsQuery.new.search
+      TbQueries::PatientsQuery.new.search
     end
 
     def patient_states_query
-      TBQueries::PatientStatesQuery.new
+      TbQueries::PatientStatesQuery.new
     end
 
     def obs_query
-      TBQueries::ObservationsQuery.new
+      TbQueries::ObservationsQuery.new
     end
 
     def clinically_diagnosed_patients
-      TBQueries::ClinicallyDiagnosedPatientsQuery.new
+      TbQueries::ClinicallyDiagnosedPatientsQuery.new
     end
 
     def relapse_patients_query
-      TBQueries::RelapsePatientsQuery.new
+      TbQueries::RelapsePatientsQuery.new
     end
   end
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddDtgToRegimen12A < ActiveRecord::Migration[5.2]
   def up
     User.current = User.first

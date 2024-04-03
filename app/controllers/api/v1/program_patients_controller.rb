@@ -1,45 +1,49 @@
+# frozen_string_literal: true
+
 require 'zebra_printer/init'
 
-class Api::V1::ProgramPatientsController < ApplicationController
-  # TODO: Move to Api::V1::Programs namespace and rename to PatientsController
-  before_action :authenticate, except: %i[print_visit_label print_transfer_out_label
-                                          print_patient_history_label print_history_label
-                                          print_lab_results_label]
+module Api
+  module V1
+    class ProgramPatientsController < ApplicationController
+      # TODO: Move to Api::V1::Programs namespace and rename to PatientsController
+      before_action :authenticate, except: %i[print_visit_label print_transfer_out_label
+                                              print_patient_history_label print_history_label
+                                              print_lab_results_label]
 
-  def show
-    date = params[:date]&.to_date || Date.today
-    render json: service.patient(params[:id], date)
-  end
+      def show
+        date = params[:date]&.to_date || Date.today
+        render json: service.patient(params[:id], date)
+      end
 
-  def last_drugs_received
-    date = params[:date]&.to_date || Date.today
-    render json: service.patient_last_drugs_received(patient, date)
-  end
+      def last_drugs_received
+        date = params[:date]&.to_date || Date.today
+        render json: service.patient_last_drugs_received(patient, date)
+      end
 
-  def find_dosages
-    service = RegimenService.new(program_id: params[:program_id])
-    dosage = service.find_dosages patient, (params[:date]&.to_date || Date.today)
-    render json: dosage
-  end
+      def find_dosages
+        service = RegimenService.new(program_id: params[:program_id])
+        dosage = service.find_dosages(patient:, date: params[:date]&.to_date || Date.today)
+        render json: dosage
+      end
 
-  def status
-    status = service.find_status patient, (params[:date]&.to_date || Date.today)
-    render json: status
-  end
+      def status
+        status = service.find_status patient, (params[:date]&.to_date || Date.today)
+        render json: status
+      end
 
-  def find_earliest_start_date
-    date_enrolled = service.find_patient_date_enrolled(patient)
-    earliest_start_date = service.find_patient_earliest_start_date(patient, date_enrolled)
+      def find_earliest_start_date
+        date_enrolled = service.find_patient_date_enrolled(patient)
+        earliest_start_date = service.find_patient_earliest_start_date(patient, date_enrolled)
 
-    render json: {
-      date_enrolled: date_enrolled,
-      earliest_start_date: earliest_start_date
-    }
-  end
+        render json: {
+          date_enrolled:,
+          earliest_start_date:
+        }
+      end
 
-  def find_next_available_arv_number
-    render json: { arv_number: service.find_next_available_arv_number }
-  end
+      def find_next_available_arv_number
+        render json: { arv_number: service.find_next_available_arv_number }
+      end
 
   def find_next_available_ncd_number
     render json: { ncd_number: service.find_next_available_ncd_number }

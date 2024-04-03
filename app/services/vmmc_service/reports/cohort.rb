@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class VMMCService::Reports::Cohort
+class VmmcService::Reports::Cohort
   attr_reader :start_date, :end_date
 
   def initialize(start_date, end_date)
@@ -8,7 +8,7 @@ class VMMCService::Reports::Cohort
     @end_date = end_date.strftime('%Y-%m-%d 23:59:59')
   end
 
-	#AGE CATEGORY
+  # AGE CATEGORY
   def neonates
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -16,6 +16,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def first_agegroup
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -23,6 +24,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def second_agegroup
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -30,6 +32,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def third_agegroup
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -37,6 +40,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def fourth_agegroup
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -44,6 +48,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def total_clients
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -52,7 +57,7 @@ class VMMCService::Reports::Cohort
     )['total']
   end
 
-  #HIV AND ART STATUS
+  # HIV AND ART STATUS
   def positive_not_art
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -60,6 +65,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def positive_on_art
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -67,6 +73,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def negative
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -74,6 +81,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def positive
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -81,6 +89,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def testing_declined
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -88,6 +97,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def testing_not_done
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -103,7 +113,7 @@ class VMMCService::Reports::Cohort
   #   )['total']
   # end
 
-  #Circumcision status
+  # Circumcision status
   def circumcision_full
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -111,6 +121,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def circumcision_partial
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -118,6 +129,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def circumcision_none
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -125,7 +137,8 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
-  #Contraindications status
+
+  # Contraindications status
   def contraindications_none
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -133,6 +146,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def contraindications_yes
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -140,6 +154,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def contraindications_total
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -147,7 +162,8 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
-  #Consent status
+
+  # Consent status
   def yes_consent
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -155,6 +171,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def no_consent
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -162,6 +179,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def total_consent
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -169,7 +187,8 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
-  #procedures used
+
+  # procedures used
   def forceps_guided
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -177,6 +196,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def device
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -184,6 +204,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
+
   def others
     ActiveRecord::Base.connection.select_one(
       <<~SQL
@@ -239,7 +260,7 @@ class VMMCService::Reports::Cohort
       SQL
     )['total']
   end
-  
+
   def postop_none
     ActiveRecord::Base.connection.select_one(
       <<~SQL

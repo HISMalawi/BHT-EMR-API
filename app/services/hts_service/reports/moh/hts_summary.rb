@@ -35,7 +35,7 @@ module HtsService
         def init_report
           model = his_patients_rev
           INDICATORS.each do |param|
-            model = ObsValueScope.call(**param.merge(model: model))
+            model = ObsValueScope.call(**param.merge(model:))
           end
           @query = Person.connection.select_all(
             model

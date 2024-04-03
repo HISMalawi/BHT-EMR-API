@@ -8,12 +8,12 @@ class PatientProgramService
     user ||= User.current
     return if program.blank? || patient.blank?
 
-    patient_program = find_patient_program(patient: patient, program: program)
+    patient_program = find_patient_program(patient:, program:)
     return patient_program unless patient_program.blank?
 
     ActiveRecord::Base.transaction do
-      patient_program = PatientProgram.create(patient: patient, program: program, date_enrolled: date_enrolled,
-                                              location: location, creator: user.id)
+      patient_program = PatientProgram.create(patient:, program:, date_enrolled:,
+                                              location:, creator: user.id)
       initial_state = initial_program_state(program)
       unless initial_state.blank?
         PatientState.create(patient_program_id: patient_program.id, start_date: date_enrolled,
@@ -25,7 +25,7 @@ class PatientProgramService
   end
 
   def find_patient_program(patient:, program:)
-    PatientProgram.where(patient: patient, program: program).first
+    PatientProgram.where(patient:, program:).first
   end
 
   def initial_program_state(program)

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ConceptMap < ApplicationRecord
   self.table_name = :concept_map
   self.primary_key = :concept_map_id

@@ -14,7 +14,7 @@ class PatientService
       if use_dde_service?
         begin
           assign_patient_dde_npid(patient, program)
-        rescue
+        rescue StandardError
           create_local_npid(patient, malawi_national_id)
         end
       else
@@ -51,10 +51,10 @@ class PatientService
       # Void main patient trunk
       [Observation, Order, Encounter, PatientState, PatientProgram, PatientIdentifier, Patient].each do |model|
         if model == Observation then model.where(person_id: patient.patient_id)
-        elsif model == PatientState then model.joins(:patient_program).merge(PatientProgram.where(patient: patient))
+        elsif model == PatientState then model.joins(:patient_program).merge(PatientProgram.where(patient:))
         elsif model == Patient then model.where(patient_id: patient.patient_id)
         else
-          model.where(patient: patient)
+          model.where(patient:)
         end.update_all(void_params)
       end
 
@@ -63,8 +63,8 @@ class PatientService
         model.where(person_id: patient.patient_id).update_all(void_params)
       end
 
-      program = PatientProgram.unscoped.find_by(patient: patient)&.program || Program.first
-      dde_service(program).void_patient(patient.reload, reason) if DDEService.dde_enabled?
+      program = PatientProgram.unscoped.find_by(patient:)&.program || Program.first
+      dde_service(program).void_patient(patient.reload, reason) if DdeService.dde_enabled?
     end
   end
 
@@ -83,7 +83,7 @@ class PatientService
   end
 
   def find_patients_by_npid(npid, voided: false)
-    find_patients_by_identifier(npid, *npid_identifier_types.to_a, voided: voided)
+    find_patients_by_identifier(npid, *npid_identifier_types.to_a, voided:)
   end
 
   def find_patients_by_name_and_gender(given_name, middle_name = nil, family_name, gender)
@@ -98,8 +98,8 @@ class PatientService
 
   def find_patients_by_identifier(identifier, *identifier_types, voided: false)
     Patient.joins('INNER JOIN patient_identifier USING (patient_id)')
-           .where(patient_identifier: { identifier: identifier, identifier_type: identifier_types.collect(&:id),
-                                        voided: voided })
+           .where(patient_identifier: { identifier:, identifier_type: identifier_types.collect(&:id),
+                                        voided: })
            .distinct
   end
 
@@ -141,7 +141,7 @@ class PatientService
 
       # add program state start date to the visit dates
       # if the patient has multiple HIV programs (should not happen but ...) we loop through them and get all state dates
-      patient.patient_programs.where(program_id: program_id).each do |pro|
+      patient.patient_programs.where(program_id:).each do |pro|
         pro.patient_states.map do |state|
           visit_dates << state.start_date
           visit_dates.uniq!
@@ -242,7 +242,7 @@ class PatientService
   # Last drugs received
   def patient_last_drugs_received(patient, ref_date, program_id: nil)
     dispensing_encounter_query = Encounter.joins(:type)
-    dispensing_encounter_query.where(program_id: program_id) if program_id
+    dispensing_encounter_query.where(program_id:) if program_id
     dispensing_encounter = dispensing_encounter_query.where(
       'encounter_type.name = ? AND encounter.patient_id = ?
         AND DATE(encounter_datetime) <= DATE(?)',
@@ -329,14 +329,14 @@ class PatientService
     new_identifier = filing_number_service.restore_patient(patient, filing_number) if filing_number
     return nil unless new_identifier
 
-    { new_identifier: new_identifier, archived_identifier: archived_identifier }
+    { new_identifier:, archived_identifier: }
   end
 
   # Returns a patient's past filing numbers
   def filing_number_history(patient)
     PatientIdentifier.unscoped.where(
       voided: true,
-      patient: patient,
+      patient:,
       type: [patient_identifier_type('Filing number'),
              patient_identifier_type('Archived filing number')]
     )
@@ -349,13 +349,13 @@ class PatientService
 
     # Force immediate execution of query. We don't want it executing after saving
     # the new identifier below
-    new_identifier = next_available_npid(patient: patient, identifier_type: national_id_type, program_id: program_id)
+    new_identifier = next_available_npid(patient:, identifier_type: national_id_type, program_id:)
 
     existing_identifiers.each do |identifier|
       identifier.void("Re-assigned to new national identifier: #{new_identifier.class.name === 'PatientIdentifier' ? new_identifier.identifier : new_identifier.identifier(national_id_type.name)}")
     end
 
-    { new_identifier: new_identifier, voided_identifiers: existing_identifiers }
+    { new_identifier:, voided_identifiers: existing_identifiers }
   end
 
   def current_htn_drugs_summary(patient, date)
@@ -379,7 +379,7 @@ class PatientService
     sbp_threshold = global_property('htn.systolic.threshold')&.property_value&.to_i || 0
     dbp_threshold = global_property('htn.diastolic.threshold')&.property_value&.to_i || 0
 
-    if patient.age(today: date) >= threshold || patient.programs.map { |x| x.name }.include?('HYPERTENSION PROGRAM')
+    if patient.age(today: date) >= threshold || patient.programs.map(&:name).include?('HYPERTENSION PROGRAM')
 
       htn_program = Program.find_by_name('HYPERTENSION PROGRAM')
 
@@ -423,35 +423,35 @@ class PatientService
     state = ProgramWorkflowState.where(['program_workflow_id = ? AND concept_id in (?)',
                                         ProgramWorkflow.where(['program_id = ?', htn_program.id]).first.id,
                                         ConceptName.where(name: state).collect(&:concept_id)]).first.id
-    unless state.blank?
-      patient_program = PatientProgram.where(['patient_id = ? AND program_id = ? AND date_enrolled <= ?',
-                                              patient.patient_id, htn_program.id, date]).first
+    return if state.blank?
 
-      state_within_range = PatientState.where(['patient_program_id = ? AND state = ? AND start_date <= ? AND end_date >= ?',
-                                               patient_program.id, state, date, date]).first
+    patient_program = PatientProgram.where(['patient_id = ? AND program_id = ? AND date_enrolled <= ?',
+                                            patient.patient_id, htn_program.id, date]).first
 
-      if state_within_range.blank?
-        last_state = PatientState.where(['patient_program_id = ? AND start_date <= ? ',
-                                         patient_program.id, date]).order('start_date ASC').last
-        unless last_state.blank?
-          last_state.end_date = date
-          last_state.save
-        end
+    state_within_range = PatientState.where(['patient_program_id = ? AND state = ? AND start_date <= ? AND end_date >= ?',
+                                             patient_program.id, state, date, date]).first
 
-        state_after = PatientState.where(['patient_program_id = ? AND start_date >= ? ',
-                                          patient_program.id, date]).order('start_date ASC').last
+    return unless state_within_range.blank?
 
-        new_state = PatientState.new(patient_program_id: patient_program.id,
-                                     start_date: date, state: state)
-        new_state.end_date = state_after.start_date unless state_after.blank?
-        new_state.save
-      end
+    last_state = PatientState.where(['patient_program_id = ? AND start_date <= ? ',
+                                     patient_program.id, date]).order('start_date ASC').last
+    unless last_state.blank?
+      last_state.end_date = date
+      last_state.save
     end
+
+    state_after = PatientState.where(['patient_program_id = ? AND start_date >= ? ',
+                                      patient_program.id, date]).order('start_date ASC').last
+
+    new_state = PatientState.new(patient_program_id: patient_program.id,
+                                 start_date: date, state:)
+    new_state.end_date = state_after.start_date unless state_after.blank?
+    new_state.save
   end
 
   def fetch_full_visit(patient, program = nil, visit_date)
     patient_id = ActiveRecord::Base.connection.quote(patient.id)
-    program_id = program ? ActiveRecord::Base.connection.quote(program.id) : nil
+    program ? ActiveRecord::Base.connection.quote(program.id) : nil
 
     medication = ActiveRecord::Base.connection.select_all <<-SQL
       SELECT
@@ -488,7 +488,7 @@ class PatientService
       SELECT patient_outcome(#{patient_id}, DATE('#{visit_date}')) outcome;
     SQL
 
-    current_weight = ActiveRecord::Base.connection.select_one <<-SQL
+    ActiveRecord::Base.connection.select_one <<-SQL
       SELECT  IF(value_numeric is null ,value_text, value_numeric) weight
       FROM obs WHERE person_id = #{patient_id}
       AND voided = 0 AND DATE(obs_datetime) = DATE('#{visit_date}')
@@ -568,7 +568,7 @@ class PatientService
       rescue StandardError
         ''
       end,
-      visit_type: visit_type,
+      visit_type:,
       medication: medication_given
     }
   end
@@ -605,19 +605,19 @@ class PatientService
   end
 
   def dde_service(program)
-    DDEService.new(program: program)
+    DdeService.new(program:)
   end
 
   # Blesses patient with a v3 npid
   def assign_patient_v3_npid(patient)
     identifier_type = PatientIdentifierType.find_by(name: 'National id')
-    identifier_type.next_identifier(patient: patient)
+    identifier_type.next_identifier(patient:)
   end
 
   # Blesses patient with a v28 malawiNid
   def assign_patient_v28_malawiNid(patient, malawi_national_id)
     identifier_type = PatientIdentifierType.find_by(name: 'Malawi National ID')
-    identifier_type.next_identifier_for_malawi_nid(patient: patient, MNID: malawi_national_id)
+    identifier_type.next_identifier_for_malawi_nid(patient:, MNID: malawi_national_id)
   end
 
   # Blesses patient with a DDE npid
@@ -638,7 +638,7 @@ class PatientService
   def visit_bp_readings_trail(readings, patient, bp_concepts)
     readings.each_with_object({}) do |reading, trail|
       date = reading.obs_datetime.to_date
-      visit = trail[date] || { date: date, sbp: nil, dbp: nil,
+      visit = trail[date] || { date:, sbp: nil, dbp: nil,
                                drugs: bp_drugs_received(patient, date),
                                note: bp_note_received(patient, date) }
 
@@ -675,7 +675,7 @@ class PatientService
     bp_drug_concepts = Concept.joins(:concept_names)\
                               .where(concept_name: { name: BP_DRUG_CONCEPT_NAMES })
     orders = Order.joins(:encounter)\
-                  .where(patient: patient, concept: bp_drug_concepts)\
+                  .where(patient:, concept: bp_drug_concepts)\
                   .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
     orders.collect { |order| order.drug_order.drug.name }
   end
@@ -694,12 +694,12 @@ class PatientService
 
   def patient_engine
     program = Program.find_by(name: 'TB PROGRAM')
-    TBService::PatientsEngine.new program: program
+    TbService::PatientsEngine.new program:
   end
 
   # Returns all of patient's identifiers of given identifier_type
   def patient_identifiers(patient, identifier_type)
-    PatientIdentifier.where(patient: patient, type: identifier_type)
+    PatientIdentifier.where(patient:, type: identifier_type)
   end
 
   # Returns the next available patient identifier for assignment
@@ -708,7 +708,7 @@ class PatientService
       raise "Unknown identifier type: #{identifier_type.name}"
     end
 
-    return identifier_type.next_identifier(patient: patient) unless use_dde_service?
+    return identifier_type.next_identifier(patient:) unless use_dde_service?
 
     dde_patient_id_type = patient_identifier_type(PatientIdentifierType::DDE_ID_TYPE_NAME)
     dde_patient_id = patient_identifiers(patient, dde_patient_id_type).first&.identifier
@@ -918,7 +918,7 @@ class PatientService
       end
     end
 
-    { adherence: adherence, expected_amount_remaining: expected_amount_remaining }
+    { adherence:, expected_amount_remaining: }
   end
 
   # Returns an HTN management encounter for the given patient on
@@ -926,16 +926,16 @@ class PatientService
   def find_htn_management_encounter(patient, date)
     type = encounter_type('HYPERTENSION MANAGEMENT')
 
-    encounter = patient.encounters.where(type: type)\
+    encounter = patient.encounters.where(type:)\
                        .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
                        .order(:encounter_datetime)
                        .last
 
     return encounter if encounter
 
-    Encounter.create(encounter_datetime: date, type: type,
+    Encounter.create(encounter_datetime: date, type:,
                      creator: User.current.id, location_id: Location.current.id,
-                     patient: patient)
+                     patient:)
   end
 
   def find_htn_drug_order(encounter, drug)
@@ -962,11 +962,11 @@ class PatientService
     end
 
     Observation.create(
-      encounter: encounter,
+      encounter:,
       obs_datetime: encounter.encounter_datetime,
       person_id: encounter.patient_id,
       location_id: Location.current.id,
-      concept_id: concept_id,
+      concept_id:,
       order_id: drug_order&.order_id,
       creator: User.current.id,
       value_numeric: pills,
@@ -979,9 +979,9 @@ class PatientService
     program = PatientProgram.where(['patient_id = ? AND program_id = ? AND date_enrolled <= ?',
                                     patient.id, program_id, date.strftime('%Y-%m-%d 23:59:59')]).last
     alive_concept_id = ConceptName.where(['name =?', 'Alive']).first.concept_id
-    if program.blank? and create
+    if program.blank? && create
       ActiveRecord::Base.transaction do
-        program = PatientProgram.create({ program_id: program_id, date_enrolled: date,
+        program = PatientProgram.create({ program_id:, date_enrolled: date,
                                           patient_id: patient.id })
         alive_state = ProgramWorkflowState.where(['program_workflow_id = ? AND concept_id = ?',
                                                   ProgramWorkflow.where(['program_id = ?', program_id]).first.id, alive_concept_id]).first.id
@@ -1035,6 +1035,6 @@ class PatientService
       nil
     end
 
-    { patient_id: patient_id, max_date: latest_date, sbp: sbp, dbp: dbp }
+    { patient_id:, max_date: latest_date, sbp:, dbp: }
   end
 end

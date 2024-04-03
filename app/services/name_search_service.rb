@@ -11,7 +11,7 @@ module NameSearchService
         return person_name_code
       end
 
-      PersonNameCode.create(person_name: person_name,
+      PersonNameCode.create(person_name:,
                             given_name_code: person_name.given_name&.soundex,
                             middle_name_code: person_name.middle_name&.soundex,
                             family_name_code: person_name.family_name&.soundex,

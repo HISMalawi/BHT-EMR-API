@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddRecordTypesToRecordSyncStatus < ActiveRecord::Migration[5.2]
   MODELS = %w[Person PersonAttribute PersonAddress PersonName Patient
               PatientIdentifier Encounter Observation Order DrugOrder

@@ -1,13 +1,18 @@
 # frozen_string_literal: true
 
+require 'etc'
+
+num_cores = Etc.nprocessors
+num = num_cores > 2 ? num_cores - 2 : 1
+
 # Puma can serve each request in a thread from an internal thread pool.
 # The `threads` method setting takes two numbers: a minimum and maximum.
 # Any libraries that use thread pools should be configured to match
 # the maximum value specified for Puma. Default is set to 5 threads for minimum
 # and maximum; this matches the default thread size of Active Record.
 #
-max_threads = ENV.fetch('RAILS_MAX_THREADS', 10)
-min_threads = ENV.fetch('RAILS_MIN_THREADS', 5)
+max_threads = ENV.fetch('RAILS_MAX_THREADS', num)
+min_threads = ENV.fetch('RAILS_MIN_THREADS', num > 1 ? num - 1 : 1)
 threads min_threads, max_threads
 
 # Specifies the `port` that Puma will listen on to receive requests; default is 3000.
@@ -24,7 +29,7 @@ environment ENV.fetch('RAILS_ENV', 'development')
 # Workers do not work on JRuby or Windows (both of which do not support
 # processes).
 #
-workers ENV.fetch('WEB_CONCURRENCY', 0)
+workers ENV.fetch('WEB_CONCURRENCY', num)
 
 # Use the `preload_app!` method when specifying a `workers` number.
 # This directive tells Puma to first boot the application and load code

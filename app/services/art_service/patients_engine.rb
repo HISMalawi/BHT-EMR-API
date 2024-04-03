@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   # Patients sub service.
   #
   # Basically provides ART specific patient-centric functionality
@@ -52,7 +52,7 @@ module ARTService
     # Returns patient's ART start date at current facility
     def find_patient_date_enrolled(patient)
       order = Order.joins(:encounter, :drug_order)\
-                   .where(encounter: { patient: patient },
+                   .where(encounter: { patient: },
                           drug_order: { drug: Drug.arv_drugs })\
                    .order(:start_date)\
                    .first
@@ -85,7 +85,7 @@ module ARTService
 
       vitals_encounter = Encounter.joins(:type)
                                   .merge(EncounterType.where(name: 'VITALS'))
-                                  .where(program: @program, patient_id: patient_id)
+                                  .where(program: @program, patient_id:)
                                   .where('encounter_datetime < DATE(?) + INTERVAL 1 DAY', as_of)
 
       Observation.joins(:encounter)
@@ -130,10 +130,10 @@ module ARTService
       "#{current_arv_code} #{next_available_number}"
     end
 
-    #function to check if an arv number already exists
+    # function to check if an arv number already exists
     def arv_number_already_exists(arv_number)
       identifier_type = PatientIdentifierType.find_by_name('ARV Number')
-      identifiers = PatientIdentifier.all.where(
+      PatientIdentifier.all.where(
         identifier: arv_number,
         identifier_type: identifier_type.id
       ).exists?
@@ -145,28 +145,28 @@ module ARTService
     end
 
     def visit_summary_label(patient, date)
-      ARTService::PatientVisitLabel.new patient, date
+      ArtService::PatientVisitLabel.new patient, date
     end
 
     def transfer_out_label(patient, date)
-      ARTService::PatientTransferOutLabel.new patient, date
+      ArtService::PatientTransferOutLabel.new patient, date
     end
 
     def mastercard_data(patient, date)
-      ARTService::PatientMastercard.new(patient, date).data
+      ArtService::PatientMastercard.new(patient, date).data
     end
 
     def patient_history_label(patient, date)
-      ARTService::PatientHistory.new(patient, date)
+      ArtService::PatientHistory.new(patient, date)
     end
 
     def medication_side_effects(patient, date)
-      service = ARTService::PatientSideEffect.new(patient, date)
+      service = ArtService::PatientSideEffect.new(patient, date)
       service.side_effects
     end
 
-    def saved_encounters(patient, date)
-      return []
+    def saved_encounters(_patient, _date)
+      []
     end
 
     private
@@ -198,7 +198,6 @@ module ARTService
       village = address.city_village || 'Unknown Village'
       "#{district}, #{village}"
     end
-
 
     def patient_summary(patient, date)
       PatientSummary.new patient, date

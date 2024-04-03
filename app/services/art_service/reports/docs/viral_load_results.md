@@ -1,11 +1,11 @@
 # Code Documentation
 
 ## Summary
-The code snippet is a part of the ViralLoadResults class in the ARTService::Reports module. It is responsible for querying the database to find patients whose most recent viral load result falls within a specified range.
+The code snippet is a part of the ViralLoadResults class in the ArtService::Reports module. It is responsible for querying the database to find patients whose most recent viral load result falls within a specified range.
 
 ## Example Usage
 ```ruby
-report = ARTService::Reports::ViralLoadResults.new(start_date: '2021-01-01', range: 'suppressed')
+report = ArtService::Reports::ViralLoadResults.new(start_date: '2021-01-01', range: 'suppressed')
 report.find_report
 ```
 

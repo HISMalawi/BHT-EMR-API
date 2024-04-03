@@ -1,7 +1,7 @@
 # Code Documentation
 
 ## Summary
-The code snippet is a part of the HypertensionReport class in the ARTService::Reports::Clinic module. It initializes a report structure with nested hashes to store hypertension data based on age groups and gender. It also defines methods to process data and populate the report structure.
+The code snippet is a part of the HypertensionReport class in the ArtService::Reports::Clinic module. It initializes a report structure with nested hashes to store hypertension data based on age groups and gender. It also defines methods to process data and populate the report structure.
 
 ## Example Usage
 ```ruby
@@ -10,7 +10,7 @@ report.find_report
 ```
  The full namespace
 ```ruby
-ARTService::Reports::Clinic::HypertensionReport.new(start_date: '2021-01-01', end_date: '2021-12-31')
+ArtService::Reports::Clinic::HypertensionReport.new(start_date: '2021-01-01', end_date: '2021-12-31')
 ```
 
 ## Code Analysis

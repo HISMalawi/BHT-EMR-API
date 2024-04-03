@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     module Pepfar
       # TxTb report
       # rubocop:disable Metrics/ClassLength
-      class TxTB
+      class TxTb
         attr_accessor :start_date, :end_date, :report, :rebuild_outcome
 
         include Utils
@@ -15,6 +15,7 @@ module ARTService
           @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
           @rebuild_outcome = ActiveModel::Type::Boolean.new.cast(kwargs[:rebuild_outcome]) || false
           @occupation = kwargs[:occupation]
+          @report_type = kwargs[:report_type] || 'moh'
         end
 
         def find_report
@@ -22,9 +23,9 @@ module ARTService
           create_temp_earliest_start_date unless temp_eartliest_start_date_exists?
           init_report
           build_cohort_tables
+          process_patients_alive_and_on_art
           process_tb_screening
           process_tb_confirmed_and_on_treatment
-          process_patients_alive_and_on_art
           process_tb_screened
           process_tb_confirmed
           report
@@ -69,7 +70,7 @@ module ARTService
         def build_cohort_tables
           return unless rebuild_outcome || @occupation.present?
 
-          cohort_builder = ARTService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar')
+          cohort_builder = ArtService::Reports::CohortBuilder.new(outcomes_definition: @report_type)
           cohort_builder.init_temporary_tables(start_date, end_date, @occupation)
         end
 
@@ -91,17 +92,17 @@ module ARTService
             INNER JOIN (
               SELECT o.person_id, MAX(o.obs_datetime) AS obs_datetime, tesd.earliest_start_date, tesd.gender, tesd.birthdate
               FROM obs o
-              INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id
+              INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id #{@report_type == 'moh' ? '' : "AND tesd.patient_id IN (#{@tx_curr.join(',')})"}
               WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
               AND o.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('TB Suspected', 'TB NOT suspected') AND voided = 0)
-              AND o.voided = 0 AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
+              AND o.voided = 0 AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}' #{@report_type == 'moh' ? '' : "AND o.person_id IN (#{@tx_curr.join(',')})"}
               GROUP BY o.person_id
             ) current_obs ON current_obs.person_id = o.person_id AND current_obs.obs_datetime = o.obs_datetime
             INNER JOIN concept_name cn ON cn.concept_id = o.value_coded AND cn.voided = 0
             LEFT JOIN obs screen_method ON screen_method.concept_id = #{ConceptName.find_by_name('TB screening method used').concept_id} AND screen_method.voided = 0 AND screen_method.person_id = o.person_id AND DATE(screen_method.obs_datetime) = DATE(current_obs.obs_datetime)
             LEFT JOIN concept_name vcn ON vcn.concept_id = screen_method.value_coded AND vcn.voided = 0 AND vcn.name IN ('CXR', 'MWRD')
             WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
-            AND o.voided = 0
+            AND o.voided = 0 #{@report_type == 'moh' ? '' : "AND o.person_id IN (#{@tx_curr.join(',')})"}
             AND o.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('TB Suspected', 'TB NOT suspected') AND voided = 0)
             AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}'
             GROUP BY o.person_id
@@ -136,7 +137,7 @@ module ARTService
               tesd.earliest_start_date as enrollment_date,
               prev.tb_confirmed_date prev_reading
             FROM obs o
-            INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id
+            INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id #{@report_type == 'moh' ? '' : "AND tesd.patient_id IN (#{@tx_curr.join(',')})"}
             INNER JOIN person p ON p.person_id = o.person_id AND p.voided = 0
             LEFT JOIN obs tcd ON tcd.concept_id = #{ConceptName.find_by_name('TB treatment start date').concept_id} AND tcd.voided = 0 AND tcd.person_id = o.person_id
             LEFT JOIN (
@@ -147,7 +148,7 @@ module ARTService
               LEFT JOIN obs tcd ON tcd.concept_id = #{ConceptName.find_by_name('TB treatment start date').concept_id} AND tcd.voided = 0 AND tcd.person_id = o.person_id
               WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
               AND o.value_coded = #{ConceptName.find_by_name('Confirmed TB on treatment').concept_id}
-              AND o.voided = 0
+              AND o.voided = 0 #{@report_type == 'moh' ? '' : "AND o.person_id IN (#{@tx_curr.join(',')})"}
               AND o.obs_datetime <= '#{start_date}'
               GROUP BY o.person_id
             ) prev ON prev.person_id = o.person_id
@@ -160,10 +161,12 @@ module ARTService
         end
 
         def process_patients_alive_and_on_art
+          @tx_curr = [] if @report_type == 'pepfar'
           find_patients_alive_and_on_art.each do |patient|
             next unless pepfar_age_groups.include?(patient['age_group'])
 
             @report[patient['age_group']][patient['gender'].to_sym][:tx_curr] << patient['patient_id']
+            @tx_curr << patient['patient_id'] if @report_type == 'pepfar'
           end
         end
 
@@ -218,10 +221,12 @@ module ARTService
 
         def process_screening_results(metrics, enrollment_date, tb_status, patient_id)
           if new_on_art(enrollment_date)
-            metrics[:sceen_pos_new] << patient_id if ['tb suspected', 'sup', 'confirmed tb not on treatment', 'norx', 'confirmed tb on treatment', 'rx'].include?(tb_status)
+            metrics[:sceen_pos_new] << patient_id if ['tb suspected', 'sup', 'confirmed tb not on treatment', 'norx',
+                                                      'confirmed tb on treatment', 'rx'].include?(tb_status)
             metrics[:sceen_neg_new] << patient_id if ['tb not suspected', 'nosup'].include?(tb_status)
           else
-            metrics[:sceen_pos_prev] << patient_id if ['tb suspected', 'sup', 'confirmed tb not on treatment', 'norx'].include?(tb_status)
+            metrics[:sceen_pos_prev] << patient_id if ['tb suspected', 'sup', 'confirmed tb not on treatment',
+                                                       'norx'].include?(tb_status)
             metrics[:sceen_neg_prev] << patient_id if ['tb not suspected', 'nosup'].include?(tb_status)
           end
         end
@@ -236,6 +241,7 @@ module ARTService
         # rubocop:enable Metrics/MethodLength
 
         def execute_query(query)
+          Rails.logger.info(query)
           ActiveRecord::Base.connection.select_all(query)
         end
 

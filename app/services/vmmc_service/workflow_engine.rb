@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class VMMCService::WorkflowEngine
+class VmmcService::WorkflowEngine
   include ModelUtils
 
   attr_reader :program, :patient, :date
@@ -17,14 +17,14 @@ class VMMCService::WorkflowEngine
     # 'N/A'
     state = INITIAL_STATE
     loop do
-    	state = next_state state
-    	break if state == END_STATE
+      state = next_state state
+      break if state == END_STATE
 
-    	LOGGER.debug "Loading encounter type: #{state}"
-    	encounter_type = EncounterType.find_by(name: state)
+      LOGGER.debug "Loading encounter type: #{state}"
+      encounter_type = EncounterType.find_by(name: state)
 
-    	return encounter_type if valid_state?(state)
-  	end
+      return encounter_type if valid_state?(state)
+    end
   end
 
   def valid_state?(state)
@@ -51,7 +51,7 @@ class VMMCService::WorkflowEngine
   REGISTRATION_CONSENT = 'REGISTRATION CONSENT'
   HIV_STATUS = 'UPDATE HIV STATUS'
   VITALS = 'VITALS'
-  MEDICAL_HISTORY = 'MEDICAL HISTORY'  
+  MEDICAL_HISTORY = 'MEDICAL HISTORY'
   GENITAL_EXAMINATION = 'GENITAL EXAMINATION'
   SUMMARY_ASSESSMENT = 'SUMMARY ASSESSMENT'
   CIRCUMCISION = 'CIRCUMCISION'
@@ -164,7 +164,7 @@ class VMMCService::WorkflowEngine
 
     continue_to_circumcision_concept_id = ConceptName.find_by_name('Continue to circumcision?').concept_id
 
-     Observation.joins(:encounter)\
+    Observation.joins(:encounter)\
                .where(person_id: @patient.id,
                       concept_id: continue_to_circumcision_concept_id,
                       value_coded: yes_concept.concept_id)\
@@ -176,7 +176,8 @@ class VMMCService::WorkflowEngine
   def vmmc_registration_encounter_not_collected?
     encounter = Encounter.joins(:type).where(
       'encounter_type.name = ? AND encounter.patient_id = ?',
-      REGISTRATION, @patient.patient_id)
+      REGISTRATION, @patient.patient_id
+    )
 
     encounter.blank?
   end
@@ -184,7 +185,8 @@ class VMMCService::WorkflowEngine
   def post_op_review_encounter_not_collected?
     encounter = Encounter.joins(:type).where(
       'encounter_type.name = ? AND encounter.patient_id = ?',
-      POST_OP_REVIEW, @patient.patient_id)
+      POST_OP_REVIEW, @patient.patient_id
+    )
 
     encounter.blank?
   end
@@ -192,7 +194,8 @@ class VMMCService::WorkflowEngine
   def summary_assessment_encounter_not_collected?
     encounter = Encounter.joins(:type).where(
       'encounter_type.name = ? AND encounter.patient_id = ?',
-      SUMMARY_ASSESSMENT, @patient.patient_id)
+      SUMMARY_ASSESSMENT, @patient.patient_id
+    )
 
     encounter.blank?
   end
@@ -221,28 +224,26 @@ class VMMCService::WorkflowEngine
                 .exists?
   end
 
-    def medical_history_not_collected?
+  def medical_history_not_collected?
+    medical_history_enc = EncounterType.find_by name: MEDICAL_HISTORY
 
-      medical_history_enc = EncounterType.find_by name: MEDICAL_HISTORY
-
-      med_history = Encounter.where("encounter_type = ?
+    med_history = Encounter.where("encounter_type = ?
           AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
-          medical_history_enc.id, @patient.patient_id, @date)
-        .order(encounter_datetime: :desc).first.blank?
+                                  medical_history_enc.id, @patient.patient_id, @date)
+                           .order(encounter_datetime: :desc).first.blank?
 
-      med_history
-    end
+    med_history
+  end
 
   def patient_tested_for_hiv?
-          hiv_status_enc = EncounterType.find_by name: STATUS
+    hiv_status_enc = EncounterType.find_by name: STATUS
 
-      hiv_status = Encounter.where("encounter_type = ?
+    hiv_status = Encounter.where("encounter_type = ?
           AND patient_id = ? AND DATE(encounter_datetime) >= DATE(?)",
-          hiv_status_enc.id, @patient.patient_id, @date)
-        .order(encounter_datetime: :desc).first.blank?
+                                 hiv_status_enc.id, @patient.patient_id, @date)
+                          .order(encounter_datetime: :desc).first.blank?
 
-      hiv_status
-
+    hiv_status
   end
 
   def patient_has_never_had_post_op_review?

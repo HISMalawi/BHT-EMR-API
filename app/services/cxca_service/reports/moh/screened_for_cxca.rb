@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module CXCAService
+module CxcaService
   module Reports
     module Moh
       # This class is responsible for generating the MOH CXCA report
@@ -52,7 +52,7 @@ module CXCAService
           'Positive on ART' => [],
           'Negative' => [],
           'Unknown (HIV- > 1 year ago, Inconclusive, Prefers not to Disclose, or Never Tested)' => []
-        }
+        }.freeze
 
         REFERRAL_REASON_GROUP = {
           "Further Investigation and Management": [],
@@ -61,7 +61,7 @@ module CXCAService
           "Suspect Cancer": [],
           "No treatment": [],
           "Other gynae": []
-        }
+        }.freeze
 
         REASON_FOR_VISIT_GROUP = [
           'Initial Screening',
@@ -103,7 +103,7 @@ module CXCAService
 
             screening_method = SCREENING_METHOD_MAP[concept_id_to_name(record['screening_method'])]
             next unless screening_method.present?
-            
+
             screening_result = concept_id_to_name(record['screening_result'])
             referral_reason = concept_id_to_name(record['referral_reason'])
             hiv_status = concept_id_to_name(record['hiv_status'])
@@ -193,7 +193,7 @@ module CXCAService
           indicator = @report[:screened_disaggregated_by_hiv_status]
           negative = ['Negative'].include?(hiv_status)
           test_date = hiv_test_date.present? if negative
-          period = hiv_test_date&.to_date < end_date.to_date - 1.year if negative && test_date.present?
+          period = hiv_test_date&.to_date&.< end_date.to_date - 1.year if negative && test_date.present?
           unknown_cat = negative && test_date && period
           uncat = negative && hiv_test_date.blank?
           if hiv_status.blank? || ['Never Tested', 'Undisclosed'].include?(hiv_status) || unknown_cat || uncat

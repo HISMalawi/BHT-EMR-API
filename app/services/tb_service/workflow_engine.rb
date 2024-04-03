@@ -2,7 +2,7 @@
 
 require 'set'
 
-module TBService
+module TbService
   class WorkflowEngine
     include ModelUtils
 
@@ -91,7 +91,7 @@ module TBService
     STATE_CONDITIONS = {
 
       TB_INITIAL => %i[patient_not_transferred_in_today?
-                        tb_suspect_not_enrolled?],
+                       tb_suspect_not_enrolled?],
 
       EXAMINATION => %i[go_to_examination?],
 
@@ -105,7 +105,7 @@ module TBService
       LAB_RESULTS => %i[patient_should_go_for_lab_results?],
 
       TB_RECEPTION => %i[no_tb_reception?
-                                    patient_should_proceed_for_treatment?],
+                         patient_should_proceed_for_treatment?],
 
       TB_REGISTRATION => %i[patient_has_no_tb_registration?
                             patient_is_not_a_transfer_out?
@@ -113,7 +113,7 @@ module TBService
                             patient_is_no_a_referral?],
 
       VITALS => %i[no_vitals_today?
-                                    patient_should_proceed_for_treatment?],
+                   patient_should_proceed_for_treatment?],
 
       TREATMENT => %i[patient_has_no_treatment?
                       patient_should_proceed_for_treatment?],
@@ -166,7 +166,7 @@ module TBService
           TB_RECEPTION
         else
           Rails.logger.warn "Invalid TB activity in user properties: #{activity}"
-          end
+        end
       end
 
       Set.new(encounters)
@@ -643,7 +643,7 @@ module TBService
       referral = concept 'Referral'
       Observation.joins(:encounter).where(
         'person_id = ? AND concept_id = ? AND value_coded = ? AND DATE(obs_datetime) = DATE(?) AND encounter.encounter_type = ?',
-        @patient.patient_id, patient_type.concept_id, referral.concept_id, @date,encounter_type(TB_INITIAL).id
+        @patient.patient_id, patient_type.concept_id, referral.concept_id, @date, encounter_type(TB_INITIAL).id
       ).order(obs_datetime: :desc).first.present?
     end
 
@@ -740,7 +740,7 @@ module TBService
       start_time, end_time = TimeUtils.day_bounds(@date)
       Observation.joins(:encounter).where(
         'person_id = ? AND concept_id = ? AND value_coded = ? AND encounter.encounter_type = ? AND obs_datetime BETWEEN ? AND ?',
-        @patient.patient_id, type_of_patient.concept_id, referral.concept_id,encounter_type(TB_INITIAL).id, start_time, end_time
+        @patient.patient_id, type_of_patient.concept_id, referral.concept_id, encounter_type(TB_INITIAL).id, start_time, end_time
       ).order(obs_datetime: :desc).first.present?
     end
 

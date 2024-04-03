@@ -1,6 +1,6 @@
-module TBService::Reports::Overview
+module TbService::Reports::Overview
   class << self
-    def statistics (date)
+    def statistics(date)
       date = date.to_date
 
       {
@@ -26,8 +26,9 @@ module TBService::Reports::Overview
     end
 
     private
+
     def query
-      TBQueries::EncountersQuery.new
+      TbQueries::EncountersQuery.new
     end
   end
 end

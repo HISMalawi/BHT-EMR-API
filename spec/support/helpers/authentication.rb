@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 module Helpers
   module Authentication
     def login_as(username, password)
-      login_data = JSON.dump({ username: username, password: password })
+      login_data = JSON.dump({ username:, password: })
       headers = { 'Content-type' => 'application/json' }
-      post api_v1_auth_login_path, params: login_data, headers: headers
+      post(api_v1_auth_login_path, params: login_data, headers:)
       Rails.logger.debug response.body
     end
 

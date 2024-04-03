@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This migration comes from lab (originally 20210807111531)
 class AddDefaultToLimsOrderMapping < ActiveRecord::Migration[5.2]
   def up

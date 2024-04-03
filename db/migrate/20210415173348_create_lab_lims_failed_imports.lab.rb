@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This migration comes from lab (originally 20210407071728)
 
 class CreateLabLimsFailedImports < ActiveRecord::Migration[5.2]

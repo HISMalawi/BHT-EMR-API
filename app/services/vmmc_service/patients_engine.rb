@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-module VMMCService
+module VmmcService
   # Patients sub service.
   #
   # Basically provides VMMC specific patient-centric functionality
   class PatientsEngine
     include ModelUtils
 
-    VMMC_PROGRAM =  Program.find_by name: 'VMMC PROGRAM'
+    VMMC_PROGRAM = Program.find_by name: 'VMMC PROGRAM'
 
     def initialize(program:)
       @program = program
@@ -22,14 +22,13 @@ module VMMCService
     end
 
     def visit_summary_label(patient, date)
-      VMMCService::PatientVisitLabel.new patient, date
+      VmmcService::PatientVisitLabel.new patient, date
     end
 
     def saved_encounters(patient, date)
-
       x = Encounter.where(["DATE(encounter_datetime) = ? AND patient_id = ? AND voided = 0
           AND program_id = ?", date.to_date.strftime("%Y-%m-%d"),
-          patient.patient_id, VMMC_PROGRAM.id]).collect{|e| e.name}.uniq
+                           patient.patient_id, VMMC_PROGRAM.id]).collect { |e| e.name }.uniq
     end
 
     private
@@ -37,7 +36,5 @@ module VMMCService
     def patient_summary(patient, date)
       PatientSummary.new patient, date
     end
-
   end
-
 end

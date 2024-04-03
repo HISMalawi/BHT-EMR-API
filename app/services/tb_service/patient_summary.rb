@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService
+module TbService
   # Provides various summary statistics for an TB patient
   class PatientSummary
     NPID_TYPE = 'National id'
@@ -9,8 +9,7 @@ module TBService
 
     include ModelUtils
 
-    attr_reader :patient
-    attr_reader :date
+    attr_reader :patient, :date
 
     def initialize(patient, date)
       @patient = patient
@@ -22,11 +21,11 @@ module TBService
       {
         patient_id: patient.patient_id,
         npid: identifier(NPID_TYPE) || 'N/A',
-        tb_number: tb_number,
+        tb_number:,
         program_start_date: patient_program_start_date || 'N/A',
         current_outcome: current_outcome || 'N/A',
-        current_drugs: current_drugs,
-        residence: residence,
+        current_drugs:,
+        residence:,
         drug_duration: drug_duration || 'N/A',
         drug_start_date: drug_start_date&.strftime('%d/%m/%Y') || 'N/A'
       }
@@ -83,7 +82,6 @@ module TBService
                                 .where('CAST(min_weight AS DECIMAL(4, 1)) <= :weight
                                                   AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
                                        weight: patient.weight.to_f.round(1))
-        ingredients
 
         ingredients.each do |ingredient|
           drug = Drug.find_by(drug_id: ingredient.drug_id)
@@ -98,7 +96,7 @@ module TBService
       state = PatientState.joins(:patient_program)\
                           .includes(:program_workflow_state)
                           .where('start_date <= ?', date)\
-                          .merge(PatientProgram.where(program: program, patient: patient))\
+                          .merge(PatientProgram.where(program:, patient:))\
                           .order(start_date: :desc)\
                           .last
 
@@ -130,19 +128,18 @@ module TBService
     end
 
     def tb_number
-      number = TBNumberService.get_patient_tb_number(patient_id: patient.patient_id)
+      number = TbNumberService.get_patient_tb_number(patient_id: patient.patient_id)
       return 'N/A' unless number
 
       number[:identifier]
     end
 
     def patient_program_start_date
-      patient_program = PatientProgram.find_by(patient_id: patient.patient_id, program_id: program('TB PROGRAM').program_id)
+      patient_program = PatientProgram.find_by(patient_id: patient.patient_id,
+                                               program_id: program('TB PROGRAM').program_id)
       return 'N/A' unless patient_program
 
       patient_program.date_enrolled.to_date
     end
-
-    private
   end
-  end
+end
