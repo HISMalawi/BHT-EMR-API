@@ -36,7 +36,7 @@ module Api
         patient_weight = params.require(:weight)
         name = params[:name]
 
-        render json: service.regimen_extras(patient_weight, name)
+        render json: service.regimen_extras(patient_weight:, name:)
       end
 
       def custom_tb_ingredients
