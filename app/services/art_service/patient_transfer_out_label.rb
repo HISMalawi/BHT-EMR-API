@@ -18,7 +18,7 @@ module ArtService
       initial_staging_conditions = transfer_out_note.who_clinical_conditions
       destination = transfer_out_note.transferred_out_to
 
-      label = ZebraPrinter::Label.new(776, 329, 'T')
+      label = ZebraPrinter::Lib::Label.new(776, 329, 'T')
       label.line_spacing = 0
       label.top_margin = 30
       label.bottom_margin = 30
