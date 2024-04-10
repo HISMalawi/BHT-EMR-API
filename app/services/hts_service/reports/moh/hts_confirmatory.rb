@@ -63,9 +63,8 @@ module HtsService
         def initialize(start_date:, end_date:)
           @start_date = start_date&.to_date&.beginning_of_day
           @end_date = end_date&.to_date&.end_of_day
-          @data = %i[hiv_test_2_result_invalid_entry hiv_test_3_result_invalid_entry            hiv_test_3_result_not_applicable_or_missing hiv_test_1_repeat_result_invalid_entry result_given_to_client_invalid_entry result_given_to_client_missing invalid_rtri_result rtri_result_not_done rtri_result_invalid_entry dbs_collected_invalid_entry dbs_collected_missing_where_rtri_recent specimen_ids_invalid_entry specimen_ids_missing_where_dbs_collected referral_for_retesting_after_confirmatory_invalid_entry referral_for_art_initiation_invalid_entry art_referral_outcome_invalid_entry art_clinic_registration_indexber_invalid_entry art_clinic_registration_indexber_missing_among_clients_linked_to_art linking_with_initial_register_missing_linkid
-          rtri_result_missing_among_hiv_positive_clients dbs_collected_not_applicable art_clinic_registration_indexber_valid_entry art_clinic_registration_indexber_not_applicable linking_with_initial_register_invalid_linkid art_referral_outcome_missing_where_referred_for_art
-          ].map { |indicator| [indicator, []] }.to_h
+          @data = %i[hiv_test_2_result_invalid_entry hiv_test_3_result_invalid_entry hiv_test_3_result_not_applicable_or_missing hiv_test_1_repeat_result_invalid_entry result_given_to_client_invalid_entry result_given_to_client_missing invalid_rtri_result rtri_result_not_done rtri_result_invalid_entry dbs_collected_invalid_entry dbs_collected_missing_where_rtri_recent specimen_ids_invalid_entry specimen_ids_missing_where_dbs_collected referral_for_retesting_after_confirmatory_invalid_entry referral_for_art_initiation_invalid_entry art_referral_outcome_invalid_entry art_clinic_registration_indexber_invalid_entry art_clinic_registration_indexber_missing_among_clients_linked_to_art linking_with_initial_register_missing_linkid
+                     rtri_result_missing_among_hiv_positive_clients dbs_collected_not_applicable art_clinic_registration_indexber_valid_entry art_clinic_registration_indexber_not_applicable linking_with_initial_register_invalid_linkid art_referral_outcome_missing_where_referred_for_art].map { |indicator| [indicator, []] }.to_h
         end
 
         def data
@@ -104,17 +103,16 @@ module HtsService
 
         def set_unique
           @data.each do |key, obj|
-            @data[key] = obj&.map { |q| q['person_id'] }.uniq
+            @data[key] = obj&.map { |q| q['person_id'] }&.uniq
           end
         end
 
         def fetch_confirmatory_register
           @data['total_clients_in_confirmatory_register'] = @query
-          
+
           @data['hiv_test_2_result_negative'] = filter_hash('test_two', concept('Negative').concept_id)
           @data['hiv_test_2_result_positive'] = filter_hash('test_two', concept('Positive').concept_id)
           @data['hiv_test_2_result_missing'] = filter_hash('test_two', nil)
-
 
           @data['hiv_test_3_result_negative'] = filter_hash('test_three', concept('Negative').concept_id)
           @data['hiv_test_3_result_positive'] = filter_hash('test_three', concept('Positive').concept_id)
@@ -129,7 +127,7 @@ module HtsService
           @data['rtri_result_negative'] = filter_hash('recency', concept('Negative').concept_id)
           @data['rtri_result_not_done'] = filter_hash('recency', concept('Not Done').concept_id) || []
           @data['rtri_result_not_done'] = @data['rtri_result_not_done'] + filter_hash('recency', nil)
-          
+
           @data['dbs_collected_no'] = filter_hash('dbs_collected', concept(NO_ANSWER).concept_id)
           @data['dbs_collected_no'] = @data['dbs_collected_no'] + filter_hash('dbs_collected', nil)
           @data['dbs_collected_yes'] = filter_hash('dbs_collected', concept(YES_ANSWER).concept_id)

@@ -3,7 +3,7 @@
 class LocationService
   # Outputs label printer commands for printing out a location label
   def print_location_label(location)
-    label = ZebraPrinter::StandardLabel.new
+    label = ZebraPrinter::Lib::StandardLabel.new
     label.font_size = 2
     label.font_horizontal_multiplier = 2
     label.font_vertical_multiplier = 2

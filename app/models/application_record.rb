@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
 
@@ -10,9 +12,9 @@ class ApplicationRecord < ActiveRecord::Base
   end
 
   def check_uuid
-    if self.attributes.has_key?('uuid') && self.uuid.blank?
-      self.uuid = SecureRandom.uuid
-    end
+    return unless attributes.key?('uuid') && uuid.blank?
+
+    self.uuid = SecureRandom.uuid
   end
 
   class << self

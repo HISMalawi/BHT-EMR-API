@@ -2,70 +2,70 @@
 
 require 'ostruct'
 
-module ARTService
+module ArtService
   class ReportEngine
     attr_reader :program
 
     LOGGER = Rails.logger
 
     REPORTS = {
-      'ARCHIVING_CANDIDATES' => ARTService::Reports::ArchivingCandidates,
-      'APPOINTMENTS' => ARTService::Reports::AppointmentsReport,
-      'ARV_REFILL_PERIODS' => ARTService::Reports::ArvRefillPeriods,
-      'COHORT' => ARTService::Reports::Cohort,
-      'COHORT_DISAGGREGATED' => ARTService::Reports::CohortDisaggregated,
-      'COHORT_DISAGGREGATED_ADDITIONS' => ARTService::Reports::CohortDisaggregatedAdditions,
-      'COHORT_SURVIVAL_ANALYSIS' => ARTService::Reports::CohortSurvivalAnalysis,
-      'DRUG_DISPENSATIONS' => ARTService::Reports::DrugDispensations,
-      'HIGH_VL_PATIENTS' => ARTService::Reports::ViralLoadResults,
-      'IPT' => ARTService::Reports::IPTReport,
-      'PATIENTS_WITH_OUTDATED_DEMOGRAPHICS' => ARTService::Reports::PatientsWithOutdatedDemographics,
-      'PATIENTS_ON_DTG' => ARTService::Reports::PatientsOnDTG,
-      'PREGNANT_PATIENTS' => ARTService::Reports::PregnantPatients,
-      'REGIMENS_AND_FORMULATIONS' => ARTService::Reports::RegimensAndFormulations,
-      'REGIMENS_BY_WEIGHT_AND_GENDER' => ARTService::Reports::RegimensByWeightAndGender,
-      'REGIMEN_SWITCH' => ARTService::Reports::RegimenSwitch,
-      'RETENTION' => ARTService::Reports::Retention,
-      'LIMS_ELECTRONIC_RESULTS' => ARTService::Reports::LimsResults,
-      'TPT_OUTCOME' => ARTService::Reports::TptOutcome,
-      'CLINIC_TX_RTT' => ARTService::Reports::ClinicTxRtt,
-      'TB_PREV2' => ARTService::Reports::Pepfar::TbPrev3,
-      'TPT_NEWLY_INITIATED' => ARTService::Reports::TptNewlyInitiated,
-      'TX_CURR' => ARTService::Reports::PatientsAliveAndOnTreatment,
-      'TX_ML' => ARTService::Reports::Pepfar::TxMl,
-      'TX_RTT' => ARTService::Reports::Pepfar::TxRTT,
-      'IPT_COVERAGE' => ARTService::Reports::IPTCoverage,
-      'VISITS' => ARTService::Reports::VisitsReport,
-      'VL_DUE' => ARTService::Reports::PatientsDueForViralLoad,
-      'VL_DISAGGREGATED' => ARTService::Reports::ViralLoadDisaggregated,
-      'TB_PREV' => ARTService::Reports::Pepfar::TbPrev,
-      'OUTCOME_LIST' => ARTService::Reports::OutcomeList,
-      'VIRAL_LOAD' => ARTService::Reports::ViralLoad,
-      'VIRAL_LOAD_COVERAGE' => ARTService::Reports::Pepfar::ViralLoadCoverage2,
-      'EXTERNAL_CONSULTATION_CLIENTS' => ARTService::Reports::ExternalConsultationClients,
-      'SC_ARVDISP' => ARTService::Reports::Pepfar::ScArvdisp,
-      'SC_CURR' => ARTService::Reports::Pepfar::ScCurr,
-      'PATIENT_ART_VL_DATES' => ARTService::Reports::Pepfar::PatientStartVL,
-      'MOH_TPT' => ARTService::Reports::MohTpt,
-      'TX_TB' => ARTService::Reports::Pepfar::TxTB,
-      'VL_COLLECTION' => ARTService::Reports::VlCollection,
-      'DISCREPANCY_REPORT' => ARTService::Reports::Clinic::DiscrepancyReport,
-      'STOCK_CARD' => ARTService::Reports::Clinic::StockCardReport,
-      'HYPERTENSION_REPORT' => ARTService::Reports::Clinic::HypertensionReport,
-      'TX_NEW' => ARTService::Reports::Pepfar::TxNew
+      'ARCHIVING_CANDIDATES' => ArtService::Reports::ArchivingCandidates,
+      'APPOINTMENTS' => ArtService::Reports::AppointmentsReport,
+      'ARV_REFILL_PERIODS' => ArtService::Reports::ArvRefillPeriods,
+      'COHORT' => ArtService::Reports::ArtCohort,
+      'COHORT_DISAGGREGATED' => ArtService::Reports::CohortDisaggregated,
+      'COHORT_DISAGGREGATED_ADDITIONS' => ArtService::Reports::CohortDisaggregatedAdditions,
+      'COHORT_SURVIVAL_ANALYSIS' => ArtService::Reports::CohortSurvivalAnalysis,
+      'DRUG_DISPENSATIONS' => ArtService::Reports::DrugDispensations,
+      'HIGH_VL_PATIENTS' => ArtService::Reports::ViralLoadResults,
+      'IPT' => ArtService::Reports::IptReport,
+      'PATIENTS_WITH_OUTDATED_DEMOGRAPHICS' => ArtService::Reports::PatientsWithOutdatedDemographics,
+      'PATIENTS_ON_DTG' => ArtService::Reports::PatientsOnDtg,
+      'PREGNANT_PATIENTS' => ArtService::Reports::PregnantPatients,
+      'REGIMENS_AND_FORMULATIONS' => ArtService::Reports::RegimensAndFormulations,
+      'REGIMENS_BY_WEIGHT_AND_GENDER' => ArtService::Reports::RegimensByWeightAndGender,
+      'REGIMEN_SWITCH' => ArtService::Reports::RegimenSwitch,
+      'RETENTION' => ArtService::Reports::Retention,
+      'LIMS_ELECTRONIC_RESULTS' => ArtService::Reports::LimsResults,
+      'TPT_OUTCOME' => ArtService::Reports::TptOutcome,
+      'CLINIC_TX_RTT' => ArtService::Reports::ClinicTxRtt,
+      'TB_PREV2' => ArtService::Reports::Pepfar::TbPrev3,
+      'TPT_NEWLY_INITIATED' => ArtService::Reports::TptNewlyInitiated,
+      'TX_CURR' => ArtService::Reports::PatientsAliveAndOnTreatment,
+      'TX_ML' => ArtService::Reports::Pepfar::TxMl,
+      'TX_RTT' => ArtService::Reports::Pepfar::TxRtt,
+      'IPT_COVERAGE' => ArtService::Reports::IptCoverage,
+      'VISITS' => ArtService::Reports::VisitsReport,
+      'VL_DUE' => ArtService::Reports::PatientsDueForViralLoad,
+      'VL_DISAGGREGATED' => ArtService::Reports::ViralLoadDisaggregated,
+      'TB_PREV' => ArtService::Reports::Pepfar::TbPrev,
+      'OUTCOME_LIST' => ArtService::Reports::OutcomeList,
+      'VIRAL_LOAD' => ArtService::Reports::ViralLoad,
+      'VIRAL_LOAD_COVERAGE' => ArtService::Reports::Pepfar::ViralLoadCoverage2,
+      'EXTERNAL_CONSULTATION_CLIENTS' => ArtService::Reports::ExternalConsultationClients,
+      'SC_ARVDISP' => ArtService::Reports::Pepfar::ScArvdisp,
+      'SC_CURR' => ArtService::Reports::Pepfar::ScCurr,
+      'PATIENT_ART_VL_DATES' => ArtService::Reports::Pepfar::PatientStartVl,
+      'MOH_TPT' => ArtService::Reports::MohTpt,
+      'TX_TB' => ArtService::Reports::Pepfar::TxTb,
+      'VL_COLLECTION' => ArtService::Reports::VlCollection,
+      'DISCREPANCY_REPORT' => ArtService::Reports::Clinic::DiscrepancyReport,
+      'STOCK_CARD' => ArtService::Reports::Clinic::StockCardReport,
+      'HYPERTENSION_REPORT' => ArtService::Reports::Clinic::HypertensionReport,
+      'TX_NEW' => ArtService::Reports::Pepfar::TxNew
     }.freeze
 
     def generate_report(type:, **kwargs)
-      call_report_manager(:build_report, type: type, **kwargs)
+      call_report_manager(:build_report, type:, **kwargs)
     end
 
     def find_report(type:, **kwargs)
-      call_report_manager(:find_report, type: type, **kwargs)
+      call_report_manager(:find_report, type:, **kwargs)
     end
 
     def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init, **kwargs)
-      cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated', name: 'disaggregated', start_date: start_date,
-                                                   end_date: end_date, rebuild: rebuild, **kwargs)
+      cohort = REPORTS['COHORT_DISAGGREGATED'].new(type: 'disaggregated', name: 'disaggregated', start_date:,
+                                                   end_date:, rebuild:, **kwargs)
       return cohort.initialize_disaggregated if init
 
       cohort.disaggregated(quarter, age_group)
@@ -74,14 +74,14 @@ module ARTService
     def cohort_survival_analysis(quarter, age_group, regenerate, occupation)
       cohort = REPORTS['COHORT_SURVIVAL_ANALYSIS'].new(type: 'survival_analysis',
                                                        name: 'survival_analysis', start_date: Date.today,
-                                                       end_date: Date.today, regenerate: regenerate, occupation: occupation)
+                                                       end_date: Date.today, regenerate:, occupation:)
       cohort.survival_analysis(quarter, age_group)
     end
 
     def defaulter_list(start_date, end_date, pepfar, **kwargs)
       REPORTS['COHORT'].new(type: 'defaulter_list',
-                            name: 'defaulter_list', start_date: start_date,
-                            end_date: end_date, **kwargs).defaulter_list(pepfar)
+                            name: 'defaulter_list', start_date:,
+                            end_date:, **kwargs).defaulter_list(pepfar)
     end
 
     def missed_appointments(start_date, end_date, **kwargs)
@@ -114,18 +114,18 @@ module ARTService
 
     def screened_for_tb(start_date, end_date, gender, age_group)
       REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
-                                                    end_date: end_date.to_date, age_group: age_group, gender: gender).screened_for_tb
+                                                    end_date: end_date.to_date, age_group:, gender:).screened_for_tb
     end
 
     def clients_given_ipt(start_date, end_date, gender, age_group)
       REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
-                                                    end_date: end_date.to_date, age_group: age_group, gender: gender).clients_given_ipt
+                                                    end_date: end_date.to_date, age_group:, gender:).clients_given_ipt
     end
 
     def arv_refill_periods(start_date, end_date, min_age, max_age, org, initialize_tables, **kwargs)
       REPORTS['ARV_REFILL_PERIODS'].new(start_date: start_date.to_date,
-                                        end_date: end_date.to_date, min_age: min_age,
-                                        max_age: max_age, org: org, initialize_tables: initialize_tables, **kwargs).arv_refill_periods
+                                        end_date: end_date.to_date, min_age:,
+                                        max_age:, org:, initialize_tables:, **kwargs).arv_refill_periods
     end
 
     def tx_ml(start_date, end_date, **kwargs)
@@ -146,13 +146,13 @@ module ARTService
 
     def disaggregated_regimen_distribution(start_date, end_date, gender, age_group)
       REPORTS['COHORT_DISAGGREGATED_ADDITIONS'].new(start_date: start_date.to_date,
-                                                    end_date: end_date.to_date, age_group: age_group, gender: gender).disaggregated_regimen_distribution
+                                                    end_date: end_date.to_date, age_group:, gender:).disaggregated_regimen_distribution
     end
 
     def tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
       REPORTS['ARV_REFILL_PERIODS'].new(start_date: start_date.to_date,
                                         end_date: end_date.to_date, min_age: 0, max_age: 0,
-                                        org: org, initialize_tables: '').tx_mmd_client_level_data(patient_ids)
+                                        org:, initialize_tables: '').tx_mmd_client_level_data(patient_ids)
     end
 
     def tb_prev(start_date, end_date)
@@ -171,7 +171,7 @@ module ARTService
 
     def patient_outcome_list(start_date, end_date, outcome, **kwargs)
       REPORTS['OUTCOME_LIST'].new(start_date: start_date.to_date,
-                                  end_date: end_date.to_date, outcome: outcome, **kwargs).get_list
+                                  end_date: end_date.to_date, outcome:, **kwargs).get_list
     end
 
     def clients_due_vl(start_date, end_date, **kwargs)
@@ -194,7 +194,7 @@ module ARTService
                            tx_curr_definition, patient_ids)
       REPORTS['VIRAL_LOAD_COVERAGE'].new(start_date: start_date.to_date,
                                          end_date: end_date.to_date,
-                                         tx_curr_definition: tx_curr_definition).vl_maternal_status(patient_ids)
+                                         tx_curr_definition:).vl_maternal_status(patient_ids)
     end
 
     def patient_art_vl_dates(end_date, patient_ids)
@@ -208,7 +208,7 @@ module ARTService
 
     def sc_arvdisp(start_date, end_date, rebuild_outcome)
       REPORTS['SC_ARVDISP'].new(start_date: start_date.to_date,
-                                end_date: end_date.to_date, rebuild_outcome: rebuild_outcome).report
+                                end_date: end_date.to_date, rebuild_outcome:).report
     end
 
     private
@@ -220,7 +220,7 @@ module ARTService
       type = report_type(type)
 
       report_manager = REPORTS[type.name.upcase].new(
-        type: type, name: name, start_date: start_date, end_date: end_date, **kwargs
+        type:, name:, start_date:, end_date:, **kwargs
       )
 
       report_manager.send(method)

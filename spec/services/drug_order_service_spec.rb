@@ -7,7 +7,7 @@ RSpec.describe DrugOrderService do
   let(:service) { DrugOrderService }
 
   describe :create_drug_orders do
-    let(:treatment_encounter) { create :encounter_treatment, patient: patient }
+    let(:treatment_encounter) { create :encounter_treatment, patient: }
     let(:archetypes) do
       [
         {

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FixDtgDose < ActiveRecord::Migration[5.2]
   def up
     dtgs = Drug.where(concept_id: ConceptName.find_by_name('Dolutegravir').concept_id)

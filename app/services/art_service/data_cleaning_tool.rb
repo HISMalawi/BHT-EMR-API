@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   class DataCleaningTool
     include CommonSqlQueryUtils
-  
+
     TOOLS = {
       'DATE ENROLLED LESS THAN EARLIEST START DATE' => 'date_enrolled_less_than_earliest_start_date',
       'PRE ART OR UNKNOWN OUTCOMES' => 'pre_art_or_unknown_outcomes',
@@ -235,32 +235,37 @@ module ARTService
     end
 
     def multiple_start_reasons
-      concept_id = concept('Reason for ART eligibility').concept_id
-
-      data = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT person_id, count(concept_id) reason
-        FROM obs WHERE concept_id=#{concept_id} AND voided = 0
-        AND person_id NOT IN (#{external_clients})
-        GROUP BY person_id HAVING reason > 1;
-      SQL
-
-      return {} if data.blank?
-
-      patient_ids = data.map { |d| d['person_id'].to_i }
-
-      data = ActiveRecord::Base.connection.select_all <<~SQL
+      ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
-          p.person_id, i.identifier arv_number, birthdate, gender, death_date,
-          n.given_name, n.family_name
-        FROM person p
-        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.identifier_type = #{indetifier_type} AND i.voided = 0
-        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-        WHERE p.person_id IN(#{patient_ids.join(',')})
-        GROUP BY p.person_id ORDER BY i.date_created DESC;
+          o.person_id patient_id,
+          a.identifier arv_number,
+          n.given_name,
+          n.family_name,
+          p.birthdate,
+          p.gender,
+          p.death_date,
+          GROUP_CONCAT(DISTINCT(vcn.name)) reasons,
+          GROUP_CONCAT(DISTINCT(DATE(o.obs_datetime))) visits
+        FROM obs o
+        INNER JOIN person p ON p.person_id = o.person_id AND p.voided = 0
+        INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.program_id = 1 -- HIV Program
+        INNER JOIN concept_name cn ON cn.concept_id = o.concept_id AND cn.voided = 0 AND cn.concept_id = #{concept('Reason for ART eligibility').concept_id}
+        INNER JOIN concept_name vcn ON vcn.concept_id = o.value_coded AND vcn.voided = 0
+        INNER JOIN patient_program pp ON pp.patient_id = o.person_id AND pp.program_id = 1 AND pp.voided = 0
+        INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 -- On ART
+        INNER JOIN (
+          SELECT pp.patient_id, MIN(start_date) AS start_date
+          FROM patient_program pp
+          INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 -- On ART
+          WHERE pp.voided = 0 AND pp.program_id = 1 -- HIV Program
+          GROUP BY pp.patient_id
+        ) AS ms ON ms.patient_id = pp.patient_id AND ms.start_date = ps.start_date AND o.obs_datetime > ps.start_date
+        LEFT JOIN patient_identifier a ON a.patient_id = pp.patient_id AND a.voided = 0 AND a.identifier_type = #{indetifier_type}
+        LEFT JOIN person_name n ON n.person_id = pp.patient_id AND n.voided = 0
+        WHERE o.voided = 0
+        AND o.person_id NOT IN (#{external_clients})
+        GROUP BY o.person_id HAVING COUNT(DISTINCT(o.value_coded)) > 1 OR COUNT(DISTINCT(DATE(o.obs_datetime))) > 1;
       SQL
-
-      organise_data data
     end
 
     def missing_start_reasons
@@ -476,7 +481,7 @@ module ARTService
       patient_visit_dates.each do |patient_id, visit_date|
         patient = Patient.find(patient_id)
         date =  visit_date.to_date
-        workflow_engine = ARTService::WorkflowEngine.new(patient: patient, date: date, program: program)
+        workflow_engine = ArtService::WorkflowEngine.new(patient:, date:, program:)
         complete = workflow_engine.next_encounter.blank? ? true : false
 
         next if complete

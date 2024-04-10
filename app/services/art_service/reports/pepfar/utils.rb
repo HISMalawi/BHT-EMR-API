@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     module Pepfar
       ##
       # Common utilities for Pepfar reports
       module Utils
         ##
-        # An array of all groups as required by PEPFAR.
+        # An array of all groups as required by Pepfar.
         def pepfar_age_groups
           @pepfar_age_groups ||= [
             'Unknown',
@@ -50,13 +50,13 @@ module ARTService
         end
 
         ##
-        # Returns the preferred PEPFAR identifier type.
+        # Returns the preferred Pepfar identifier type.
         #
         # In some clinics like Lighthouse Filing numbers are used exclusively and in other
         # sites, ARV Numbers are used.
         def pepfar_patient_identifier_type
           name = GlobalPropertyService.use_filing_numbers? ? 'Filing number' : 'ARV Number'
-          PatientIdentifierType.where(name: name).select(:patient_identifier_type_id)
+          PatientIdentifierType.where(name:).select(:patient_identifier_type_id)
         end
 
         FULL_6H_COURSE_PILLS = 146

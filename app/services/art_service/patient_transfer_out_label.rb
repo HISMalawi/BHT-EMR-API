@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   # Prints out patient transfer out labels
   #
   # Source: NART/app/controllers/generic_patients_controller#patient_transfer_out_label
@@ -10,7 +10,7 @@ module ARTService
     def initialize(patient, date)
       @patient = patient
       @date = date
-      @transfer_out_note = ARTService::PatientTransferOut.new patient, date
+      @transfer_out_note = ArtService::PatientTransferOut.new patient, date
     end
 
     def print
@@ -18,7 +18,7 @@ module ARTService
       initial_staging_conditions = transfer_out_note.who_clinical_conditions
       destination = transfer_out_note.transferred_out_to
 
-      label = ZebraPrinter::Label.new(776, 329, 'T')
+      label = ZebraPrinter::Lib::Label.new(776, 329, 'T')
       label.line_spacing = 0
       label.top_margin = 30
       label.bottom_margin = 30
@@ -58,7 +58,7 @@ module ARTService
       initial_height = "Init HT: #{transfer_out_note.initial_height}"
       initial_weight = "Init WT: #{transfer_out_note.initial_weight}"
 
-      first_cd4_count = 'CD count ' + transfer_out_note.cd4_count if transfer_out_note.cd4_count
+      first_cd4_count = "CD count #{transfer_out_note.cd4_count}" if transfer_out_note.cd4_count
       unless transfer_out_note.cd4_count_date.blank?
         first_cd4_count_date = "CD count date #{transfer_out_note.cd4_count_date.strftime('%d-%b-%Y')}"
       end

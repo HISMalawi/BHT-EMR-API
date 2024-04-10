@@ -57,7 +57,8 @@ module HtsService
           { name: 'frs', concept: FRS, join: 'LEFT', value: 'value_numeric' },
           { name: 'referal_for_retesting', concept: REFERRAL_FOR_RETESTING, join: 'LEFT' },
           { name: 'time_of_hiv_test', concept: TIME_OF_HIV_TEST, value: 'value_datetime', join: 'LEFT' },
-          { name: 'time_since_last_medication', value: 'value_datetime', concept: TIME_SINCE_LAST_MEDICATION, join: 'LEFT' },
+          { name: 'time_since_last_medication', value: 'value_datetime', concept: TIME_SINCE_LAST_MEDICATION,
+            join: 'LEFT' },
           { name: 'previous_hiv_test', concept: PREVIOUS_HIV_TEST, join: 'LEFT' },
           { name: 'previous_hiv_test_done', concept: PREVIOUS_HIV_TEST_DONE, join: 'LEFT' },
           { name: 'risk_category', concept: RISK_CATEGORY, join: 'LEFT' },
@@ -66,7 +67,7 @@ module HtsService
           { name: 'taken_arvs_before', concept: TAKEN_ARVS_BEFORE, join: 'LEFT' },
           { name: 'taken_prep_before', concept: TAKEN_PREP_BEFORE, join: 'LEFT' },
           { name: 'taken_pep_before', concept: TAKEN_PEP_BEFORE, join: 'LEFT' },
-          { name: 'referrals_ordered', concept: REFERALS_ORDERED, value: 'value_text', join: 'LEFT' },
+          { name: 'referrals_ordered', concept: REFERALS_ORDERED, value: 'value_text', join: 'LEFT' }
           # {
           #   name: 'outcome',
           #   concept: 'Antiretroviral status or outcome',
@@ -318,7 +319,7 @@ module HtsService
           @data['time_since_last_hiv_test_not_applicable_or_missing'] = @data['last_hiv_test_never_tested']
           @data['time_since_last_hiv_test_not_applicable_or_missing'] += filter_hash('time_of_hiv_test', nil)
           @data['time_since_last_hiv_test_not_applicable_or_missing'] += @query.select do |q|
-            get_diff(q['encounter_datetime'], q['time_of_hiv_test']) < 0
+            get_diff(q['encounter_datetime'], q['time_of_hiv_test']).negative?
           end
         end
 
@@ -337,7 +338,11 @@ module HtsService
         end
 
         def fetch_ever_taken_drugs_before
-          @data['ever_taken_arvs_no'] = @query.select { |r| [r['taken_prep_before'], r['taken_pep_before'], r['taken_arvs_before']].all? { |q| q == concept(NO_ANSWER).concept_id } }
+          @data['ever_taken_arvs_no'] = @query.select do |r|
+            [r['taken_prep_before'], r['taken_pep_before'], r['taken_arvs_before']].all? do |q|
+              q == concept(NO_ANSWER).concept_id
+            end
+          end
           @data['ever_taken_arvs_prep'] = filter_hash('taken_prep_before', concept(YES_ANSWER).concept_id)
           @data['ever_taken_arvs_pep'] = filter_hash('taken_pep_before', concept(YES_ANSWER).concept_id)
           @data['ever_taken_arvs_art'] = filter_hash('taken_arvs_before', concept(YES_ANSWER).concept_id)
@@ -376,7 +381,7 @@ module HtsService
           @data['partner_hiv_status_hiv_positive_not_on_art'] =
             filter_hash('partner_hiv_status', concept('Positive NOT on ART').concept_id)
           @data['partner_hiv_status_hiv_positive_on_art'] =
-          filter_hash('partner_hiv_status', concept('Positive on ART').concept_id)
+            filter_hash('partner_hiv_status', concept('Positive on ART').concept_id)
           @data['partner_hiv_status_missing'] = filter_hash('partner_hiv_status', nil)
         end
 
@@ -384,9 +389,9 @@ module HtsService
           @data['referral_for_hiv_retesting_no_retest_needed'] =
             filter_hash('referal_for_retesting', concept('NOT done').concept_id)
           @data['referral_for_hiv_retesting_retest_needed'] =
-            filter_hash('referal_for_retesting', 10616) # TODO: Fix this voided concept
+            filter_hash('referal_for_retesting', 10_616) # TODO: Fix this voided concept
           @data['referral_for_hiv_retesting_confirmatory_test'] =
-          filter_hash('referal_for_retesting', concept('Confirmatory HIV test').concept_id)
+            filter_hash('referal_for_retesting', concept('Confirmatory HIV test').concept_id)
           @data['referral_for_hiv_retesting_missing'] =
             filter_hash('referal_for_retesting', nil)
         end
@@ -400,7 +405,8 @@ module HtsService
         end
 
         def linked_clients
-          not_linked_concepts = [concept('Refused').concept_id, concept('Died').concept_id, concept('Unknown').concept_id]
+          not_linked_concepts = [concept('Refused').concept_id, concept('Died').concept_id,
+                                 concept('Unknown').concept_id]
 
           @data['linking_with_hiv_confirmatory_register_linked'] = filter_hash('outcome', concept('Linked').concept_id)
           @data['linking_with_hiv_confirmatory_register_not_applicable_not_linked'] = @query.select do |q|

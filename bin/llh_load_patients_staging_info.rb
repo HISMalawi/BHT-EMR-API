@@ -98,23 +98,26 @@ def encounter_service
 end
 
 def patient_staging_encounter(patient, date)
-  staging = Encounter.where(type: STAGING_ENCOUNTER, patient: patient)
+  staging = Encounter.where(type: STAGING_ENCOUNTER, patient:)
                      .where('encounter_datetime < DATE(?) + INTERVAL 1 DAY', date)
                      .first
   return staging if staging
 
-  staging = encounter_service.create(program: HIV_PROGRAM, type: STAGING_ENCOUNTER, patient: patient, encounter_datetime: date)
+  staging = encounter_service.create(program: HIV_PROGRAM, type: STAGING_ENCOUNTER, patient:,
+                                     encounter_datetime: date)
   raise "Couldn't create staging encounter: #{staging.errors.as_json}" unless staging.errors.empty?
 
   staging
 end
 
 def drug_encounter(patient, date, encounter_type)
-  encounter = Encounter.where(type: encounter_type, patient: patient, encounter_datetime: (date..(date + 1.day).to_date))
+  encounter = Encounter.where(type: encounter_type, patient:,
+                              encounter_datetime: (date..(date + 1.day).to_date))
                        .first
   return encounter if encounter
 
-  encounter = encounter_service.create(program: HIV_PROGRAM, type: encounter_type, patient: patient, encounter_datetime: date)
+  encounter = encounter_service.create(program: HIV_PROGRAM, type: encounter_type, patient:,
+                                       encounter_datetime: date)
   raise "Couldn't create #{encounter_type.name} encounter: #{encounter.errors.as_json}" unless encounter.errors.empty?
 
   encounter
@@ -139,7 +142,7 @@ def save_patient_staging_information(patient, staging_information, date)
 
   logger.debug("Creating new staging information for patient ##{patient.patient_id}")
   staging_information.each do |question_concept, value_concept|
-    Observation.create!(encounter: encounter,
+    Observation.create!(encounter:,
                         person_id: encounter.patient_id,
                         obs_datetime: date,
                         concept_id: question_concept.concept_id,
@@ -166,7 +169,7 @@ def make_drug_prescriptions(patient, drugs, date)
 
   encounter.orders.each { |order| order.void('Overwritten by LLH Pre - 2010 patients import script') }
 
-  DrugOrderService.create_drug_orders(encounter: encounter, drug_orders: drug_orders)
+  DrugOrderService.create_drug_orders(encounter:, drug_orders:)
 end
 
 def dispense_drugs(patient, orders, date)
@@ -175,18 +178,21 @@ def dispense_drugs(patient, orders, date)
   logger.debug("Voiding existing dispensations for patient ##{patient.patient_id}")
   patient_dispensing_encounter(patient, date)
     .observations
-    .each { |observation| observation.void('Overwritten by LLH Pre - 2010 patients import script', skip_after_void: true) }
+    .each do |observation|
+    observation.void('Overwritten by LLH Pre - 2010 patients import script',
+                     skip_after_void: true)
+  end
 
   logger.debug("Creating new dispensations for patient ##{patient.patient_id}")
   dispensations = orders.map do |order|
     {
       drug_order_id: order.order_id,
       quantity: 30,
-      date: date
+      date:
     }
   end
 
-  DispensationService.create(HIV_PROGRAM,  dispensations)
+  DispensationService.create(HIV_PROGRAM, dispensations)
 end
 
 def process_csv(csv)
