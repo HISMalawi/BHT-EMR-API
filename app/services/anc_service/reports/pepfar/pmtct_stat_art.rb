@@ -93,26 +93,30 @@ module AncService
         def process_clients(clients, report_structure)
           clients.each do |client|
             if client['prev_test'] == yes_concept && client['prev_test_result'] == positive_concept
-              report_structure[client['age_group']][:known_positive] << client['patient_id']
+              report_structure[client['age_group']][:known_positive] << client['patient_id'] unless report_structure[client['age_group']][:known_positive].include?(client['patient_id'])
+              report_structure[client['age_group']][:already_on_art] << client['patient_id'] unless report_structure[client['age_group']][:already_on_art].include?(client['patient_id'])
             end
             if client['prev_test_result'] != positive_concept && client['hiv_status'] == positive_concept
-              report_structure[client['age_group']][:newly_tested_positives] << client['patient_id']
+              report_structure[client['age_group']][:newly_tested_positives] << client['patient_id'] unless report_structure[client['age_group']][:newly_tested_positives].include?(client['patient_id'])
+              report_structure[client['age_group']][:new_on_art] << client['patient_id'] unless report_structure[client['age_group']][:new_on_art].include?(client['patient_id'])
             end
             if client['prev_test'] != yes_concept && client['hiv_status'] == negative_concept
-              report_structure[client['age_group']][:new_negatives] << client['patient_id']
+               report_structure[client['age_group']][:new_negatives] << client['patient_id']
             end
             if client['prev_test'] == yes_concept && client['prev_test_result'] == negative_concept
-              report_structure[client['age_group']][:recent_negatives] << client['patient_id']
+               report_structure[client['age_group']][:recent_negatives] << client['patient_id']
             end
             if (client['prev_test'] != yes_concept || client['prev_test'].blank?) && client['hiv_status'].blank?
-              report_structure[client['age_group']][:not_done] << client['patient_id']
-            end
-            if client['art_status'] != yes_concept && client['current_outcome'] == 'On antiretrovirals'
-              report_structure[client['age_group']][:new_on_art] << client['patient_id']
-            end
-            if client['art_status'] == yes_concept
-              report_structure[client['age_group']][:already_on_art] << client['patient_id']
-            end
+                 report_structure[client['age_group']][:not_done] << client['patient_id']
+           end
+           if client['art_status'] != yes_concept && client['current_outcome'] == 'On antiretrovirals'
+                 report_structure[client['age_group']][:new_on_art] << client['patient_id'] unless report_structure[client['age_group']][:new_on_art].include?(client['patient_id'])
+                report_structure[client['age_group']][:newly_tested_positives] << client['patient_id'] unless report_structure[client['age_group']][:newly_tested_positives].include?(client['patient_id'])
+           end
+           if client['art_status'] == yes_concept
+              report_structure[client['age_group']][:known_positive] << client['patient_id'] unless report_structure[client['age_group']][:known_positive].include?(client['patient_id'])
+              report_structure[client['age_group']][:already_on_art] << client['patient_id'] unless report_structure[client['age_group']][:already_on_art].include?(client['patient_id'])
+           end
           end
           report_structure
         end
