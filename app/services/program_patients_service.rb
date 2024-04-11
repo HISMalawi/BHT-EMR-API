@@ -2,14 +2,14 @@
 
 class ProgramPatientsService
   ENGINES = {
-    'HIV PROGRAM' => ARTService::PatientsEngine,
-    'TB PROGRAM' => TBService::PatientsEngine,
-    'ANC PROGRAM' => ANCService::PatientsEngine,
-    'OPD PROGRAM' => OPDService::PatientsEngine,
-    'VMMC PROGRAM' => VMMCService::PatientsEngine,
-    'CXCA PROGRAM' => CXCAService::PatientsEngine,
-    'HTC PROGRAM' => HTSService::PatientsEngine,
-    'NCD PROGRAM' => NCDService::PatientsEngine,
+    'HIV PROGRAM' => ArtService::PatientsEngine,
+    'TB PROGRAM' => TbService::PatientsEngine,
+    'ANC PROGRAM' => AncService::PatientsEngine,
+    'OPD PROGRAM' => OpdService::PatientsEngine,
+    'VMMC PROGRAM' => VmmcService::PatientsEngine,
+    'CXCA PROGRAM' => CxcaService::PatientsEngine,
+    'HTC PROGRAM' => HtsService::PatientsEngine,
+    'NCD PROGRAM' => NcdService::PatientsEngine,
   }.freeze
 
   def initialize(program:)

@@ -2,13 +2,13 @@
 
 class AppointmentService
   ENGINES = {
-    'HIV PROGRAM' => ARTService::AppointmentEngine,
-    'TB PROGRAM' => TBService::AppointmentEngine,
-    'ANC PROGRAM' => ANCService::AppointmentEngine,
-    'VMMC PROGRAM' => VMMCService::AppointmentEngine,
-    'CXCA PROGRAM' => CXCAService::AppointmentEngine,
-    'HTC PROGRAM' => HTSService::AppointmentEngine,
-    'NCD PROGRAM' => NCDService::AppointmentEngine,
+    'HIV PROGRAM' => ArtService::AppointmentEngine,
+    'TB PROGRAM' => TbService::AppointmentEngine,
+    'ANC PROGRAM' => AncService::AppointmentEngine,
+    'VMMC PROGRAM' => VmmcService::AppointmentEngine,
+    'CXCA PROGRAM' => CxcaService::AppointmentEngine,
+    'HTC PROGRAM' => HtsService::AppointmentEngine,
+    'NCD PROGRAM' => NcdService::AppointmentEngine,
   }.freeze
 
   def initialize(program_id:, patient_id:, retro_date:)
