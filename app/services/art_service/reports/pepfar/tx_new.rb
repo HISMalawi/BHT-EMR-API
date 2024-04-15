@@ -93,7 +93,6 @@ module ArtService
             else
               next
             end
-            report[age_group.to_s][gender.to_s][indicator.to_sym] << patient_id if new_patient.zero?
             process_aggreggation_rows(report:, gender:, indicator:, start_date: date_enrolled,
                                       patient_id:, maternal_status: row['maternal_status'], maternal_status_date: row['maternal_status_date'])
           end
