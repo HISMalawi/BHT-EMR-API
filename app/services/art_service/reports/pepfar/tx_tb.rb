@@ -100,7 +100,7 @@ module ArtService
             ) current_obs ON current_obs.person_id = o.person_id AND current_obs.obs_datetime = o.obs_datetime
             INNER JOIN concept_name cn ON cn.concept_id = o.value_coded AND cn.voided = 0
             LEFT JOIN obs screen_method ON screen_method.concept_id = #{ConceptName.find_by_name('TB screening method used').concept_id} AND screen_method.voided = 0 AND screen_method.person_id = o.person_id AND DATE(screen_method.obs_datetime) = DATE(current_obs.obs_datetime)
-            LEFT JOIN concept_name vcn ON vcn.concept_id = screen_method.value_coded AND vcn.voided = 0 AND vcn.name IN ('CXR', 'MWRD')
+            LEFT JOIN concept_name vcn ON vcn.concept_id = screen_method.value_coded AND vcn.voided = 0 AND vcn.name IN ('Chest x-ray', 'MWRD')
             WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
             AND o.voided = 0 #{@report_type == 'moh' ? '' : "AND o.person_id IN (#{@tx_curr.join(',')})"}
             AND o.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('TB Suspected', 'TB NOT suspected') AND voided = 0)
@@ -233,7 +233,7 @@ module ArtService
 
         def process_method(metrics, methods, patient_id)
           metrics[:symptom_screen_alone] << patient_id if methods.blank?
-          metrics[:cxr_screen] << patient_id if methods&.include?('cxr') && !methods&.include?('mwrd')
+          metrics[:cxr_screen] << patient_id if methods&.include?('chest x-ray') && !methods&.include?('mwrd')
           metrics[:mwrd_screen] << patient_id if methods&.include?('mwrd')
         end
 
