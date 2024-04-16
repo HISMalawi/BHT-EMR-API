@@ -1,3 +1,4 @@
+# rubocop:disable Metrics/MethodLength
 # frozen_string_literal: true
 
 module CxcaService
@@ -30,7 +31,7 @@ module CxcaService
             'Hysterectomy' => [],
             'Not due for screening' => [],
             'Preferred counseling' => [],
-            'Not applicable' => [],
+            'NOT applicable' => [],
             'Patient refused' => [],
             'Chemotherapy' => [],
             'Pregnancy' => [],
@@ -44,6 +45,9 @@ module CxcaService
             if @report.keys.include?(row['reason_for_not_screening'])
               @report[row['reason_for_not_screening']] << row['patient_id']
             end
+            # Hack due to concept name coming from frontend not matching
+            @report['Not due for screening'] << row['patient_id'] \
+              if row['reason_for_not_screening'] == 'Screened for Cervical Cancer'
           end
         end
 
@@ -56,16 +60,16 @@ module CxcaService
               reason_name.name reason_for_not_screening
             FROM patient p
             INNER JOIN encounter on encounter.patient_id = p.patient_id
-            LEFT JOIN obs reason_for_not_screening ON reason_for_not_screening.person_id = encounter.patient_id
-                AND reason_for_not_screening.voided = 0
-                AND reason_for_not_screening.concept_id = #{concept('Reason for NOT offering CxCa').concept_id}
-            LEFT JOIN concept_name reason_name ON reason_name.concept_id = reason_for_not_screening.value_coded
-                AND reason_name.voided = 0
-            WHERE p.voided = 0
             AND encounter.voided = 0
-            AND encounter.program_id = (#{cxca_program})
+            AND encounter.program_id = #{cxca_program}
             AND encounter.encounter_datetime >= '#{@start_date}'
             AND encounter.encounter_datetime <= '#{@end_date}'
+            INNER JOIN obs reason ON reason.encounter_id = encounter.encounter_id
+                AND reason.voided = 0
+                AND reason.concept_id = #{concept('Reason for NOT offering CxCa').concept_id}
+            INNER JOIN concept_name reason_name ON reason_name.concept_id = reason.value_coded
+                AND reason_name.voided = 0
+            WHERE p.voided = 0
             GROUP BY p.patient_id
           SQL
         end
@@ -73,3 +77,5 @@ module CxcaService
     end
   end
 end
+
+# rubocop:enable Metrics/MethodLength
