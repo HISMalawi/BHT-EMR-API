@@ -979,7 +979,8 @@ module ArtService
 
       def update_cum_outcome(end_date)
         ArtService::Reports::Cohort::Outcomes.new(end_date:,
-                                                  definition: @outcomes_definition).update_cummulative_outcomes
+                                                  definition: @outcomes_definition,
+                                                  rebuild: 'true').update_cummulative_outcomes
       end
 
       def update_tb_status(end_date)
