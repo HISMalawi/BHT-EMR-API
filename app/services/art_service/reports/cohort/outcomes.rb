@@ -373,7 +373,7 @@ module ArtService
         def prepare_tables
           create_outcome_table unless check_if_table_exists('temp_patient_outcomes')
           validate_temp_outcome_table
-          create_tmp_max_drug_orders_table unless check_if_table_exists('temp_max_drug_orders')
+          create_temp_max_drug_orders_table unless check_if_table_exists('temp_max_drug_orders')
           create_tmp_min_auto_expire_date unless check_if_table_exists('temp_min_auto_expire_date')
           create_temp_max_patient_state unless check_if_table_exists('temp_max_patient_state')
           create_max_patient_appointment_date unless check_if_table_exists('temp_max_patient_appointment')
@@ -430,7 +430,7 @@ module ArtService
           SQL
         end
 
-        def create_tmp_max_drug_orders_table
+        def create_temp_max_drug_orders_table
           ActiveRecord::Base.connection.execute <<~SQL
             CREATE TABLE IF NOT EXISTS temp_max_drug_orders (
               patient_id INT NOT NULL,

@@ -18,7 +18,7 @@ module ArtService
                                            ORDER BY drug_order.drug_inventory_id ASC) AS drugs,
                                            DATE(tmdo.start_date) prescription_date
               FROM temp_patient_outcomes AS outcomes
-              INNER JOIN tmp_max_drug_orders tmdo ON tmdo.patient_id = outcomes.patient_id AND outcomes.cum_outcome = 'On antiretrovirals'
+              INNER JOIN temp_max_drug_orders tmdo ON tmdo.patient_id = outcomes.patient_id AND outcomes.cum_outcome = 'On antiretrovirals'
               INNER JOIN orders
                 ON orders.patient_id = outcomes.patient_id
                 AND orders.concept_id IN (#{arv_drugs_concept_set.to_sql})

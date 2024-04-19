@@ -1224,7 +1224,7 @@ module ArtService
           INNER JOIN temp_patient_outcomes
             ON temp_patient_outcomes.patient_id = e.patient_id
             AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
-          INNER JOIN tmp_max_drug_orders AS max_obs ON max_obs.patient_id = obs.person_id
+          INNER JOIN temp_max_drug_orders AS max_obs ON max_obs.patient_id = obs.person_id
             AND DATE(max_obs.start_date) = DATE(obs.obs_datetime)
           WHERE obs.person_id = e.patient_id
           GROUP BY obs.person_id
@@ -1254,7 +1254,7 @@ module ArtService
           INNER JOIN temp_patient_outcomes
             ON temp_patient_outcomes.patient_id = e.patient_id
             AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
-          INNER JOIN tmp_max_drug_orders AS max_obs ON max_obs.patient_id = obs.person_id
+          INNER JOIN temp_max_drug_orders AS max_obs ON max_obs.patient_id = obs.person_id
             AND DATE(max_obs.start_date) = DATE(obs.obs_datetime)
           GROUP BY obs.person_id
           HAVING value_coded = 1065
