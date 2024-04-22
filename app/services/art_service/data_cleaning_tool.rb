@@ -18,7 +18,7 @@ module ArtService
       'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
       'MISSING VL RESULTS' => 'missing_vl_results',
       'DIFFERENT PREGNANCY VALUE ON SAME DATE' => 'different_pregnancy_value_on_same_date',
-      'MISSING START DATE' => 'missing_start_date'
+      'MISSING ART START DATE' => 'missing_start_date'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
