@@ -1,3 +1,4 @@
+# rubocop:disable Metrics/AbcSize, Style/Documentation
 # frozen_string_literal: true
 
 module CxcaService
@@ -31,7 +32,7 @@ module CxcaService
         private
 
         def init_report
-          query = fetch_query.to_hash
+          query = fetch_query
           pepfar_age_groups.collect do |age_group|
             row = {}
             row['age_group'] = age_group
@@ -47,7 +48,7 @@ module CxcaService
           end
         end
 
-        def fetch_query
+        def fetch_query # rubocop:disable Metrics/MethodLength
           Person.connection.select_all(
             Person.joins(patient: :encounters)
               .where(encounter: { program_id: CxCa_PROGRAM.id, encounter_datetime: @start_date..@end_date })
@@ -62,7 +63,10 @@ module CxcaService
                 AND reason_name.voided = 0
               SQL
               .group('person.person_id')
-              .select("disaggregated_age_group(person.birthdate, DATE('#{@end_date.to_date}')) AS age_group, person.person_id, reason_name.name AS reason_for_visit, treatment.value_text AS treatment")
+              .select("disaggregated_age_group(person.birthdate, DATE('#{@end_date.to_date}')) AS age_group,
+                      person.person_id,
+                      reason_name.name AS reason_for_visit,
+                      treatment.value_text AS treatment")
               .to_sql
           )
         end
@@ -70,3 +74,5 @@ module CxcaService
     end
   end
 end
+
+# rubocop:enable Metrics/AbcSize, Style/Documentation
