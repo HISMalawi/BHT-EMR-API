@@ -54,7 +54,7 @@ module ArtService
         p.gender,
         pn.given_name,
         pn.family_name,
-        pi.identifier AS identifier,
+        pi.identifier AS arv_number,
         DATE(MIN(o.value_datetime)) value_datetime
         FROM encounter e
         INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
