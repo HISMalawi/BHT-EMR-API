@@ -59,17 +59,16 @@ module ArtService
         FROM encounter e
         INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
         INNER JOIN person_name pn ON pn.person_id = p.person_id AND pn.voided = 0
-        INNER JOIN obs o ON o.encounter_id = e.encounter_id#{' '}
+        INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0
           AND o.concept_id = #{concept('ART start date').id}
-          AND o.voided = 0
           AND e.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC CONSULTATION' LIMIT 1)
-          AND e.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program')#{'  '}
+          AND e.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program')
           AND e.voided = 0
           AND e.encounter_datetime BETWEEN #{ActiveRecord::Base.connection.quote(@start_date)} AND #{ActiveRecord::Base.connection.quote(@end_date)}
         INNER JOIN patient_identifier pi ON pi.patient_id = o.person_id
           AND pi.identifier_type = #{indetifier_type} AND pi.voided = 0
         INNER JOIN concept_name co on co.concept_id  = o.concept_id
-          AND o.obs_datetime BETWEEN #{ActiveRecord::Base.connection.quote(@start_date)} AND #{ActiveRecord::Base.connection.quote(@end_date)} AND o.voided = 0
+          AND o.obs_datetime < #{ActiveRecord::Base.connection.quote(@end_date)}
         WHERE e.voided = 0
         GROUP BY o.person_id, value_datetime
         HAVING value_datetime IS NULL
@@ -612,8 +611,8 @@ module ArtService
     end
 
     def indetifier_type
-      @indetifier_type ||= PatientIdentifierType.find_by_name!\
-        (GlobalPropertyService.use_filing_numbers? ? 'Filing Number' : 'ARV Number').id
+      @indetifier_type ||= PatientIdentifierType\
+                           .find_by_name!(GlobalPropertyService.use_filing_numbers? ? 'Filing Number' : 'ARV Number').id
     end
 
     ##
