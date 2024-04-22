@@ -49,7 +49,7 @@ module ArtService
     def missing_start_date
       ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
-        o.person_id,
+        o.person_id AS patient_id,
         p.birthdate,
         p.gender,
         pn.given_name,
@@ -62,16 +62,14 @@ module ArtService
         INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0
           AND o.concept_id = #{concept('Date antiretrovirals started').concept_id}
           AND e.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC REGISTRATION' LIMIT 1)
-          AND e.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program')
+          AND e.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program' LIMIT 1)
           AND e.voided = 0
-          AND e.encounter_datetime BETWEEN #{ActiveRecord::Base.connection.quote(@start_date)} AND #{ActiveRecord::Base.connection.quote(@end_date)}
-        INNER JOIN patient_identifier pi ON pi.patient_id = o.person_id
+        LEFT JOIN patient_identifier pi ON pi.patient_id = o.person_id
           AND pi.identifier_type = #{indetifier_type} AND pi.voided = 0
-        INNER JOIN concept_name co on co.concept_id  = o.concept_id
           AND o.obs_datetime < #{ActiveRecord::Base.connection.quote(@end_date)}
         WHERE e.voided = 0
-        GROUP BY o.person_id, value_datetime
-        HAVING value_datetime IS NULL
+        GROUP BY o.person_id, o.value_datetime
+        HAVING o.value_datetime IS NULL
       SQL
     end
 
