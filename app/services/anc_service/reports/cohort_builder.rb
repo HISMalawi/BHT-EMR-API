@@ -392,7 +392,9 @@ module AncService
         encounter_types = ['LAB RESULTS', 'ART_FOLLOWUP'].collect { |t| EncounterType.find_by_name(t).id }
         art_answers = ['Yes', 'Already on ART at another facility']
 
-        if type === 'monthly'
+        result = []
+
+        if type == 'monthly'
 
           result = begin
             Encounter.find_by_sql(['SELECT e.patient_id FROM encounter e
@@ -495,7 +497,6 @@ module AncService
         end
 
         result['on_cpt'] = cpt_ids.blank? ? [] : cpt_ids.join(',')
-
         result['arv_before_visit_one'] = b4_visit_one.blank? ? [] : b4_visit_one # .join(",")
 
         result['no_art'] = no_art.join(',')
@@ -1079,12 +1080,9 @@ module AncService
       # end
 
       def on_art_before_anc_final_visit
-        ids = begin
-          @c_on_art_before
-        rescue StandardError
-          []
-        end
-        (@c_extra_art_checks + ids).uniq
+        (@c_extra_art_checks + @c_on_art_before)&.uniq
+      rescue StandardError
+        []
       end
 
       def start_art_zero_to_twenty_seven_for_final_visit
