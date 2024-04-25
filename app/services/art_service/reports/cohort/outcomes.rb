@@ -357,6 +357,35 @@ module ArtService
           create_temp_max_patient_state unless check_if_table_exists('temp_max_patient_state')
           create_max_patient_appointment_date unless check_if_table_exists('temp_max_patient_appointment')
           create_temp_adverse_outcome unless check_if_table_exists('temp_current_state')
+          create_temp_current_medication unless check_if_table_exists('temp_current_medication')
+          create_temp_current_brought_in unless check_if_table_exists('temp_current_brought_in')
+        end
+
+        def create_temp_current_medication
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE TABLE IF NOT EXISTS temp_current_medication(
+              patient_id INT NOT NULL,
+              concept_id INT NOT NULL,
+              drug_id INT NOT NULL,
+              daily_dose DECIMAL NOT NULL,
+              quantity DECIMAL(32,2) NOT NULL,
+              start_date DATE NOT NULL,
+              PRIMARY KEY(patient_id, drug_id)
+            )
+          SQL
+          craete_tmp_current_med_index
+        end
+
+        def craete_tmp_current_med_index
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE INDEX idx_cm_concept ON temp_current_medication (concept_id)
+          SQL
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE INDEX idx_cm_drug ON temp_current_medication (drug_id)
+          SQL
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE INDEX idx_cm_date ON temp_current_medication (start_date)
+          SQL
         end
 
         def create_temp_adverse_outcome
@@ -374,7 +403,7 @@ module ArtService
 
         def create_current_state_index
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE INDEX idx_state_named ON temp_current_state (cum_outcome)
+            CREATE INDEX idx_state_name ON temp_current_state (cum_outcome)
           SQL
           ActiveRecord::Base.connection.execute <<~SQL
             CREATE INDEX idx_state_id ON temp_current_state (state)
