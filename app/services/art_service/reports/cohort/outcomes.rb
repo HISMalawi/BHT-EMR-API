@@ -52,6 +52,7 @@ module ArtService
           load_max_drug_orders
           load_min_auto_expire_date
           load_max_patient_state
+          load_patient_current_state
           load_max_appointment_date
           # HIC SUNT DRACONIS: The order of the operations below matters,
           # do not change it unless you know what you are doing!!!
@@ -174,8 +175,8 @@ module ArtService
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes
             SELECT patients.patient_id,
-                   pateints.cum_outcome,
-                   patients.start_date, 2
+              patients.cum_outcome,
+              patients.outcome_date, 2
             FROM temp_current_state AS patients
             WHERE (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step = 1)
             AND patients.outcomes = 1
@@ -197,9 +198,9 @@ module ArtService
             SELECT patients.patient_id,
                   CASE
                     WHEN #{current_defaulter_function('patients.patient_id')} = 1 THEN 'Defaulted'
-                    ELSE patients.outcome
+                    ELSE patients.cum_outcome
                   END AS cum_outcome,
-                  patients.start_date, 3
+                  patients.outcome_date, 3
             FROM temp_current_state AS patients
             WHERE (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2))
               AND patients.cum_outcome = 'Pre-ART (Continue)'
@@ -355,7 +356,7 @@ module ArtService
           create_tmp_min_auto_expire_date unless check_if_table_exists('temp_min_auto_expire_date')
           create_temp_max_patient_state unless check_if_table_exists('temp_max_patient_state')
           create_max_patient_appointment_date unless check_if_table_exists('temp_max_patient_appointment')
-          create_temp_adverse_outcome unless check_if_table_exists('temp_adverse_outcome')
+          create_temp_adverse_outcome unless check_if_table_exists('temp_current_state')
         end
 
         def create_temp_adverse_outcome
@@ -373,7 +374,7 @@ module ArtService
 
         def create_current_state_index
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE INDEX idx_state_name ON temp_current_state (cum_outcome)
+            CREATE INDEX idx_state_named ON temp_current_state (cum_outcome)
           SQL
           ActiveRecord::Base.connection.execute <<~SQL
             CREATE INDEX idx_state_id ON temp_current_state (state)
@@ -518,6 +519,7 @@ module ArtService
           ActiveRecord::Base.connection.execute('TRUNCATE temp_min_auto_expire_date')
           ActiveRecord::Base.connection.execute('TRUNCATE temp_max_patient_state')
           ActiveRecord::Base.connection.execute('TRUNCATE temp_max_patient_appointment')
+          ActiveRecord::Base.connection.execute('TRUNCATE temp_current_state')
         end
       end
       # rubocop:enable Metrics/ClassLength
