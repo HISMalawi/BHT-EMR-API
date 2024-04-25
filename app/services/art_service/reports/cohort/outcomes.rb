@@ -126,6 +126,21 @@ module ArtService
           SQL
         end
 
+        def load_patient_current_state
+          ActiveRecord::Base.connection.execute <<~SQL
+            INSERT INTO temp_current_state
+            SELECT mps.patient_id, cn.name AS cum_outcome, ps.start_date as outcome_date, ps.state, count(*) outcomes
+            FROM temp_max_patient_state mps
+            INNER JOIN patient_program pp ON pp.patient_id = mps.patient_id AND pp.program_id = 1 AND pp.voided = 0
+            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.start_date = mps.start_date AND ps.voided = 0
+            AND (ps.end_date IS NULL OR ps.end_date > DATE(#{end_date}))
+            INNER JOIN program_workflow_state pws ON pws.program_workflow_state_id = ps.state AND pws.retired = 0
+            INNER JOIN concept_name cn ON cn.concept_id = pws.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
+            WHERE mps.patient_id IN (SELECT patient_id FROM temp_earliest_start_date)
+            GROUP BY mps.patient_id
+          SQL
+        end
+
         # Loads all patiens with an outcome of died as of given date
         # into the temp_patient_outcomes table.
         def load_patients_who_died
@@ -159,31 +174,17 @@ module ArtService
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes
             SELECT patients.patient_id,
-                   (
-                     SELECT name FROM concept_name
-                     WHERE concept_id = (
-                     SELECT concept_id FROM program_workflow_state
-                     WHERE program_workflow_state_id = patient_state.state
-                     LIMIT 1
-                     )
-                   ) AS cum_outcome,
-                   patient_state.start_date, 2
-            FROM temp_earliest_start_date AS patients
-            INNER JOIN patient_program
-              ON patient_program.patient_id = patients.patient_id
-              AND patient_program.program_id = 1
-              AND patient_program.voided = 0
-            INNER JOIN patient_state
-              ON patient_state.patient_program_id = patient_program.patient_program_id
-              AND patient_state.state IN (#{program_states('Patient transferred out', 'Treatment stopped').to_sql})
-              AND patient_state.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
-              AND (patient_state.end_date >= #{end_date} OR patient_state.end_date IS NULL)
-              AND patient_state.voided = 0
-            INNER JOIN temp_max_patient_state AS max_patient_state
-              ON max_patient_state.patient_id = patient_program.patient_id
-              AND max_patient_state.start_date = patient_state.start_date
-            WHERE patients.date_enrolled <= #{end_date}
-              AND (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step = 1)
+                   pateints.cum_outcome,
+                   patients.start_date, 2
+            FROM temp_current_state AS patients
+            WHERE (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step = 1)
+            AND patients.outcomes = 1
+            AND patients.state IN (
+              SELECT pws.program_workflow_state_id state
+              FROM program_workflow pw
+              INNER JOIN program_workflow_state pws ON pws.program_workflow_id = pw.program_workflow_id AND pws.retired = 0
+              WHERE pw.program_id = 1 AND pw.retired = 0 AND pws.terminal = 1
+            )
             GROUP BY patients.patient_id
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
           SQL
@@ -196,25 +197,12 @@ module ArtService
             SELECT patients.patient_id,
                   CASE
                     WHEN #{current_defaulter_function('patients.patient_id')} = 1 THEN 'Defaulted'
-                    ELSE 'Pre-ART (Continue)'
+                    ELSE patients.outcome
                   END AS cum_outcome,
-                  patient_state.start_date, 3
-            FROM temp_earliest_start_date AS patients
-            INNER JOIN patient_program
-              ON patient_program.patient_id = patients.patient_id
-              AND patient_program.program_id = 1
-              AND patient_program.voided = 0
-            INNER JOIN patient_state
-              ON patient_state.patient_program_id = patient_program.patient_program_id
-              AND patient_state.state = (#{program_states('Pre-ART (Continue)').limit(1).to_sql})
-              AND patient_state.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
-              AND (patient_state.end_date >= #{end_date} OR patient_state.end_date IS NULL)
-              AND patient_state.voided = 0
-            INNER JOIN temp_max_patient_state AS max_patient_state
-              ON max_patient_state.patient_id = patient_program.patient_id
-              AND max_patient_state.start_date = patient_state.start_date
-            WHERE patients.date_enrolled <= #{end_date}
-              AND (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2))
+                  patients.start_date, 3
+            FROM temp_current_state AS patients
+            WHERE (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2))
+              AND patients.cum_outcome = 'Pre-ART (Continue)'
             GROUP BY patients.patient_id
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
           SQL
@@ -231,19 +219,9 @@ module ArtService
                     END AS cum_outcome,
                    NULL, 4
             FROM temp_earliest_start_date AS patients
-            INNER JOIN patient_program
-              ON patient_program.patient_id = patients.patient_id
-              AND patient_program.program_id = 1
-              AND patient_program.voided = 0
-            WHERE patients.date_enrolled <= #{end_date}
-              AND (patient_program.patient_program_id) NOT IN (
-                SELECT patient_program_id
-                FROM patient_state
-                WHERE start_date < DATE(#{end_date}) + INTERVAL 1 DAY AND voided = 0
-              )
+            WHERE patients.patient_id NOT IN (SELECT patient_id FROM temp_current_state)
               AND (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2, 3))
             GROUP BY patients.patient_id
-            HAVING cum_outcome = 'Defaulted'
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
           SQL
         end
@@ -377,6 +355,32 @@ module ArtService
           create_tmp_min_auto_expire_date unless check_if_table_exists('temp_min_auto_expire_date')
           create_temp_max_patient_state unless check_if_table_exists('temp_max_patient_state')
           create_max_patient_appointment_date unless check_if_table_exists('temp_max_patient_appointment')
+          create_temp_adverse_outcome unless check_if_table_exists('temp_adverse_outcome')
+        end
+
+        def create_temp_adverse_outcome
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE TABLE IF NOT EXISTS temp_current_state(
+              patient_id INT NOT NULL,
+              cum_outcome VARCHAR(120) NOT NULL,
+              outcome_date DATE DEFAULT NULL,
+              state INT NOT NULL,
+              outcomes INT NOT NULL,
+              PRIMARY KEY(patient_id))
+          SQL
+          create_current_state_index
+        end
+
+        def create_current_state_index
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE INDEX idx_state_name ON temp_current_state (cum_outcome)
+          SQL
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE INDEX idx_state_id ON temp_current_state (state)
+          SQL
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE INDEX idx_state_count ON temp_current_state (outcomes)
+          SQL
         end
 
         def check_if_table_exists(table_name)
