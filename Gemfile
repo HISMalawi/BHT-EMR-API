@@ -50,7 +50,7 @@ gem 'rswag-ui'
 # gem 'his_emr_api_radiology', '~> 0.0.8'
 
 gem 'emr_ohsp_interface', '~> 2.2.0'
-gem 'his_emr_api_lab', git: 'https://github.com/EGPAFMalawiHIS/HIS-EMR-API-Lab', branch: 'upgrade/rails-7'
+gem 'his_emr_api_lab', '~> 2.0.0'
 # gem 'his_emr_api_radiology', '~> 1.0.9'
 
 gem 'parallel', '~> 1.20.1'

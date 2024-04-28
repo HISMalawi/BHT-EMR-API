@@ -25,7 +25,7 @@ module ArtService
       Drug.where(concept: arv_extras_concepts) + Drug.arv_drugs.order(name: :desc)
     end
 
-    def regimen_extras(patient_weight, name = nil)
+    def regimen_extras(patient_weight:, name: nil)
       name = %w[INH Pyridoxine] if name&.casecmp?('INH') # INH is always paired with pyridoxine
       name ||= %w[Pyridoxine INH CPT]
 

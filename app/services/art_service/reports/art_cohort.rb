@@ -25,8 +25,8 @@ module ArtService
 
       def build_report
         with_lock(LOCK_FILE, blocking: false) do
-          clear_drill_down
           @cohort_builder.build(@cohort_struct, @start_date, @end_date, @occupation)
+          clear_drill_down
           save_report
         end
       rescue FailedToAcquireLock => e
@@ -115,6 +115,12 @@ module ArtService
 
       LOGGER = Rails.logger
 
+      def find_saved_report
+        result = Report.where(type: @type, name: "#{@name} #{@occupation}",
+                              start_date: @start_date, end_date: @end_date)
+        result&.map { |r| r['id'] } || []
+      end
+
       # Writes the report to database
       def save_report
         Report.transaction do
@@ -153,7 +159,7 @@ module ArtService
 
       def clear_drill_down
         ActiveRecord::Base.connection.execute <<~SQL
-          TRUNCATE cohort_drill_down
+          DELETE FROM cohort_drill_down #{find_saved_report.count.positive? ? "WHERE reporting_report_design_resource_id IN (#{find_saved_report.join(',')})" : ''}
         SQL
       end
 
