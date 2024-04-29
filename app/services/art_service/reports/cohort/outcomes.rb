@@ -29,12 +29,10 @@ module ArtService
         # The main idea here is to come up with cumulative outcomes for patients in temp_earliest_start_date
         # 1. load_patients_who_died
         # 2. load_patients_who_stopped_treatment
-        # 3. load_patients_on_pre_art
-        # 4. load_patients_without_state
-        # 5. load_patients_without_drug_orders
-        # 6. load_patients_on_treatment
-        # 7. load_without_clinical_contact
-        # 8. load_defaulters
+        # 3. load_patients_without_drug_orders
+        # 4. load_patients_on_treatment
+        # 5. load_without_clinical_contact
+        # 6. load_defaulters
 
         def program_states(*names)
           ::ProgramWorkflowState.joins(:program_workflow)
@@ -54,8 +52,6 @@ module ArtService
           # do not change it unless you know what you are doing!!!
           load_patients_who_died
           load_patients_who_stopped_treatment
-          load_patients_on_pre_art
-          load_patients_without_state
           load_patients_without_drug_orders
           load_patients_on_treatment
           load_without_clinical_contact
@@ -175,7 +171,7 @@ module ArtService
             FROM temp_current_medication cm
             LEFT JOIN (
             SELECT ob.person_id, cm.drug_id,
-            SUM(ob.value_numeric) + SUM(CASE#{' '}
+            SUM(ob.value_numeric) + SUM(CASE
               WHEN ob.value_text is null then 0
               WHEN ob.value_text REGEXP '^[0-9]+(\.[0-9]+)?$' then ob.value_text
               ELSE 0
@@ -243,42 +239,6 @@ module ArtService
           SQL
         end
 
-        # Load all patients on Pre-ART.
-        def load_patients_on_pre_art
-          ActiveRecord::Base.connection.execute <<~SQL
-            INSERT INTO temp_patient_outcomes
-            SELECT patients.patient_id,
-                  CASE
-                    WHEN #{current_defaulter_function('patients.patient_id')} = 1 THEN 'Defaulted'
-                    ELSE patients.cum_outcome
-                  END AS cum_outcome,
-                  patients.outcome_date, 3
-            FROM temp_current_state AS patients
-            WHERE (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2))
-              AND patients.cum_outcome = 'Pre-ART (Continue)'
-            GROUP BY patients.patient_id
-            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
-          SQL
-        end
-
-        # Load all patients without a state
-        def load_patients_without_state
-          ActiveRecord::Base.connection.execute <<~SQL
-            INSERT INTO temp_patient_outcomes
-            SELECT patients.patient_id,
-                   CASE
-                      WHEN #{current_defaulter_function('patients.patient_id')} = 1 THEN 'Defaulted'
-                      ELSE 'Unknown'
-                    END AS cum_outcome,
-                   NULL, 4
-            FROM temp_earliest_start_date AS patients
-            WHERE patients.patient_id NOT IN (SELECT patient_id FROM temp_current_state)
-              AND (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2, 3))
-            GROUP BY patients.patient_id
-            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
-          SQL
-        end
-
         # Load all patients without drug orders or have drug orders
         # without a quantity.
         def load_patients_without_drug_orders
@@ -286,10 +246,10 @@ module ArtService
             INSERT INTO temp_patient_outcomes
             SELECT patients.patient_id,
                    'Unknown',
-                   NULL, 5
+                   NULL, 3
             FROM temp_earliest_start_date AS patients
             WHERE date_enrolled <= #{end_date}
-              AND (patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2, 3, 4))
+              AND (patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2))
               AND (patient_id) NOT IN (SELECT patient_id FROM temp_max_drug_orders)
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
           SQL
@@ -299,11 +259,11 @@ module ArtService
         def load_patients_on_treatment
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes
-            SELECT patients.patient_id, 'On antiretrovirals', COALESCE(cs.outcome_date, patients.start_date), 6
+            SELECT patients.patient_id, 'On antiretrovirals', COALESCE(cs.outcome_date, patients.start_date), 4
             FROM temp_min_auto_expire_date AS patients
             LEFT JOIN temp_current_state AS cs ON cs.patient_id = patients.patient_id
             WHERE patients.#{@definition == 'pepfar' ? 'pepfar_defaulter_date' : 'moh_defaulter_date'} >= #{end_date}
-            AND (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2, 3, 4, 5))
+            AND (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2, 3))
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
           SQL
         end
@@ -311,11 +271,11 @@ module ArtService
         def load_without_clinical_contact
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes
-            SELECT patients.patient_id, 'Defaulted', null, 7
+            SELECT patients.patient_id, 'Defaulted', null, 5
             FROM temp_current_medication AS patients
             LEFT JOIN temp_current_state AS cs ON cs.patient_id = patients.patient_id
             WHERE patients.#{@definition == 'pepfar' ? 'pepfar_defaulter_date' : 'moh_defaulter_date'} < #{end_date}
-            AND (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2, 3, 4, 5, 6))
+            AND (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2, 3, 4))
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
           SQL
         end
@@ -324,10 +284,10 @@ module ArtService
         def load_defaulters
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes
-            SELECT patient_id, #{patient_outcome_function('patient_id')}, NULL, 8
+            SELECT patient_id, #{patient_outcome_function('patient_id')}, NULL, 6
             FROM temp_earliest_start_date
             WHERE date_enrolled <= #{end_date}
-            AND (patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2, 3, 4, 5, 6, 7))
+            AND (patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes WHERE step IN (1, 2, 3, 4, 5))
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
           SQL
         end
@@ -337,15 +297,6 @@ module ArtService
         # ===================================
         #  Function Management Region
         # ===================================
-
-        def current_defaulter_function(sql_column)
-          case @definition
-          when 'moh' then "current_defaulter(#{sql_column}, #{end_date})"
-          when 'pepfar' then "current_pepfar_defaulter(#{sql_column}, #{end_date})"
-          else raise "Invalid outcomes definition: #{@definition}" # Should never happen but you never know!
-          end
-        end
-
         def patient_outcome_function(sql_column)
           case @definition
           when 'moh' then "patient_outcome(#{sql_column}, #{end_date})"
@@ -545,23 +496,6 @@ module ArtService
           SQL
         end
 
-        def create_max_patient_appointment_date
-          ActiveRecord::Base.connection.execute <<~SQL
-            CREATE TABLE IF NOT EXISTS temp_max_patient_appointment (
-              patient_id INT NOT NULL,
-              appointment_date DATE NOT NULL,
-              PRIMARY KEY (patient_id)
-            )
-          SQL
-          create_max_patient_appointment_date_indexes
-        end
-
-        def create_max_patient_appointment_date_indexes
-          ActiveRecord::Base.connection.execute <<~SQL
-            CREATE INDEX idx_max_patient_appointment_date ON temp_max_patient_appointment (appointment_date)
-          SQL
-        end
-
         def update_steps
           ActiveRecord::Base.connection.execute <<~SQL
             UPDATE temp_patient_outcomes SET step = 0 WHERE step > 0
@@ -577,8 +511,8 @@ module ArtService
           ActiveRecord::Base.connection.execute('TRUNCATE temp_max_drug_orders')
           ActiveRecord::Base.connection.execute('TRUNCATE temp_min_auto_expire_date')
           ActiveRecord::Base.connection.execute('TRUNCATE temp_max_patient_state')
-          ActiveRecord::Base.connection.execute('TRUNCATE temp_max_patient_appointment')
           ActiveRecord::Base.connection.execute('TRUNCATE temp_current_state')
+          ActiveRecord::Base.connection.execute('TRUNCATE temp_current_medication')
         end
       end
       # rubocop:enable Metrics/ClassLength
