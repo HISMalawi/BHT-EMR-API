@@ -395,8 +395,8 @@ module ArtService
           result = ActiveRecord::Base.connection.select_one <<~SQL
             SELECT COUNT(*) AS count
             FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE table_name = DATABASE()
-            AND table_schema = '#{table_name}'
+            WHERE table_schema = DATABASE()
+            AND table_name = '#{table_name}'
           SQL
           result['count'].to_i
         end
