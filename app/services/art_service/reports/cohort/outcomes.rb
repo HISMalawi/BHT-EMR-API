@@ -95,20 +95,6 @@ module ArtService
           SQL
         end
 
-        def load_max_appointment_date
-          ActiveRecord::Base.connection.execute <<~SQL
-            INSERT INTO temp_max_patient_appointment
-            SELECT o.person_id, DATE(MAX(o.value_datetime)) appointment_date
-            FROM obs o
-            INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0
-              AND e.program_id = 1 AND e.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-            WHERE o.concept_id = 5096 AND o.voided = 0 AND o.obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-            GROUP BY o.person_id
-            HAVING appointment_date IS NOT NULL
-            ON DUPLICATE KEY UPDATE appointment_date = VALUES(appointment_date)
-          SQL
-        end
-
         def load_max_patient_state
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_max_patient_state
@@ -155,8 +141,8 @@ module ArtService
             INNER JOIN orders o ON o.patient_id = mdo.patient_id AND o.order_type_id = 1 AND DATE(o.start_date) = DATE(mdo.start_date) AND o.voided = 0
             INNER JOIN drug_order do ON do.order_id = o.order_id AND do.quantity > 0 AND do.drug_inventory_id IN (#{arv_drug})
             INNER JOIN drug d ON d.drug_id = do.drug_inventory_id
-            GROUP BY mdo.patient_id, do.drug_inventory_id
-              ON DUPLICATE KEY UPDATE concept_id = VALUES(concept_id), daily_dose = VALUES(daily_dose), quantity=VALUES(quantity), start_date = VALUES(start_date), pill_count = VALUES(pill_count), expiry_date = VALUES(expiry_date), pepfar_defaulter_date = VALUES(pepfar_defaulter_date), moh_defaulter_date = VALUES(moh_defaulter_date);
+            GROUP BY mdo.patient_id, do.drug_inventory_id HAVING quantity < 6000
+            ON DUPLICATE KEY UPDATE concept_id = VALUES(concept_id), daily_dose = VALUES(daily_dose), quantity=VALUES(quantity), start_date = VALUES(start_date), pill_count = VALUES(pill_count), expiry_date = VALUES(expiry_date), pepfar_defaulter_date = VALUES(pepfar_defaulter_date), moh_defaulter_date = VALUES(moh_defaulter_date);
           SQL
         end
 
@@ -233,6 +219,7 @@ module ArtService
               FROM program_workflow pw
               INNER JOIN program_workflow_state pws ON pws.program_workflow_id = pw.program_workflow_id AND pws.retired = 0
               WHERE pw.program_id = 1 AND pw.retired = 0 AND pws.terminal = 1
+              AND pws.program_workflow_state_id IN (2, 3, 6) -- Transferred out,Patient Died, Treatment stopped
             )
             GROUP BY patients.patient_id
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
