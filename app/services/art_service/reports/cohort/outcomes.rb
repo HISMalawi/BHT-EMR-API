@@ -170,7 +170,7 @@ module ArtService
             GROUP BY ob.person_id, cm.drug_id
             ) first_ob ON first_ob.person_id = cm.patient_id AND first_ob.drug_id = cm.drug_id
             LEFT JOIN obs second_ob ON second_ob.person_id = cm.patient_id AND second_ob.concept_id = cm.concept_id AND DATE(second_ob.obs_datetime) = cm.start_date AND second_ob.voided = 0
-            LEFT JOIN obs third_ob ON third_ob.person_id = cm.patient_id AND third_ob.concept_id = 2540 AND third_ob.value_drug = cm.drug_id AND third_ob.voided = 0
+            LEFT JOIN obs third_ob ON third_ob.person_id = cm.patient_id AND third_ob.concept_id = 2540 AND third_ob.value_drug = cm.drug_id AND third_ob.voided = 0 AND DATE(third_ob.obs_datetime) = cm.start_date
             GROUP BY cm.patient_id, cm.drug_id
             ON DUPLICATE KEY UPDATE pill_count = VALUES(pill_count), expiry_date = VALUES(expiry_date), pepfar_defaulter_date = VALUES(pepfar_defaulter_date), moh_defaulter_date = VALUES(moh_defaulter_date);
           SQL
