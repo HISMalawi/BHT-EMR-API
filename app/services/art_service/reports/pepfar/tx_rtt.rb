@@ -63,14 +63,17 @@ module ArtService
         end
 
         def process_months(report, months, patient_id)
-          report[:returned_less_than_3_months] << patient_id if months.blank?
-          report[:returned_less_than_3_months] << patient_id if months < 3
-          report[:returned_greater_than_3_months_and_less_than_6_months] << patient_id if months >= 3 && months < 6
+          return report[:returned_less_than_3_months] << patient_id if months.blank?
+          return report[:returned_less_than_3_months] << patient_id if months < 3
+          if months >= 3 && months < 6
+            return report[:returned_greater_than_3_months_and_less_than_6_months] << patient_id
+          end
+
           report[:returned_greater_than_or_equal_to_6_months] << patient_id if months >= 6
         end
 
         def process_cd4(report, months, patient_id, cd4_cat)
-          if cd4_cat == 'unknown_cd4_count' && months <= 2
+          if cd4_cat == 'unknown_cd4_count' && (months.blank? || months <= 2)
             report[:not_eligible_for_cd4] << patient_id
             return
           end
