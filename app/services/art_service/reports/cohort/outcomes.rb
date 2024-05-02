@@ -102,7 +102,7 @@ module ArtService
             FROM patient_state ps
             INNER JOIN patient_program pp ON pp.patient_program_id = ps.patient_program_id AND pp.program_id = 1 AND pp.voided = 0
             WHERE ps.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
-              AND ps.voided = 0
+              AND ps.voided = 0 AND pp.patient_id IN (SELECT patient_id FROM temp_earliest_start_date)
             GROUP BY pp.patient_id
             HAVING start_date IS NOT NULL
             ON DUPLICATE KEY UPDATE start_date = VALUES(start_date)
@@ -112,14 +112,14 @@ module ArtService
         def load_patient_current_state
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_current_state
-            SELECT mps.patient_id, cn.name AS cum_outcome, ps.start_date as outcome_date, ps.state, count(*) outcomes
+            SELECT mps.patient_id, cn.name AS cum_outcome, ps.start_date as outcome_date, ps.state, count(DISTINCT(ps.state)) outcomes
             FROM temp_max_patient_state mps
             INNER JOIN patient_program pp ON pp.patient_id = mps.patient_id AND pp.program_id = 1 AND pp.voided = 0
             INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.start_date = mps.start_date AND ps.voided = 0
-            AND (ps.end_date IS NULL OR ps.end_date > DATE(#{end_date}))
             INNER JOIN program_workflow_state pws ON pws.program_workflow_state_id = ps.state AND pws.retired = 0
             INNER JOIN concept_name cn ON cn.concept_id = pws.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
-            WHERE mps.patient_id IN (SELECT patient_id FROM temp_earliest_start_date)
+            LEFT OUTER JOIN patient_state ps2 ON ps.patient_program_id = ps2.patient_program_id AND ps.start_date = ps2.start_date AND ps.date_created < ps2.date_created
+            WHERE ps2.patient_program_id IS NULL
             GROUP BY mps.patient_id
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), state = VALUES(state), outcomes = VALUES(outcomes)
           SQL
