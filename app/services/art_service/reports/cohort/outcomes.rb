@@ -309,6 +309,10 @@ module ArtService
         # ===================================
         #  Table Management Region
         # ===================================
+        # rubocop:disable Metrics/MethodLength
+        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/PerceivedComplexity
+        # rubocop:disable Metrics/CyclomaticComplexity
         def prepare_tables
           create_outcome_table unless check_if_table_exists('temp_patient_outcomes')
           drop_temp_patient_outcome_table unless count_table_columns('temp_patient_outcomes') == 4
@@ -320,6 +324,9 @@ module ArtService
           create_temp_current_medication unless check_if_table_exists('temp_current_medication')
           drop_temp_current_state unless count_table_columns('temp_current_state') == 6
         end
+        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/PerceivedComplexity
+        # rubocop:enable Metrics/CyclomaticComplexity
 
         def create_temp_current_medication
           ActiveRecord::Base.connection.execute <<~SQL
@@ -358,11 +365,6 @@ module ArtService
           SQL
         end
 
-        def drop_temp_current_state
-          ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_current_state')
-          create_temp_current_state
-        end
-
         def create_temp_current_state
           ActiveRecord::Base.connection.execute <<~SQL
             CREATE TABLE IF NOT EXISTS temp_current_state(
@@ -390,6 +392,26 @@ module ArtService
           ActiveRecord::Base.connection.execute <<~SQL
             CREATE INDEX idx_patient_state_id ON temp_current_state (patient_state_id)
           SQL
+        end
+
+        def create_tmp_min_auto_expire_date
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE TABLE IF NOT EXISTS temp_min_auto_expire_date (
+              patient_id INT NOT NULL,
+              start_date DATE DEFAULT NULL,
+              auto_expire_date DATE DEFAULT NULL,
+              pepfar_defaulter_date DATE DEFAULT NULL,
+              moh_defaulter_date DATE DEFAULT NULL,
+              PRIMARY KEY (patient_id)
+            )
+          SQL
+          create_min_auto_expire_date_indexes
+        end
+        # rubocop:enable Metrics/MethodLength
+
+        def drop_temp_current_state
+          ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_current_state')
+          create_temp_current_state
         end
 
         def check_if_table_exists(table_name)
@@ -457,20 +479,6 @@ module ArtService
           ActiveRecord::Base.connection.execute <<~SQL
             CREATE INDEX idx_max_orders ON temp_max_drug_orders (start_date)
           SQL
-        end
-
-        def create_tmp_min_auto_expire_date
-          ActiveRecord::Base.connection.execute <<~SQL
-            CREATE TABLE IF NOT EXISTS temp_min_auto_expire_date (
-              patient_id INT NOT NULL,
-              start_date DATE DEFAULT NULL,
-              auto_expire_date DATE DEFAULT NULL,
-              pepfar_defaulter_date DATE DEFAULT NULL,
-              moh_defaulter_date DATE DEFAULT NULL,
-              PRIMARY KEY (patient_id)
-            )
-          SQL
-          create_min_auto_expire_date_indexes
         end
 
         def drop_tmp_min_auto_expirte_date
