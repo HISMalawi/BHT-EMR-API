@@ -147,6 +147,10 @@ module ArtService
           TREATMENT
         when /Vitals/i
           VITALS
+        when /Symptom screening/i
+          SYMPTOM_SCREENING
+        when /AHD screening/i
+          AHD_SCREENING
         else
           Rails.logger.warn "Invalid ART activity in user properties: #{activity}"
         end
