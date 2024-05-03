@@ -67,6 +67,7 @@ module ArtService
           load_min_auto_expire_date
           load_max_patient_state
           load_patient_current_state
+          update_patient_current_state
         end
 
         def load_max_drug_orders
@@ -112,16 +113,29 @@ module ArtService
         def load_patient_current_state
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_current_state
-            SELECT mps.patient_id, cn.name AS cum_outcome, ps.start_date as outcome_date, ps.state, count(DISTINCT(ps.state)) outcomes
-            FROM temp_max_patient_state mps
-            INNER JOIN patient_program pp ON pp.patient_id = mps.patient_id AND pp.program_id = 1 AND pp.voided = 0
-            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.start_date = mps.start_date AND ps.voided = 0
+            SELECT mps.patient_id, cn.name AS cum_outcome, ps.start_date as outcome_date, ps.state, count(DISTINCT(ps.state)) outcomes, MAX(ps.patient_state_id) patient_state_id
+            FROM patient_state ps
+            INNER JOIN patient_program pp ON pp.patient_program_id = ps.patient_program_id AND pp.program_id = 1 AND pp.voided = 0
+            INNER JOIN temp_max_patient_state mps ON mps.patient_id = pp.patient_id AND mps.start_date = ps.start_date
+            INNER JOIN program_workflow_state pws ON pws.program_workflow_state_id = ps.state AND pws.retired = 0
+            INNER JOIN concept_name cn ON cn.concept_id = pws.concept_id AND cn.voided = 0 AND cn.concept_name_type = 'FULLY_SPECIFIED'
+            LEFT JOIN patient_state ps2 ON ps.patient_program_id = ps2.patient_program_id AND ps.start_date = ps2.start_date AND ps.date_created < ps2.date_created AND ps2.voided = 0
+            WHERE ps2.patient_program_id IS NULL AND ps.voided = 0
+            GROUP BY mps.patient_id
+            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), state = VALUES(state), outcomes = VALUES(outcomes), patient_state_id = VALUES(patient_state_id)
+          SQL
+        end
+
+        def update_patient_current_state
+          ActiveRecord::Base.connection.execute <<~SQL
+            INSERT INTO temp_current_state
+            SELECT cs.patient_id, cn.name as cum_outcome, ps.start_date as outcome_date, ps.state, 1, cs.patient_state_id
+            FROM patient_state ps
+            INNER JOIN temp_current_state cs ON cs.patient_state_id = ps.patient_state_id
             INNER JOIN program_workflow_state pws ON pws.program_workflow_state_id = ps.state AND pws.retired = 0
             INNER JOIN concept_name cn ON cn.concept_id = pws.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
-            LEFT OUTER JOIN patient_state ps2 ON ps.patient_program_id = ps2.patient_program_id AND ps.start_date = ps2.start_date AND ps.date_created < ps2.date_created
-            WHERE ps2.patient_program_id IS NULL
-            GROUP BY mps.patient_id
-            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), state = VALUES(state), outcomes = VALUES(outcomes)
+            WHERE ps.voided = 0 AND cs.outcomes > 1
+            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), state = VALUES(state), outcomes = VALUES(outcomes), patient_state_id = VALUES(patient_state_id)
           SQL
         end
 
@@ -302,8 +316,9 @@ module ArtService
           create_tmp_min_auto_expire_date unless check_if_table_exists('temp_min_auto_expire_date')
           drop_tmp_min_auto_expirte_date unless count_table_columns('temp_min_auto_expire_date') == 5
           create_temp_max_patient_state unless check_if_table_exists('temp_max_patient_state')
-          create_temp_adverse_outcome unless check_if_table_exists('temp_current_state')
+          create_temp_current_state unless check_if_table_exists('temp_current_state')
           create_temp_current_medication unless check_if_table_exists('temp_current_medication')
+          drop_temp_current_state unless count_table_columns('temp_current_state') == 6
         end
 
         def create_temp_current_medication
@@ -343,7 +358,12 @@ module ArtService
           SQL
         end
 
-        def create_temp_adverse_outcome
+        def drop_temp_current_state
+          ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_current_state')
+          create_temp_current_state
+        end
+
+        def create_temp_current_state
           ActiveRecord::Base.connection.execute <<~SQL
             CREATE TABLE IF NOT EXISTS temp_current_state(
               patient_id INT NOT NULL,
@@ -351,6 +371,7 @@ module ArtService
               outcome_date DATE DEFAULT NULL,
               state INT NOT NULL,
               outcomes INT NOT NULL,
+              patient_state_id INT NOT NULL,
               PRIMARY KEY(patient_id))
           SQL
           create_current_state_index
@@ -365,6 +386,9 @@ module ArtService
           SQL
           ActiveRecord::Base.connection.execute <<~SQL
             CREATE INDEX idx_state_count ON temp_current_state (outcomes)
+          SQL
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE INDEX idx_patient_state_id ON temp_current_state (patient_state_id)
           SQL
         end
 
