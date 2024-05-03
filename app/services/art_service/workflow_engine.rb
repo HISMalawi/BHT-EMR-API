@@ -1,3 +1,4 @@
+# rubocop:disable Layout/LineLength, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ClassLength, Style/Documentation
 # frozen_string_literal: true
 
 require 'htn_workflow'
@@ -48,6 +49,8 @@ module ArtService
     HIV_CLINIC_REGISTRATION = 'HIV CLINIC REGISTRATION'
     HIV_RECEPTION = 'HIV RECEPTION'
     VITALS = 'VITALS'
+    SYMPTOM_SCREENING = 'SYMPTOM SCREENING'
+    AHD_SCREENING = 'AHD SCREENING'
     HIV_STAGING = 'HIV STAGING'
     HIV_CLINIC_CONSULTATION = 'HIV CLINIC CONSULTATION'
     ART_ADHERENCE = 'ART ADHERENCE'
@@ -62,8 +65,10 @@ module ArtService
       INITIAL_STATE => HIV_CLINIC_REGISTRATION,
       HIV_CLINIC_REGISTRATION => HIV_RECEPTION,
       HIV_RECEPTION => VITALS,
-      VITALS => HIV_STAGING,
-      HIV_STAGING => HIV_CLINIC_CONSULTATION,
+      VITALS => SYMPTOM_SCREENING,
+      SYMPTOM_SCREENING => HIV_STAGING,
+      HIV_STAGING => AHD_SCREENING,
+      AHD_SCREENING => HIV_CLINIC_CONSULTATION,
       HIV_CLINIC_CONSULTATION => ART_ADHERENCE,
       ART_ADHERENCE => HIV_CLINIC_CONSULTATION_CLINICIAN,
       HIV_CLINIC_CONSULTATION_CLINICIAN => TREATMENT,
@@ -83,10 +88,17 @@ module ArtService
                    patient_not_on_fast_track?
                    patient_has_not_completed_fast_track_visit?
                    patient_does_not_have_height_and_weight?],
+      SYMPTOM_SCREENING => %i[patient_is_alive? patient_not_on_fast_track?
+                              patient_has_not_completed_fast_track_visit?
+                              patient_not_coming_for_drug_refill?],
       HIV_STAGING => %i[patient_is_alive?
-                        patient_not_already_staged?
+                        patient_not_already_staged_or_has_symptoms_screening?
                         patient_has_not_completed_fast_track_visit?
                         patient_not_coming_for_drug_refill?],
+      AHD_SCREENING => %i[continue_ahd_screening_accepted?
+                          patient_is_alive? patient_not_on_fast_track?
+                          patient_not_coming_for_drug_refill?
+                          patient_has_not_completed_fast_track_visit?],
       HIV_CLINIC_CONSULTATION => %i[patient_not_on_fast_track? patient_is_alive?
                                     patient_has_not_completed_fast_track_visit?],
       ART_ADHERENCE => %i[patient_received_art? patient_is_alive?
@@ -281,6 +293,39 @@ module ArtService
       ).exists?
     end
 
+    def continue_ahd_screening_accepted?
+      encounter_type = EncounterType.find_by(name: HIV_STAGING)
+      continue_to_ahd_question = Observation.joins(:encounter)\
+                                            .where(concept: concept('Continue with AHD'))
+                                            .where(person: @patient.person)
+                                            .where(encounter: { program_id: @program.program_id, encounter_type: })\
+                                            .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                                            .order(obs_datetime: :desc)\
+                                            .first
+      return false if continue_to_ahd_question.blank?
+
+      continue_to_ahd_question&.value_coded == concept('Yes').concept_id
+    end
+
+    def patient_not_already_staged_or_has_symptoms_screening?
+      return true if patient_not_already_staged?
+      return true if patient_has_symptoms_screening?
+
+      false
+    end
+
+    def patient_has_symptoms_screening?
+      encounter_type = EncounterType.find_by(name: SYMPTOM_SCREENING)
+      patient_screened = Encounter.where(
+        'patient_id = ? AND program_id = ? AND encounter_type = ? AND encounter_datetime < ?',
+        @patient.patient_id, @program.program_id, encounter_type.encounter_type_id,
+        @date.to_date + 1.days
+      )
+      patient_screened.observations.any? do |observation|
+        observation.value_coded == concept('Yes').concept_id
+      end
+    end
+
     # Checks if patient has not undergone staging before
     def patient_not_already_staged?
       encounter_type = EncounterType.find_by(name: 'HIV Staging')
@@ -443,3 +488,5 @@ module ArtService
     end
   end
 end
+
+# rubocop:enable Layout/LineLength, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ClassLength, Style/Documentation
