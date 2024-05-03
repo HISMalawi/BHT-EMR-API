@@ -10,7 +10,7 @@ class ObservationService
   def create_observation(encounter, obs_parameters)
     proccess_obs_creation(encounter, obs_parameters)
     records
-  rescue e
+  rescue StandardError => e
     # log the error
     Rails.logger.error("Error creating observation: #{e.message}")
     raise e
