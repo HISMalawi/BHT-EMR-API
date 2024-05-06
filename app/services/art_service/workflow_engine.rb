@@ -320,14 +320,13 @@ module ArtService
 
     def patient_has_symptoms_screening?
       encounter_type = EncounterType.find_by(name: SYMPTOM_SCREENING)
-      patient_screened = Encounter.where(
-        'patient_id = ? AND program_id = ? AND encounter_type = ? AND encounter_datetime < ?',
-        @patient.patient_id, @program.program_id, encounter_type.encounter_type_id,
-        @date.to_date + 1.days
-      )
-      patient_screened.observations.any? do |observation|
-        observation.value_coded == concept('Yes').concept_id
-      end
+      Observation.joins(:encounter)\
+                 .where(person: @patient.person)
+                 .where(encounter: { program_id: @program.program_id, encounter_type: })\
+                 .where('concept_id in (SELECT value_coded from obs WHERE concept_id = ?)', concept('AHD Symptom').concept_id)
+                 .where(value_coded: concept('Yes'))
+                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                 .present?
     end
 
     # Checks if patient has not undergone staging before
