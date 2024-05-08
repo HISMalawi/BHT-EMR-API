@@ -94,7 +94,7 @@ module HtsService
                   .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, facility.value_text as access_point, hiv_status.value_coded as status, pregnancy_status.value_coded pregnancy_status")
                   .group('person.person_id')
                   .to_sql
-          Person.connection.select_all(query).to_hash
+          Person.connection.select_all(query)
         end
       end
     end
