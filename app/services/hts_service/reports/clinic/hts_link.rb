@@ -93,7 +93,7 @@ module HtsService
               .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, linked.obs_datetime AS linked_date, facility.value_text as facility, person.person_id, person.gender, encounter.encounter_datetime as date_tested")
               .group('person.person_id')
               .to_sql
-          ).to_hash
+          )
         end
       end
     end
