@@ -25,14 +25,12 @@ module OpdService
       end
 
       def malaria_report
-        @malaria_data = Observation.where("obs_datetime BETWEEN ? AND ?  AND c.voided = ? AND c.name IN (?) AND
-      malaria_report(obs.order_id,obs.value_text,obs.value_coded,obs.person_id,DATE(obs_datetime),c.name,p.birthdate,'#{@end_date.to_date}') IS NOT NULL",
-                                          @start_date.to_date.strftime('%Y-%m-%d 00:00:00'), @end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
-                                          0, ['Amount dispensed', 'MRDT', 'Malaria film', 'Malaria Species', 'Primary diagnosis'])\
-                                   .joins('INNER JOIN concept_name c ON c.concept_id = obs.concept_id
-      INNER JOIN person p ON p.person_id = obs.person_id')\
-                                   .pluck("malaria_report(obs.order_id,obs.value_text,obs.value_coded,obs.person_id,DATE(obs_datetime),c.name,p.birthdate,'#{@end_date.to_date}')
-      as malaria_data", :person_id).group_by(&:shift)
+        @malaria_data = Observation.where(Arel.sql("obs_datetime BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'  AND c.voided = 0 AND c.name IN ('Amount dispensed', 'MRDT', 'Malaria film', 'Malaria Species', 'Primary diagnosis') AND
+          malaria_report(obs.order_id,obs.value_text,obs.value_coded,obs.person_id,DATE(obs_datetime),c.name,p.birthdate,'#{@end_date.to_date}') IS NOT NULL"))\
+                       .joins(Arel.sql('INNER JOIN concept_name c ON c.concept_id = obs.concept_id
+          INNER JOIN person p ON p.person_id = obs.person_id'))\
+                       .pluck(Arel.sql("malaria_report(obs.order_id,obs.value_text,obs.value_coded,obs.person_id,DATE(obs_datetime),c.name,p.birthdate,'#{@end_date.to_date}')
+          as malaria_data"), :person_id).group_by(&:shift)
 
         build_malaria_hash
       end
