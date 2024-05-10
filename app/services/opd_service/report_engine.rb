@@ -533,15 +533,14 @@ module OpdService
       monthsRes = {}
       ili_id = ConceptName.find_by_name 'ILI'
       respiratory_id = ConceptName.find_by_name 'Respiratory'
-      data = Observation.where("obs_datetime BETWEEN ? AND ? AND obs.value_text IN(?,?) OR
-      obs.value_coded IN (#{ili_id.concept_id},#{respiratory_id.concept_id})", (@date - 11.month).beginning_of_month, @date,
-                               'Respiratory', 'ILI').group('name', 'months')\
-                        .pluck("
+      data = Observation.where(Arel.sql("obs_datetime BETWEEN '#{(@date - 11.month).beginning_of_month}' AND '#{@date}' AND obs.value_text IN('Respiratory', 'ILI') OR
+      obs.value_coded IN (#{ili_id.concept_id},#{respiratory_id.concept_id})")).group('name', 'months')\
+                        .pluck(Arel.sql("
         coalesce(obs.value_text, (select name from concept_name where concept_id = obs.value_coded limit 1)) name,
         DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01') as obs_date,
         OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}') as months,
         COUNT(OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}')) as obs_count
-      ")\
+      "))\
                         .group_by(&:shift)
 
       respiratory_data = {}
