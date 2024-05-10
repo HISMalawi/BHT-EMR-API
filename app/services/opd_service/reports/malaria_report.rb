@@ -13,15 +13,14 @@ module OpdService
         type = EncounterType.find_by_name 'PATIENT REGISTRATION'
         visit_type = ConceptName.find_by_name 'Type of visit'
 
-        Encounter.where('encounter_datetime BETWEEN ? AND ?
-      AND encounter_type = ? AND value_coded IS NOT NULL
-      AND obs.concept_id = ?', @start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-                        @end_date.to_date.strftime('%Y-%m-%d 23:59:59'), type.id, visit_type.concept_id)\
-                 .joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+        Encounter.where(Arel.sql("encounter_datetime BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+      AND encounter_type = '#{type.id}' AND value_coded IS NOT NULL
+      AND obs.concept_id = '#{visit_type.concept_id}'"))\
+                 .joins(Arel.sql('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
       INNER JOIN concept_name c ON c.concept_id = obs.value_coded
-      INNER JOIN person p ON p.person_id = obs.person_id')\
-                 .group('obs.person_id').pluck("malaria_report('','','','','',c.name,p.birthdate,'#{@end_date.to_date}')
-      as malaria_data", 'obs.person_id').group_by(&:shift)
+      INNER JOIN person p ON p.person_id = obs.person_id'))\
+                 .group('obs.person_id').pluck(Arel.sql("malaria_report('','','','','',c.name,p.birthdate,'#{@end_date.to_date}')
+      as malaria_data"), 'obs.person_id').group_by(&:shift)
       end
 
       def malaria_report
