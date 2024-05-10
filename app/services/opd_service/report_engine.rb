@@ -13,7 +13,7 @@ module OpdService
       'TRIAGE_COVID' => OpdService::Reports::TriageCovid,
       'TRIAGE_REGISTRATION' => OpdService::Reports::TriageRegistration,
       'ATTENDANCE' => OpdService::Reports::Attendance,
-      'DRUG' => OpdService::Reports::Drug
+      'DRUG' => OpdService::Reports::DrugReport
     }.freeze
 
     def initialize; end
