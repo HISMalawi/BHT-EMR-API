@@ -2,7 +2,7 @@
 
 module OpdService
   module Reports
-    class Drug
+    class DrugReport
       def find_report(start_date:, end_date:, **_extra_kwargs)
         drug(start_date, end_date)
       end
