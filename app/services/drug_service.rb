@@ -51,7 +51,7 @@ class DrugService
 
     if filters.include?(:name)
       name = filters.delete(:name)
-      query = query.where('name LIKE ?', "#{name}%")
+      query = query.where('name LIKE ?', "%#{name}%")
     end
 
     query = query.where(filters) unless filters.empty?
