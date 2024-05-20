@@ -24,6 +24,13 @@ module ArtService
           process_data
         end
 
+        def update_outcomes_by_definition
+          update_steps(portion: true)
+          load_patients_on_treatment
+          load_without_clinical_contact
+          load_defaulters
+        end
+
         private
 
         # The main idea here is to come up with cumulative outcomes for patients in temp_earliest_start_date
@@ -515,9 +522,9 @@ module ArtService
           SQL
         end
 
-        def update_steps
+        def update_steps(portion: false)
           ActiveRecord::Base.connection.execute <<~SQL
-            UPDATE temp_patient_outcomes SET step = 0 WHERE step > 0
+            UPDATE temp_patient_outcomes SET step = 0 WHERE step >= #{portion ? 4 : 0}
           SQL
         end
 
