@@ -12,7 +12,7 @@ module ArtService
         include ArtService::Reports::Pepfar::Utils
 
         def initialize(start_date:, end_date:, **kwargs)
-          @type = kwargs[:type]
+          @type = kwargs[:definition]
           @start_date = start_date
           @end_date = end_date
           @rebuild = kwargs[:rebuild]&.casecmp?('true')
@@ -155,13 +155,27 @@ module ArtService
         # rubocop:enable Metrics/MethodLength
 
         def update_outcomes
-          ArtService::Reports::Cohort::Outcomes.new(end_date:, occupation:,
-                                                    definition: type).update_cummulative_outcomes
+          if check_if_table_exists('temp_patient_outcomes')
+            ArtService::Reports::Cohort::Outcomes.new(end_date:, occupation:,
+                                                      definition: type).update_outcomes_by_definition
+          else
+            rebuild_report
+          end
         end
 
         def rebuild_report
           ArtService::Reports::CohortBuilder.new(outcomes_definition: type)
                                             .init_temporary_tables(start_date, end_date, occupation)
+        end
+
+        def check_if_table_exists(table_name)
+          result = ActiveRecord::Base.connection.select_one <<~SQL
+            SELECT COUNT(*) AS count
+            FROM information_schema.tables
+            WHERE table_schema = DATABASE()
+            AND table_name = '#{table_name}'
+          SQL
+          result['count'].to_i.positive?
         end
       end
       # rubocop:enable Metrics/ClassLength
