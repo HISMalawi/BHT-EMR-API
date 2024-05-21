@@ -13,7 +13,7 @@ module ArtService
           @start_date = start_date
           @end_date = end_date
           @occupation = kwargs[:occupation]
-          @type = kwargs[:type] || 'poc'
+          @type = kwargs[:system_type] || 'poc'
         end
 
         def find_report
@@ -69,7 +69,6 @@ module ArtService
                                                          end).each do |patient|
             # find the regimen for the patient using the clients array
             regimen = clients.find { |client| client['patient_id'] == patient['patient_id'] }['current_regimen']
-            puts "Patient: #{patient['patient_id']} is due for VL. Regimen: #{regimen}"
             report[regimen][:drawn] << patient['patient_id']
             next unless patient['result_value']
 
