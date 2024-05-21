@@ -269,7 +269,7 @@ module Api
       end
 
       def print_hts_linkage_code
-        label = HTSService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code
+        label = HtsService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code
         send_data label, type: 'application/label;charset=utf-8',
                          stream: false,
                          filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
@@ -295,7 +295,7 @@ module Api
       end
 
       def last_cxca_screening_details
-        cxca = CXCAService::PatientSummary.new(patient, params[:date].to_date)
+        cxca = CxcaService::PatientSummary.new(patient, params[:date].to_date)
         render json: cxca.last_screening_info
       end
 
@@ -304,7 +304,7 @@ module Api
         to_date = params.delete(:to_date)
         patient_id = params.delete(:patient_id)
 
-        AITIntergrationJob.perform_later({ from_date:, to_date:, patient_id: })
+        AitIntergrationJob.perform_later({ from_date:, to_date:, patient_id: })
         render json: { status: 'Enqueued ait sync' }, status: :ok
       end
 
@@ -346,7 +346,7 @@ module Api
 
         sex =  "(#{person.gender})"
         address = person.addresses.first.to_s.strip[0..24].humanize
-        label = ZebraPrinter::StandardLabel.new
+        label = ZebraPrinter::Lib::StandardLabel.new
         label.font_size = 2
         label.font_horizontal_multiplier = 2
         label.font_vertical_multiplier = 2
@@ -378,7 +378,7 @@ module Api
         len = number.length - 5
         number = "#{number[len..len]}   #{number[(len + 1)..(len + 2)]} #{number[(len + 3)..(number.length)]}"
 
-        label = ZebraPrinter::StandardLabel.new
+        label = ZebraPrinter::Lib::StandardLabel.new
         label.draw_text(number, 75, 30, 0, 4, 4, 4, false)
         label.draw_text("Filing area #{file_type}", 75, 150, 0, 2, 2, 2, false)
         label.draw_text("Version number: #{version_number}", 75, 200, 0, 2, 2, 2, false)
@@ -396,7 +396,7 @@ module Api
 
         number = "#{number[0..1]} #{number[2..3]} #{number[4..]}"
 
-        label = ZebraPrinter::StandardLabel.new
+        label = ZebraPrinter::Lib::StandardLabel.new
         label.draw_text(number, 75, 30, 0, 4, 4, 4, false)
         label.draw_text("Filing area #{file_type}", 75, 150, 0, 2, 2, 2, false)
         label.draw_text("Version number: #{version_number}", 75, 200, 0, 2, 2, 2, false)
@@ -421,11 +421,11 @@ module Api
       end
 
       def ait_intergration_service(patient_id)
-        HTSService::AITIntergration::AITIntergrationService.new(patient_id)
+        HtsService::AitIntergration::AitIntergrationService.new(patient_id)
       end
 
       def tb_prevention_service
-        @tb_prevention_service ||= ARTService::Reports::Pepfar::TptStatus
+        @tb_prevention_service ||= ArtService::Reports::Pepfar::TptStatus
       end
 
       def tb_lab_order_params
