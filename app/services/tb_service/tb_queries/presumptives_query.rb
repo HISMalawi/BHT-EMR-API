@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class TBService::TBQueries::PresumptivesQuery
+class TbService::TbQueries::PresumptivesQuery
   include ModelUtils
 
   def initialize(relation = Patient.all)

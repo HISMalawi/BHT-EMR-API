@@ -2,6 +2,7 @@ DROP FUNCTION IF EXISTS adherence_cal;
                                                                                 
 DELIMITER $$                                                                     
 CREATE FUNCTION adherence_cal(patient_id INT, drug_id INT , visit_date varchar(10)) RETURNS INT
+DETERMINISTIC
 BEGIN                                                                           
                                                                                 
 DECLARE given_last_time INT;                                                        

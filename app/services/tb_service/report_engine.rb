@@ -3,26 +3,18 @@
 require 'set'
 include TimeUtils
 
-
-module TBService
+module TbService
   class ReportEngine
     attr_reader :program
+
     include ModelUtils
 
     LOGGER = Rails.logger
 
     REPORTS = {
-      'TBHIV' => TBService::Reports::Tbhiv,
-      'QUARTERLY' => TBService::Reports::Quarterly,
-      'CASEFINDING' => TBService::Reports::CaseFinding,
-      'PRESUMPTIVES' => TBService::Reports::Presumptives,
-      'CONTACTS' => TBService::Reports::Contacts,
-      'HIGHRISKPATIENTS' => TBService::Reports::HighRiskPatients,
-      'IPTOUTCOMES' => TBService::Reports::IptOutcomes,
-      'COMMUNITY' => TBService::Reports::Community,
-      'MDR_CASEFINDING' => TBService::Reports::MdrCaseFinding,
-      'MDR_OUTCOMES' => TBService::Reports::MdrOutcomes,
-      'MDR_INTERIM_OUTCOMES' => TBService::Reports::MdrInterimOutcomes
+      'TBHIV' => TbService::Reports::Tbhiv,
+      'QUARTERLY' => TbService::Reports::Quarterly,
+      'CASEFINDING' => TbService::Reports::CaseFinding
     }.freeze
 
     def find_report(type:, name:, start_date:, end_date:)
@@ -39,7 +31,7 @@ module TBService
     end
 
     def dashboard_stats(date)
-      TBService::Reports::Overview.statistics(date)
+      TbService::Reports::Overview.new.statistics(date)
     end
   end
 end

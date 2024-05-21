@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddOpenmrsTimestampsToPharmacyBatchReallocations < ActiveRecord::Migration[5.2]
   def up
     ActiveRecord::Base.connection.execute(

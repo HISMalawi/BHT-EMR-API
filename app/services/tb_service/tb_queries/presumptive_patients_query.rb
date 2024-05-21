@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBService::TBQueries::PresumptivePatientsQuery
+class TbService::TbQueries::PresumptivePatientsQuery
   def initialize (relation = Patient.all)
     @relation = relation.extending(Scopes)
   end

@@ -2,7 +2,7 @@
 
 include ModelUtils
 
-class TBService::TBQueries::EnrolledPatientsQuery
+class TbService::TbQueries::EnrolledPatientsQuery
   TB_NUMBER_REGEX = '^[A-Za-z]+\/(TB|IPT)\/[0-9]+\/[0-9]+$'
 
   def initialize(relation = Patient.includes(:patient_identifiers, person: :addresses, patient_programs: :patient_states).all)

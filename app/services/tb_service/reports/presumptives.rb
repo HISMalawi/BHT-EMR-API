@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService::Reports::Presumptives
+module TbService::Reports::Presumptives
   class << self
 
     def report_format(indicator:)
@@ -81,15 +81,15 @@ module TBService::Reports::Presumptives
     private
 
     def presumptive_patients_query
-      TBService::TBQueries::PresumptivePatientsQuery.new
+      TbService::TbQueries::PresumptivePatientsQuery.new
     end
 
     def new_patients_query
-      TBService::TBQueries::NewPatientsQuery.new
+      TbService::TbQueries::NewPatientsQuery.new
     end
 
     def opd_patients_query
-      TBService::TBQueries::OpdPatientsQuery.new
+      TbService::TbQueries::OpdPatientsQuery.new
     end
   end
 end

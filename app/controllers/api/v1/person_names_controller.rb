@@ -1,49 +1,55 @@
-class Api::V1::PersonNamesController < ApplicationController
-  def show
-    render json: PersonName.find(params[:id])
-  end
+# frozen_string_literal: true
 
-  def index
-    filters = params.permit(%i[given_name middle_name family_name person_id])
+module Api
+  module V1
+    class PersonNamesController < ApplicationController
+      def show
+        render json: PersonName.find(params[:id])
+      end
 
-    if filters.empty?
-      render json: paginate(PersonName)
-    else
-      conds = params_to_query_conditions filters
-      render json: paginate(PersonName.where(conds[0].join(' AND '), *conds[1]))
-    end
-  end
+      def index
+        filters = params.permit(%i[given_name middle_name family_name person_id])
 
-  def search_given_name
-    search_partial_name :given_name
-  end
+        if filters.empty?
+          render json: paginate(PersonName)
+        else
+          conds = params_to_query_conditions filters
+          render json: paginate(PersonName.where(conds[0].join(' AND '), *conds[1]))
+        end
+      end
 
-  def search_family_name
-    search_partial_name :family_name
-  end
+      def search_given_name
+        search_partial_name :given_name
+      end
 
-  def search_middle_name
-    search_partial_name :middle_name
-  end
+      def search_family_name
+        search_partial_name :family_name
+      end
 
-  private
+      def search_middle_name
+        search_partial_name :middle_name
+      end
 
-  def search_partial_name(field)
-    search_string = params.require('search_string')
-    paginator = ->(query) { paginate(query) }
+      private
 
-    names = NameSearchService.search_partial_person_name(field, search_string, use_soundex: false,
-                                                                               paginator: paginator)
+      def search_partial_name(field)
+        search_string = params.require('search_string')
+        paginator = ->(query) { paginate(query) }
 
-    render json: names
-  end
+        names = NameSearchService.search_partial_person_name(field, search_string, use_soundex: false,
+                                                                                   paginator:)
 
-  def params_to_query_conditions(params)
-    params.to_hash.each_with_object([[], []]) do |kv_pair, query_conds|
-      k, v = kv_pair
-      v.gsub!(/(^'|'$)/, '')
-      query_conds[0] << "#{k} like ?"
-      query_conds[1] << "#{v}%"
+        render json: names
+      end
+
+      def params_to_query_conditions(params)
+        params.to_hash.each_with_object([[], []]) do |kv_pair, query_conds|
+          k, v = kv_pair
+          v.gsub!(/(^'|'$)/, '')
+          query_conds[0] << "#{k} like ?"
+          query_conds[1] << "#{v}%"
+        end
+      end
     end
   end
 end

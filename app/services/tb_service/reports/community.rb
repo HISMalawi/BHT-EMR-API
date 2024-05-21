@@ -1,4 +1,4 @@
-module TBService::Reports::Community
+module TbService::Reports::Community
   class << self
 
     def report_format(indicator:)
@@ -73,7 +73,7 @@ module TBService::Reports::Community
     private
 
     def initial_visits_query
-      TBService::TBQueries::InitialVisitsQuery
+      TbService::TbQueries::InitialVisitsQuery
     end
 
     def get_reporting_quarter(start_date, end_date)

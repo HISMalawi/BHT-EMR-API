@@ -2,7 +2,7 @@
 
 include ModelUtils
 
-class TBService::TBQueries::NewPatientsQuery
+class TbService::TbQueries::NewPatientsQuery
   NON_TREATMENT_STATES = [173]
   def initialize(relation = Patient.all)
     @relation = relation.extending(Scopes)

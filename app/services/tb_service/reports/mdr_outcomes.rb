@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService::Reports::MdrOutcomes
+module TbService::Reports::MdrOutcomes
   class << self
 
     AGE_GROUPS = {
@@ -72,11 +72,11 @@ module TBService::Reports::MdrOutcomes
     end
 
     def patient_outcome_query
-      TBService::TBQueries::MdrOutcomeQuery.new
+      TbService::TbQueries::MdrOutcomeQuery.new
     end
 
     def mdr_patient_query
-      TBService::TBQueries::MDRPatientQuery.new
+      TbService::TbQueries::MDRPatientQuery.new
     end
 
   end

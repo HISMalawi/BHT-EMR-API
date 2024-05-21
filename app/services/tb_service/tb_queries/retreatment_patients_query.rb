@@ -2,7 +2,7 @@
 
 include ModelUtils
 
-class TBService::TBQueries::RetreatmentPatientsQuery
+class TbService::TbQueries::RetreatmentPatientsQuery
   def initialize(relation = Patient.all)
     @relation = relation.extending(Scopes)
   end

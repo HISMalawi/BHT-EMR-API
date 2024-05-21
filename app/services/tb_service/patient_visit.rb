@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'ostruct'
-
-class TBService::PatientVisit
+module TbService
+  # A summary of a patient's ART clinic visit
+  class PatientVisit
     include ModelUtils
 
     delegate :get, to: :patient_observation
@@ -12,8 +12,8 @@ class TBService::PatientVisit
     def initialize(patient, date)
       @patient = patient
       @date = date
-      @vital_stats = TBService::PatientVitalStats.new(@patient)
-      @visit_drugs = TBService::PatientDrugs.new(@patient, @date)
+      @vital_stats = TbService::PatientVitalStats.new(@patient)
+      @visit_drugs = TbService::PatientDrugs.new(@patient, @date)
     end
 
     def patient_outcome
@@ -26,9 +26,29 @@ class TBService::PatientVisit
     end
 
     def next_appointment
-      c_name = 'Appointment date'
-      datetime = get(@patient, c_name, @date).first&.value_datetime
-      datetime ? datetime.strftime('%d/%b/%Y') : 'N/A'
+      Observation.where(person: patient.person, concept: concept('Appointment date'))\
+                 .order(obs_datetime: :desc)\
+                 .first\
+                 &.value_datetime
+    end
+
+    def tb_status
+      state = begin
+        Concept.find(Observation.where(['person_id = ? AND concept_id = ? AND DATE(obs_datetime) <= ? AND value_coded IS NOT NULL',
+                                        patient.id, ConceptName.find_by_name('TB STATUS').concept_id,
+                                        visit_date.to_date]).order('obs_datetime DESC, date_created DESC').first.value_coded).fullname
+      rescue StandardError
+        'Unk'
+      end
+
+      program_id = Program.find_by_name('TB PROGRAM').id
+      patient_state = PatientState.where(["patient_state.voided = 0 AND p.voided = 0
+         AND p.program_id = ? AND DATE(start_date) <= DATE('#{date}') AND p.patient_id =?",
+                                          program_id, patient.id]).joins('INNER JOIN patient_program p  ON p.patient_program_id = patient_state.patient_program_id').order('start_date DESC').first
+
+      return state if patient_state.blank?
+
+      ConceptName.find_by_concept_id(patient_state.program_workflow_state.concept_id).name
     end
 
     def height
@@ -62,7 +82,7 @@ class TBService::PatientVisit
     end
 
     def patient_observation
-      TBService::PatientObservation
+      TbService::PatientObservation
     end
 
     def get_program

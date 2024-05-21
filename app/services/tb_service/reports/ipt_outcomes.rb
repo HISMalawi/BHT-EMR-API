@@ -1,4 +1,4 @@
-module TBService::Reports::IptOutcomes
+module TbService::Reports::IptOutcomes
   class << self
 
     def report_format(indicator:)
@@ -31,7 +31,7 @@ module TBService::Reports::IptOutcomes
     private
 
     def ipt_patients_query
-      TBService::TBQueries::IptPatientsQuery.new
+      TbService::TbQueries::IptPatientsQuery.new
     end
   end
 end

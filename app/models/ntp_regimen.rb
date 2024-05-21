@@ -19,4 +19,4 @@ class NtpRegimen < VoidableRecord
               .where(drug_id: drugs.map(&:drug_id))
   end
  
-end
+end 

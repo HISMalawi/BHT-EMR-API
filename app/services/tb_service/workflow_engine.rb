@@ -3,7 +3,7 @@
 require 'set'
 require 'date'
 
-module TBService
+module TbService
   class WorkflowEngine
     include ModelUtils
 
@@ -201,7 +201,7 @@ module TBService
     end
 
     def mdr_service
-      TBService::TBMdrService.new(@patient.patient_id, @program.program_id, @date)
+      TbService::TbMdrService.new(@patient.patient_id, @program.program_id, @date)
     end
 
     def mdr_patient?

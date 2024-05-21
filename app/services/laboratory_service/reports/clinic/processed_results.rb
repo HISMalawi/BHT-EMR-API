@@ -34,7 +34,7 @@ module LaboratoryService
               measures: result['measures'].split(',').map do |measure|
                 name, modifier, value = measure.split(':')
 
-                { name: name, modifier: modifier, value: value }
+                { name:, modifier:, value: }
               end
             }
           end

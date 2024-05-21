@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ConceptDatatype < RetirableRecord
   self.table_name = :concept_datatype
   self.primary_key = :concept_datatype_id

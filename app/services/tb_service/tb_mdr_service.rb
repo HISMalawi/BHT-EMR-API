@@ -3,8 +3,8 @@ require 'set'
 require 'date'
 require 'yaml'
 
-module TBService
-  class TBMdrService
+module TbService
+  class TbMdrService
     include ModelUtils
     include TimeUtils
 

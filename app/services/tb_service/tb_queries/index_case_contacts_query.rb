@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBService::TBQueries::IndexCaseContactsQuery
+class TbService::TbQueries::IndexCaseContactsQuery
   def initialize (relation = Relationship.all)
     @relation = relation.extending(Scopes)
     @program = program('TB Program')

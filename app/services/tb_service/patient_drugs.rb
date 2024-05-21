@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'yaml'
 
-class TBService::PatientDrugs
+class TbService::PatientDrugs
   delegate :get, to: :patient_observation
 
   def initialize (patient, date)
@@ -50,7 +50,7 @@ class TBService::PatientDrugs
   private
 
   def patient_observation
-    TBService::PatientObservation
+    TbService::PatientObservation
   end
 
   def format_drug_name(drug)

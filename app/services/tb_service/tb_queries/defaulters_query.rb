@@ -2,7 +2,7 @@
 
 include ModelUtils
 
-class TBService::TBQueries::DefaultersQuery
+class TbService::TbQueries::DefaultersQuery
   def initialize(relation = Patient.all)
     @relation = relation.extending(Scopes)
     @program = program('TB Program')

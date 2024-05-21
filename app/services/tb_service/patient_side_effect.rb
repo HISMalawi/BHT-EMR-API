@@ -1,4 +1,4 @@
-module TBService
+module TbService
   class PatientSideEffect
     include ModelUtils
 

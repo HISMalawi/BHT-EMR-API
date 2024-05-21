@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBService::TBQueries::MdrOutcomeQuery
+class TbService::TbQueries::MdrOutcomeQuery
   def initialize (relation = Patient.all)
     @relation = relation
     @program = program('TB Program')

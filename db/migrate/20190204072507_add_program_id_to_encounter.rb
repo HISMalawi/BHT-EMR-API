@@ -13,12 +13,17 @@ class AddProgramIdToEncounter < ActiveRecord::Migration[5.2]
     #   encounter.uuid = SecureRandom.uuid
     #   encounter.save
     # end
-    
+
     # alter column to not allow null
     # change_column :encounter, :uuid, :string, limit: 38, null: false unless column_exists?(:encounter, :uuid)
 
     # add foreign key
-    add_foreign_key :encounter, :program, column: :program_id, foreign_key: :program_id, primary_key: :program_id unless foreign_key_exists?(:encounter, :program)
+    unless foreign_key_exists?(
+      :encounter, :program
+    )
+      add_foreign_key :encounter, :program, column: :program_id, foreign_key: :program_id,
+                                            primary_key: :program_id
+    end
     # uuid has to be unique
     # add_index :encounter, :uuid, unique: true unless index_exists?(:encounter, :uuid)
   end

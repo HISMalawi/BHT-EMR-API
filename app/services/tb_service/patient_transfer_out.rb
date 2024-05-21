@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
   # Provides various data that is required for a transfer out note
-  class TBService::PatientTransferOut
+  class TbService::PatientTransferOut
     include ModelUtils
 
     attr_accessor :patient, :date
@@ -37,7 +37,7 @@
     private
 
     def patients_engine
-      TBService::PatientsEngine.new(program: @program)
+      TbService::PatientsEngine.new(program: @program)
     end
 
     def transfer_out_location

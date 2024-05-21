@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBService::TBQueries::IndexCasesQuery
+class TbService::TbQueries::IndexCasesQuery
   def initialize (relation = Patient.all)
     @relation = relation.extending(Scopes)
     @program = program('TB Program')

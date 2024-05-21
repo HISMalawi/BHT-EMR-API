@@ -1,9 +1,10 @@
+# rubocop:disable Metrics/MethodLength, Metrics/ClassLength, Style/Documentation, Metrics/AbcSize, Metrics/BlockLength, Security/Eval
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   class DataCleaningTool
     include CommonSqlQueryUtils
-  
+
     TOOLS = {
       'DATE ENROLLED LESS THAN EARLIEST START DATE' => 'date_enrolled_less_than_earliest_start_date',
       'PRE ART OR UNKNOWN OUTCOMES' => 'pre_art_or_unknown_outcomes',
@@ -16,7 +17,9 @@ module ARTService
       'INCOMPLETE VISITS' => 'incomplete_visit',
       'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
       'MISSING VL RESULTS' => 'missing_vl_results',
-      'DIFFERENT PREGNANCY VALUE ON SAME DATE' => 'different_pregnancy_value_on_same_date'
+      'DIFFERENT PREGNANCY VALUE ON SAME DATE' => 'different_pregnancy_value_on_same_date',
+      'MISSING ART START DATE' => 'missing_start_date',
+      'MULTIPLE OPEN STATES' => 'multiple_open_states'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -27,7 +30,7 @@ module ARTService
 
     def results
       eval(TOOLS[@tool_name.to_s])
-    rescue Exception => e
+    rescue StandardError => e
       "#{e.class}: #{e.message}"
     end
 
@@ -41,6 +44,33 @@ module ARTService
         WHERE identifier = '#{identifier}'
         AND identifier_type = 3
         AND voided = 0
+      SQL
+    end
+
+    def missing_start_date
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+        o.person_id AS patient_id,
+        p.birthdate,
+        p.gender,
+        pn.given_name,
+        pn.family_name,
+        pi.identifier AS arv_number,
+        DATE(MIN(o.value_datetime)) value_datetime
+        FROM encounter e
+        INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
+        INNER JOIN person_name pn ON pn.person_id = p.person_id AND pn.voided = 0
+        INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0
+          AND o.concept_id = #{concept('Date antiretrovirals started').concept_id}
+          AND e.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC REGISTRATION' LIMIT 1)
+          AND e.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program' LIMIT 1)
+          AND e.voided = 0
+        LEFT JOIN patient_identifier pi ON pi.patient_id = o.person_id
+          AND pi.identifier_type = #{indetifier_type} AND pi.voided = 0
+          AND o.obs_datetime < #{ActiveRecord::Base.connection.quote(@end_date)}
+        WHERE e.voided = 0
+        GROUP BY o.person_id, o.value_datetime
+        HAVING o.value_datetime IS NULL
       SQL
     end
 
@@ -235,32 +265,37 @@ module ARTService
     end
 
     def multiple_start_reasons
-      concept_id = concept('Reason for ART eligibility').concept_id
-
-      data = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT person_id, count(concept_id) reason
-        FROM obs WHERE concept_id=#{concept_id} AND voided = 0
-        AND person_id NOT IN (#{external_clients})
-        GROUP BY person_id HAVING reason > 1;
-      SQL
-
-      return {} if data.blank?
-
-      patient_ids = data.map { |d| d['person_id'].to_i }
-
-      data = ActiveRecord::Base.connection.select_all <<~SQL
+      ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
-          p.person_id, i.identifier arv_number, birthdate, gender, death_date,
-          n.given_name, n.family_name
-        FROM person p
-        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
-        AND i.identifier_type = #{indetifier_type} AND i.voided = 0
-        LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-        WHERE p.person_id IN(#{patient_ids.join(',')})
-        GROUP BY p.person_id ORDER BY i.date_created DESC;
+          o.person_id patient_id,
+          a.identifier arv_number,
+          n.given_name,
+          n.family_name,
+          p.birthdate,
+          p.gender,
+          p.death_date,
+          GROUP_CONCAT(DISTINCT(vcn.name)) reasons,
+          GROUP_CONCAT(DISTINCT(DATE(o.obs_datetime))) visits
+        FROM obs o
+        INNER JOIN person p ON p.person_id = o.person_id AND p.voided = 0
+        INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND e.program_id = 1 -- HIV Program
+        INNER JOIN concept_name cn ON cn.concept_id = o.concept_id AND cn.voided = 0 AND cn.concept_id = #{concept('Reason for ART eligibility').concept_id}
+        INNER JOIN concept_name vcn ON vcn.concept_id = o.value_coded AND vcn.voided = 0
+        INNER JOIN patient_program pp ON pp.patient_id = o.person_id AND pp.program_id = 1 AND pp.voided = 0
+        INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 -- On ART
+        INNER JOIN (
+          SELECT pp.patient_id, MIN(start_date) AS start_date
+          FROM patient_program pp
+          INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 -- On ART
+          WHERE pp.voided = 0 AND pp.program_id = 1 -- HIV Program
+          GROUP BY pp.patient_id
+        ) AS ms ON ms.patient_id = pp.patient_id AND ms.start_date = ps.start_date AND o.obs_datetime > ps.start_date
+        LEFT JOIN patient_identifier a ON a.patient_id = pp.patient_id AND a.voided = 0 AND a.identifier_type = #{indetifier_type}
+        LEFT JOIN person_name n ON n.person_id = pp.patient_id AND n.voided = 0
+        WHERE o.voided = 0
+        AND o.person_id NOT IN (#{external_clients})
+        GROUP BY o.person_id HAVING COUNT(DISTINCT(o.value_coded)) > 1 OR COUNT(DISTINCT(DATE(o.obs_datetime))) > 1;
       SQL
-
-      organise_data data
     end
 
     def missing_start_reasons
@@ -476,7 +511,7 @@ module ARTService
       patient_visit_dates.each do |patient_id, visit_date|
         patient = Patient.find(patient_id)
         date =  visit_date.to_date
-        workflow_engine = ARTService::WorkflowEngine.new(patient: patient, date: date, program: program)
+        workflow_engine = ArtService::WorkflowEngine.new(patient:, date:, program:)
         complete = workflow_engine.next_encounter.blank? ? true : false
 
         next if complete
@@ -566,6 +601,24 @@ module ARTService
       SQL
     end
 
+    def multiple_open_states
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT p.person_id patient_id, n.given_name,n.family_name, p.gender,p.birthdate,a.identifier arv_number, i.identifier national_id,
+        ps.start_date, GROUP_CONCAT(DISTINCT(cn.name)) states, COUNT(DISTINCT(ps.state)) state_count
+        FROM patient_state ps
+        INNER JOIN patient_program pp ON pp.patient_program_id = ps.patient_program_id AND pp.voided = 0 AND pp.program_id = 1 -- HIV Program
+        INNER JOIN person p ON p.person_id = pp.patient_id AND p.voided = 0
+        INNER JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        INNER JOIN program_workflow_state pws ON pws.program_workflow_state_id = ps.state AND pws.retired = 0
+        INNER JOIN concept_name cn ON cn.concept_id = pws.concept_id AND cn.voided = 0 AND cn.concept_name_type = 'FULLY_SPECIFIED'
+        LEFT JOIN patient_identifier a ON a.patient_id = p.person_id AND a.voided = 0 AND a.identifier_type = #{indetifier_type}
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.voided = 0 AND i.identifier_type = 3
+        WHERE ps.voided = 0 AND ps.start_date BETWEEN '#{@start_date}' AND '#{@end_date}' AND (ps.end_date IS NULL OR ps.end_date > '#{@end_date}')
+        AND p.person_id NOT IN(#{external_clients})
+        GROUP BY p.person_id, ps.start_date HAVING state_count > 1;
+      SQL
+    end
+
     def concept(name)
       ConceptName.find_by_name(name)
     end
@@ -575,7 +628,8 @@ module ARTService
     end
 
     def indetifier_type
-      @indetifier_type ||= PatientIdentifierType.find_by_name!(GlobalPropertyService.use_filing_numbers? ? 'Filing Number' : 'ARV Number').id
+      @indetifier_type ||= PatientIdentifierType\
+                           .find_by_name!(GlobalPropertyService.use_filing_numbers? ? 'Filing Number' : 'ARV Number').id
     end
 
     ##
@@ -615,3 +669,5 @@ module ARTService
     end
   end
 end
+
+# rubocop:enable Metrics/MethodLength, Metrics/ClassLength, Style/Documentation, Metrics/AbcSize, Metrics/BlockLength, Security/Eval

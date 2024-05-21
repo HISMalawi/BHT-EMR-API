@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-module TBService::Reports::Tbhiv
+module TbService::Reports::Tbhiv
   class << self
+    def new_and_relapse_tb_cases_notified(start_date, end_date)
+      patients = patients_query.new_patients(start_date, end_date)
 
     def report_format(indicator)
       {
@@ -12,40 +14,64 @@ module TBService::Reports::Tbhiv
       }
     end
 
-    def format_report(indicator:, report_data:)
-      data = report_format(indicator)
-      program = Program.find_by_name('TB PROGRAM')
-      report_data&.each do |patient|
-        process_patient(patient, data, program)
-      end
-      data
+    def total_with_hiv_result_documented(start_date, end_date)
+      type = encounter_type('TB_Initial')
+      program = program('TB Program')
+      hiv_status = concept('HIV Status')
+
+      patients = Encounter.select(:patient_id).distinct\
+                          .joins(:observations)\
+                          .where(:encounter => { encounter_type: type,
+                                                 program_id: program,
+                                                 encounter_datetime: start_date..end_date },
+                                 :obs => { concept_id: hiv_status })
+
+      return [] if patients.empty?
+
+      ids = patients.map(&:patient_id)
+
+      persons_query.group_by_gender(ids)
     end
 
-    def process_patient(patient, data, program)
-      gender = patient.gender == 'M' ? :male : :female
-      data[:total] << patient.id
-      data[gender] << patient.id
+    def total_tested_hiv_positive(start_date, end_date)
+      type = encounter_type('TB_Initial')
+      program = program('TB Program')
+      hiv_status = concept('HIV Status')
+      positive = concept('Positive')
+
+      patients = Encounter.select(:patient_id).distinct\
+                          .joins(:observations)\
+                          .where(:encounter => { encounter_type: type,
+                                                 program_id: program,
+                                                 encounter_datetime: start_date..end_date },
+                                 :obs => { concept_id: hiv_status, value_coded: positive })
+
+      return [] if patients.empty?
+
+      ids = patients.map(&:patient_id)
+
+      persons_query.group_by_gender(ids)
     end
 
-    def patient_ids(data)
-      data.map(&:patient_id)
+    def started_cpt(start_date, end_date)
+      persons = person_drugs_query.started_cpt(start_date, end_date)
+
+      return [] if persons.empty?
+
+      ids = persons.map { |foo| foo['person_id'] }
+
+      persons_query.group_by_gender(ids)
     end
 
-    def new_and_relapse_tb_cases_notified(start_date, end_date)
-      new_cases = new_patients_query.ref(start_date, end_date)
-      relapses = relapse_patients_query.ref(start_date, end_date)
-      return nil if new_cases.empty? && relapses.empty?
+    def started_art_before_tb_treatment(start_date, end_date)
+      ids = tb_treatment_query.started_after_art(start_date, end_date)
 
       ids = (new_cases + relapses)
       Patient.where(patient_id: ids)
     end
 
-    def total_with_hiv_result_documented(start_date, end_date)
-      new_cases = new_patients_query.ref(start_date, end_date)
-      ipt_treatment = ipt_candidates_query.ref(start_date, end_date)
-      non_ipt = ipt_treatment.on_ipt(start_date, end_date)
-      cases = new_cases.where.not(patient_id: non_ipt.map(&:patient_id))
-      relapses = relapse_patients_query.ref(start_date, end_date)
+    def started_art_while_on_treatment(start_date, end_date)
+      ids = tb_treatment_query.started_before_art(start_date, end_date)
 
       unless cases.empty? && relapses.empty?
         all = Patient.where(patient_id: (cases + relapses))
@@ -89,21 +115,25 @@ module TBService::Reports::Tbhiv
 
     private
 
-    def new_patients_query
-      TBService::TBQueries::NewPatientsQuery.new
+    def person_drugs_query
+      TbQueries::PersonDrugsQuery.new.search
     end
 
+    def patients_query
+      TbQueries::PatientsQuery.new.search
+    end
 
-    def hiv_result_query
-      TBService::TBQueries::HivResultQuery
+    def persons_query
+      TbQueries::PersonsQuery.new
     end
 
     def relapse_patients_query
-      TBService::TBQueries::RelapsePatientsQuery.new
+      TbQueries::RelapsePatientsQuery.new
     end
 
-    def ipt_candidates_query
-      TBService::TBQueries::IptCandidatesQuery.new
+    def tb_treatment_query
+      TbQueries::TbTreatmentQuery.new
     end
   end
+end
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService
+module TbService
   module Reports
     module MdrCaseFinding # rubocop:disable Style/Documentation
       class << self
@@ -117,11 +117,11 @@ module TBService
         end
 
         def mdr_patient_query
-          TBService::TBQueries::MDRPatientQuery.new
+          TbService::TbQueries::MDRPatientQuery.new
         end
 
         def mdr_diagnosis_query
-          TBService::TBQueries::MdrQuery.new
+          TbService::TbQueries::MdrQuery.new
         end
       end
     end

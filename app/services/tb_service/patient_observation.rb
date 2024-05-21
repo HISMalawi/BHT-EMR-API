@@ -1,4 +1,4 @@
-module TBService::PatientObservation
+module TbService::PatientObservation
   class << self
     include ModelUtils
 

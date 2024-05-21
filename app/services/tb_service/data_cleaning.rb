@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService
+module TbService
   class DataCleaning
     include ModelUtils
 
@@ -39,7 +39,7 @@ module TBService
           patient_id: patient.patient_id,
           name: patient.name,
           identifier: patient.patient_identifiers.find_by(identifier_type: 'National id')&.identifier,
-          tb_number: TBService::PatientSummary.new(patient, @end_date).tb_number,
+          tb_number: TbService::PatientSummary.new(patient, @end_date).tb_number,
           gender: patient.gender,
           birthdate: patient.person.birthdate,
           residence: patient.person&.addresses.first&.city_village,
@@ -91,11 +91,11 @@ module TBService
     end
     
     def registered_patients_query
-      TBQueries::RegisteredPatientsQuery.new.ref(@start_date, @end_date)
+      TbQueries::RegisteredPatientsQuery.new.ref(@start_date, @end_date)
     end
 
     def enrolled_patients_query
-      TBQueries::EnrolledPatientsQuery.new.ref(@start_date, @end_date)
+      TbQueries::EnrolledPatientsQuery.new.ref(@start_date, @end_date)
     end
   end
 end

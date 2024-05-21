@@ -9,13 +9,13 @@ FactoryBot.define do
 
     factory :concept_with_name do
       after :create do |concept|
-        create_list :concept_name, 1, concept: concept
+        create_list :concept_name, 1, concept:
       end
     end
 
     factory :concept_amount_dispensed do
       after :create do |concept|
-        create_list :concept_name, 1, concept: concept, name: 'AMOUNT DISPENSED'
+        create_list :concept_name, 1, concept:, name: 'AMOUNT DISPENSED'
       end
     end
   end

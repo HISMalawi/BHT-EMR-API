@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBService::TBQueries::MdrQuery
+class TbService::TbQueries::MdrQuery
   MDR_STATE_ID = 174
   TB_STATE = 92
 

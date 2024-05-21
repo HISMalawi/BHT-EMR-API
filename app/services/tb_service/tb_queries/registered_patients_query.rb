@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class TBService::TBQueries::RegisteredPatientsQuery
+class TbService::TbQueries::RegisteredPatientsQuery
   include ModelUtils
 
   TB_PROGRAM_ID = 2 # find out while program is not visible in this scope

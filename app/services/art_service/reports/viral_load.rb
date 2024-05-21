@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     class ViralLoad
       include CommonSqlQueryUtils
@@ -160,7 +160,8 @@ module ARTService
         end
       end
 
-      def get_vl_due_details(person) # patient_id, appointment_date, patient_start_date)
+      # patient_id, appointment_date, patient_start_date)
+      def get_vl_due_details(person)
         patient_start_date = begin
           person[:start_date].to_date
         rescue StandardError
@@ -175,28 +176,28 @@ module ARTService
         months_on_art = vl_info[:period_on_art]
 
         # if @possible_milestones.include?(months_on_art)
-        if vl_info[:eligibile] || (vl_info[:due_date] <= end_date.to_date + 28.day)
-          last_result = last_vl_result(person[:patient_id])
-          {
-            patient_id: person[:patient_id],
-            mile_stone: vl_info[:due_date], # (patient_start_date.to_date + months_on_art.month).to_date,
-            start_date: patient_start_date,
-            months_on_art: months_on_art,
-            appointment_date: appointment_date,
-            given_name: person[:given_name],
-            family_name: person[:family_name],
-            gender: person[:gender],
-            birthdate: person[:birthdate],
-            arv_number: use_filing_number(person[:patient_id], person[:arv_number]),
-            last_result_order_date: begin
-              last_result.order_date.to_date
-            rescue StandardError
-              'N/A'
-            end,
-            last_result: last_result.result_value,
-            last_result_date: last_result.result_date
-          }
-        end
+        return unless vl_info[:eligibile] || (vl_info[:due_date] <= end_date.to_date + 28.day)
+
+        last_result = last_vl_result(person[:patient_id])
+        {
+          patient_id: person[:patient_id],
+          mile_stone: vl_info[:due_date], # (patient_start_date.to_date + months_on_art.month).to_date,
+          start_date: patient_start_date,
+          months_on_art:,
+          appointment_date:,
+          given_name: person[:given_name],
+          family_name: person[:family_name],
+          gender: person[:gender],
+          birthdate: person[:birthdate],
+          arv_number: use_filing_number(person[:patient_id], person[:arv_number]),
+          last_result_order_date: begin
+            last_result.order_date.to_date
+          rescue StandardError
+            'N/A'
+          end,
+          last_result: last_result.result_value,
+          last_result_date: last_result.result_date
+        }
       end
 
       def date_diff(date1, date2)
@@ -283,7 +284,7 @@ module ARTService
       end
 
       def get_vl_due_info(patient_id, appointment_date)
-        vl_info = ARTService::VLReminder.new(patient_id: patient_id, date: appointment_date)
+        vl_info = ArtService::VlReminder.new(patient_id:, date: appointment_date)
         vl_info.vl_reminder_info
       end
     end

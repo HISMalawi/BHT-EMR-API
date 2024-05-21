@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBService::TBQueries::IptPatientsQuery
+class TbService::TbQueries::IptPatientsQuery
   ON_IPT = 173
 
   def initialize (relation = Patient.all)

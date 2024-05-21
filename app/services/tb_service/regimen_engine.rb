@@ -1,8 +1,5 @@
 # frozen_string_literal: true
-
-require 'set'
-
-module TBService
+module TbService
   class RegimenEngine
     include ModelUtils
     include TimeUtils
@@ -137,6 +134,8 @@ module TBService
     def find_regimens(patient)
       mdr = mdr_service(patient)
 
+      patient = patient[:patient] if patient.is_a? Hash
+
       return mdr.get_current_regimen_drugs if mdr.patient_on_mdr_treatment?
 
       return ipt_drug(weight: patient.weight) if is_eligible_for_ipt?(person: patient.person)
@@ -153,15 +152,12 @@ module TBService
       find_regimens(patient)
     end
 
-
-    private
     def averse_to_strepto? (patient)
-      !meningitis_tb?(patient: patient) || pregnant?(patient: patient)
+      !meningitis_tb?(patient:) || pregnant?(patient:)
     end
 
-
     def mdr_service(patient)
-      TBService::TBMdrService.new(patient, @program, Time.now)
+      TbService::TbMdrService.new(patient, @program, Time.now)
     end
   end
 end

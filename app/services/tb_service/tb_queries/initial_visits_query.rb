@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBService::TBQueries::InitialVisitsQuery
+class TbService::TbQueries::InitialVisitsQuery
   def initialize (start_date, end_date)
     @start_date = start_date
     @end_date = end_date
@@ -34,11 +34,11 @@ class TBService::TBQueries::InitialVisitsQuery
   private
 
   def presumptives
-    TBService::TBQueries::PresumptivePatientsQuery.new.ref(@start_date, @end_date)
+    TbService::TbQueries::PresumptivePatientsQuery.new.ref(@start_date, @end_date)
   end
 
   def enrolled
-    TBService::TBQueries::EnrolledPatientsQuery.new.ref(@start_date, @end_date)
+    TbService::TbQueries::EnrolledPatientsQuery.new.ref(@start_date, @end_date)
   end
 
   def source_of_referral (src)

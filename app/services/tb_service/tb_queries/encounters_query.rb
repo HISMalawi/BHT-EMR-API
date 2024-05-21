@@ -2,19 +2,21 @@
 
 include TimeUtils
 
-class TBService::TBQueries::EncountersQuery
-  include ModelUtils
+module TbService
+module TbQueries
+  class EncountersQuery
+    def initialize
+      @program = program('TB Program')
+    end
 
-  def initialize
-    @program = program('TB Program')
+    def by_date(date, type)
+      type = encounter_type(type)
+      start_time, end_time = TimeUtils.day_bounds(date)
+
+      Encounter.where(program: @program,
+                      type:,
+                      encounter_datetime: start_time..end_time)
+    end
   end
-
-  def by_date(date, type)
-    type = encounter_type(type)
-    start_time, end_time = TimeUtils.day_bounds(date)
-
-    Encounter.where(program: @program,
-                    type: type,
-                    encounter_datetime: start_time..end_time)
-  end
+end
 end

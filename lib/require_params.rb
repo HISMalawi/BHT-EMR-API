@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'set'
-
 # Blesses ActiveController Controllers with a get_params method
 # which is a wrapper of `params` method that is able to enforce
 # the presence of some fields.

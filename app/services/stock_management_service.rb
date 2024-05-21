@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# TODO: Move this into ARTService::Pharmacy. Makes sense to have it there since
+# TODO: Move this into ArtService::Pharmacy. Makes sense to have it there since
 # this is only for ART.
 
 # Stock Management Service
@@ -75,7 +75,7 @@ class StockManagementService
   #       }
   def add_items_to_batch(batch_number, stock_items, location_id: nil)
     ActiveRecord::Base.transaction do
-      batch = find_or_create_batch(batch_number, location_id: location_id)
+      batch = find_or_create_batch(batch_number, location_id:)
 
       stock_items.each_with_index do |item, _i|
         drug_id = fetch_parameter(item, :drug_id)
@@ -88,8 +88,8 @@ class StockManagementService
         expiry_date = fetch_parameter_as_date(item, :expiry_date)
 
         item = find_batch_items(pharmacy_batch_id: batch.id,
-                                drug_id: drug_id,
-                                pack_size: pack_size).first
+                                drug_id:,
+                                pack_size:).first
 
         barcode = barcode.blank? ? nil : barcode
         if item
@@ -100,7 +100,8 @@ class StockManagementService
           item.barcode = barcode
           item.save
         else
-          item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code, barcode)
+          item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code,
+                                   barcode)
           validate_activerecord_object(item)
         end
 
@@ -140,7 +141,9 @@ class StockManagementService
       query = query.where(current_quantity: filters[:current_quantity]) unless filters[:current_quantity].nil?
       query = query.where(pharmacy_batch_id: filters[:pharmacy_batch_id]) unless filters[:pharmacy_batch_id].nil?
       query = query.where(pack_size: filters[:pack_size]) if filters.key?(:pack_size)
-      query = query.where("pharmacy_batches.batch_number = '#{filters[:batch_number]}'") unless filters[:batch_number].nil?
+      unless filters[:batch_number].nil?
+        query = query.where("pharmacy_batches.batch_number = '#{filters[:batch_number]}'")
+      end
     end
     query = query.joins("LEFT JOIN pharmacy_obs ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id AND pharmacy_obs.transaction_reason = 'Drug dispensed'")
                  .joins('INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id')
@@ -173,7 +176,8 @@ class StockManagementService
 
   def batch_update_items(data)
     ActiveRecord::Base.transaction do
-      verification = PharmacyStockVerification.create!(verification_date: data.delete(:verification_date), reason: data.delete(:reason))
+      verification = PharmacyStockVerification.create!(verification_date: data.delete(:verification_date),
+                                                       reason: data.delete(:reason))
       data['items'].map do |item|
         id = item.delete(:id)
         process_edit_batch_item(id, item, verif_id: verification.id)
@@ -188,16 +192,19 @@ class StockManagementService
     if params[:current_quantity]
       diff = params[:current_quantity].to_f - item.current_quantity
       current = item.current_quantity
-      if !diff.zero?
-        result = commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason, stock_verification_id:verif_id)
-        commit_transaction(item, STOCK_PREVIOUS_COUNT, current, Date.today, update_item: false, transaction_reason: reason, stock_verification_id:verif_id, obs_group_id: result[:event].id)
+      unless diff.zero?
+        result = commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason,
+                                                                        stock_verification_id: verif_id)
+        commit_transaction(item, STOCK_PREVIOUS_COUNT, current, Date.today, update_item: false,
+                                                                            transaction_reason: reason, stock_verification_id: verif_id, obs_group_id: result[:event].id)
       end
     end
 
     if params[:delivered_quantity]
       diff = params[:delivered_quantity].to_f - item.delivered_quantity
-      if !diff.zero?
-        commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason, stock_verification_id:verif_id)
+      unless diff.zero?
+        commit_transaction(item, STOCK_EDIT, diff, Date.today, update_item: true, transaction_reason: reason,
+                                                               stock_verification_id: verif_id)
       end
     end
 
@@ -228,7 +235,8 @@ class StockManagementService
 
       item = PharmacyBatchItem.find(batch_item_id)
       if item.delivery_date > date
-        raise InvalidParameterError, "Item was delivered at a date (#{item.delivery_date}) later than relocation date (#{date})"
+        raise InvalidParameterError,
+              "Item was delivered at a date (#{item.delivery_date}) later than relocation date (#{date})"
       end
 
       # A negative sign would result in addition of quantity thus
@@ -236,10 +244,10 @@ class StockManagementService
       quantity = quantity.to_f.abs
       commit_transaction(item, STOCK_DEBIT, -quantity.to_f, date, update_item: true, transaction_reason: reason)
       destination = Location.find(destination_location_id)
-      PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
-                                           quantity: quantity, location: destination,
+      PharmacyBatchItemReallocation.create(reallocation_code:, item:,
+                                           quantity:, location: destination,
                                            reallocation_type: STOCK_ITEM_REALLOCATION,
-                                           date: date,
+                                           date:,
                                            date_created: Time.now,
                                            date_changed: Time.now,
                                            creator: User.current.id)
@@ -252,8 +260,8 @@ class StockManagementService
       quantity = quantity.to_f.abs
       validate_disposal(item, date, reason, quantity)
       commit_transaction(item, STOCK_DEBIT, -quantity.to_f, date, update_item: true, transaction_reason: reason)
-      PharmacyBatchItemReallocation.create(reallocation_code: reallocation_code, item: item,
-                                           quantity: quantity, date: date,
+      PharmacyBatchItemReallocation.create(reallocation_code:, item:,
+                                           quantity:, date:,
                                            reallocation_type: STOCK_ITEM_DISPOSAL,
                                            date_created: Time.now, date_changed: Time.now,
                                            creator: User.current.id)
@@ -287,8 +295,8 @@ class StockManagementService
     stock_level_in_months = stock_level_in_days / DAYS_IN_MONTH
 
     {
-      stock_level_in_months: stock_level_in_months,
-      stock_level: stock_level,
+      stock_level_in_months:,
+      stock_level:,
       consumption_rate: drug_consumption_rate(drug_id)
     }
   end
@@ -296,7 +304,7 @@ class StockManagementService
   private
 
   def debit_drug(drug_id, pack_size, debit_quantity, date, reason, dispensation_id: nil)
-    drugs = find_batch_items(drug_id: drug_id, pack_size: pack_size)
+    drugs = find_batch_items(drug_id:, pack_size:)
             .where('expiry_date > ? AND current_quantity > 0', date)
             .order('expiry_date')
 
@@ -318,8 +326,8 @@ class StockManagementService
   def credit_drug(drug_id, pack_size, credit_quantity, date, reason)
     return credit_quantity unless credit_quantity.positive?
 
-    drugs = find_batch_items(drug_id: drug_id, pack_size: pack_size)
-            .where('delivery_date < :date AND expiry_date > :date AND pharmacy_batch_items.date_changed >= :date', date: date)
+    drugs = find_batch_items(drug_id:, pack_size:)
+            .where('delivery_date < :date AND expiry_date > :date AND pharmacy_batch_items.date_changed >= :date', date:)
             .order(:expiry_date)
 
     # Spread the quantity being credited back among the existing drugs,
@@ -343,16 +351,18 @@ class StockManagementService
     ActiveRecord::Base.transaction do
       event = Pharmacy.create(type: pharmacy_event_type(event_name),
                               item: batch_item,
-                              quantity: quantity,
+                              quantity:,
                               transaction_date: date || Date.today,
                               **metadata)
       validate_activerecord_object(event)
       update_batch_item!(batch_item, quantity) if update_item
-      if ![STOCK_PREVIOUS_COUNT, STOCK_CURRENT_COUNT].include?(event_name)
-        StockTrackerService.new(drug_id: batch_item.drug_id, pack_size: batch_item.pack_size, transaction_date: date || Date.today).update_stock_balance(transaction_type: event_name, quantity: quantity)
+      unless [STOCK_PREVIOUS_COUNT, STOCK_CURRENT_COUNT].include?(event_name)
+        StockTrackerService.new(drug_id: batch_item.drug_id, pack_size: batch_item.pack_size, transaction_date: date || Date.today).update_stock_balance(
+          transaction_type: event_name, quantity:
+        )
       end
 
-      { event: event, target_item: batch_item }
+      { event:, target_item: batch_item }
     end
   end
 
@@ -360,22 +370,22 @@ class StockManagementService
     batch = PharmacyBatch.find_by_batch_number(batch_number)
     return batch if batch
 
-    PharmacyBatch.create(batch_number: batch_number, location_id: location_id)
+    PharmacyBatch.create(batch_number:, location_id:)
   end
 
   def create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code, barcode)
     quantity = quantity.to_f
 
     PharmacyBatchItem.create(
-      batch: batch,
+      batch:,
       drug_id: drug_id.to_i,
-      pack_size: pack_size,
+      pack_size:,
       delivered_quantity: quantity,
       current_quantity: quantity,
-      delivery_date: delivery_date,
-      expiry_date: expiry_date,
-      product_code: product_code,
-      barcode: barcode
+      delivery_date:,
+      expiry_date:,
+      product_code:,
+      barcode:
     )
   end
 
@@ -413,9 +423,9 @@ class StockManagementService
     if quantity > item.current_quantity
       raise InvalidParameterError, 'Disposal quantity cannot be greater than the current quantity'
     end
-    if date < item.expiry_date && reason == 'Expired'
-      raise InvalidParameterError, 'Disposal before expiry date is not allowed'
-    end
+    return unless date < item.expiry_date && reason == 'Expired'
+
+    raise InvalidParameterError, 'Disposal before expiry date is not allowed'
   end
 
   def validate_activerecord_object(object)
@@ -442,7 +452,7 @@ class StockManagementService
 
     total_drugs_consumed = Pharmacy.joins(:item, :type)
                                    .where(transaction_date: as_of_date..Float::INFINITY)
-                                   .merge(PharmacyBatchItem.where(drug_id: drug_id))
+                                   .merge(PharmacyBatchItem.where(drug_id:))
                                    .merge(PharmacyEncounterType.where(name: STOCK_DEBIT))
                                    .select('SUM(ABS(quantity)) AS count')
                                    .first

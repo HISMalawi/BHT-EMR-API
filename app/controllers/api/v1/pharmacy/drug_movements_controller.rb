@@ -5,7 +5,7 @@
 class Api::V1::Pharmacy::DrugMovementsController < ApplicationController
   # return an array of drug movement
   def show
-    items = ARTService::Pharmacy::DrugMovement.stock_movement(allowed_params)
+    items = ArtService::Pharmacy::DrugMovement.stock_movement(allowed_params)
 
     render json: items, status: 200
   end

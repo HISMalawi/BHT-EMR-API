@@ -1,4 +1,4 @@
-module TBService::DCTools::RegisteredPatients
+module TbService::DCTools::RegisteredPatients
   class << self
     include ModelUtils
 
@@ -47,11 +47,11 @@ module TBService::DCTools::RegisteredPatients
     private
 
     def registered_patients_query (start_date, end_date)
-      TBQueries::RegisteredPatientsQuery.new.ref(start_date, end_date)
+      TbQueries::RegisteredPatientsQuery.new.ref(start_date, end_date)
     end
 
     def enrolled_patients_query (start_date, end_date)
-      TBQueries::EnrolledPatientsQuery.new.ref(start_date, end_date)
+      TbQueries::EnrolledPatientsQuery.new.ref(start_date, end_date)
     end
   end
 end

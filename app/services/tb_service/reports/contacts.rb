@@ -1,4 +1,4 @@
-module TBService::Reports::Contacts
+module TbService::Reports::Contacts
   class << self
 
 
@@ -85,27 +85,27 @@ module TBService::Reports::Contacts
     private
 
     def index_cases
-      TBService::TBQueries::IndexCasesQuery
+      TbService::TbQueries::IndexCasesQuery
     end
 
     def enrolled_patients
-      TBService::TBQueries::EnrolledPatientsQuery.new
+      TbService::TbQueries::EnrolledPatientsQuery.new
     end
 
     def index_case_contacts
-      TBService::TBQueries::IndexCaseContactsQuery.new
+      TbService::TbQueries::IndexCaseContactsQuery.new
     end
 
     def screened_patients
-      TBService::TBQueries::ScreenedPatientsQuery.new
+      TbService::TbQueries::ScreenedPatientsQuery.new
     end
 
     def presumptive_patients
-      TBService::TBQueries::PresumptivePatientsQuery.new
+      TbService::TbQueries::PresumptivePatientsQuery.new
     end
 
     def ipt_candidates_query
-      TBService::TBQueries::IptCandidatesQuery.new
+      TbService::TbQueries::IptCandidatesQuery.new
     end
   end
 end

@@ -36,6 +36,6 @@ class Api::V1::MdrController < ApplicationController
     patient_service = PatientService.new
     starting_from_date = patient_service.patient_last_outcome_date(patient, program, date)
 
-    TBService::TBMdrService.new patient, program, date, starting_from_date
+    TbService::TbMdrService.new patient, program, date, starting_from_date
   end
 end

@@ -2,7 +2,7 @@
 
 include ModelUtils
 
-class TBService::TBQueries::RelapsePatientsQuery
+class TbService::TbQueries::RelapsePatientsQuery
   STATES = {
     RP: 168
   }.freeze

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService
+module TbService
   # Patients sub service.
   #
   # Basically provides ART specific patient-centric functionality
@@ -43,29 +43,8 @@ module TBService
       end).values
     end
 
-    def drugs_dispensed_on_date (patient, ref_date)
-      dispensing_encounter = Encounter.joins(:type).where(
-        'encounter_type.name = ? AND encounter.patient_id = ?
-          AND DATE(encounter_datetime) = DATE(?)',
-        'DISPENSING', patient.patient_id, ref_date
-      ).order(encounter_datetime: :desc).first
-
-      return [] unless dispensing_encounter
-
-      # HACK: Group orders in a map first to eliminate duplicates which can
-      # be created when a drug is scanned twice.
-      (dispensing_encounter.observations.each_with_object({}) do |obs, drug_map|
-        next unless obs.value_drug || drug_map.key?(obs.value_drug)
-
-        order = obs.order
-        next unless order&.drug_order&.quantity
-
-        drug_map[obs.value_drug] = order.drug_order if order.drug_order.drug.tb_drug?
-      end).values
-    end
-
     # assess whether a patient must go for a lab order
-    def due_lab_order? (patient:)
+    def due_lab_order?(patient:)
       program_start_date = find_patient_date_enrolled(patient)
       return false unless program_start_date
 
@@ -73,13 +52,13 @@ module TBService
       falls_within_ordering_period?(days: days, tolerance: 5) && no_orders_done?(patient: patient, time: 5.days.ago)
     end
 
-    def no_orders_done? (patient:, time:)
+    def no_orders_done?(patient:, time:)
       lab_order = encounter_type('Lab Orders')
       Encounter.where('patient_id = ? AND program_id = ? AND encounter_datetime >= ?',\
                       patient.patient_id, @program.program_id, time).blank?
     end
 
-    def falls_within_ordering_period? (days:, tolerance:)
+    def falls_within_ordering_period?(days:, tolerance:)
       # a lab order is supposed to be done after 56, 84, 140 and 260 days
       intervals = [56, 84, 140, 260]
 
@@ -102,15 +81,15 @@ module TBService
     end
 
     def visit_summary_label(patient, date)
-      TBService::PatientVisitLabel.new patient, date
+      TbService::PatientVisitLabel.new patient, date
     end
 
     def transfer_out_label(patient, date)
-      TBService::PatientTransferOutLabel.new patient, date
+      TbService::PatientTransferOutLabel.new patient, date
     end
 
     def medication_side_effects(patient, date)
-      service = TBService::PatientSideEffect.new(patient, date)
+      service = TbService::PatientSideEffect.new(patient, date)
       service.side_effects
     end
 
@@ -144,7 +123,7 @@ module TBService
     private
 
     def patient_summary(patient, date)
-      TBService::PatientSummary.new patient, date
+      TbService::PatientSummary.new patient, date
     end
 
     def patient_is_under_five?(patient)

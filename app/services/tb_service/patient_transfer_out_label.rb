@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-  class TBService::PatientTransferOutLabel
+  class TbService::PatientTransferOutLabel
     def initialize(patient, date)
       @patient = patient
       @date = date
-      @note = TBService::PatientTransferOut.new @patient, @date
+      @note = TbService::PatientTransferOut.new @patient, @date
       @printer = printer_instance
     end
 

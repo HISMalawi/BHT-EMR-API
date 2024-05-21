@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Privilege < ApplicationRecord
   self.table_name = 'privilege'
   self.primary_key = 'privilege_id'

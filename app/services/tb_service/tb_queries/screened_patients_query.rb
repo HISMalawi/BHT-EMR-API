@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBService::TBQueries::ScreenedPatientsQuery
+class TbService::TbQueries::ScreenedPatientsQuery
   def initialize (relation = Patient.all)
     @relation = relation.extending(Scopes)
     @program = program('TB Program')

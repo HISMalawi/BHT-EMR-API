@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module HTSService
+module HtsService
   class DataCleaning
     include ModelUtils
 
@@ -17,6 +17,7 @@ module HTSService
       'DUPLICATE ENCOUNTERS' => 'duplicate_encounter',
       'PARTNER STATUS' => 'partner_status',
       'TEST DATE EARLIER THAN BIRTHDATE' => 'test_date_earlier_than_birthdate',
+      'MISSING BIRTHDATE' => 'missing_birthdate'
     }.freeze
 
     def initialize(start_date, end_date, tool_name)
@@ -33,6 +34,34 @@ module HTSService
 
     private
 
+    def missing_birthdate
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          p.patient_id,
+          e.encounter_type,
+          i.identifier,
+          DATE(e.encounter_datetime) as visit_date,
+          pe.gender,
+          pe.birthdate,
+          pn.given_name,
+          pn.family_name
+        FROM patient p
+        INNER JOIN person_name pn ON pn.person_id = p.patient_id
+          AND pn.voided = 0
+        INNER JOIN person pe ON pe.person_id = p.patient_id
+          AND pe.voided = 0
+        INNER JOIN encounter e ON e.patient_id = p.patient_id
+          AND e.voided = 0
+        INNER JOIN patient_identifier i ON i.patient_id = p.patient_id AND i.identifier_type = #{patient_identifier_type('National id').id}
+        WHERE e.program_id = #{program('HTC PROGRAM').id}
+          AND e.voided = 0
+          AND DATE(e.encounter_datetime) >= DATE('#{@start_date}')
+          AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
+          AND pe.birthdate IS NULL
+          OR pe.birthdate = '0000-00-00'
+      SQL
+    end
+
     def incomplete_visits
       ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
@@ -45,17 +74,17 @@ module HTSService
           pn.given_name,
           pn.family_name
         FROM patient p
-        INNER JOIN person_name pn ON pn.person_id = p.patient_id 
+        INNER JOIN person_name pn ON pn.person_id = p.patient_id#{' '}
           AND pn.voided = 0
-        INNER JOIN person pe ON pe.person_id = p.patient_id 
+        INNER JOIN person pe ON pe.person_id = p.patient_id#{' '}
           AND pe.voided = 0
-        INNER JOIN encounter e ON e.patient_id = p.patient_id 
+        INNER JOIN encounter e ON e.patient_id = p.patient_id#{' '}
           AND e.voided = 0
         INNER JOIN patient_identifier i ON i.patient_id = p.patient_id AND i.identifier_type = #{patient_identifier_type('National id').id}
         LEFT JOIN obs vt ON vt.encounter_id = e.encounter_id
           AND vt.voided = 0
           AND vt.concept_id = #{concept('Visit type').id}
-          LEFT JOIN encounter et ON et.patient_id = p.patient_id 
+          LEFT JOIN encounter et ON et.patient_id = p.patient_id#{' '}
           AND et.voided = 0
           AND et.encounter_type = #{encounter_type('TESTING').id}
         WHERE e.program_id = #{program('HTC PROGRAM').id}
@@ -80,14 +109,14 @@ module HTSService
           pn.given_name,
           pn.family_name
         FROM patient p
-        INNER JOIN person_name pn ON pn.person_id = p.patient_id 
+        INNER JOIN person_name pn ON pn.person_id = p.patient_id#{' '}
           AND pn.voided = 0
-        INNER JOIN person pe ON pe.person_id = p.patient_id 
+        INNER JOIN person pe ON pe.person_id = p.patient_id#{' '}
           AND pe.voided = 0
-        INNER JOIN encounter e ON e.patient_id = p.patient_id 
+        INNER JOIN encounter e ON e.patient_id = p.patient_id#{' '}
           AND e.voided = 0
         INNER JOIN patient_identifier i ON i.patient_id = p.patient_id AND i.identifier_type = #{patient_identifier_type('National id').id}
-        INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type 
+        INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type#{' '}
           AND et.retired = 0
           AND e.encounter_type = #{encounter_type('TESTING').id}
         INNER JOIN obs hiv_status ON hiv_status.encounter_id = e.encounter_id
@@ -122,7 +151,7 @@ module HTSService
         INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type AND et.retired = 0
         INNER JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.identifier_type = #{patient_identifier_type('National id').id}
         INNER JOIN person_name p ON p.person_id = e.patient_id AND p.voided = 0
-        INNER JOIN person pn ON pn.person_id = e.patient_id 
+        INNER JOIN person pn ON pn.person_id = e.patient_id#{' '}
           AND pn.voided = 0
         WHERE e.program_id = #{program('HTC PROGRAM').id} AND e.voided = 0
         AND DATE(e.encounter_datetime) >= DATE('#{@start_date}') AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
@@ -144,11 +173,11 @@ module HTSService
           pn.family_name,
           pe.birthdate
         FROM patient p
-        INNER JOIN person_name pn ON pn.person_id = p.patient_id 
+        INNER JOIN person_name pn ON pn.person_id = p.patient_id#{' '}
           AND pn.voided = 0
         INNER JOIN person pe ON pe.person_id = p.patient_id
           AND pe.voided = 0
-        INNER JOIN encounter e ON e.patient_id = p.patient_id 
+        INNER JOIN encounter e ON e.patient_id = p.patient_id#{' '}
           AND e.voided = 0
           AND e.encounter_type = #{encounter_type('TESTING').id}
         INNER JOIN patient_identifier i ON i.patient_id = p.patient_id AND i.identifier_type = #{patient_identifier_type('National id').id}
@@ -160,7 +189,7 @@ module HTSService
           AND e.voided = 0
           AND DATE(e.encounter_datetime) >= DATE('#{@start_date}')
           AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
-          AND DATE(pe.birthdate) >= DATE(date_sub(e.encounter_datetime, interval 14 year)) 
+          AND DATE(pe.birthdate) >= DATE(date_sub(e.encounter_datetime, interval 14 year))#{' '}
       SQL
     end
 

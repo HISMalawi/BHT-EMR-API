@@ -1,5 +1,5 @@
 require 'date'
-class TBService::PatientScreeningCriteria
+class TbService::PatientScreeningCriteria
   include ModelUtils
 
   def initialize(patient_id:, program_id:, date:)

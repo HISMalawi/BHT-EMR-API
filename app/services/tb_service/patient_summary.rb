@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService
+module TbService
   # Provides various summary statistics for an TB patient
   class PatientSummary
     NPID_TYPE = 'National id'
@@ -42,7 +42,7 @@ module TBService
     end
 
     def mw_national_id
-      national_identifier = TBNumberService.mw_national_identifier(patient.patient_id)
+      national_identifier = TbNumberService.mw_national_identifier(patient.patient_id)
       national_identifier.identifier if not national_identifier.nil?
     end
 
@@ -154,7 +154,7 @@ module TBService
     end
 
     def tb_number
-      number = TBNumberService.get_current_patient_identifier(patient_id: patient.patient_id)
+      number = TbNumberService.get_current_patient_identifier(patient_id: patient.patient_id)
       return 'N/A' unless number
       number[:identifier]
     end

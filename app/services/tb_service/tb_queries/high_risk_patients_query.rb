@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBService::TBQueries::HighRiskPatientsQuery
+class TbService::TbQueries::HighRiskPatientsQuery
   def initialize (relation = Patient.all)
     @relation = relation.extending(Scopes)
     @program = program('TB Program')

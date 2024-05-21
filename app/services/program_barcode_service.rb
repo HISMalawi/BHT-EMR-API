@@ -2,12 +2,12 @@
 
 class ProgramBarcodeService
   ENGINES = {
-    'OPD PROGRAM' => OPDService::BarcodeEngine
+    'OPD PROGRAM' => OpdService::BarcodeEngine
   }.freeze
 
   def initialize(program:)
     clazz = ENGINES[program.name.upcase]
-    @engine = clazz.new(program: program)
+    @engine = clazz.new(program:)
   end
 
   def method_missing(method, *args, &block)

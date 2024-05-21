@@ -9,7 +9,7 @@
 #   >>> patient_summary.current_outcome # prints current outcome for patient in TB program
 module ProgramServiceLoader
   PROGRAM_NAMESPACES = {
-    'HIV PROGRAM' => 'ARTService'
+    'HIV PROGRAM' => 'ArtService'
   }.freeze
 
   def self.load(program, service_name)

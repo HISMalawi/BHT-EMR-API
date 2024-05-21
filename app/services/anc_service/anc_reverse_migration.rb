@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
   # rubocop:disable Metrics/ClassLength
   # class to handle reversing of anc migrated data
   # in true sense we are just deleting the records
-  class ANCReverseMigration
+  class AncReverseMigration
     include ActionView::Helpers::DateHelper
     def initialize(params)
       @database = params[:database]
@@ -87,7 +87,7 @@ module ANCService
         WHERE p.creator IN (#{@users}) AND DATE(e.date_created) >= DATE('#{@date}')
         GROUP BY p.patient_id HAVING COUNT(*) > 0;
       SQL
-      central_execute message: 'Saving patients in use', statement: statement
+      central_execute message: 'Saving patients in use', statement:
     end
 
     # method to map patient that not being used
@@ -128,7 +128,7 @@ module ANCService
         FROM patient p
         WHERE p.creator IN (#{@users}) AND p.patient_id NOT IN (#{@patients})
       SQL
-      central_execute message: 'Add patients to not in use', statement: statement
+      central_execute message: 'Add patients to not in use', statement:
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -161,7 +161,7 @@ module ANCService
           primary key (parameter_name)
         )
       SQL
-      central_execute statement: statement
+      central_execute(statement:)
       if check_mapping?
         statement = <<~SQL
           INSERT INTO #{@database}.reverse_mapping(parameter_name, parameter_value)
@@ -178,7 +178,7 @@ module ANCService
           ('max_order_id', #{prev_max_order_id.nil? ? 'null' : prev_max_order_id})
         SQL
       end
-      central_execute message: 'Inserting reverse values to reverse_mapping table', statement: statement
+      central_execute message: 'Inserting reverse values to reverse_mapping table', statement:
     end
     # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength

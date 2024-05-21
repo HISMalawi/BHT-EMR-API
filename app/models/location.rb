@@ -55,7 +55,8 @@ class Location < RetirableRecord
 
   def location_label
     return unless location_id
-    label = ZebraPrinter::StandardLabel.new
+
+    label = ZebraPrinter::Lib::StandardLabel.new
     label.font_size = 2
     label.font_horizontal_multiplier = 2
     label.font_vertical_multiplier = 2

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class TBService::PatientVitalStats
+class TbService::PatientVitalStats
   delegate :get, to: :patient_observation
 
   def initialize (patient)
@@ -25,6 +25,6 @@ class TBService::PatientVitalStats
   private
 
   def patient_observation
-    TBService::PatientObservation
+    TbService::PatientObservation
   end
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module TBService
+module TbService
   class PatientVisitLabel
     include ModelUtils
 
@@ -18,12 +18,12 @@ module TBService
     end
 
     def print
-      visit = TBService::PatientVisit.new patient, date
+      visit = TbService::PatientVisit.new patient, date
       return unless visit
 
       tb_number = patient.identifier('District TB Number')&.identifier || patient.identifier('District IPT Number')&.identifier || patient.national_id
 
-      label = ZebraPrinter::StandardLabel.new
+      label = ZebraPrinter::Lib::StandardLabel.new
       # label.draw_text("Printed: #{Date.today.strftime('%b %d %Y')}",597,280,0,1,1,1,false)
       label.draw_text(seen_by(patient, date).to_s, 499, 255, 0, 1, 1, 1, false)
       label.draw_text(date&.strftime('%B %d %Y').upcase, 25, 30, 0, 3, 1, 1, false)
@@ -31,11 +31,15 @@ module TBService
       label.draw_text("#{patient.person.name}(#{patient.gender})", 25, 60, 0, 3, 1, 1, false)
 
       pill_count = visit.pills_brought.collect { |c| c.join(',') }&.join(' ')
-      label.draw_text("#{visit.height.to_s + 'cm' unless visit.height.blank?}  #{visit.weight.to_s + 'kg' unless visit.weight.blank?}  #{'BMI:' + visit.bmi.to_s unless visit.bmi.blank?}", 470, 62, 0, 2, 1, 1, false)
-      label.draw_text("#{'(PC: ' + pill_count[0..24] + ')'}", 25, 88, 0, 2, 1, 1, false) unless pill_count.blank?
-      label.draw_text('Adh', 25, 130, 0, 3, 1, 1, false)
-      label.draw_text('DRUG(S) GIVEN', 110, 130, 0, 3, 1, 1, false)
-      label.draw_text('OUTC', 499, 130, 0, 3, 1, 1, false)
+      label.draw_text(
+        "#{visit.height.to_s + 'cm' unless visit.height.blank?}  #{visit.weight.to_s + 'kg' unless visit.weight.blank?}  #{'BMI:' + visit.bmi.to_s unless visit.bmi.blank?} VL:#{visit.viral_load_result} #{'(PC:' + pill_count[0..24] + ')' unless pill_count.blank?}", 25, 95, 0, 2, 1, 1, false
+      )
+
+      label.draw_text('SE', 25, 130, 0, 3, 1, 1, false)
+      label.draw_text('TB', 110, 130, 0, 3, 1, 1, false)
+      label.draw_text('Adh', 185, 130, 0, 3, 1, 1, false)
+      label.draw_text('DRUG(S) GIVEN', 255, 130, 0, 3, 1, 1, false)
+      label.draw_text('OUTC', 577, 130, 0, 3, 1, 1, false)
       label.draw_line(25, 150, 800, 5)
       label.draw_text(adherence_to_show(visit.adherence)&.gsub('%', '\\\\%').to_s, 25, 160, 0, 2, 1, 1, false)
       label.draw_text("#{visit.patient_outcome.name[0..20]}...", 499, 160, 0, 2, 1, 1, false)
@@ -68,26 +72,23 @@ module TBService
                                   AND '#{date} 23:59:59'
                                   ORDER BY date_created DESC")
       provider = begin
-                  [a.first.name, a.first.creator]
-                 rescue StandardError
-                   nil
-                end
-
+        [a.first.name, a.first.creator]
+      rescue StandardError
+        nil
+      end
+      # provider = patient.encounters.find_by_date(date).collect{|e| next unless e.name == 'HIV CLINIC CONSULTATION' ; [e.name,e.creator]}.compact
       provider_username = ('Seen by: ' + User.find(provider[1]).username).to_s unless provider.blank?
       if provider_username.blank?
-        clinic_encounters = ['TB Reception', 'Treatment', 'Vitals', 'Dispensation', 'Appointment']
+        clinic_encounters = ['HIV CLINIC CONSULTATION', 'HIV STAGING', 'ART ADHERENCE', 'TREATMENT', 'DISPENSION',
+                             'HIV RECEPTION']
         encounter_type_ids = EncounterType.where(['name IN (?)', clinic_encounters]).collect(&:id)
-
-        encounter = Encounter.where(['patient_id = ? AND encounter_type In (?) AND program_id = ?',
-                                     patient.id, encounter_type_ids, @program.program_id])\
-                             .order('encounter_datetime DESC')\
-                             .first
-
+        encounter = Encounter.where(['patient_id = ? AND encounter_type In (?)', patient.id,
+                                     encounter_type_ids]).order('encounter_datetime DESC').first
         provider_username = begin
-                              ('Seen by: ' + User.find(encounter.creator).username).to_s
-                            rescue StandardError
-                              nil
-                            end
+          ('Seen by: ' + User.find(encounter.creator).username).to_s
+        rescue StandardError
+          nil
+        end
       end
       provider_username
     end

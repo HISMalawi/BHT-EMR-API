@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     class RegimensByWeightAndGender
       include ConcurrencyUtils
@@ -36,8 +36,8 @@ module ARTService
       ].freeze
 
       def regimen_counts
-        with_lock(Cohort::LOCK_FILE) do
-          PatientsAliveAndOnTreatment.new(start_date: start_date, end_date: end_date, occupation: @occupation)
+        with_lock(ArtCohort::LOCK_FILE) do
+          PatientsAliveAndOnTreatment.new(start_date:, end_date:, occupation: @occupation)
                                      .refresh_outcomes_table
 
           WEIGHT_BANDS.map do |start_weight, end_weight|
@@ -83,7 +83,7 @@ module ARTService
         if start_weight.nil? && end_weight.nil?
           # If no weight is provided then this must be all patients without a weight observation
           return PatientProgram.select(:patient_id)
-                               .where(program_id: ARTService::Constants::PROGRAM_ID)
+                               .where(program_id: ArtService::Constants::PROGRAM_ID)
                                .where.not(patient_id: patients_with_known_weight.select(:person_id))
         end
 

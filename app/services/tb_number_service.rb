@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBNumberService
+class TbNumberService
   class DuplicateIdentifierError < StandardError; end
   NORMAL_TYPE = 'District TB Number'
   IPT_TYPE = 'District IPT Number'
@@ -89,8 +89,6 @@ class TBNumberService
     label.print(1)
   end
 
-  private
-
   def self.generate_tb_number (patient_id, date, number, type)
     identifier_type = PatientIdentifierType.find(type)
 
@@ -124,7 +122,7 @@ class TBNumberService
   end
 
   def self.regimen_engine
-    TBService::RegimenEngine.new(program: program('TB Program'))
+    TbService::RegimenEngine.new(program: program('TB Program'))
   end
 
   def self.facility_code

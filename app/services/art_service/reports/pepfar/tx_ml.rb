@@ -1,4 +1,6 @@
-module ARTService
+# frozen_string_literal: true
+
+module ArtService
   module Reports
     module Pepfar
       class TxMl
@@ -45,9 +47,6 @@ module ARTService
             rescue StandardError
               pat['date_enrolled'].to_date
             end
-          end
-
-          (tx_new || []).each do |pat|
             patient_ids << pat['patient_id']
             patient_ids = patient_ids.uniq
           end
@@ -100,6 +99,8 @@ module ARTService
             when 'Patient transferred out'
               data[age_group][gender][4] << patient_id
             end
+          rescue StandardError => e
+            Rails.logger.error(e.message)
           end
 
           data
@@ -151,7 +152,14 @@ module ARTService
             SELECT current_pepfar_defaulter_date(#{patient_id}, '#{end_date}') def_date;
           SQL
 
-          defaulter_date = defaulter_date['def_date'].to_date rescue end_date.to_date
+          defaulter_date = begin
+            defaulter_date['def_date'].to_date
+          rescue StandardError
+            end_date.to_date
+          end
+
+          raise "Defaulted outside the reporting period" if defaulter_date > end_date.to_date
+          raise "Defaulted outside the reporting period" if defaulter_date < start_date.to_date
           days_gone = ActiveRecord::Base.connection.select_one <<~SQL
             SELECT TIMESTAMPDIFF(MONTH, DATE('#{earliest_start_date}'), DATE('#{defaulter_date}')) months;
           SQL

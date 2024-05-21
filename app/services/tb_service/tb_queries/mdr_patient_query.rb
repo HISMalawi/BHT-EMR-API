@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBService::TBQueries::MDRPatientQuery
+class TbService::TbQueries::MDRPatientQuery
   MDR_STATE_ID = 174
 
   def initialize (relation = Patient.all)

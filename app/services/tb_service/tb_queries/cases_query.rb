@@ -1,6 +1,6 @@
 include ModelUtils
 
-class TBService::TBQueries::CasesQuery
+class TbService::TbQueries::CasesQuery
   RELAPSE_PATIENT_TYPE = 9814 #conflict resolution..
   def initialize (relation = Patient.all)
     @relation = relation.extending(Scopes)

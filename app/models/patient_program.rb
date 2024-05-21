@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PatientProgram < VoidableRecord
   self.table_name = 'patient_program'
   self.primary_key = 'patient_program_id'
@@ -54,7 +56,7 @@ class PatientProgram < VoidableRecord
   def current_state(date)
     patient_states.where('start_date <= DATE(:date)
                           AND (end_date >= DATE(:date) OR end_date IS NULL)',
-                         date: date)
+                         date:)
                   .order(:start_date)
                   .last
   end

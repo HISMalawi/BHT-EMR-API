@@ -1,10 +1,10 @@
 include TimeUtils
 
-class TBService::DCToolsEngine
+class TbService::DCToolsEngine
   LOGGER = Rails.logger
 
   SCENARIOS = {
-    'REGISTERED PATIENTS' => TBService::DCTools::RegisteredPatients
+    'REGISTERED PATIENTS' => TbService::DCTools::RegisteredPatients
   }.freeze
 
   def find_scenario (type:, name:, start_date:, end_date:)

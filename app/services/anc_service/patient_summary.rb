@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ANCService
+module AncService
   # Provides various summary statistics for an ART patient
   class PatientSummary
     NPID_TYPE = 'National id'
@@ -16,8 +16,8 @@ module ANCService
     def initialize(patient, date)
       @patient = patient
       @date = date
-      @art_service = ARTService::PatientSummary
-      @patient_visit = PatientVisit.new(patient,date)
+      @art_service = ArtService::PatientSummary
+      @patient_visit = PatientVisit.new(patient, date)
     end
 
     def full_summary
@@ -36,7 +36,7 @@ module ANCService
     end
 
     def date_of_lnmp
-      ANCService::PregnancyService.date_of_lnmp(@patient, @date)
+      AncService::PregnancyService.date_of_lnmp(@patient, @date)
     end
 
     def number_of_visits
@@ -45,11 +45,11 @@ module ANCService
       visits = []
 
       anc_visits = patient.encounters.joins([:observations])
-        .where(['encounter_type = ? AND obs.concept_id = ?
+                          .where(['encounter_type = ? AND obs.concept_id = ?
             AND encounter_datetime > ?',
-          EncounterType.find_by_name('ANC Visit Type').id,
-          ConceptName.find_by_name('Reason for visit').concept_id,
-          lmp_date]).each do |e|
+                                  EncounterType.find_by_name('ANC Visit Type').id,
+                                  ConceptName.find_by_name('Reason for visit').concept_id,
+                                  lmp_date]).each do |e|
         e.observations.each do |o|
           visits << o.value_numeric unless o.value_numeric.blank?
         end
@@ -60,14 +60,14 @@ module ANCService
     def fundus
       lmp_date = date_of_lnmp
       fundus = patient.encounters.joins([:observations])
-        .where(["encounter_type = ? AND obs.concept_id = ?
+                      .where(["encounter_type = ? AND obs.concept_id = ?
             AND encounter_datetime > ?",
-          EncounterType.find_by_name('Current pregnancy').id,
-          ConceptName.find_by_name('week of first visit').concept_id,
-          lmp_date])
-        .last.observations.collect {|o|
-          o.value_numeric
-        }.compact.last.to_i rescue nil
+                              EncounterType.find_by_name('Current pregnancy').id,
+                              ConceptName.find_by_name('week of first visit').concept_id,
+                              lmp_date])
+                      .last.observations.collect { |o|
+                 o.value_numeric
+               }.compact.last.to_i rescue nil
     end
 
     def getCurrentPatientOutcome
@@ -87,8 +87,6 @@ module ANCService
         "SELECT name FROM program_workflow_state INNER JOIN concept_name ON concept_name.concept_id = program_workflow_state.concept_id
         WHERE program_workflow_state_id = '#{state}';"
       )["name"]
-
     end
-
   end
 end

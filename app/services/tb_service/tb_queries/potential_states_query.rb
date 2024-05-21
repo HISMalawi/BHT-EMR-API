@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class TBService::TBQueries::PotentialStatesQuery
+class TbService::TbQueries::PotentialStatesQuery
   include ModelUtils
 
   STATES = {

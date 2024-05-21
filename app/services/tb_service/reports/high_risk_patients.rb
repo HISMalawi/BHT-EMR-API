@@ -1,4 +1,4 @@
-module TBService::Reports::HighRiskPatients
+module TbService::Reports::HighRiskPatients
   class << self
 
 
@@ -81,15 +81,15 @@ module TBService::Reports::HighRiskPatients
     private
 
     def enrolled_patients_query
-      TBService::TBQueries::EnrolledPatientsQuery.new
+      TbService::TbQueries::EnrolledPatientsQuery.new
     end
 
     def high_risk_patients_query
-      TBService::TBQueries::HighRiskPatientsQuery
+      TbService::TbQueries::HighRiskPatientsQuery
     end
 
     def index_case_contacts_query
-      TBService::TBQueries::IndexCaseContactsQuery.new
+      TbService::TbQueries::IndexCaseContactsQuery.new
     end
   end
 end
