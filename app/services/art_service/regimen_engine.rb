@@ -3,10 +3,32 @@
 module ArtService
   # TODO: This module reads like noise, it needs a re-write or even better,
   #       a complete rewrite.
+
+  # rubocop:disable Metrics/ClassLength
   class RegimenEngine
     include ModelUtils
 
     LOGGER = Rails.logger
+    DISCONTINUED_DRUGS = ['d4T (Stavudine 30mg tablet)',
+                          'd4T (Stavudine 40mg tablet)',
+                          'd4T (Stavudine 20mg tablet)',
+                          'd4T (Stavudine 15mg tablet)',
+                          'd4T (Stavudine syrup)',
+                          'Triomune-40',
+                          'Triomune baby (d4T/3TC/NVP 6/30/50mg tablet)',
+                          'd4T/3TC/NVP (30/150/200mg tablet)',
+                          'Triomune junior (d4T/3TC/NVP 12/60/100mg tablet)',
+                          'DDI (Didanosine 125mg tablet)',
+                          'DDI (Didanosine 200mg tablet)',
+                          'd4T/3TC/EFV (Stavudine Lamvudine Efavirenz)',
+                          'Coviro30 (Lamivudine + Stavudine 150/30 mg tablet)',
+                          'Coviro40 (Lamivudine + Stavudine 150/40mg tablet)',
+                          'd4T/3TC (Stavudine Lamivudine 6/30mg tablet)',
+                          'd4T/3TC (Stavudine Lamivudine 30/150 tablet)',
+                          'DDI/ABC/LPV/r',
+                          'TDF/d4T (Tenofavir and Stavudine 300/300mg tablet',
+                          'LPV/r pellets',
+                          'LPV/r Granules'].freeze
 
     def initialize(program:)
       @program = program
@@ -22,7 +44,7 @@ module ArtService
       arv_extras_concepts = Concept.joins(:concept_names).where(
         concept_name: { name: ['INH', 'CPT', 'Pyridoxine', 'Rifapentine', 'INH / RFP'] }
       )
-      Drug.where(concept: arv_extras_concepts) + Drug.arv_drugs.order(name: :desc)
+      Drug.where(concept: arv_extras_concepts) + Drug.arv_drugs.order(name: :desc).where.not(name: DISCONTINUED_DRUGS)
     end
 
     def regimen_extras(patient_weight:, name: nil)
@@ -517,4 +539,5 @@ module ArtService
       '17' => [Set.new([30, 1044]), Set.new([11, 969])]
     }.freeze
   end
+  # rubocop:enable Metrics/ClassLength
 end
