@@ -13,7 +13,7 @@ module ArtService
       'APPOINTMENTS' => ArtService::Reports::AppointmentsReport,
       'ARV_REFILL_PERIODS' => ArtService::Reports::ArvRefillPeriods,
       'COHORT' => ArtService::Reports::ArtCohort,
-      'COHORT_DISAGGREGATED' => ArtService::Reports::CohortDisaggregated,
+      'COHORT_DISAGGREGATED' => ArtService::Reports::Cohort::Disaggregated,
       'COHORT_DISAGGREGATED_ADDITIONS' => ArtService::Reports::CohortDisaggregatedAdditions,
       'COHORT_SURVIVAL_ANALYSIS' => ArtService::Reports::CohortSurvivalAnalysis,
       'DRUG_DISPENSATIONS' => ArtService::Reports::DrugDispensations,
