@@ -25,7 +25,7 @@ module ArtService
           update_outcomes unless rebuild
           process_initialization
           process_data
-          flatten_data
+          flatten_and_sort_data
         end
 
         private
@@ -57,6 +57,7 @@ module ArtService
         end
 
         def init_cohort_section(cursor)
+          cursor['tx_curr'] = []
           COHORT_REGIMENS.each do |regimen|
             cursor[regimen] = []
           end
@@ -80,6 +81,7 @@ module ArtService
             regimen = regimen.gsub(/(\d+[A-Za-z]*P)\z/, '\1P') if regimen.match?(/\A\d+[A-Za-z]*[^P]P\z/)
             gender = data['gender']
             report[age_group.to_s][gender.to_s][regimen.to_s] << patient_id
+            report[age_group.to_s][gender.to_s]['tx_curr'] << patient_id
             report[age_group.to_s][gender.to_s]['total'] << patient_id
             process_aggregate_rows(gender:, regimen:, patient_id:)
           end
@@ -92,7 +94,7 @@ module ArtService
           # we need to loop through the keys
           result.each_key do |key|
             result[key].each do |patient_id|
-              puts "Process patient: #{patient_id} on regimen: #{maternal[patient_id]}. Category: #{key}"
+              report['All'][key.to_s]['tx_curr'] << patient_id
               report['All'][key.to_s][maternal[patient_id].to_s] << patient_id
               report['All'][key.to_s]['total'] << patient_id
             end
@@ -102,6 +104,7 @@ module ArtService
 
         def process_aggregate_rows(gender:, regimen:, patient_id:)
           if gender == 'M'
+            report['All']['M']['tx_curr'] << patient_id
             report['All']['M'][regimen.to_s] << patient_id
             report['All']['M']['total'] << patient_id
           else
@@ -122,6 +125,21 @@ module ArtService
             end
           end
           flat_data
+        end
+
+        def flatten_and_sort_data
+          flat_data = flatten_data
+
+          age_group_order = ['Unknown', '<1 year', '1-4 years', '5-9 years', '10-14 years', '15-19 years',
+                             '20-24 years', '25-29 years', '30-34 years', '35-39 years', '40-44 years', '45-49 years',
+                             '50-54 years', '55-59 years', '60-64 years', '65-69 years', '70-74 years', '75-79 years',
+                             '80-84 years', '85-89 years', '90 plus years', 'All']
+          gender_order = %w[F M FP FNP FBF]
+
+          flat_data.sort_by do |row|
+            [age_group_order.index(row['age_group']) || Float::INFINITY,
+             gender_order.index(row['gender']) || Float::INFINITY]
+          end
         end
 
         # rubocop:disable Metrics/MethodLength
