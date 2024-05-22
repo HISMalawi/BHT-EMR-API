@@ -28,7 +28,13 @@ module ArtService
                           'DDI/ABC/LPV/r',
                           'TDF/d4T (Tenofavir and Stavudine 300/300mg tablet',
                           'LPV/r pellets',
-                          'LPV/r Granules'].freeze
+                          'LPV/r Granules',
+                          'Triomune-30',
+                          'LS30 (Stavudine and Lamivudine 30mg tablet)',
+                          'Lamivir baby (Stavudine and Lamivudine 6/30mg tablet',
+                          'D4T+3TC/D4T+3TC+NVP',
+                          'TDF/3TC + ALT/r',
+                          'AZT/3TC + ALT/r'].freeze
 
     def initialize(program:)
       @program = program
