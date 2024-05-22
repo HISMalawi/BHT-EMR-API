@@ -5,19 +5,20 @@ def patients
   ActiveRecord::Base.connection.select_all <<~SQL
     SELECT ob.person_id, count(ob.person_id) dup_lmp_count, min(ob.obs_datetime) latest_preg_min_lmp_date
     FROM obs ob
-            INNER JOIN(SELECT MAX(ob2.obs_datetime) start_date,
-                            ob2.person_id
-                        FROM obs ob2
-                                INNER JOIN encounter ON ob2.encounter_id = encounter.encounter_id
-                        AND encounter.encounter_type = #{EncounterType.find_by_name('ANC VISIT TYPE')}
-                        AND encounter.voided = 0
-                        AND ob2.concept_id = #{Concept.find_by_name('Reason for visit').id}
-                        AND ob2.value_numeric = 1 /*First visit for a new preganancy*/
-                        AND ob2.voided = 0
-                    GROUP BY person_id) as latest_preg_visit1 ON latest_preg_visit1.person_id = ob.person_id
-            INNER JOIN encounter ON ob.encounter_id = encounter.encounter_id
-            AND encounter.voided = 0
-        AND encounter.program_id = #{Program.find_by_name('ANC PROGRAM').id}
+      INNER JOIN(
+        SELECT MAX(ob2.obs_datetime) start_date, ob2.person_id
+        FROM obs ob2
+          INNER JOIN encounter ON ob2.encounter_id = encounter.encounter_id
+          AND encounter.encounter_type = #{EncounterType.find_by_name('ANC VISIT TYPE')}
+          AND encounter.voided = 0
+        AND ob2.concept_id = #{Concept.find_by_name('Reason for visit').id}
+        AND ob2.value_numeric = 1 /*First visit for a new preganancy*/
+        AND ob2.voided = 0
+        GROUP BY person_id
+      ) as latest_preg_visit1 ON latest_preg_visit1.person_id = ob.person_id
+      INNER JOIN encounter ON ob.encounter_id = encounter.encounter_id
+      AND encounter.voided = 0
+      AND encounter.program_id = #{Program.find_by_name('ANC PROGRAM').id}
     WHERE ob.obs_datetime > IF(latest_preg_visit1.start_date, latest_preg_visit1.start_date, DATE("1901-01-01 00:00:00"))
     AND ob.concept_id = #{Concept.find_by_name('Date of last menstrual period').id}
     AND ob.voided = 0
