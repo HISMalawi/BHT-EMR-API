@@ -3,30 +3,31 @@
 Table of Contents
 =================
 
-   * [HIS EMR API](#his-emr-api)
-      * [Requirements](#requirements)
-      * [Setting up](#setting-up)
-         * [Configuration](#configuration)
-         * [Setting up rails](#setting-up-rails)
-            * [Database](#database)
-               * [Using an existing database](#using-an-existing-database)
-               * [Using an empty database](#using-an-empty-database)
-         * [DDE](#dde)
-            * [Configuration](#configuration-1)
-            * [Enabling DDE](#enabling-dde)
-         * [Updating Metadata](#updating-metadata)
-         * [EMC to POC](#emc-to-poc)
-         * [AIT Intergration](#ait-intergration)
-         * [Running the API](#running-the-api)
-      * [Creating a Service](#creating-a-service)
-      * [Raw Data Store](#raw-data-store)
-      * [For developers](#for-developers)
-         * [Documentation](#documentation)
-            * [Building the Documentation](#building-the-documentation)
-         * [Testing](#testing)
-         * [Coding style/standards](#coding-stylestandards)
-         * [Useful (recommended) tools for development](#useful-recommended-tools-for-development)
-         * [Dev Container](#dev-container)
+- [BHT EMR API](#bht-emr-api)
+- [Table of Contents](#table-of-contents)
+  - [Requirements](#requirements)
+  - [Setting up](#setting-up)
+    - [Configuration](#configuration)
+    - [Setting up rails](#setting-up-rails)
+    - [Setting up Production mode](#setting-up-production-mode)
+      - [Database](#database)
+        - [Using an existing database](#using-an-existing-database)
+        - [Using an empty database](#using-an-empty-database)
+      - [DDE](#dde)
+    - [Updating Metadata](#updating-metadata)
+    - [EMC to POC](#emc-to-poc)
+    - [AIT Intergration](#ait-intergration)
+    - [Running the API](#running-the-api)
+  - [Creating a Service](#creating-a-service)
+  - [Raw Data Store](#raw-data-store)
+  - [For developers](#for-developers)
+    - [Documentation](#documentation)
+      - [Building the Documentation](#building-the-documentation)
+    - [Testing](#testing)
+    - [Coding style/standards](#coding-stylestandards)
+    - [Useful (recommended) tools for development](#useful-recommended-tools-for-development)
+    - [Dev Container](#dev-container)
+    - [Data Cleaning](#data-cleaning)
 
 ## Requirements
 
@@ -405,5 +406,9 @@ See the following for more:
 * You don't need to worry about setting up the storage, the container comes with it pre-configured
 * You don't need to worry about setting up the locale, the container comes with it pre-configured
 * You don't need to worry about setting up the gems, the container comes with them pre-installed
+
+### Data Cleaning
+
+- [ANC](/bin/ANC/README.md)
 
 [Back to top](#table-of-contents)
