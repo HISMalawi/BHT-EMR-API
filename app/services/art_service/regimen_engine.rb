@@ -31,7 +31,7 @@ module ArtService
                           'LPV/r Granules',
                           'Triomune-30',
                           'LS30 (Stavudine and Lamivudine 30mg tablet)',
-                          'Lamivir baby (Stavudine and Lamivudine 6/30mg tablet',
+                          'Lamivir baby (Stavudine and Lamivudine 6/30mg tabl',
                           'D4T+3TC/D4T+3TC+NVP',
                           'TDF/3TC + ALT/r',
                           'AZT/3TC + ALT/r'].freeze
