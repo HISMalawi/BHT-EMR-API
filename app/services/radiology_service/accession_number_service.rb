@@ -20,10 +20,10 @@ module RadiologyService
       private
 
       def find_current_counter(date)
-        counter = RadiologyAccessionNumberCounter.find_by(date: date)
+        counter = RadiologyAccessionNumberCounter.find_by(date:)
         return counter if counter
 
-        RadiologyAccessionNumberCounter.create(date: date, value: 1)
+        RadiologyAccessionNumberCounter.create(date:, value: 1)
       end
 
       def validate_date(date)

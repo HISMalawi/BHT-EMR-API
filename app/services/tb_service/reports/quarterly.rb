@@ -2,7 +2,7 @@
 
 include ModelUtils
 
-module TBService::Reports::Quarterly
+module TbService::Reports::Quarterly
   class << self
     STATES = {
       'TREATMENT_COMPLETE' => 93,
@@ -16,7 +16,7 @@ module TBService::Reports::Quarterly
       'ART_TREATMENT' => 7
     }.freeze
 
-    def new_pulmonary_clinically_diagnosed (start_date, end_date)
+    def new_pulmonary_clinically_diagnosed(start_date, end_date)
       new_patients = patients_query.new_patients(start_date, end_date)
       return [] if new_patients.empty?
 
@@ -31,7 +31,7 @@ module TBService::Reports::Quarterly
       map_outcomes(patients, start_date, end_date)
     end
 
-    def new_eptb (start_date, end_date)
+    def new_eptb(start_date, end_date)
       new_patients = patients_query.new_patients(start_date, end_date)
       return [] if new_patients.empty?
 
@@ -46,7 +46,7 @@ module TBService::Reports::Quarterly
       map_outcomes(persons, start_date, end_date)
     end
 
-    def new_mtb_detected_xpert (start_date, end_date)
+    def new_mtb_detected_xpert(start_date, end_date)
       new_patients = patients_query.new_patients(start_date, end_date)
       return [] if new_patients.empty?
 
@@ -61,7 +61,7 @@ module TBService::Reports::Quarterly
       map_outcomes(persons, start_date, end_date)
     end
 
-    def new_smear_positive (start_date, end_date)
+    def new_smear_positive(start_date, end_date)
       new_patients = patients_query.new_patients(start_date, end_date)
       return [] if new_patients.empty?
 
@@ -76,7 +76,7 @@ module TBService::Reports::Quarterly
       map_outcomes(persons, start_date, end_date)
     end
 
-    def relapse_bacteriologically_confirmed (start_date, end_date)
+    def relapse_bacteriologically_confirmed(start_date, end_date)
       patients = relapse_patients_query.bacteriologically_confirmed(start_date, end_date)
 
       return [] if patients.empty?
@@ -86,7 +86,7 @@ module TBService::Reports::Quarterly
       map_outcomes(ids, start_date, end_date)
     end
 
-    def relapse_clinical_pulmonary (start_date, end_date)
+    def relapse_clinical_pulmonary(start_date, end_date)
       patients = relapse_patients_query.clinical_pulmonary(start_date, end_date)
 
       return [] if patients.empty?
@@ -96,7 +96,7 @@ module TBService::Reports::Quarterly
       map_outcomes(ids, start_date, end_date)
     end
 
-    def relapse_eptb (start_date, end_date)
+    def relapse_eptb(start_date, end_date)
       patients = relapse_patients_query.eptb(start_date, end_date)
 
       return [] if patients.empty?
@@ -106,14 +106,15 @@ module TBService::Reports::Quarterly
       map_outcomes(ids, start_date, end_date)
     end
 
-    def retreatment_excluding_relapse (start_date, end_date)
+    def retreatment_excluding_relapse(start_date, end_date)
       type = encounter_type('Treatment')
       program = program('TB Program')
 
       treated = PatientState.select('patient_program.patient_id').distinct\
                             .joins(:patient_program)\
                             .where(:patient_program => { program_id: program },
-                                   :patient_state => { state: STATES['CURRENTLY_IN_TREATMENT'], date_created: start_date..end_date })
+                                   :patient_state => { state: STATES['CURRENTLY_IN_TREATMENT'],
+                                                       date_created: start_date..end_date })
 
       return [] if treated.empty?
 
@@ -134,7 +135,7 @@ module TBService::Reports::Quarterly
       map_outcomes(retreated_ids, start_date, end_date)
     end
 
-    def hiv_positive_new_and_relapse (start_date, end_date)
+    def hiv_positive_new_and_relapse(start_date, end_date)
       hiv_status = concept('HIV Status')
       value = concept('Positive')
 
@@ -143,7 +144,7 @@ module TBService::Reports::Quarterly
 
       return [] if relapse.empty? && new_patients.empty?
 
-      ids = (relapse.map { |r| r['patient_id']} + new_patients.map(&:patient_id)).uniq
+      ids = (relapse.map { |r| r['patient_id'] } + new_patients.map(&:patient_id)).uniq
 
       positive = Observation.where(person_id: ids,
                                    concept: hiv_status,
@@ -156,7 +157,7 @@ module TBService::Reports::Quarterly
       map_outcomes(outcome_ids, start_date, end_date)
     end
 
-    def children_aged_zero_to_four (start_date, end_date)
+    def children_aged_zero_to_four(start_date, end_date)
       children = patients_query.age_range(0, 4, start_date, end_date)
 
       return [] if children.empty?
@@ -166,7 +167,7 @@ module TBService::Reports::Quarterly
       map_outcomes(patient_ids, start_date, end_date)
     end
 
-    def children_aged_five_to_fourteen (start_date, end_date)
+    def children_aged_five_to_fourteen(start_date, end_date)
       children = patients_query.age_range(5, 14, start_date, end_date)
 
       return [] if children.empty?
@@ -177,10 +178,11 @@ module TBService::Reports::Quarterly
     end
 
     private
-    def map_outcomes (patient_ids, start_date, end_date)
+
+    def map_outcomes(patient_ids, start_date, end_date)
       {
         'cases' => number_of_cases(patient_ids, start_date, end_date),
-        'cured' => patients_with_state(patient_ids, start_date, end_date, STATES['CURED'] ),
+        'cured' => patients_with_state(patient_ids, start_date, end_date, STATES['CURED']),
         'complete' => patients_with_state(patient_ids, start_date, end_date, STATES['TREATMENT_COMPLETE']),
         'failed' => patients_with_state(patient_ids, start_date, end_date, STATES['TREATMENT_FAILED']),
         'defaulted' => patients_with_state(patient_ids, start_date, end_date, STATES['DEFAULTED']),
@@ -189,49 +191,52 @@ module TBService::Reports::Quarterly
       }
     end
 
-    def number_of_cases (patient_ids, start_date, end_date)
+    def number_of_cases(patient_ids, start_date, end_date)
       patient_ids.size
     end
 
-    def patients_with_state (patient_ids, start_date, end_date, state)
+    def patients_with_state(patient_ids, start_date, end_date, state)
       PatientState.joins(:patient_program)\
                   .where('patient_program.patient_id': patient_ids,
-                          state: state,
-                          end_date: nil,
+                         state: state,
+                         end_date: nil,
                          'patient_state.date_created': start_date..end_date)\
                   .count
     end
 
-    def cases_not_evaluated (patient_ids)
+    def cases_not_evaluated(patient_ids)
       tb_program = program('TB Program')
 
-      ids = patient_ids.select { |id| PatientState.joins(:patient_program)\
-                                                  .where('patient_program.patient_id': id,
-                                                         'patient_program.program_id': tb_program.program_id)\
-                                                  .blank? }
+      ids = patient_ids.select { |id|
+        PatientState.joins(:patient_program)\
+                    .where('patient_program.patient_id': id,
+                           'patient_program.program_id': tb_program.program_id)\
+                    .blank?
+      }
 
       ids.size
     end
 
     private
+
     def patients_query
-      TBQueries::PatientsQuery.new.search
+      TbQueries::PatientsQuery.new.search
     end
 
     def patient_states_query
-      TBQueries::PatientStatesQuery.new
+      TbQueries::PatientStatesQuery.new
     end
 
     def obs_query
-      TBQueries::ObservationsQuery.new
+      TbQueries::ObservationsQuery.new
     end
 
     def clinically_diagnosed_patients_query
-      TBQueries::ClinicallyDiagnosedPatientsQuery.new
+      TbQueries::ClinicallyDiagnosedPatientsQuery.new
     end
 
     def relapse_patients_query
-      TBQueries::RelapsePatientsQuery.new
+      TbQueries::RelapsePatientsQuery.new
     end
   end
 end

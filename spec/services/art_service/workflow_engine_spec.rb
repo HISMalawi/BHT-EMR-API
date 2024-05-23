@@ -8,14 +8,14 @@ ACTIVITIES = 'ART adherence, Drug Dispensations, HIV clinic consultations,
 
 HIV_PROGRAM_ID = 1
 
-describe ARTService::WorkflowEngine do
+describe ArtService::WorkflowEngine do
   let(:epoch) { Time.now }
   let(:art_program) { Program.find_by_name!('HIV Program') }
   let(:patient) { create :patient }
   let(:engine) do
     UserProperty.create(user: User.current, property: 'Activities', property_value: ACTIVITIES)
-    ARTService::WorkflowEngine.new program: art_program,
-                                   patient: patient,
+    ArtService::WorkflowEngine.new program: art_program,
+                                   patient:,
                                    date: epoch
   end
 
@@ -23,8 +23,8 @@ describe ARTService::WorkflowEngine do
     # Initialise an engine without any user activities
     UserProperty.find_by(property: 'Activities')&.delete
 
-    ARTService::WorkflowEngine.new program: art_program,
-                                   patient: patient,
+    ArtService::WorkflowEngine.new program: art_program,
+                                   patient:,
                                    date: epoch
   end
 
@@ -207,7 +207,7 @@ describe ARTService::WorkflowEngine do
 
   # Helper methods
   def enroll_patient(patient)
-    create :patient_program, patient: patient,
+    create :patient_program, patient:,
                              program: art_program
   end
 
@@ -215,7 +215,7 @@ describe ARTService::WorkflowEngine do
     date ||= Time.now
     enroll_patient patient
     create(:encounter, type: EncounterType.find_by!(name: EncounterType::HIV_CLINIC_REGISTRATION),
-                       patient: patient,
+                       patient:,
                        date_created: date,
                        program_id: HIV_PROGRAM_ID)
   end
@@ -223,7 +223,7 @@ describe ARTService::WorkflowEngine do
   def receive_patient(patient, guardian_only: false, on_fast_track: false)
     register_patient patient
     reception = create :encounter, type: EncounterType.find_by_name!('HIV RECEPTION'),
-                                   patient: patient,
+                                   patient:,
                                    program_id: HIV_PROGRAM_ID
     if guardian_only
       create :observation, concept_id: ConceptName.find_by_name!('PATIENT PRESENT').concept_id,
@@ -256,15 +256,15 @@ describe ARTService::WorkflowEngine do
     receive_patient patient, guardian_only: false
 
     encounter = create :encounter, type: EncounterType.find_by_name!('VITALS'),
-                                   patient: patient,
+                                   patient:,
                                    program_id: HIV_PROGRAM_ID
 
-    create :observation, encounter: encounter,
+    create :observation, encounter:,
                          person_id: encounter.patient_id,
                          concept_id: ConceptName.find_by_name!('Weight').concept_id,
                          value_numeric: 50
 
-    create :observation, encounter: encounter,
+    create :observation, encounter:,
                          person_id: encounter.patient_id,
                          concept_id: ConceptName.find_by_name!('Height (cm)').concept_id,
                          value_numeric: 50
@@ -273,34 +273,34 @@ describe ARTService::WorkflowEngine do
   def record_staging(patient)
     record_vitals patient
     create :encounter, type: EncounterType.find_by_name!('HIV STAGING'),
-                       patient: patient,
+                       patient:,
                        program_id: HIV_PROGRAM_ID
   end
 
   def record_hiv_clinic_consultation(patient)
     record_staging patient
     create :encounter, type: EncounterType.find_by_name!('HIV CLINIC CONSULTATION'),
-                       patient: patient,
+                       patient:,
                        program_id: HIV_PROGRAM_ID
   end
 
   def record_art_adherence(patient)
     record_hiv_clinic_consultation patient
     create :encounter, type: EncounterType.find_by_name!('ART ADHERENCE'),
-                       patient: patient,
+                       patient:,
                        program_id: HIV_PROGRAM_ID
   end
 
   def record_treatment(patient, assess_fast_track: false)
     record_art_adherence patient
     encounter = create :encounter, type: EncounterType.find_by_name!('TREATMENT'),
-                                   patient: patient,
+                                   patient:,
                                    program_id: HIV_PROGRAM_ID
 
     arv = Drug.arv_drugs[0]
-    order = create :order, concept: arv.concept, patient: patient,
-                           encounter: encounter
-    create :drug_order, order: order, drug: arv
+    order = create(:order, concept: arv.concept, patient:,
+                           encounter:)
+    create :drug_order, order:, drug: arv
 
     setup_fast_track_assessment(encounter, patient, assess_fast_track)
 
@@ -317,7 +317,7 @@ describe ARTService::WorkflowEngine do
                                end
 
     create :observation, concept_id: ConceptName.find_by_name!('Assess for fast track?').concept_id,
-                         encounter: encounter,
+                         encounter:,
                          person: patient.person,
                          value_coded: assess_fast_track_answer
   end
@@ -326,24 +326,24 @@ describe ARTService::WorkflowEngine do
     record_treatment patient, assess_fast_track: true
 
     encounter = create :encounter, type: EncounterType.find_by_name!('FAST TRACK ASSESMENT'),
-                                   patient: patient,
+                                   patient:,
                                    program_id: HIV_PROGRAM_ID
     create :observation, concept_id: ConceptName.find_by_name!('Adult 18 years +').concept_id,
                          person: patient.person,
-                         encounter: encounter
+                         encounter:
   end
 
   def record_dispensing(patient)
     record_fast_track patient
     create :encounter, type: EncounterType.find_by_name!('DISPENSING'),
-                       patient: patient,
+                       patient:,
                        program_id: HIV_PROGRAM_ID
   end
 
   def record_appointment(patient)
     record_dispensing patient
     create :encounter, type: EncounterType.find_by_name!('APPOINTMENT'),
-                       patient: patient,
+                       patient:,
                        program_id: HIV_PROGRAM_ID
   end
 
@@ -351,7 +351,7 @@ describe ARTService::WorkflowEngine do
     date ||= Time.now
 
     create :observation, person: patient.person,
-                         encounter: create(:encounter_dispensing, patient: patient, program_id: HIV_PROGRAM_ID),
+                         encounter: create(:encounter_dispensing, patient:, program_id: HIV_PROGRAM_ID),
                          concept_id: ConceptName.find_by_name!('AMOUNT DISPENSED').concept_id,
                          value_drug: Drug.arv_drugs[0].drug_id,
                          obs_datetime: date
@@ -359,7 +359,7 @@ describe ARTService::WorkflowEngine do
 
   def record_patient_not_receiving_treatment(patient)
     create :observation, person: patient.person,
-                         encounter: create(:encounter_vitals, patient: patient, program_id: HIV_PROGRAM_ID),
+                         encounter: create(:encounter_vitals, patient:, program_id: HIV_PROGRAM_ID),
                          concept_id: ConceptName.find_by_name!('Prescribe drugs').concept_id,
                          value_coded: ConceptName.find_by_name!('No').concept_id
   end
@@ -369,7 +369,7 @@ describe ARTService::WorkflowEngine do
                           .joins(:type)
                           .merge(EncounterType.where(name: EncounterType::REGISTRATION))
                           .first
-    registration ||= create(:encounter, patient: patient,
+    registration ||= create(:encounter, patient:,
                                         program_id: HIV_PROGRAM_ID,
                                         encounter_datetime: date || Date.today,
                                         type: EncounterType.find_by!(name: EncounterType::REGISTRATION))

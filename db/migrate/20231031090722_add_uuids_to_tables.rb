@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddUuidsToTables < ActiveRecord::Migration[5.2]
   def change
     add_column :active_list, :uuid, :string, length: 32 unless column_exists?(:active_list, :uuid)
@@ -14,7 +16,8 @@ class AddUuidsToTables < ActiveRecord::Migration[5.2]
     add_column :concept_proposal, :uuid, :string, length: 32 unless column_exists?(:concept_proposal, :uuid)
     add_column :concept_set, :uuid, :string, length: 32 unless column_exists?(:concept_set, :uuid)
     add_column :concept_source, :uuid, :string, length: 32 unless column_exists?(:concept_source, :uuid)
-    add_column :concept_state_conversion, :uuid, :string, length: 32 unless column_exists?(:concept_state_conversion, :uuid)
+    add_column :concept_state_conversion, :uuid, :string, length: 32 unless column_exists?(:concept_state_conversion,
+                                                                                           :uuid)
     add_column :drug, :uuid, :string, length: 32 unless column_exists?(:drug, :uuid)
     add_column :encounter, :uuid, :string, length: 32 unless column_exists?(:encounter, :uuid)
     add_column :encounter_type, :uuid, :string, length: 32 unless column_exists?(:encounter_type, :uuid)
@@ -32,16 +35,20 @@ class AddUuidsToTables < ActiveRecord::Migration[5.2]
     add_column :location_tag, :uuid, :string, length: 32 unless column_exists?(:location_tag, :uuid)
     add_column :logic_rule_definition, :uuid, :string, length: 32 unless column_exists?(:logic_rule_definition, :uuid)
     add_column :logic_rule_token, :uuid, :string, length: 32 unless column_exists?(:logic_rule_token, :uuid)
-    add_column :logic_token_registration, :uuid, :string, length: 32 unless column_exists?(:logic_token_registration, :uuid)
+    add_column :logic_token_registration, :uuid, :string, length: 32 unless column_exists?(:logic_token_registration,
+                                                                                           :uuid)
     add_column :note, :uuid, :string, length: 32 unless column_exists?(:note, :uuid)
     add_column :notification_alert, :uuid, :string, length: 32 unless column_exists?(:notification_alert, :uuid)
-    add_column :notification_alert_recipient, :uuid, :string, length: 32 unless column_exists?(:notification_alert_recipient, :uuid)
+    add_column :notification_alert_recipient, :uuid, :string, length: 32 unless column_exists?(
+      :notification_alert_recipient, :uuid
+    )
     add_column :notification_template, :uuid, :string, length: 32 unless column_exists?(:notification_template, :uuid)
     add_column :obs, :uuid, :string, length: 32 unless column_exists?(:obs, :uuid)
     add_column :order_type, :uuid, :string, length: 32 unless column_exists?(:order_type, :uuid)
     add_column :orders, :uuid, :string, length: 32 unless column_exists?(:orders, :uuid)
     add_column :patient_identifier, :uuid, :string, length: 32 unless column_exists?(:patient_identifier, :uuid)
-    add_column :patient_identifier_type, :uuid, :string, length: 32 unless column_exists?(:patient_identifier_type, :uuid)
+    add_column :patient_identifier_type, :uuid, :string, length: 32 unless column_exists?(:patient_identifier_type,
+                                                                                          :uuid)
     add_column :patient_program, :uuid, :string, length: 32 unless column_exists?(:patient_program, :uuid)
     add_column :patient_state, :uuid, :string, length: 32 unless column_exists?(:patient_state, :uuid)
     add_column :patientflags_flag, :uuid, :string, length: 32 unless column_exists?(:patientflags_flag, :uuid)
@@ -60,8 +67,11 @@ class AddUuidsToTables < ActiveRecord::Migration[5.2]
     add_column :relationship_type, :uuid, :string, length: 32 unless column_exists?(:relationship_type, :uuid)
     add_column :report_object, :uuid, :string, length: 32 unless column_exists?(:report_object, :uuid)
     add_column :report_schema_xml, :uuid, :string, length: 32 unless column_exists?(:report_schema_xml, :uuid)
-    add_column :reporting_report_design, :uuid, :string, length: 32 unless column_exists?(:reporting_report_design, :uuid)
-    add_column :reporting_report_design_resource, :uuid, :string, length: 32 unless column_exists?(:reporting_report_design_resource, :uuid)
+    add_column :reporting_report_design, :uuid, :string, length: 32 unless column_exists?(:reporting_report_design,
+                                                                                          :uuid)
+    add_column :reporting_report_design_resource, :uuid, :string, length: 32 unless column_exists?(
+      :reporting_report_design_resource, :uuid
+    )
     add_column :role, :uuid, :string, length: 32 unless column_exists?(:role, :uuid)
     add_column :scheduler_task_config, :uuid, :string, length: 32 unless column_exists?(:scheduler_task_config, :uuid)
     add_column :serialized_object, :uuid, :string, length: 32 unless column_exists?(:serialized_object, :uuid)
@@ -69,4 +79,3 @@ class AddUuidsToTables < ActiveRecord::Migration[5.2]
     add_column :users, :uuid, :string, length: 32 unless column_exists?(:users, :uuid)
   end
 end
-

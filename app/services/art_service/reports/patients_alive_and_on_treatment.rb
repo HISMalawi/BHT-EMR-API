@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     # Returns all patients alive and on treatment within a given
     # time period (Tx Curr).
@@ -33,7 +33,7 @@ module ARTService
       end
 
       def query
-        with_lock(Cohort::LOCK_FILE) do
+        with_lock(ArtCohort::LOCK_FILE) do
           refresh_outcomes_table if @rebuild_outcomes || !outcomes_table_exists?
 
           Patient.find_by_sql <<~SQL

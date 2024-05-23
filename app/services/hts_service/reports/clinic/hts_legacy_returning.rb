@@ -77,7 +77,7 @@ module HtsService
           model = query
 
           INDICATORS.each do |param|
-            model = ObsValueScope.call(**param.merge(model: model))
+            model = ObsValueScope.call(**param.merge(model:))
           end
           @query_data = connection.select_all(model.group('person.person_id'))
           access_type_and_age_group
@@ -174,7 +174,7 @@ module HtsService
             not_present: filter_hash(data, 'partner_present', 'No')
           }
           partner_present[:total_chec] = partner_present.values.flatten
-          report.merge!({ partner_present: partner_present})
+          report.merge!({ partner_present: })
         end
 
         def last_tested
@@ -187,7 +187,7 @@ module HtsService
             inconclusive: filter_hash(data, 'last_tested', concept(HIV_INVALID_OR_INCONCLUSIVE).concept_id)
           }
           last_test[:total_chec] = last_test.values.flatten
-          report.merge!({ last_test: last_test})
+          report.merge!({ last_test: })
         end
 
         def access_type_and_age_group

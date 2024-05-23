@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateMohRegimenCombinationDrugs < ActiveRecord::Migration[5.2]
   def change
     return if table_exists?(:moh_regimen_combination_drug)

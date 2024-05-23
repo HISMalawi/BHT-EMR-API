@@ -4,13 +4,22 @@ def update_admin_password_and_salt
   user = User.find_by_username('admin')
   salt = SecureRandom.base64
   pass = Digest::SHA1.hexdigest("test#{salt}")
-  user.update!(password: pass, salt: salt)
+  user.update!(password: pass, salt:)
 end
 
 def add_global_property
-  GlobalProperty.create!(property: 'current_health_center_id', property_value: 614) if GlobalProperty.where(property: 'current_health_center_id').blank?
-  GlobalProperty.create!(property: 'current_health_center_name', property_value: 'Queen Elizabeth Central Hospital') if GlobalProperty.where(property: 'current_health_center_name').blank?
-  GlobalProperty.create!(property: 'site_prefix', property_value: 'QECH') if GlobalProperty.where(property: 'site_prefix').blank?
+  if GlobalProperty.where(property: 'current_health_center_id').blank?
+    GlobalProperty.create!(property: 'current_health_center_id',
+                           property_value: 614)
+  end
+  if GlobalProperty.where(property: 'current_health_center_name').blank?
+    GlobalProperty.create!(property: 'current_health_center_name',
+                           property_value: 'Queen Elizabeth Central Hospital')
+  end
+  return unless GlobalProperty.where(property: 'site_prefix').blank?
+
+  GlobalProperty.create!(property: 'site_prefix',
+                         property_value: 'QECH')
 end
 
 def person_not_in_patient

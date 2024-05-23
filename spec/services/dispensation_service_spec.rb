@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require 'set'
 
 RSpec.describe DispensationService do
   let(:patient) { create :patient }
@@ -33,12 +32,12 @@ RSpec.describe DispensationService do
   describe :dispense_drug do
     it 'updates order quantity' do
       program = create :program
-      encounter = create :encounter_treatment, patient: patient
+      encounter = create(:encounter_treatment, patient:)
       drug = Drug.arv_drugs[0]
-      order = create :order, encounter: encounter, patient: patient,
+      order = create :order, encounter:, patient:,
                              concept: drug.concept, start_date: Date.today,
                              auto_expire_date: 10.days.after
-      drug_order = create :drug_order, order: order, drug: drug
+      drug_order = create(:drug_order, order:, drug:)
 
       obs = DispensationService.dispense_drug(program, drug_order, 10)
 

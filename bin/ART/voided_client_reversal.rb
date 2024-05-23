@@ -82,7 +82,7 @@ def unvoid_encounters(patient:)
   encounters.each do |encounter|
     encounter.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil) if encounter.program_id.present?
     next if encounter.program_id.present?
-    
+
     # update using raw query to avoid validation errors
     ActiveRecord::Base.connection.execute <<~SQL
       UPDATE encounter SET voided = 0, voided_by = NULL, date_voided = NULL, void_reason = NULL
@@ -106,32 +106,33 @@ def unvoid_obs(patient:)
 end
 
 def process_person(patient:)
-  unvoid_person_name(patient: patient)
-  unvoid_person_attributes(patient: patient)
-  unvoid_person_addressess(patient: patient)
-  unvoid_relationship(patient: patient)
+  unvoid_person_name(patient:)
+  unvoid_person_attributes(patient:)
+  unvoid_person_addressess(patient:)
+  unvoid_relationship(patient:)
 end
 
 def process_patient(patient:)
-  unvoid_patient_identifier(patient: patient)
-  unvoid_patient_program(patient: patient)
-  unvoid_patient_state(patient: patient)
+  unvoid_patient_identifier(patient:)
+  unvoid_patient_program(patient:)
+  unvoid_patient_state(patient:)
 end
 
 def process_encounters(patient:)
-  unvoid_encounters(patient: patient)
-  unvoid_orders(patient: patient)
-  unvoid_obs(patient: patient)
+  unvoid_encounters(patient:)
+  unvoid_orders(patient:)
+  unvoid_obs(patient:)
 end
 
 def process_request(identifier:, given_name:, family_name:, gender:, birthdate:)
-  patient = voided_patient(identifier: identifier, given_name: given_name, family_name: family_name, gender: gender, birthdate: birthdate)
+  patient = voided_patient(identifier:, given_name:, family_name:, gender:,
+                           birthdate:)
   ActiveRecord::Base.transaction do
-    unvoid_person(patient: patient)
-    unvoid_patient(patient: patient)
-    process_person(patient: patient)
-    process_encounters(patient: patient)
-    process_patient(patient: patient)
+    unvoid_person(patient:)
+    unvoid_patient(patient:)
+    process_person(patient:)
+    process_encounters(patient:)
+    process_patient(patient:)
   end
 end
 
@@ -151,4 +152,5 @@ gender = gets.strip
 print 'Enter patient birthdate in the following format(yyyy-mm-dd) i.e 1987-07-15> '
 birthdate = gets.strip
 
-process_request(identifier: identifier, given_name: given_name, family_name: family_name, gender: gender, birthdate: birthdate)
+process_request(identifier:, given_name:, family_name:, gender:,
+                birthdate:)

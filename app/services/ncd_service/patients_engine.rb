@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-class NCDService::PatientsEngine
+class NcdService::PatientsEngine
   include ModelUtils
-  def initialize(program:)
-    @program = program
+  def initialize(program: nil)
+    @program = program || Program.find_by_name!('NCD Program')
   end
 
   def visit_summary_label(patient, date)

@@ -21,15 +21,15 @@ module HtsService
       'HTS TST FAC' => HtsService::Reports::Pepfar::HtsTstFac1,
       'HTS RECENT FAC' => HtsService::Reports::Pepfar::HtsRecentFac,
       'HTS LEGACY REGULAR' => HtsService::Reports::Clinic::HtsLegacyRegular,
-      'HTS LEGACY RETURNING' => HtsService::Reports::Clinic::HtsLegacyReturning,
+      'HTS LEGACY RETURNING' => HtsService::Reports::Clinic::HtsLegacyReturning
     }.freeze
 
     def generate_report(type:, **kwargs)
-      call_report_manager(:build_report, type: type, **kwargs)
+      call_report_manager(:build_report, type:, **kwargs)
     end
 
     def find_report(type:, **kwargs)
-      call_report_manager(:data, type: type, **kwargs)
+      call_report_manager(:data, type:, **kwargs)
     end
 
     private
@@ -46,10 +46,9 @@ module HtsService
       quarter = kwargs.delete(:quarter)
 
       if kwargs.empty? && ![start_date, end_date].all? { |date| date&.strip == '' }
-        report_manager = report.new(start_date: start_date, end_date: end_date)
+        report_manager = report.new(start_date:, end_date:)
       end
-      report_manager = report.new(quarter: quarter, year: year) if [quarter, year].all?
-
+      report_manager = report.new(quarter:, year:) if [quarter, year].all?
 
       method = report_manager.method(method)
       if kwargs.empty? || [year, quarter].all?

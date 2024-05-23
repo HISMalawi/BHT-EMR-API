@@ -1,12 +1,15 @@
-class OPDService::Reports::Diagnosis
+# frozen_string_literal: true
 
-  def find_report(start_date:, end_date:, **_extra_kwargs)
-    diagnosis(start_date, end_date)
-  end
+module OpdService
+  module Reports
+    class Diagnosis
+      def find_report(start_date:, end_date:, **_extra_kwargs)
+        diagnosis(start_date, end_date)
+      end
 
-  def diagnosis(start_date, end_date)
-    type = EncounterType.find_by_name 'Outpatient diagnosis'
-    data = Encounter.where('encounter_datetime BETWEEN ? AND ?
+      def diagnosis(start_date, end_date)
+        type = EncounterType.find_by_name 'Outpatient diagnosis'
+        data = Encounter.where('encounter_datetime BETWEEN ? AND ?
       AND encounter_type = ?
       AND obs.concept_id IN(6543, 6542)',
       start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
@@ -23,33 +26,36 @@ class OPDService::Reports::Diagnosis
       a.state_province district, a.township_division ta, a.city_village village, z.value,
       opd_disaggregated_age_group(p.birthdate,'#{end_date.to_date}') as age_group,c.name")
 
-      create_diagnosis_hash(data)
-  end
-
-  def create_diagnosis_hash(data)
-    records = {}
-    (data || []).each do |record|
-      age_group = record['age_group'].blank? ? "Unknown" : record['age_group']
-      gender = (record['gender'].match(/f/i) ? "F" : (record['gender'].match(/m/i) ? "M" : "Unknown")) rescue "Unknown"
-      patient_id = record['person_id']
-      diagnosis = record['name']
-
-      if records[diagnosis].blank?
-        records[diagnosis] = {}
+        create_diagnosis_hash(data)
       end
 
-      if records[diagnosis][gender].blank?
-        records[diagnosis][gender] = {}
+      def create_diagnosis_hash(data)
+        records = {}
+        (data || []).each do |record|
+          age_group = record['age_group'].blank? ? 'Unknown' : record['age_group']
+          gender = begin
+            (if record['gender'].match(/f/i)
+               'F'
+             else
+               (record['gender'].match(/m/i) ? 'M' : 'Unknown')
+             end)
+          rescue StandardError
+            'Unknown'
+          end
+          patient_id = record['person_id']
+          diagnosis = record['name']
+
+          records[diagnosis] = {} if records[diagnosis].blank?
+
+          records[diagnosis][gender] = {} if records[diagnosis][gender].blank?
+
+          records[diagnosis][gender][age_group] = [] if records[diagnosis][gender][age_group].blank?
+
+          records[diagnosis][gender][age_group] << patient_id
+        end
+
+        records
       end
-
-      if records[diagnosis][gender][age_group].blank?
-        records[diagnosis][gender][age_group] = []
-      end
-
-      records[diagnosis][gender][age_group] << patient_id
-
     end
-
-    records
   end
 end

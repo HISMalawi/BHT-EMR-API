@@ -2,19 +2,19 @@
 
 class RegimenService
   ENGINES = {
-    'HIV PROGRAM' => ARTService::RegimenEngine,
-    'TB PROGRAM' => TBService::RegimenEngine
+    'HIV PROGRAM' => ArtService::RegimenEngine,
+    'TB PROGRAM' => TbService::RegimenEngine
   }.freeze
 
   def initialize(program_id:)
     @engine = load_engine program_id
   end
 
-  def method_missing(method, *args, &block)
-    Rails.logger.debug "Executing missing method: #{method}"
-    return @engine.send(method, *args, &block) if respond_to_missing?(method)
+  def method_missing(method, **args, &block)
+    Rails.logger.debug "Executing missing method: #{method}. With these arguments: #{args}"
+    return @engine.send(method, **args, &block) if respond_to_missing?(method)
 
-    super(method, *args, &block)
+    super(method, **args, &block)
   end
 
   def respond_to_missing?(method)
@@ -28,6 +28,6 @@ class RegimenService
     program = Program.find program_id
 
     engine = ENGINES[program.name.upcase]
-    engine.new program: program
+    engine.new program:
   end
 end

@@ -2,7 +2,7 @@
 
 require 'logger'
 
-module VMMCService
+module VmmcService
   class AppointmentEngine
     include ModelUtils
 

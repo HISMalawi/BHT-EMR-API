@@ -3,7 +3,7 @@
 require 'logger'
 require 'restclient'
 
-class DDEClient
+class DdeClient
   def initialize
     @auto_login = true # If logged out, automatically login on next request
     @base_url = nil
@@ -15,12 +15,12 @@ class DDEClient
   #
   # @return A Connection object that can be used to re-connect to DDE
   def connect(url:, username:, password:)
-    @connection = establish_connection(url: url, username: username, password: password)
+    @connection = establish_connection(url:, username:, password:)
   end
 
   # Reconnect to DDE using previous connection
   #
-  # @see: DDEClient#connect
+  # @see: DdeClient#connect
   def restore_connection(connection)
     @connection = reload_connection(connection)
   end
@@ -31,13 +31,13 @@ class DDEClient
     end
   end
 
-  def post(resource, data)
+  def post(resource, **data)
     exec_request resource do |url, headers|
       RestClient.post url, data.to_json, headers
     end
   end
 
-  def put(resource, data)
+  def put(resource, **data)
     exec_request resource do |url, headers|
       RestClient.put url, data.to_json, headers
     end
@@ -52,7 +52,7 @@ class DDEClient
   private
 
   JSON_CONTENT_TYPE = 'application/json'
-  LOGGER = Logger.new(STDOUT)
+  LOGGER = Logger.new($stdout)
   DDE_API_KEY_VALIDITY_PERIOD = 3600 * 12
   DDE_VERSION = 'v1'
 
@@ -84,19 +84,17 @@ class DDEClient
     # be available to the build_url method right now
     @base_url = url
 
-    response, status = post('login', username: username, password: password)
+    response, status = post('login', username:, password:)
 
     @auto_login = true
 
-    if status != 200
-      raise DDEClientError, "Unable to establish connection to DDE: #{response}"
-    end
+    raise DdeClientError, "Unable to establish connection to DDE: #{response}" if status != 200
 
     LOGGER.info('Connection to DDE established :)')
     @connection = {
       key: response['access_token'],
       expires: Time.now + DDE_API_KEY_VALIDITY_PERIOD,
-      config: { url: url, username: username, password: password }
+      config: { url:, username:, password: }
     }
   end
 
@@ -118,7 +116,7 @@ class DDEClient
     LOGGER.debug "Handling DDE response:\n\tStatus - #{response.code}\n\tBody - #{response.body}"
     handle_response response
   rescue RestClient::Unauthorized => e
-    LOGGER.error "DDEClient suppressed exception: #{e}"
+    LOGGER.error "DdeClient suppressed exception: #{e}"
     return handle_response e.response unless @auto_login
 
     LOGGER.debug 'Auto-logging into DDE...'
@@ -126,13 +124,13 @@ class DDEClient
     LOGGER.debug "Reset connection: #{@connection}"
     retry # Retry last request...
   rescue RestClient::BadRequest => e
-    LOGGER.error "DDEClient suppressed exception: #{e}"
+    LOGGER.error "DdeClient suppressed exception: #{e}"
     handle_response e.response
   rescue RestClient::UnprocessableEntity => e
-    LOGGER.error "DDEClient suppressed exception: #{e}"
+    LOGGER.error "DdeClient suppressed exception: #{e}"
     handle_response e.response
   rescue RestClient::NotFound => e
-    LOGGER.error "DDEClient suppressed exception: #{e}"
+    LOGGER.error "DdeClient suppressed exception: #{e}"
     handle_response e.response
   end
 

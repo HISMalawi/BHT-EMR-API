@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 Rails.application.routes.draw do
   mount Lab::Engine => '/'
-  mount Radiology::Engine => '/'
+  # mount Radiology::Engine => '/'
   mount EmrOhspInterface::Engine => '/'
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
@@ -25,13 +27,11 @@ Rails.application.routes.draw do
         post '/activate', to: 'users#activate'
         post '/deactivate', to: 'users#deactivate'
       end
-      
+
       resources :hts_reports, only: %i[index]
       get '/hts_stats' => 'hts_reports#daily_stats'
       get '/valid_provider_id', to: 'people#valid_provider_id'
       get '/next_hts_linkage_ids_batch', to: 'people#next_hts_linkage_ids_batch'
-
-
 
       # notifications for nlims any features in the future
       resources :notifications, only: %i[index update] do
@@ -296,8 +296,8 @@ Rails.application.routes.draw do
 
       post '/reports/encounters' => 'encounters#count'
 
-      #drugs_cms routes
-      get '/drug_cms/search', to: "drug_cms#search"
+      # drugs_cms routes
+      get '/drug_cms/search', to: 'drug_cms#search'
       resources :drug_cms, only: %i[index]
     end
   end
@@ -321,7 +321,6 @@ Rails.application.routes.draw do
   get '/api/v1/dashboard_stats_for_syndromic_statistics' => 'api/v1/reports#syndromic_statistics'
   post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
   post '/api/v1/patient_art_vl_dates' => 'api/v1/reports#patient_art_vl_dates'
-
 
   # SQA controller
   post '/api/v1/duplicate_identifier' => 'api/v1/cleaning#duplicate_identifier'

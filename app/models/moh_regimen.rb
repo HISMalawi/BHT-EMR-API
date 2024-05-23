@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class MohRegimen < VoidableRecord
   self.table_name =  'moh_regimens'
   self.primary_key = 'regimen_id'

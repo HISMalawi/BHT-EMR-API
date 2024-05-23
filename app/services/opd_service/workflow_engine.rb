@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require 'set'
-
-module OPDService
+module OpdService
   class WorkflowEngine
     include ModelUtils
 
@@ -44,19 +42,17 @@ module OPDService
     PRESCRIPTION = 'PRESCRIPTION'
     DISPENSING = 'DISPENSING'
     TREATMENT = 'TREATMENT'
-=begin
-    # Encounters graph
-    ENCOUNTER_SM = {
-      INITIAL_STATE => PATIENT_REGISTRATION,
-      PATIENT_REGISTRATION => SOCIAL_HISTORY,
-      SOCIAL_HISTORY => END_STATE
-    }.freeze
-
-    STATE_CONDITIONS = {
-      PATIENT_REGISTRATION => %i[patient_not_registered_today?],
-      SOCIAL_HISTORY => %i[social_history_not_collected?]
-    }.freeze
-=end
+    #     # Encounters graph
+    #     ENCOUNTER_SM = {
+    #       INITIAL_STATE => PATIENT_REGISTRATION,
+    #       PATIENT_REGISTRATION => SOCIAL_HISTORY,
+    #       SOCIAL_HISTORY => END_STATE
+    #     }.freeze
+    #
+    #     STATE_CONDITIONS = {
+    #       PATIENT_REGISTRATION => %i[patient_not_registered_today?],
+    #       SOCIAL_HISTORY => %i[social_history_not_collected?]
+    #     }.freeze
     # Encounters graph
     ENCOUNTER_SM = {
       INITIAL_STATE => PATIENT_REGISTRATION,
@@ -74,13 +70,13 @@ module OPDService
       PRESENTING_COMPLAINTS => %i[patient_does_not_have_complaints?],
       OUTPATIENT_DIAGNOSIS => %i[patient_does_not_have_diagnosis?],
       PRESCRIPTION => %i[patient_does_not_have_prescription?],
-      DISPENSING => %i[patient_does_not_have_dispensation?],
+      DISPENSING => %i[patient_does_not_have_dispensation?]
     }.freeze
 
     def load_user_activities
-      #activities = ['Patient registration,Social history']
+      # activities = ['Patient registration,Social history']
       activities = user_property('OPD_activities')&.property_value
-      activities = "Patient registration,Social history,Vitals" if activities.blank?
+      activities = 'Patient registration,Social history,Vitals' if activities.blank?
 
       encounters = (activities&.split(',') || []).collect do |activity|
         # Re-map activities to encounters
@@ -116,7 +112,7 @@ module OPDService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
-      Encounter.where(type: type, patient: @patient)\
+      Encounter.where(type:, patient: @patient)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
     end
@@ -128,8 +124,8 @@ module OPDService
         status && method(condition).call
       end
     end
-    def opd_activity_enabled?(state)
 
+    def opd_activity_enabled?(state)
       @activities.include?(state)
     end
 
@@ -144,10 +140,11 @@ module OPDService
 
       encounter.blank?
     end
+
     # Checks if patient has complaints in today
     #
     def patient_does_not_have_complaints?
-      encounter_type = EncounterType.find_by name:PRESENTING_COMPLAINTS
+      encounter_type = EncounterType.find_by name: PRESENTING_COMPLAINTS
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
@@ -155,10 +152,11 @@ module OPDService
 
       encounter.blank?
     end
+
     # Checks if patient has diagnosis today
     #
     def patient_does_not_have_diagnosis?
-      encounter_type = EncounterType.find_by name:OUTPATIENT_DIAGNOSIS
+      encounter_type = EncounterType.find_by name: OUTPATIENT_DIAGNOSIS
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
@@ -170,7 +168,7 @@ module OPDService
     # Checks if patient has prescription today
     #
     def patient_does_not_have_prescription?
-      encounter_type = EncounterType.find_by name:TREATMENT
+      encounter_type = EncounterType.find_by name: TREATMENT
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
@@ -179,10 +177,10 @@ module OPDService
       encounter.blank?
     end
 
-  # Checks if patient has prescription today
+    # Checks if patient has prescription today
     #
     def patient_does_not_have_dispensation?
-      encounter_type = EncounterType.find_by name:DISPENSING
+      encounter_type = EncounterType.find_by name: DISPENSING
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date
@@ -195,7 +193,8 @@ module OPDService
     def social_history_not_collected?
       encounter = Encounter.joins(:type).where(
         'encounter_type.name = ? AND encounter.patient_id = ?',
-        SOCIAL_HISTORY, @patient.patient_id)
+        SOCIAL_HISTORY, @patient.patient_id
+      )
 
       encounter.blank?
     end
@@ -210,21 +209,21 @@ module OPDService
 
     def patient_has_no_weight_today?
       concept_id = ConceptName.find_by_name('Weight').concept_id
-      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
+      !Observation.where(concept_id:, person_id: @patient.id)\
                   .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                   .exists?
     end
 
     def patient_has_no_height?
       concept_id = ConceptName.find_by_name('Height (cm)').concept_id
-      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
+      !Observation.where(concept_id:, person_id: @patient.id)\
                   .where('obs_datetime < ?', TimeUtils.day_bounds(@date)[1])\
                   .exists?
     end
 
     def patient_has_no_height_today?
       concept_id = ConceptName.find_by_name('Height (cm)').concept_id
-      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
+      !Observation.where(concept_id:, person_id: @patient.id)\
                   .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                   .exists?
     end

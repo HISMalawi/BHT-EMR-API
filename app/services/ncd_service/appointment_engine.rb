@@ -2,7 +2,7 @@
 
 require 'logger'
 
-module NCDService
+module NcdService
   class AppointmentEngine
     include ModelUtils
 

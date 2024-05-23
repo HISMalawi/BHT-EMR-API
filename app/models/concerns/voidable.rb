@@ -15,7 +15,7 @@ module Voidable
     clazz._update_voidable_field self, :voided, 1
     clazz._update_voidable_field self, :date_voided, Time.now
     clazz._update_voidable_field self, :void_reason, reason
-    clazz._update_voidable_field self, :voided_by, user ? user.user_id : nil
+    clazz._update_voidable_field self, :voided_by, user&.user_id
 
     save!(validate: false)
 
@@ -26,6 +26,7 @@ module Voidable
 
   def voided?
     raise 'Model not voidable' unless voidable?
+
     voided != 0
   end
 
@@ -51,10 +52,10 @@ module Voidable
                                  void_reason: :void_reason,
                                  voided_by: :voided_by)
       @interface = {
-        voided: voided,
-        date_voided: date_voided,
-        void_reason: void_reason,
-        voided_by: voided_by
+        voided:,
+        date_voided:,
+        void_reason:,
+        voided_by:
       }
     end
 
@@ -100,7 +101,7 @@ module Voidable
 
     def _update_voidable_field(instance, field, value)
       # remap_voidable_interface unless @interface # Initialise default interface
-      setter = (_voidable_field(field).to_s + '=').to_sym
+      setter = "#{_voidable_field(field)}=".to_sym
       instance.method(setter).call(value)
     end
   end
