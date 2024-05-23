@@ -31,7 +31,8 @@ module ArtService
         art_duration: art_duration || 'N/A',
         current_regimen:,
         art_start_date: art_start_date&.strftime('%d/%m/%Y') || 'N/A',
-        reason_for_art: art_reason
+        reason_for_art: art_reason,
+        is_transfer_in: PatientHistory.new(patient, date).transfer_in
       }
     end
 
