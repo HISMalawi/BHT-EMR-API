@@ -1,10 +1,9 @@
-# BHT EMR API
+# HIS EMR API
 
 Table of Contents
 =================
 
-- [BHT EMR API](#bht-emr-api)
-- [Table of Contents](#table-of-contents)
+- [HIS EMR API](#his-emr-api)
   - [Requirements](#requirements)
   - [Setting up](#setting-up)
     - [Configuration](#configuration)
@@ -28,6 +27,7 @@ Table of Contents
     - [Useful (recommended) tools for development](#useful-recommended-tools-for-development)
     - [Dev Container](#dev-container)
     - [Data Cleaning](#data-cleaning)
+   - [Contributors](#contributors)
 
 ## Requirements
 
@@ -410,5 +410,17 @@ See the following for more:
 ### Data Cleaning
 
 - [ANC](/bin/ANC/README.md)
+
+## Contributors
+These are organizations that have contributed to the development of the HIS EMR API
+<p float="left">
+    <img src="public/malawi.png" alt="Malawi Government" style="width:100px; height:100px; object-fit:cover;" />
+    <img src="public/cdc.png" alt="CDC" style="width:100px; height:100px; object-fit:fit;" /> 
+    <img src="public/PEPFAR.jpg" alt="PEPFAR" style="width:100px; height:100px; object-fit:fit;" />
+    <img src="public/baobab.png" alt="Baobab Health Trust" style="width:100px; height:100px; object-fit:fit;" />
+    <img src="public/egpaf.png" alt="Elizabeth Glaser Pediatric AIDS Foundation" style="width:200px; height:100px; object-fit:fit;" />
+    <img src="public/LIN.jpg" alt="Luke International" style="width:200px; height:100px; object-fit:fit;" />
+</p>
+
 
 [Back to top](#table-of-contents)
