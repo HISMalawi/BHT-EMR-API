@@ -414,11 +414,11 @@ See the following for more:
 ## Contributors
 These are organizations that have contributed to the development of the HIS EMR API
 <p float="left">
-    <img src="public/malawi.png" alt="Malawi Government" style="width:100px; height:100px; object-fit:cover;" />
-    <img src="public/PEPFAR.jpg" alt="PEPFAR" style="width:100px; height:100px; object-fit:fit;" />
-    <img src="public/egpaf.png" alt="Elizabeth Glaser Pediatric AIDS Foundation" style="width:200px; height:100px; object-fit:fit;" />
-    <img src="public/baobab.png" alt="Baobab Health Trust" style="width:100px; height:100px; object-fit:fit;" />
-    <img src="public/LIN.jpg" alt="Luke International" style="width:200px; height:100px; object-fit:fit;" />
+    <img src="public/malawi.png" alt="Malawi Government" style="background: white;height:65px;padding: 10px;border-radius:2%" />
+    <img src="public/PEPFAR.jpg" alt="PEPFAR" style="background: white;height:65px;padding: 10px; object-fit:fit;border-radius:2%;" />
+    <img src="public/egpaf.png" alt="Elizabeth Glaser Pediatric AIDS Foundation" style="background: white;height:65px;padding: 10px; object-fit:fit;border-radius:2%;" />
+    <img src="public/baobab.png" alt="Baobab Health Trust" style="background: white;height:65px;padding: 10px; object-fit:fit;border-radius:2%;" />
+    <img src="public/LIN.jpg" alt="Luke International" style="background: white;height:65px;padding: 10px; object-fit:fit;border-radius:2%;" />
 </p>
 
 
