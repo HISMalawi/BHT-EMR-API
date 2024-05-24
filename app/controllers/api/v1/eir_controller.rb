@@ -5,14 +5,15 @@ class Api::V1::EirController < ApplicationController
     # Get Vaccine Schedule
     begin
       patient = Person.find(immunization_schedule_params[:patient_id].to_i)
-
-      if patient.gender == 'M'
-        immunization_concepts = ConceptName.where.not(name: 'Female only Immunizations').where(name: 'Immunizations').pluck(:concept_id)
+      immunization_concepts = ConceptName.where(name: 'Immunizations').pluck(:concept_id)
+      if patient.gender == ('M' || 'Male')
+        female_immunization_concepts = ConceptName.where(name: 'Female only Immunizations').pluck(:concept_id)
+        female_concepts = ConceptSet.where(concept_set: female_immunization_concepts).pluck(:concept_id)
+        concept_set = ConceptSet.where(concept_set: immunization_concepts)
+                                .where.not(concept_id: female_concepts).pluck(:concept_id)
       else
-        immunization_concepts = ConceptName.where(name: 'Immunizations').pluck(:concept_id)
+        concept_set = ConceptSet.where(concept_set: immunization_concepts).pluck(:concept_id)
       end
-
-      concept_set = ConceptSet.where(concept_set: immunization_concepts).pluck(:concept_id)
       schedule = Drug.joins(concept: :concept_names).where(concept_id: concept_set)
                      .select('concept_name.concept_id AS concept_id,
                               concept_name.name AS concept_name,
