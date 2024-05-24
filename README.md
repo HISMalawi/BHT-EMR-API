@@ -413,12 +413,12 @@ See the following for more:
 
 ## Contributors
 These are organizations that have contributed to the development of the HIS EMR API
-<p float="left">
-    <img src="public/malawi.png" alt="Malawi Government" style="background: white;height:65px;padding: 10px;border-radius:2%" />
-    <img src="public/PEPFAR.jpg" alt="PEPFAR" style="background: white;height:65px;padding: 10px; object-fit:fit;border-radius:2%;" />
-    <img src="public/egpaf.png" alt="Elizabeth Glaser Pediatric AIDS Foundation" style="background: white;height:65px;padding: 10px; object-fit:fit;border-radius:2%;" />
-    <img src="public/baobab.png" alt="Baobab Health Trust" style="background: white;height:65px;padding: 10px; object-fit:fit;border-radius:2%;" />
-    <img src="public/LIN.jpg" alt="Luke International" style="background: white;height:65px;padding: 10px; object-fit:fit;border-radius:2%;" />
+<p>
+    <img src="public/malawi.png" alt="Malawi Government" style="background: white !important;height:60px;padding: 5px;border-radius:1%" />
+    <img src="public/PEPFAR.jpg" alt="PEPFAR" style="background: white !important;height:60px;padding: 5px; object-fit:fit;border-radius:1%;" />
+    <img src="public/egpaf.png" alt="Elizabeth Glaser Pediatric AIDS Foundation" style="background: white !important;height:60px;padding: 5px; object-fit:fit;border-radius:1%;" />
+    <img src="public/baobab.png" alt="Baobab Health Trust" style="background: white !important;height:60px;padding: 5px; object-fit:fit;border-radius:1%;" />
+    <img src="public/LIN.jpg" alt="Luke International" style="background: white !important;height:60px;padding: 5px; object-fit:fit;border-radius:1%;" />
 </p>
 
 
