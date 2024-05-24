@@ -415,10 +415,9 @@ See the following for more:
 These are organizations that have contributed to the development of the HIS EMR API
 <p float="left">
     <img src="public/malawi.png" alt="Malawi Government" style="width:100px; height:100px; object-fit:cover;" />
-    <img src="public/cdc.png" alt="CDC" style="width:100px; height:100px; object-fit:fit;" /> 
     <img src="public/PEPFAR.jpg" alt="PEPFAR" style="width:100px; height:100px; object-fit:fit;" />
-    <img src="public/baobab.png" alt="Baobab Health Trust" style="width:100px; height:100px; object-fit:fit;" />
     <img src="public/egpaf.png" alt="Elizabeth Glaser Pediatric AIDS Foundation" style="width:200px; height:100px; object-fit:fit;" />
+    <img src="public/baobab.png" alt="Baobab Health Trust" style="width:100px; height:100px; object-fit:fit;" />
     <img src="public/LIN.jpg" alt="Luke International" style="width:200px; height:100px; object-fit:fit;" />
 </p>
 
