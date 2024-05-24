@@ -209,7 +209,7 @@ You will have to choose the environment you want to update the metadata for.
 - Developers
 To add metadata into the system
 ```bash
-bin/dump_metadata.sh [production|development|test]
+bin/dump_metadata.sh
 ```
 
 Commit the changes to the repository. And as always make sure you create a PR to be reviewed.
