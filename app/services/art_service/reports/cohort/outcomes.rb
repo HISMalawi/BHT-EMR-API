@@ -25,6 +25,7 @@ module ArtService
         end
 
         def update_outcomes_by_definition
+          prepare_tables
           update_steps(portion: true)
           load_patients_on_treatment
           load_without_clinical_contact
