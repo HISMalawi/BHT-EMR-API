@@ -404,4 +404,7 @@ Rails.application.routes.draw do
   get '/api/v1/next_appointment', to: 'api/v1/appointments#next_appointment'
 
   post 'api/v1/sync_to_ait', to: 'api/v1/patients#sync_to_ait'
+
+  # EIR
+  get '/api/v1/eir/schedule', to: 'api/v1/eir#vaccine_schedule'
 end
