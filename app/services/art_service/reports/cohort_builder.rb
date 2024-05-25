@@ -1494,8 +1494,8 @@ module ArtService
         4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A 16A 17A
       ].freeze
 
-      def cal_regimem_category(_patient_list, end_date)
-        Cohort::Regimens.patient_regimens(end_date).map do |prescription|
+      def cal_regimem_category(_patient_list, _end_date)
+        Cohort::Regimens.patient_regimens.map do |prescription|
           regimen = prescription['regimen_category']
 
           regimen = 'unknown_regimen' if regimen == 'Unknown' || !COHORT_REGIMENS.include?(regimen)

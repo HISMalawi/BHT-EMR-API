@@ -299,6 +299,8 @@ Rails.application.routes.draw do
       # drugs_cms routes
       get '/drug_cms/search', to: 'drug_cms#search'
       resources :drug_cms, only: %i[index]
+
+      post '/immunization/administer_vaccine', to: 'administer_vaccine#administer_vaccine'
     end
   end
 
