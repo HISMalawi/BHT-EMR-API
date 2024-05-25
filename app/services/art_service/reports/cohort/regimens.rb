@@ -3,61 +3,28 @@
 module ArtService
   module Reports
     module Cohort
+      # This module is responsible for generating the regimen report
       module Regimens
-        def self.patient_regimens(date)
-          date = ActiveRecord::Base.connection.quote(date)
-
+        # rubocop:disable Metrics/MethodLength
+        def self.patient_regimens
           ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT prescriptions.patient_id,
-                   regimens.name AS regimen_category,
-                   prescriptions.drugs,
-                   prescriptions.prescription_date
+            SELECT prescriptions.patient_id, regimens.name AS regimen_category, prescriptions.drugs, prescriptions.prescription_date
             FROM (
-              SELECT orders.patient_id,
-                     GROUP_CONCAT(DISTINCT(drug_order.drug_inventory_id)
-                                           ORDER BY drug_order.drug_inventory_id ASC) AS drugs,
-                                           DATE(tmdo.start_date) prescription_date
-              FROM temp_patient_outcomes AS outcomes
-              INNER JOIN temp_max_drug_orders tmdo ON tmdo.patient_id = outcomes.patient_id AND outcomes.cum_outcome = 'On antiretrovirals'
-              INNER JOIN orders
-                ON orders.patient_id = outcomes.patient_id
-                AND orders.concept_id IN (#{arv_drugs_concept_set.to_sql})
-                AND orders.voided = 0
-                AND DATE(orders.start_date) = DATE(tmdo.start_date)
-              INNER JOIN drug_order
-                ON drug_order.order_id = orders.order_id AND drug_order.quantity > 0
-              /* Only select drugs prescribed on the last prescription day */
-              /* INNER JOIN (
-                SELECT patient_id, DATE(MAX(start_date)) AS prescription_date
-                FROM orders
-                INNER JOIN drug_order
-                  ON drug_order.order_id = orders.order_id
-                  AND drug_order.quantity > 0
-                WHERE orders.voided = 0
-                  AND orders.concept_id IN (#{arv_drugs_concept_set.to_sql})
-                  AND orders.start_date < (DATE(#{date}) + INTERVAL 1 DAY)
-                  AND orders.patient_id IN (
-                    SELECT patient_id FROM temp_patient_outcomes WHERE cum_outcome = 'On antiretrovirals'
-                  )
-                GROUP BY orders.patient_id
-              ) AS recent_prescription
-                ON recent_prescription.patient_id = orders.patient_id
-                AND orders.start_date
-                  BETWEEN recent_prescription.prescription_date
-                  AND (recent_prescription.prescription_date + INTERVAL 1 DAY) */
-              GROUP BY orders.patient_id
+              SELECT tcm.patient_id, GROUP_CONCAT(DISTINCT(tcm.drug_id) ORDER BY tcm.drug_id ASC) AS drugs, DATE(tcm.start_date) prescription_date
+              FROM temp_current_medication tcm
+              INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = tcm.patient_id AND outcomes.cum_outcome = 'On antiretrovirals'
+              GROUP BY tcm.patient_id
             ) AS prescriptions
             LEFT JOIN (
-              SELECT GROUP_CONCAT(drug.drug_id ORDER BY drug.drug_id ASC) AS drugs,
-                    regimen_name.name AS name
+              SELECT GROUP_CONCAT(drug.drug_id ORDER BY drug.drug_id ASC) AS drugs, regimen_name.name AS name
               FROM moh_regimen_combination AS combo
-                INNER JOIN moh_regimen_combination_drug AS drug USING (regimen_combination_id)
-                INNER JOIN moh_regimen_name AS regimen_name USING (regimen_name_id)
+              INNER JOIN moh_regimen_combination_drug AS drug USING (regimen_combination_id)
+              INNER JOIN moh_regimen_name AS regimen_name USING (regimen_name_id)
               GROUP BY combo.regimen_combination_id
-            ) AS regimens
-              ON regimens.drugs = prescriptions.drugs
+            ) AS regimens ON regimens.drugs = prescriptions.drugs
           SQL
         end
+        # rubocop:enable Metrics/MethodLength
 
         def self.arv_drugs_concept_set
           @arv_drugs_concept_set ||= ConceptSet.where(set: Concept.find_by_name('Antiretroviral drugs'))

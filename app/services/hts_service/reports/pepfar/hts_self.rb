@@ -103,7 +103,7 @@ module HtsService
             )
             .group('gender.value_coded, age_group.value_coded, user.value_coded, gender.value_coded')
             .to_sql
-          ).to_hash
+          )
         end
       end
     end
