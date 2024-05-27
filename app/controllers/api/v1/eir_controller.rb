@@ -1,7 +1,7 @@
 class Api::V1::EirController < ApplicationController
   def vaccine_schedule
     # Get Administered Vaccines
-
+    
     # Get Vaccine Schedule
     begin
       patient = Person.find(immunization_schedule_params[:patient_id].to_i)
@@ -19,8 +19,8 @@ class Api::V1::EirController < ApplicationController
                               concept_name.name AS concept_name,
                               drug.drug_id AS drug_id,
                               drug.name AS drug_name')
-
-      render json: {vaccinSchedule: format_schedule(schedule)}, status: :ok
+      vaccines_given = administered_vaccines(patient.person_id, schedule.pluck(:drug_id))
+      render json: {vaccinSchedule: format_schedule(schedule, vaccines_given)}, status: :ok
     rescue ActiveRecord::RecordNotFound
       render json: {error: 'Patient not found'}, status: :not_found
     end
@@ -34,13 +34,28 @@ class Api::V1::EirController < ApplicationController
     {patient_id: params[:patient_id]}
   end
 
-  def format_schedule(schedule)
+  def format_schedule(schedule, vaccines_given)
     schedule.group_by(&:concept_name).map.with_index(1) do |(concept_name, antigens), index|
       {
         visit: index,
         age: concept_name,
-        antigens: antigens.map { |item| { concept_id: item.concept_id, drug_id: item.drug_id, drug_name: item.drug_name, status: '' } }
+        antigens: antigens.map { |item|
+          vaccine_given = vaccines_given.find { |vaccine| vaccine.drug_inventory_id == item.drug_id }
+          {
+            concept_id: item.concept_id,
+            drug_id: item.drug_id,
+            drug_name: item.drug_name,
+            status: vaccine_given ? 'administered' : 'pending',
+            date_administered: vaccine_given&.obs_datetime&.strftime('%d/%b/%Y %H:%M:%S')
+          }
+        }
       }
     end
+  end
+
+  def administered_vaccines(patient_id, drugs)
+    Observation.joins(order: :drug_order)
+               .where(drug_order: { drug_inventory_id: drugs }, person_id: patient_id)
+               .select(:obs_datetime, :drug_inventory_id)
   end
 end
