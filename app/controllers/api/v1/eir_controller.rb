@@ -46,7 +46,7 @@ class Api::V1::EirController < ApplicationController
             drug_id: item.drug_id,
             drug_name: item.drug_name,
             status: vaccine_given ? 'administered' : 'pending',
-            date_administered: vaccine_given&.obs_datetime
+            date_administered: vaccine_given&.obs_datetime&.strftime('%d/%b/%Y %H:%M:%S')
           }
         }
       }
