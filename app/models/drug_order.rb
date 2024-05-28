@@ -11,8 +11,15 @@ class DrugOrder < ApplicationRecord
 
   def as_json(options = {})
     super(options.merge(
-      include: { order: {}, drug: {} }, methods: %i[dosage_struct amount_needed barcodes]
+      include: { order: {}, drug: {} }, methods: %i[dosage_struct amount_needed barcodes regimen]
     ))
+  end
+
+  def regimen
+    return unless order.encounter.program_id == 1 # HIV Program
+
+    regimen = ActiveRecord::Base.connection.select_one("SELECT patient_current_regimen(#{order.patient_id}, DATE('#{order.start_date.to_date}')) regimen")
+    regimen['regimen']
   end
 
   def barcodes
