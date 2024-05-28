@@ -17,6 +17,7 @@ class DrugOrder < ApplicationRecord
 
   def regimen
     return unless order.encounter.program_id == 1 # HIV Program
+    return unless drug.arv?
 
     regimen = ActiveRecord::Base.connection.select_one("SELECT patient_current_regimen(#{order.patient_id}, DATE('#{order.start_date.to_date}')) regimen")
     regimen['regimen']
