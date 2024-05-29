@@ -17,7 +17,7 @@ module UserService
     query
   end
 
-  def self.create_user(username:, password:, given_name:, family_name:, roles:, programs:)
+  def self.create_user(username:, password:, given_name:, family_name:, roles:, programs:, location_id:)
     person = person_service.create_person(
       birthdate: nil, birthdate_estimated: false, gender: nil
     )
@@ -36,7 +36,8 @@ module UserService
       password: Digest::SHA1.hexdigest("#{password}#{salt}"),
       salt:,
       person:,
-      creator: User.current.id
+      creator: User.current.id,
+      location_id:
     )
     roles.each do |rolename|
       role = Role.find rolename
