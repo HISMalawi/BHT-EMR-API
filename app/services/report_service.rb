@@ -13,7 +13,8 @@ class ReportService
     'PATIENT REGISTRATION PROGRAM' => PatientRegistrationService::ReportEngine,
     'HTC PROGRAM' => HtsService::ReportEngine,
     'AETC PROGRAM' => AetcService::ReportEngine,
-    'SPINE PROGRAM' => SpineService::ReportEngine
+    'SPINE PROGRAM' => SpineService::ReportEngine,
+    'IMMUNIZATION PROGRAM' => ImmunizationService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 
