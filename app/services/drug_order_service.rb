@@ -139,7 +139,9 @@ module DrugOrderService
                           order:,
                           obs_datetime: start_date,
                           value_datetime: drug_runout_date,
-                          comments: 'User specified drug run out date during drug prescription')
+                          comments: 'User specified drug run out date during drug prescription',
+                          location_id: User.current.location_id
+                          )
 
       order
     end

@@ -78,7 +78,8 @@ module DispensationService
           encounter_id: encounter.encounter_id,
           value_drug: drug_order.drug_inventory_id,
           value_numeric: quantity,
-          obs_datetime: date
+          obs_datetime: date, 
+          location_id: User.current.location_id
         )
 
         observation
