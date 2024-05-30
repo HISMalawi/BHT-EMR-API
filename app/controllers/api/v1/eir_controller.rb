@@ -1,7 +1,5 @@
 class Api::V1::EirController < ApplicationController
   def vaccine_schedule
-    # Get Administered Vaccines
-    
     # Get Vaccine Schedule
     begin
       patient = Person.find(immunization_schedule_params[:patient_id].to_i)
@@ -20,11 +18,12 @@ class Api::V1::EirController < ApplicationController
                               drug.drug_id AS drug_id,
                               drug.name AS drug_name')
       vaccines_given = administered_vaccines(patient.person_id, schedule.pluck(:drug_id))
-      render json: {vaccinSchedule: format_schedule(schedule, vaccines_given)}, status: :ok
+      render json: {vaccinSchedule: format_schedule(schedule, vaccines_given, patient.birthdate)}, status: :ok
     rescue ActiveRecord::RecordNotFound
       render json: {error: 'Patient not found'}, status: :not_found
     end
   end
+ 
 
   private
 
@@ -34,10 +33,11 @@ class Api::V1::EirController < ApplicationController
     {patient_id: params[:patient_id]}
   end
 
-  def format_schedule(schedule, vaccines_given)
+  def format_schedule(schedule, vaccines_given, patient_dob)
     schedule.group_by(&:concept_name).map.with_index(1) do |(concept_name, antigens), index|
       {
         visit: index,
+        milestone_status: milestone_status(concept_name, patient_dob),
         age: concept_name,
         antigens: antigens.map { |item|
           vaccine_given = vaccines_given.find { |vaccine| vaccine.drug_inventory_id == item.drug_id }
@@ -57,5 +57,43 @@ class Api::V1::EirController < ApplicationController
     Observation.joins(order: :drug_order)
                .where(drug_order: { drug_inventory_id: drugs }, person_id: patient_id)
                .select(:obs_datetime, :drug_inventory_id)
+  end
+
+  def milestone_status(milestone, dob)
+    today = Date.today
+
+    if milestone.casecmp('At Birth').zero?
+      if today == dob
+        return 'current'
+      elsif today > dob
+        return 'passed'
+      else
+        return 'upcoming'
+      end
+    elsif milestone.include?('weeks')
+      milestone_weeks = milestone.split.first.to_i
+      weeks = (today - dob).to_i / 7
+      if milestone ==  weeks.to_i
+        return 'current'
+      else
+        return weeks > milestone_weeks ? 'passed' : 'upcoming'
+      end
+    elsif milestone.include?('months')
+      milestone_months = milestone.split.first.to_i
+      months = (today.year * 12 + today.month) - (dob.year * 12 + dob.month)
+      if milestone_months == months
+        return 'current'
+      else
+        return months > milestone_months ? 'passed' : 'upcoming'
+      end
+    elsif milestone.include?('years')
+      milestone_years = milestone.split.first.to_i
+      years = today.year - dob.year
+      if milestone_years == years
+        return 'current'
+      else
+        return years > milestone_years ? 'passed' : 'upcoming'
+      end
+    end
   end
 end
