@@ -410,4 +410,5 @@ Rails.application.routes.draw do
 
   # EIR
   get '/api/v1/eir/schedule', to: 'api/v1/eir#vaccine_schedule'
+  get '/api/v1/eir/followup', to: 'api/v1/follow_up#vaccine_milestones'
 end
