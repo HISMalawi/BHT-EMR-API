@@ -17,8 +17,8 @@ module Api
       end
 
       def create
-        create_params = params.require(%i[username password given_name family_name roles])
-        username, password, given_name, family_name, roles = create_params
+        create_params = params.require(%i[username password given_name family_name roles location_id])
+        username, password, given_name, family_name, roles, location_id = create_params
         programs = params[:programs]
 
         return unless validate_roles(roles) & validate_username(username)
@@ -31,7 +31,7 @@ module Api
 
         user = UserService.create_user(
           username:, password:, given_name:,
-          family_name:, roles:, programs:
+          family_name:, roles:, programs:, location_id:
         )
 
         if user.errors.empty?
