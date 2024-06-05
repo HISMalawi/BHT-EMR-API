@@ -44,7 +44,7 @@ module Api
       end
 
       def update
-        update_params = params.permit :password, :given_name, :family_name, :must_append_roles,
+        update_params = params.permit :password, :given_name, :family_name, :must_append_roles, :location_id,
                                       roles: [], programs: []
 
         # Makes sure roles are an array if provided
