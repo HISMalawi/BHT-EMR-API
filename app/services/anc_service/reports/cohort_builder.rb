@@ -107,17 +107,17 @@ module AncService
         @on_art_before_anc_first_visit = on_art_before_anc_first_visit(start_date)
         @start_art_zero_to_twenty_seven_for_first_visit = start_art_zero_to_twenty_seven_for_first_visit(start_date)
         @start_art_plus_twenty_eight_for_first_visit = start_art_plus_twenty_eight_for_first_visit(start_date)
-        @total_on_art = (@on_art_before_anc_first_visit + @start_art_zero_to_twenty_seven_for_first_visit +
-          @start_art_plus_twenty_eight_for_first_visit).uniq
-        @m_not_on_art = @total_hiv_positive_first_visit - @total_on_art
+        @total_on_art = (@on_art_before_anc_first_visit || [] + @start_art_zero_to_twenty_seven_for_first_visit || [] +
+          @start_art_plus_twenty_eight_for_first_visit || []).uniq
+        @m_not_on_art = @total_hiv_positive_first_visit || [] - @total_on_art || []
 
         # raise @m_on_art_in_nart.inspect
 
         cohort_struct.monthly_patient = @monthly_patients
         cohort_struct.pregnancy_test_done = @patients_done_pregnancy_test || []
-        cohort_struct.pregnancy_test_not_done = (@monthly_patients.uniq - @patients_done_pregnancy_test.uniq).uniq
+        cohort_struct.pregnancy_test_not_done = (@monthly_patients.uniq || [] - @patients_done_pregnancy_test&.uniq || []).uniq
         cohort_struct.pregnancy_test_done_in_first_trimester = @pregnancy_test_done_in_first_trim
-        cohort_struct.pregnancy_test_not_done_in_first_trimester = (@monthly_patients.uniq - @pregnancy_test_done_in_first_trim).uniq
+        cohort_struct.pregnancy_test_not_done_in_first_trimester = (@monthly_patients&.uniq || [] - @pregnancy_test_done_in_first_trim || []).uniq
         cohort_struct.week_of_first_visit_zero_to_twelve = week_of_first_visit_zero_to_twelve(start_date)
         cohort_struct.week_of_first_visit_plus_thirteen = week_of_first_visit_plus_thirteen(start_date)
         cohort_struct.new_hiv_negative_first_visit = @first_new_hiv_negative
@@ -134,7 +134,7 @@ module AncService
         cohort_struct.total_women_in_cohort = @cohort_patients
         @c_pre_hiv_pos = prev_hiv_positive_final_visit
         @c_new_hiv_pos = new_hiv_positive_final_visit - @c_pre_hiv_pos
-        @c_total_hiv_positive = (@c_new_hiv_pos + @c_pre_hiv_pos).uniq
+        @c_total_hiv_positive = (@c_new_hiv_pos || [] + @c_pre_hiv_pos || []).uniq
 
         @c_extra_art_checks = extra_art_checks('cohort', c_max_date)
         @c_on_art_in_nart = on_art_in_nart(@c_total_hiv_positive, @c_start_date)
@@ -142,15 +142,15 @@ module AncService
         @on_art_before_anc_final_visit = on_art_before_anc_final_visit
         @start_art_zero_to_twenty_seven_for_final_visit = start_art_zero_to_twenty_seven_for_final_visit
         @start_art_plus_twenty_eight_for_final_visit = start_art_plus_twenty_eight_for_final_visit
-        @c_total_on_art = (@on_art_before_anc_final_visit + @start_art_zero_to_twenty_seven_for_final_visit +
-          @start_art_plus_twenty_eight_for_final_visit).uniq
-        @c_not_on_art = @c_total_hiv_positive - @c_total_on_art
+        @c_total_on_art = (@on_art_before_anc_final_visit || [] + @start_art_zero_to_twenty_seven_for_final_visit || [] +
+          @start_art_plus_twenty_eight_for_final_visit || []).uniq
+        @c_not_on_art = @c_total_hiv_positive || [] - @c_total_on_art || []
 
         @on_cpt = @c_on_art_in_nart['on_cpt']
         @not_on_cpt = (@c_total_hiv_positive - @on_cpt.split(',')).uniq
 
         @nvp_given = nvp_given
-        @nvp_not_given = @c_total_hiv_positive - @nvp_given
+        @nvp_not_given = @c_total_hiv_positive || [] - @nvp_given || []
 
         cohort_struct.patients_with_total_of_one_visit = @anc_visits.select do |_x, y|
                                                            y == 1
@@ -392,6 +392,8 @@ module AncService
         encounter_types = ['LAB RESULTS', 'ART_FOLLOWUP'].collect { |t| EncounterType.find_by_name(t).id }
         art_answers = ['Yes', 'Already on ART at another facility']
 
+        result = []
+
         if type === 'monthly'
 
           result = begin
@@ -410,7 +412,7 @@ module AncService
 
         end
 
-        result.uniq
+        result&.uniq
       end
 
       # Returns patient's ART start date at current facility
