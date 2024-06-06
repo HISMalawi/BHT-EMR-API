@@ -23,7 +23,7 @@ class Api::V1::EirController < ApplicationController
       render json: {error: 'Patient not found'}, status: :not_found
     end
   end
- 
+
 
   private
 
@@ -64,35 +64,40 @@ class Api::V1::EirController < ApplicationController
 
     if milestone.casecmp('At Birth').zero?
       if today == dob
-        return 'current'
+        'current'
       elsif today > dob
-        return 'passed'
+        'passed'
       else
-        return 'upcoming'
+        'upcoming'
       end
     elsif milestone.include?('weeks')
       milestone_weeks = milestone.split.first.to_i
-      weeks = (today - dob).to_i / 7
-      if milestone ==  weeks.to_i
-        return 'current'
-      else
-        return weeks > milestone_weeks ? 'passed' : 'upcoming'
-      end
+      age_in_weeks = (today - dob).to_i / 7
+      return 'current' if milestone ==  age_in_weeks.to_i
+
+      age_in_weeks > milestone_weeks ? 'passed' : 'upcoming'
     elsif milestone.include?('months')
       milestone_months = milestone.split.first.to_i
-      months = (today.year * 12 + today.month) - (dob.year * 12 + dob.month)
-      if milestone_months == months
-        return 'current'
-      else
-        return months > milestone_months ? 'passed' : 'upcoming'
-      end
+      age_in_months = (today.year * 12 + today.month) - (dob.year * 12 + dob.month)
+      return 'current' if milestone_months == age_in_months
+
+      age_in_months > milestone_months ? 'passed' : 'upcoming'
     elsif milestone.include?('years')
       milestone_years = milestone.split.first.to_i
-      years = today.year - dob.year
-      if milestone_years == years
-        return 'current'
+      age_in_years = today.year - dob.year
+      case milestone_years
+      when 9
+        return 'current' if age_in_years >= 9 && age_in_years <= 14
+      when 12
+        return 'current' if age_in_years > 12
+      when 15
+        return 'current' if age_in_years >= 15 && age_in_years <= 45
+      when 18
+        return 'current' if age_in_years >= 18
       else
-        return years > milestone_years ? 'passed' : 'upcoming'
+        return 'current' if milestone_years == age_in_years
+
+        age_in_years > milestone_years ? 'passed' : 'upcoming'
       end
     end
   end
