@@ -133,6 +133,21 @@ module DrugOrderService
 
       # Store user specified drug run out date separately as it is overriden
       # based on the drugs that actually get dispensed.
+
+      if  encounter.type.name = 'IMMUNIZATION RECORD'
+        Observation.create!(concept_id: ConceptName.find_by_name!('Batch Number').concept_id,
+              encounter:,
+              person_id: encounter.patient_id,
+              order:,
+              obs_datetime: start_date,
+              value_datetime: drug_runout_date,
+              value_text: create_params[:batch_number],
+              comments: 'Batch Number of for drug ordered',
+              location_id: User.current.location_id
+        )
+      end
+
+
       Observation.create!(concept_id: ConceptName.find_by_name!('Drug end date').concept_id,
                           encounter:,
                           person_id: encounter.patient_id,
