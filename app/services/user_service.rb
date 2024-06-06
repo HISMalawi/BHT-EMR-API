@@ -51,13 +51,23 @@ module UserService
     user
   end
 
+  def self.update_username(user, new_username)
+    user = user
+    user.username = new_username
+    user.save
+    user
+  end
+
   def self.update_user(user, params)
     # Update person name if specified
-    if params.include?(:given_name) || params.include?(:family_name)
+    if params.include?(:given_name) || params.include?(:family_name) || params.include?(:location_id)
+      user_ = user
       name = user.person.names.first
       name.given_name = params[:given_name] if params[:given_name]
       name.family_name = params[:family_name] if params[:family_name]
+      user_.location_id = params[:location_id] if params[:location_id]
       name.save
+      user_.save
     end
 
     # Update password if any
