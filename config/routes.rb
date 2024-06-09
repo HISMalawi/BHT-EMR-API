@@ -26,6 +26,8 @@ Rails.application.routes.draw do
       resources :users do
         post '/activate', to: 'users#activate'
         post '/deactivate', to: 'users#deactivate'
+        put '/update_username', to: 'users#update_username'
+
       end
 
       resources :hts_reports, only: %i[index]
