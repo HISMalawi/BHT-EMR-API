@@ -467,7 +467,7 @@ module ArtService
       data = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
           p.person_id, given_name, family_name, gender, birthdate,
-          i.identifier arv_number
+          i.identifier arv_number, obs.obs_datetime visit_date
         FROM person p
         INNER JOIN obs ON obs.person_id = p.person_id AND (p.gender != 'F' AND p.gender != 'Female')
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
@@ -488,7 +488,7 @@ module ArtService
       client = []
 
       (data || []).each do |person|
-        client << {
+        record = {
           arv_number: person['arv_number'],
           given_name: person['given_name'],
           family_name: person['family_name'],
@@ -496,6 +496,10 @@ module ArtService
           birthdate: person['birthdate'],
           patient_id: person['person_id']
         }
+
+        record['visit_date'] = person['visit_date'].to_date.strftime('%d-%b-%Y') if person['visit_date'].present?
+
+        client << record
       end
 
       client
