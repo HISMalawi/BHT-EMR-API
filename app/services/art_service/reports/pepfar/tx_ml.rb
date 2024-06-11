@@ -4,7 +4,7 @@ module ArtService
   module Reports
     module Pepfar
       class TxMl
-        attr_reader :start_date, :end_date, :rebuild
+        attr_reader :start_date, :end_date, :rebuild, :occupation
 
         include Utils
         include CommonSqlQueryUtils
