@@ -17,7 +17,7 @@ module ArtService
         end
 
         def data
-          rebuild && ArtService::Reports::CohortBuilder.new(outcomes_definition: "pepfar").init_temporary_tables(start_date, end_date, occupation)
+          ArtService::Reports::CohortBuilder.new(outcomes_definition: "pepfar").init_temporary_tables(start_date, end_date, occupation) if rebuild
           process_data
         end
 

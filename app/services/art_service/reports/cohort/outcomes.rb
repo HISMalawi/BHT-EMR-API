@@ -6,7 +6,7 @@ module ArtService
       # This is the Cohort Outcome class
       # rubocop:disable Metrics/ClassLength
       class Outcomes
-        attr_reader :end_date, :definition, :rebuild, :start_date
+        attr_reader :end_date, :definition, :rebuild, :start_date, :prev_date
 
         def initialize(end_date:, definition: 'moh', **kwargs)
           definition = definition.downcase
@@ -15,6 +15,7 @@ module ArtService
           start_date = kwargs[:start_date] || (end_date.to_date - 2.months).beginning_of_month
           @end_date = ActiveRecord::Base.connection.quote(end_date.to_date)
           @start_date = ActiveRecord::Base.connection.quote(start_date.to_date)
+          @prev_date = ActiveRecord::Base.connection.quote((start_date.to_date - 2.months).beginning_of_month)
           @definition = definition
           @rebuild = kwargs[:rebuild]&.casecmp?('true')
         end
@@ -66,6 +67,7 @@ module ArtService
 
         def denormalize(start: false)
           load_max_drug_orders(start:)
+          update_max_drug_orders(start:)
           load_patient_current_medication(start:)
           update_patient_current_medication(start:)
           load_min_auto_expire_date(start:)
@@ -77,7 +79,7 @@ module ArtService
         def load_max_drug_orders(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_max_drug_orders#{start ? '_start' : ''}
-            SELECT o.patient_id, MAX(o.start_date) AS start_date
+            SELECT o.patient_id, MAX(o.start_date) AS start_date, NUll
             FROM orders o
             INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.patient_id
             INNER JOIN drug_order ON drug_order.order_id = o.order_id AND drug_order.quantity > 0
@@ -86,7 +88,24 @@ module ArtService
               AND o.start_date < (DATE(#{start ? start_date : end_date }) + INTERVAL 1 DAY)
               AND o.voided = 0
             GROUP BY o.patient_id
-            ON DUPLICATE KEY UPDATE start_date = VALUES(start_date)
+            ON DUPLICATE KEY UPDATE start_date = VALUES(start_date), min_order_date = VALUES(min_order_date)
+          SQL
+        end
+
+        def update_max_drug_orders(start: false)
+          ActiveRecord::Base.connection.execute <<~SQL
+            INSERT INTO temp_max_drug_orders#{start ? '_start' : ''}
+            SELECT o.patient_id, MAX(o.start_date) AS start_date, MIN(o.start_date) AS min_order_date
+            FROM orders o
+            INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.patient_id
+            INNER JOIN drug_order ON drug_order.order_id = o.order_id AND drug_order.quantity > 0
+              AND drug_order.drug_inventory_id IN (#{arv_drug})
+            WHERE o.order_type_id = 1 -- drug order
+              AND o.start_date < (DATE(#{start ? start_date : end_date }) + INTERVAL 1 DAY)
+              AND o.start_date >= (DATE(#{start ? prev_date : start_date }) + INTERVAL 1 DAY)
+              AND o.voided = 0
+            GROUP BY o.patient_id
+            ON DUPLICATE KEY UPDATE start_date = VALUES(start_date), min_order_date = VALUES(min_order_date)
           SQL
         end
 
@@ -322,6 +341,7 @@ module ArtService
             create_outcome_table(start:) unless check_if_table_exists("temp_patient_outcomes#{start ? '_start' : ''}")
             drop_temp_patient_outcome_table(start:) unless count_table_columns("temp_patient_outcomes#{start ? '_start' : ''}") == 4
             create_temp_max_drug_orders_table(start:) unless check_if_table_exists("temp_max_drug_orders#{start ? '_start' : ''}")
+            drop_temp_max_drug_orders_table(start:) unless count_table_columns("temp_max_drug_orders#{start ? '_start' : ''}") == 3
             create_tmp_min_auto_expire_date(start:) unless check_if_table_exists("temp_min_auto_expire_date#{start ? '_start' : ''}")
             drop_tmp_min_auto_expirte_date(start:) unless count_table_columns("temp_min_auto_expire_date#{start ? '_start' : ''}") == 5
             create_temp_max_patient_state(start:) unless check_if_table_exists("temp_max_patient_state#{start ? '_start' : ''}")
@@ -470,11 +490,17 @@ module ArtService
           SQL
         end
 
+        def drop_temp_max_drug_orders_table(start: false)
+          ActiveRecord::Base.connection.execute("DROP TABLE IF EXISTS temp_max_drug_orders#{start ? '_start' : ''}")
+          create_temp_max_drug_orders_table(start:)
+        end
+
         def create_temp_max_drug_orders_table(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
             CREATE TABLE IF NOT EXISTS temp_max_drug_orders#{start ? '_start' : ''} (
               patient_id INT NOT NULL,
               start_date DATETIME DEFAULT NULL,
+              min_order_date DATETIME DEFAULT NULL,
               PRIMARY KEY (patient_id)
             )
           SQL
@@ -484,6 +510,9 @@ module ArtService
         def create_max_drug_orders_indexes(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
             CREATE INDEX idx_max_orders#{start ? '_start' : ''} ON temp_max_drug_orders#{start ? '_start' : ''} (start_date)
+          SQL
+          ActiveRecord::Base.connection.execute <<~SQL
+            CREATE INDEX idx_max_min_orders#{start ? '_start' : ''} ON temp_max_drug_orders#{start ? '_start' : ''} (min_order_date)
           SQL
         end
 
