@@ -6,13 +6,15 @@ module ArtService
       # This is the Cohort Outcome class
       # rubocop:disable Metrics/ClassLength
       class Outcomes
-        attr_reader :end_date, :definition, :rebuild
+        attr_reader :end_date, :definition, :rebuild, :start_date
 
         def initialize(end_date:, definition: 'moh', **kwargs)
           definition = definition.downcase
           raise ArgumentError, "Invalid outcomes definition: #{definition}" unless %w[moh pepfar].include?(definition)
 
+          start_date = kwargs[:start_date] || (end_date.to_date - 3.months).beginning_of_month
           @end_date = ActiveRecord::Base.connection.quote(end_date.to_date)
+          @start_date = ActiveRecord::Base.connection.quote(start_date.to_date)
           @definition = definition
           @rebuild = kwargs[:rebuild]&.casecmp?('true')
         end
@@ -21,7 +23,8 @@ module ArtService
           prepare_tables
           clear_tables if rebuild
           update_steps unless rebuild
-          process_data
+          process_data(start: false)
+          process_data(start: true)
         end
 
         private
@@ -46,28 +49,28 @@ module ArtService
         # ===================================
         #  Data Management Region
         # ===================================
-        def process_data
-          denormalize
+        def process_data(start: false)
+          denormalize(start:)
           # HIC SUNT DRACONIS: The order of the operations below matters,
           # do not change it unless you know what you are doing!!!
-          load_patients_who_died
-          load_patients_who_stopped_treatment
-          load_patients_without_drug_orders
-          load_patients_on_treatment
-          load_without_clinical_contact
-          load_defaulters
+          load_patients_who_died(start:)
+          load_patients_who_stopped_treatment(start:)
+          load_patients_without_drug_orders(start:)
+          load_patients_on_treatment(start:)
+          load_without_clinical_contact(start:)
+          load_defaulters(start:)
         end
 
         # rubocop:disable Metrics/MethodLength
 
-        def denormalize
-          load_max_drug_orders
-          load_patient_current_medication
-          update_patient_current_medication
-          load_min_auto_expire_date
-          load_max_patient_state
-          load_patient_current_state
-          update_patient_current_state
+        def denormalize(start: false)
+          load_max_drug_orders(start:)
+          load_patient_current_medication(start:)
+          update_patient_current_medication(start:)
+          load_min_auto_expire_date(start:)
+          load_max_patient_state(start:)
+          load_patient_current_state(start:)
+          update_patient_current_state(start:)
         end
 
         def load_max_drug_orders(start: false)
@@ -211,7 +214,7 @@ module ArtService
               SELECT MAX(date_created)
               FROM patient_state ps
               WHERE ps.patient_program_id = patient_state.patient_program_id
-              AND ps.state = patient_state.state AND ps.voided = 0 AND ps.start_date < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY
+              AND ps.state = patient_state.state AND ps.voided = 0 AND ps.start_date < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY)
             GROUP BY patients.patient_id
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
           SQL
@@ -272,7 +275,7 @@ module ArtService
         def load_without_clinical_contact(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
-            SELECT patients.patient_id, 'Defaulted', null, 5
+            SELECT patients.patient_id, 'Defaulted', #{@definition == 'pepfar' ? 'pepfar_defaulter_date' : 'moh_defaulter_date'}, 5
             FROM temp_current_medication#{start ? '_start' : ''} AS patients
             LEFT JOIN temp_current_state#{start ? '_start' : ''} AS cs ON cs.patient_id = patients.patient_id
             WHERE patients.#{@definition == 'pepfar' ? 'pepfar_defaulter_date' : 'moh_defaulter_date'} <= #{end_date}
@@ -314,15 +317,17 @@ module ArtService
         # rubocop:disable Metrics/PerceivedComplexity
         # rubocop:disable Metrics/CyclomaticComplexity
         def prepare_tables
-          create_outcome_table unless check_if_table_exists('temp_patient_outcomes')
-          drop_temp_patient_outcome_table unless count_table_columns('temp_patient_outcomes') == 4
-          create_temp_max_drug_orders_table unless check_if_table_exists('temp_max_drug_orders')
-          create_tmp_min_auto_expire_date unless check_if_table_exists('temp_min_auto_expire_date')
-          drop_tmp_min_auto_expirte_date unless count_table_columns('temp_min_auto_expire_date') == 5
-          create_temp_max_patient_state unless check_if_table_exists('temp_max_patient_state')
-          create_temp_current_state unless check_if_table_exists('temp_current_state')
-          create_temp_current_medication unless check_if_table_exists('temp_current_medication')
-          drop_temp_current_state unless count_table_columns('temp_current_state') == 6
+          [false, true].each do |start|
+            create_outcome_table(start:) unless check_if_table_exists("temp_patient_outcomes#{start ? '_start' : ''}")
+            drop_temp_patient_outcome_table(start:) unless count_table_columns("temp_patient_outcomes#{start ? '_start' : ''}") == 4
+            create_temp_max_drug_orders_table(start:) unless check_if_table_exists("temp_max_drug_orders#{start ? '_start' : ''}")
+            create_tmp_min_auto_expire_date(start:) unless check_if_table_exists("temp_min_auto_expire_date#{start ? '_start' : ''}")
+            drop_tmp_min_auto_expirte_date(start:) unless count_table_columns("temp_min_auto_expire_date#{start ? '_start' : ''}") == 5
+            create_temp_max_patient_state(start:) unless check_if_table_exists("temp_max_patient_state#{start ? '_start' : ''}")
+            create_temp_current_state(start:) unless check_if_table_exists("temp_current_state#{start ? '_start' : ''}")
+            create_temp_current_medication(start:) unless check_if_table_exists("temp_current_medication#{start ? '_start' : ''}")
+            drop_temp_current_state(start:) unless count_table_columns("temp_current_state#{start ? '_start' : ''}") == 6
+          end
         end
         # rubocop:enable Metrics/AbcSize
         # rubocop:enable Metrics/PerceivedComplexity
@@ -344,7 +349,7 @@ module ArtService
               PRIMARY KEY(patient_id, drug_id)
             )
           SQL
-          craete_tmp_current_med_index start
+          craete_tmp_current_med_index(start:)
         end
 
         def craete_tmp_current_med_index(start: false)
@@ -376,7 +381,7 @@ module ArtService
               patient_state_id INT NOT NULL,
               PRIMARY KEY(patient_id))
           SQL
-          create_current_state_index start
+          create_current_state_index(start:)
         end
 
         def create_current_state_index(start: false)
@@ -394,9 +399,9 @@ module ArtService
           SQL
         end
 
-        def create_tmp_min_auto_expire_date
+        def create_tmp_min_auto_expire_date(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE TABLE IF NOT EXISTS temp_min_auto_expire_date (
+            CREATE TABLE IF NOT EXISTS temp_min_auto_expire_date#{start ? '_start' : ''} (
               patient_id INT NOT NULL,
               start_date DATE DEFAULT NULL,
               auto_expire_date DATE DEFAULT NULL,
@@ -405,13 +410,13 @@ module ArtService
               PRIMARY KEY (patient_id)
             )
           SQL
-          create_min_auto_expire_date_indexes
+          create_min_auto_expire_date_indexes(start:)
         end
         # rubocop:enable Metrics/MethodLength
 
-        def drop_temp_current_state
-          ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_current_state')
-          create_temp_current_state
+        def drop_temp_current_state(start: false)
+          ActiveRecord::Base.connection.execute("DROP TABLE IF EXISTS temp_current_state#{start ? '_start' : ''}")
+          create_temp_current_state(start:)
         end
 
         def check_if_table_exists(table_name)
@@ -434,14 +439,14 @@ module ArtService
           result['count'].to_i
         end
 
-        def drop_temp_patient_outcome_table
-          ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_patient_outcomes')
-          create_outcome_table
+        def drop_temp_patient_outcome_table(start: false)
+          ActiveRecord::Base.connection.execute("DROP TABLE IF EXISTS temp_patient_outcomes#{start ? '_start' : ''}")
+          create_outcome_table(start:)
         end
 
-        def create_outcome_table
+        def create_outcome_table(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE TABLE IF NOT EXISTS temp_patient_outcomes (
+            CREATE TABLE IF NOT EXISTS temp_patient_outcomes#{start ? '_start' : ''} (
             patient_id INT NOT NULL,
             cum_outcome VARCHAR(120) NOT NULL,
             outcome_date DATE DEFAULT NULL,
@@ -449,75 +454,75 @@ module ArtService
             PRIMARY KEY (patient_id)
             )
           SQL
-          create_outcome_indexes
+          create_outcome_indexes(start:)
         end
 
-        def create_outcome_indexes
+        def create_outcome_indexes(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE INDEX idx_outcome ON temp_patient_outcomes (cum_outcome)
+            CREATE INDEX idx_outcome#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (cum_outcome)
           SQL
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE INDEX idx_out_date ON temp_patient_outcomes (outcome_date)
+            CREATE INDEX idx_out_date#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (outcome_date)
           SQL
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE INDEX idx_out_step ON temp_patient_outcomes (step)
+            CREATE INDEX idx_out_step#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (step)
           SQL
         end
 
-        def create_temp_max_drug_orders_table
+        def create_temp_max_drug_orders_table(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE TABLE IF NOT EXISTS temp_max_drug_orders (
+            CREATE TABLE IF NOT EXISTS temp_max_drug_orders#{start ? '_start' : ''} (
               patient_id INT NOT NULL,
               start_date DATETIME DEFAULT NULL,
               PRIMARY KEY (patient_id)
             )
           SQL
-          create_max_drug_orders_indexes
+          create_max_drug_orders_indexes(start:) 
         end
 
-        def create_max_drug_orders_indexes
+        def create_max_drug_orders_indexes(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE INDEX idx_max_orders ON temp_max_drug_orders (start_date)
+            CREATE INDEX idx_max_orders#{start ? '_start' : ''} ON temp_max_drug_orders#{start ? '_start' : ''} (start_date)
           SQL
         end
 
-        def drop_tmp_min_auto_expirte_date
-          ActiveRecord::Base.connection.execute 'DROP TABLE temp_min_auto_expire_date'
-          create_tmp_min_auto_expire_date
+        def drop_tmp_min_auto_expirte_date(start: false)
+          ActiveRecord::Base.connection.execute "DROP TABLE temp_min_auto_expire_date#{start ? '_start' : ''}"
+          create_tmp_min_auto_expire_date(start:)
         end
 
-        def create_min_auto_expire_date_indexes
+        def create_min_auto_expire_date_indexes(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE INDEX idx_min_auto_expire_date ON temp_min_auto_expire_date (auto_expire_date)
+            CREATE INDEX idx_min_auto_expire_date#{start ? '_start' : ''} ON temp_min_auto_expire_date#{start ? '_start' : ''} (auto_expire_date)
           SQL
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE INDEX idx_min_pepfar ON temp_min_auto_expire_date (pepfar_defaulter_date)
+            CREATE INDEX idx_min_pepfar#{start ? '_start' : ''} ON temp_min_auto_expire_date#{start ? '_start' : ''} (pepfar_defaulter_date)
           SQL
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE INDEX idx_min_moh ON temp_min_auto_expire_date (moh_defaulter_date)
+            CREATE INDEX idx_min_moh#{start ? '_start' : ''} ON temp_min_auto_expire_date#{start ? '_start' : ''} (moh_defaulter_date)
           SQL
         end
 
-        def create_temp_max_patient_state
+        def create_temp_max_patient_state(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE TABLE IF NOT EXISTS temp_max_patient_state (
+            CREATE TABLE IF NOT EXISTS temp_max_patient_state#{start ? '_start' : ''} (
               patient_id INT NOT NULL,
               start_date VARCHAR(15) DEFAULT NULL,
               PRIMARY KEY (patient_id)
             )
           SQL
-          create_max_patient_state_indexes
+          create_max_patient_state_indexes(start:)
         end
 
-        def create_max_patient_state_indexes
+        def create_max_patient_state_indexes(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
-            CREATE INDEX idx_max_patient_state ON temp_max_patient_state (start_date)
+            CREATE INDEX idx_max_patient_state#{start ? '_start' : ''} ON temp_max_patient_state#{start ? '_start' : ''} (start_date)
           SQL
         end
 
-        def update_steps
+        def update_steps(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
-            UPDATE temp_patient_outcomes SET step = 0 WHERE step > 0
+            UPDATE temp_patient_outcomes#{start ? '_start' : ''} SET step = 0 WHERE step > 0
           SQL
         end
 
@@ -525,13 +530,13 @@ module ArtService
           @arv_drug ||= ::Drug.arv_drugs.map(&:drug_id).join(',')
         end
 
-        def clear_tables
-          ActiveRecord::Base.connection.execute('TRUNCATE temp_patient_outcomes')
-          ActiveRecord::Base.connection.execute('TRUNCATE temp_max_drug_orders')
-          ActiveRecord::Base.connection.execute('TRUNCATE temp_min_auto_expire_date')
-          ActiveRecord::Base.connection.execute('TRUNCATE temp_max_patient_state')
-          ActiveRecord::Base.connection.execute('TRUNCATE temp_current_state')
-          ActiveRecord::Base.connection.execute('TRUNCATE temp_current_medication')
+        def clear_tables(start: false)
+          ActiveRecord::Base.connection.execute("TRUNCATE temp_patient_outcomes#{start ? '_start' : ''}")	
+          ActiveRecord::Base.connection.execute("TRUNCATE temp_max_drug_orders#{start ? '_start' : ''}")
+          ActiveRecord::Base.connection.execute("TRUNCATE temp_min_auto_expire_date#{start ? '_start' : ''}")
+          ActiveRecord::Base.connection.execute("TRUNCATE temp_max_patient_state#{start ? '_start' : ''}")
+          ActiveRecord::Base.connection.execute("TRUNCATE temp_current_state#{start ? '_start' : ''}")
+          ActiveRecord::Base.connection.execute("TRUNCATE temp_current_medication#{start ? '_start' : ''}")
         end
       end
       # rubocop:enable Metrics/ClassLength
