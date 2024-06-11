@@ -12,7 +12,7 @@ module ArtService
           definition = definition.downcase
           raise ArgumentError, "Invalid outcomes definition: #{definition}" unless %w[moh pepfar].include?(definition)
 
-          start_date = kwargs[:start_date] || (end_date.to_date - 3.months).beginning_of_month
+          start_date = kwargs[:start_date] || (end_date.to_date - 2.months).beginning_of_month
           @end_date = ActiveRecord::Base.connection.quote(end_date.to_date)
           @start_date = ActiveRecord::Base.connection.quote(start_date.to_date)
           @definition = definition
@@ -22,8 +22,9 @@ module ArtService
         def update_cummulative_outcomes
           prepare_tables
           clear_tables if rebuild
+          clear_tables(start: true) if rebuild
           update_steps unless rebuild
-          process_data(start: false)
+          process_data
           process_data(start: true)
         end
 
@@ -168,9 +169,9 @@ module ArtService
             INSERT INTO temp_current_medication#{start ? '_start' : ''}
             SELECT cm.patient_id, cm.concept_id, cm.drug_id, cm.daily_dose, cm.quantity, cm.start_date,
             COALESCE(first_ob.quantity, 0) + COALESCE(SUM(second_ob.value_numeric),0) + COALESCE(SUM(third_ob.value_numeric),0) AS pill_count,
-            DATE_ADD(DATE_SUB(cm.start_date, INTERVAL 1 DAY), INTERVAL (cm.quantity + COALESCE(first_ob.quantity, 0) + COALESCE(SUM(second_ob.value_numeric),0) + COALESCE(SUM(third_ob.value_numeric),0)) / cm.daily_dose DAY),
-            DATE_ADD(DATE_ADD(DATE_SUB(cm.start_date, INTERVAL 1 DAY), INTERVAL (cm.quantity + COALESCE(first_ob.quantity, 0) + COALESCE(SUM(second_ob.value_numeric),0) + COALESCE(SUM(third_ob.value_numeric),0)) / cm.daily_dose DAY), INTERVAL 30 DAY),
-            DATE_ADD(DATE_ADD(DATE_SUB(cm.start_date, INTERVAL 1 DAY), INTERVAL (cm.quantity + COALESCE(first_ob.quantity, 0) + COALESCE(SUM(second_ob.value_numeric),0) + COALESCE(SUM(third_ob.value_numeric),0)) / cm.daily_dose DAY), INTERVAL 60 DAY)
+            DATE_ADD(cm.start_date, INTERVAL (cm.quantity + COALESCE(first_ob.quantity, 0) + COALESCE(SUM(second_ob.value_numeric),0) + COALESCE(SUM(third_ob.value_numeric),0)) / cm.daily_dose DAY),
+            DATE_ADD(DATE_ADD(cm.start_date, INTERVAL (cm.quantity + COALESCE(first_ob.quantity, 0) + COALESCE(SUM(second_ob.value_numeric),0) + COALESCE(SUM(third_ob.value_numeric),0)) / cm.daily_dose DAY), INTERVAL 30 DAY),
+            DATE_ADD(DATE_ADD(cm.start_date, INTERVAL (cm.quantity + COALESCE(first_ob.quantity, 0) + COALESCE(SUM(second_ob.value_numeric),0) + COALESCE(SUM(third_ob.value_numeric),0)) / cm.daily_dose DAY), INTERVAL 60 DAY)
             FROM temp_current_medication#{start ? '_start' : ''} cm
             LEFT JOIN (
               SELECT ob.person_id, cm.drug_id,
