@@ -10,7 +10,7 @@ module ArtService
         include Pepfar::Utils
         include CommonSqlQueryUtils
 
-        attr_reader :start_date, :end_date, :rebuild
+        attr_reader :start_date, :end_date, :rebuild, :occupation
 
         def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
@@ -25,7 +25,7 @@ module ArtService
           addittional_groups report
           if rebuild
             ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar')
-                                              .init_temporary_tables(start_date, end_date, '')
+                                              .init_temporary_tables(start_date, end_date, occupation)
           end
           process_data report
           flatten_the_report report
@@ -71,7 +71,7 @@ module ArtService
         # rubocop:disable Metrics/PerceivedComplexity
         # rubocop:disable Metrics/CyclomaticComplexity
         def process_data(report)
-          data.each do |row|
+          fetch_data.each do |row|
             age_group = row['age_group']
             gender = row['gender']
             date_enrolled = row['date_enrolled']
@@ -152,12 +152,12 @@ module ArtService
           result_scores.reject { |item| item[:age_group].match?(/unknown/i) }
         end
 
-        def data
+        def fetch_data
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
-              pp.patient_id,
-              pp.gender,
-              disaggregated_age_group(pp.birthdate, DATE('#{end_date}')) age_group,
+              e.patient_id,
+              e.gender,
+              disaggregated_age_group(e.birthdate, DATE('#{end_date}')) age_group,
               CASE
                 WHEN o.value_numeric < 200 THEN 'cd4_less_than_200'
                 WHEN o.value_numeric = 200 AND o.value_modifier = '=' THEN 'cd4_greater_than_equal_to_200'
@@ -167,16 +167,14 @@ module ArtService
                 ELSE 'cd4_unknown_or_not_done'
               END cd4_count_group,
               CASE
-                WHEN transfer_in.value_coded IS NOT NULL THEN 0
-                ELSE 1
+                WHEN e.recorded_start_date IS NULL THEN 1
+                ELSE 0
               END new_patient,
-              pp.date_enrolled,
-              pp.earliest_start_date,
+              e.date_enrolled,
+              e.earliest_start_date,
               preg_or_breast.name AS maternal_status,
               DATE(MIN(pregnant_or_breastfeeding.obs_datetime)) AS maternal_status_date
-            FROM temp_earliest_start_date pp
-            LEFT JOIN (#{current_occupation_query}) AS current_occupation ON current_occupation.person_id = pp.patient_id
-            INNER JOIN person pe ON pe.person_id = pp.patient_id AND pe.voided = 0
+            FROM temp_earliest_start_date e
             LEFT JOIN (
               SELECT max(o.obs_datetime) AS obs_datetime, o.person_id
               FROM obs o
@@ -188,21 +186,15 @@ module ArtService
               WHERE o.concept_id = #{concept_name('CD4 count').concept_id} AND o.voided = 0
               AND o.obs_datetime <= '#{end_date}' AND o.obs_datetime >= '#{start_date}'
               GROUP BY o.person_id
-            ) current_cd4 ON current_cd4.person_id = pp.patient_id
-            LEFT JOIN obs o ON o.person_id = pp.patient_id AND o.concept_id = #{concept_name('CD4 count').concept_id} AND o.voided = 0 AND o.obs_datetime = current_cd4.obs_datetime
-            LEFT JOIN obs transfer_in ON transfer_in.person_id = pp.patient_id
-              AND transfer_in.concept_id = #{concept_name('Ever registered at ART clinic').concept_id}
-              AND transfer_in.voided = 0
-              AND transfer_in.value_coded = #{concept_name('Yes').concept_id}
-              AND transfer_in.obs_datetime <= '#{end_date}'
-              AND transfer_in.obs_datetime >= '#{start_date}'
-            LEFT JOIN obs pregnant_or_breastfeeding ON pregnant_or_breastfeeding.person_id = pp.patient_id
+            ) current_cd4 ON current_cd4.person_id = e.patient_id
+            LEFT JOIN obs o ON o.person_id = e.patient_id AND o.concept_id = #{concept_name('CD4 count').concept_id} AND o.voided = 0 AND o.obs_datetime = current_cd4.obs_datetime
+            LEFT JOIN obs pregnant_or_breastfeeding ON pregnant_or_breastfeeding.person_id = e.patient_id
               AND pregnant_or_breastfeeding.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Breast feeding?', 'Breast feeding', 'Breastfeeding', 'Is patient pregnant?', 'patient pregnant') AND voided = 0)
               AND pregnant_or_breastfeeding.voided = 0
               AND pregnant_or_breastfeeding.value_coded = #{concept_name('Yes').concept_id}
             LEFT JOIN concept_name preg_or_breast ON preg_or_breast.concept_id = pregnant_or_breastfeeding.concept_id AND preg_or_breast.voided = 0
-            WHERE pp.date_enrolled <= '#{end_date}' AND pp.date_enrolled >= '#{start_date}' #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'current_occupation', include_clause: false)}
-            GROUP BY pp.patient_id
+            WHERE e.date_enrolled <= '#{end_date}' AND e.date_enrolled >= '#{start_date}'
+            GROUP BY e.patient_id
           SQL
         end
       end
