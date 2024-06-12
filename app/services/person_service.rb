@@ -74,14 +74,23 @@ class PersonService
 
     return create_person_name(person, params) unless name
 
-    name = handle_model_errors do
-      name.update(params)
-      name
+    new_name = name.dup&.attributes&.deep_symbolize_keys
+
+    new_name.delete('person_name_id')
+
+    new_name[:uuid] = SecureRandom.uuid
+    new_name[:creator] = User.current.id
+
+    params.each do |k, v|
+      new_name[k.to_sym] = v if PersonName.column_names.include? k
     end
 
-    NameSearchService.index_person_name(name)
+    person_name = create_person_name(person, new_name)
+    NameSearchService.index_person_name(person_name)
 
-    name
+    name&.void("Updated to #{person_name.id} => #{params}")
+
+    person_name
   end
 
   PERSON_ADDRESS_FIELD_MAP = {
