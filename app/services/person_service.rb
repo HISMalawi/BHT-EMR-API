@@ -180,7 +180,7 @@ class PersonService
       # soundex, vice-versa is also true, thus we capture both then combine them.
       filters = { given_name:, middle_name:, family_name: }
       raw_matches = NameSearchService.search_full_person_name(filters, use_soundex: false)
-      soundex_matches = NameSearchService.search_full_person_name(filters, use_soundex: false)
+      soundex_matches = NameSearchService.search_full_person_name(filters, use_soundex: true)
 
       # Extract unique person_ids from the names matched above.
       person_ids = Set.new | raw_matches.collect(&:person_id) | soundex_matches.collect(&:person_id)
