@@ -234,7 +234,8 @@ module Api
       end
 
       def cxca_reports
-        render json: service.cxca_reports(params[:start_date], params[:end_date], params[:report_name])
+        render json: service.cxca_reports(params[:start_date], params[:end_date], params[:report_name], 
+                                         screening_method: params[:screening_method])
       end
 
       def radiology_reports
