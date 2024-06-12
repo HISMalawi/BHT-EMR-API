@@ -22,19 +22,21 @@ module ArtService
 
         def update_cummulative_outcomes
           prepare_tables
-          clear_tables if rebuild
-          clear_tables(start: true) if rebuild
-          update_steps unless rebuild
-          process_data
-          process_data(start: true)
+          [false, true].each do |start|
+            clear_tables(start:) if rebuild
+            update_steps(start:, portion: false) unless rebuild
+            process_data(start:)
+          end
         end
 
         def update_outcomes_by_definition
           prepare_tables
-          update_steps(portion: true)
-          load_patients_on_treatment
-          load_without_clinical_contact
-          load_defaulters
+          [false, true].each do |start|
+            update_steps(start:,portion: true)
+            load_patients_on_treatment(start:)
+            load_without_clinical_contact(start:)
+            load_defaulters(start:)
+          end
         end
 
         def update_outcomes_by_definition
@@ -565,9 +567,9 @@ module ArtService
           SQL
         end
 
-        def update_steps(start: false)
+        def update_steps(start: false, portion: false)
           ActiveRecord::Base.connection.execute <<~SQL
-            UPDATE temp_patient_outcomes#{start ? '_start' : ''} SET step = 0 WHERE step > 0
+            UPDATE temp_patient_outcomes#{start ? '_start' : ''} SET step = 0 WHERE step >= #{portion ? 1 : 4}
           SQL
         end
 
