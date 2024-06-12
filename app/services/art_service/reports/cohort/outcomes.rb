@@ -29,6 +29,14 @@ module ArtService
           process_data(start: true)
         end
 
+        def update_outcomes_by_definition
+          prepare_tables
+          update_steps(portion: true)
+          load_patients_on_treatment
+          load_without_clinical_contact
+          load_defaulters
+        end
+
         private
 
         # The main idea here is to come up with cumulative outcomes for patients in temp_earliest_start_date

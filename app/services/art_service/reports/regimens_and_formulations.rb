@@ -40,7 +40,9 @@ module ArtService
             arv_number: demographics.arv_number,
             birthdate: demographics.birthdate,
             gender: demographics.gender,
-            weight: demographics.weight
+            weight: demographics.weight,
+            drugs: regimen_drugs,
+            regimen:
           }
         end
       end
@@ -168,6 +170,12 @@ module ArtService
                    .order(obs_datetime: :desc)
                    .first
                    &.value_numeric
+      end
+
+      def regimen_drugs
+        @regimen_drugs ||= Drug.where(drug_id: [736, 982]).map do |drug|
+          drug.alternative_names.first&.short_name || drug.name
+        end.join(' + ')
       end
 
       def weight_concept_id

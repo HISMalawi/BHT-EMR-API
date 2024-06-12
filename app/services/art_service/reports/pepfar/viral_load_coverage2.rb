@@ -34,16 +34,17 @@ module ArtService
         end
 
         def vl_maternal_status(patient_list)
-          return { FP: [], FBf: [] } if patient_list.blank?
+          return { FP: [], FBf: [], FNP: [] } if patient_list.blank?
 
           pregnant = pregnant_women(patient_list).map { |woman| woman['person_id'].to_i }
-          return { FP: pregnant, FBf: [] } if (patient_list - pregnant).blank?
+          return { FP: pregnant, FBf: [], FNP: [] } if (patient_list - pregnant).blank?
 
           feeding = breast_feeding(patient_list - pregnant).map { |woman| woman['person_id'].to_i }
-
+          not_pregnant = patient_list - pregnant - feeding
           {
             FP: pregnant,
-            FBf: feeding
+            FBf: feeding,
+            FNP: not_pregnant
           }
         end
 
@@ -200,7 +201,7 @@ module ArtService
         end
 
         def load_tx_curr_into_report(report, patients)
-          report.each do |age_group, _data|
+          report.each_key do |age_group|
             %i[M F].each do |gender|
               report[age_group][gender][:tx_curr] ||= []
               report[age_group][gender][:tx_curr] = populate_tx_curr(patients, age_group, gender) || []
