@@ -23,7 +23,7 @@ class Api::V1::EirController < ApplicationController
       render json: {error: 'Patient not found'}, status: :not_found
     end
   end
- 
+
 
   private
 
@@ -40,13 +40,14 @@ class Api::V1::EirController < ApplicationController
         milestone_status: milestone_status(concept_name, patient_dob),
         age: concept_name,
         antigens: antigens.map { |item|
-          vaccine_given = vaccines_given.find { |vaccine| vaccine.drug_inventory_id == item.drug_id }
+          vaccine_given = vaccines_given.find { |vaccine| vaccine[:drug_inventory_id] == item.drug_id }
           {
             concept_id: item.concept_id,
             drug_id: item.drug_id,
             drug_name: item.drug_name,
             status: vaccine_given ? 'administered' : 'pending',
-            date_administered: vaccine_given&.obs_datetime&.strftime('%d/%b/%Y %H:%M:%S')
+            date_administered: vaccine_given ? vaccine_given[:obs_datetime]&.strftime('%d/%b/%Y %H:%M:%S') : nil,
+            vaccine_batch_number: vaccine_given ? vaccine_given[:batch_number] : nil
           }
         }
       }
@@ -56,43 +57,59 @@ class Api::V1::EirController < ApplicationController
   def administered_vaccines(patient_id, drugs)
     Observation.joins(order: :drug_order)
                .where(drug_order: { drug_inventory_id: drugs }, person_id: patient_id)
-               .select(:obs_datetime, :drug_inventory_id)
+               .select(:obs_datetime, :drug_inventory_id, :order_id).map do |obs|
+      {
+        obs_datetime: obs.obs_datetime,
+        drug_inventory_id: obs.drug_inventory_id,
+        batch_number: get_batch_id(obs.order_id)
+      }
+    end
   end
 
+  def get_batch_id(order_id)
+     Observation.where(concept_id: ConceptName.where(name: 'Batch Number').pluck(:concept_id), order_id: order_id).first&.value_text
+  end
+
+  
   def milestone_status(milestone, dob)
     today = Date.today
 
     if milestone.casecmp('At Birth').zero?
       if today == dob
-        return 'current'
+        'current'
       elsif today > dob
-        return 'passed'
+        'passed'
       else
-        return 'upcoming'
+        'upcoming'
       end
     elsif milestone.include?('weeks')
       milestone_weeks = milestone.split.first.to_i
-      weeks = (today - dob).to_i / 7
-      if milestone ==  weeks.to_i
-        return 'current'
-      else
-        return weeks > milestone_weeks ? 'passed' : 'upcoming'
-      end
+      age_in_weeks = (today - dob).to_i / 7
+      return 'current' if milestone ==  age_in_weeks.to_i
+
+      age_in_weeks > milestone_weeks ? 'passed' : 'upcoming'
     elsif milestone.include?('months')
       milestone_months = milestone.split.first.to_i
-      months = (today.year * 12 + today.month) - (dob.year * 12 + dob.month)
-      if milestone_months == months
-        return 'current'
-      else
-        return months > milestone_months ? 'passed' : 'upcoming'
-      end
+      age_in_months = (today.year * 12 + today.month) - (dob.year * 12 + dob.month)
+      return 'current' if milestone_months == age_in_months
+
+      age_in_months > milestone_months ? 'passed' : 'upcoming'
     elsif milestone.include?('years')
       milestone_years = milestone.split.first.to_i
-      years = today.year - dob.year
-      if milestone_years == years
-        return 'current'
+      age_in_years = today.year - dob.year
+      case milestone_years
+      when 9
+        return 'current' if age_in_years >= 9 && age_in_years <= 14
+      when 12
+        return 'current' if age_in_years > 12
+      when 15
+        return 'current' if age_in_years >= 15 && age_in_years <= 45
+      when 18
+        return 'current' if age_in_years >= 18
       else
-        return years > milestone_years ? 'passed' : 'upcoming'
+        return 'current' if milestone_years == age_in_years
+
+        age_in_years > milestone_years ? 'passed' : 'upcoming'
       end
     end
   end
