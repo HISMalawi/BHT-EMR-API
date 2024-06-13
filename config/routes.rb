@@ -303,6 +303,7 @@ Rails.application.routes.draw do
       resources :drug_cms, only: %i[index]
 
       post '/immunization/administer_vaccine', to: 'administer_vaccine#administer_vaccine'
+      get '/immunization/stats', to: 'immunization_report#stats'
     end
   end
 
