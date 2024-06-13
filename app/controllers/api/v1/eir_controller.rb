@@ -40,13 +40,14 @@ class Api::V1::EirController < ApplicationController
         milestone_status: milestone_status(concept_name, patient_dob),
         age: concept_name,
         antigens: antigens.map { |item|
-          vaccine_given = vaccines_given.find { |vaccine| vaccine.drug_inventory_id == item.drug_id }
+          vaccine_given = vaccines_given.find { |vaccine| vaccine[:drug_inventory_id] == item.drug_id }
           {
             concept_id: item.concept_id,
             drug_id: item.drug_id,
             drug_name: item.drug_name,
             status: vaccine_given ? 'administered' : 'pending',
-            date_administered: vaccine_given&.obs_datetime&.strftime('%d/%b/%Y %H:%M:%S')
+            date_administered: vaccine_given ? vaccine_given[:obs_datetime]&.strftime('%d/%b/%Y %H:%M:%S') : nil,
+            vaccine_batch_number: vaccine_given ? vaccine_given[:batch_number] : nil
           }
         }
       }
@@ -56,9 +57,20 @@ class Api::V1::EirController < ApplicationController
   def administered_vaccines(patient_id, drugs)
     Observation.joins(order: :drug_order)
                .where(drug_order: { drug_inventory_id: drugs }, person_id: patient_id)
-               .select(:obs_datetime, :drug_inventory_id)
+               .select(:obs_datetime, :drug_inventory_id, :order_id).map do |obs|
+      {
+        obs_datetime: obs.obs_datetime,
+        drug_inventory_id: obs.drug_inventory_id,
+        batch_number: get_batch_id(obs.order_id)
+      }
+    end
   end
 
+  def get_batch_id(order_id)
+     Observation.where(concept_id: ConceptName.where(name: 'Batch Number').pluck(:concept_id), order_id: order_id).first&.value_text
+  end
+
+  
   def milestone_status(milestone, dob)
     today = Date.today
 
