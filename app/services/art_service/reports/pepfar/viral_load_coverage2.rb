@@ -66,8 +66,7 @@ module ArtService
             end
           end
           results.each { |patient| process_client_eligibility(patient) } if @type == 'emastercard'
-          end_time = Time.now
-          Rails.logger.info "Time taken to process #{results.length} clients: #{end_time - start} seconds.
+          Rails.logger.info "Time taken for VL Coverage to process #{results.length} clients: #{Time.now - start} seconds.
                             These are the clients returned: #{@clients.length}"
           @clients
         end
@@ -185,7 +184,7 @@ module ArtService
           if patient['vl_order_date'] && patient['vl_order_date'].to_date >= end_date - 12.months && patient['vl_order_date'].to_date <= end_date
             return false
           end
-          return false if last_date.to_date + length.months < patient['outcome_date'].to_date
+          return false if last_date.to_date + length.months < patient['recorded_state_start_date'].to_date
 
           true
         end
@@ -353,9 +352,11 @@ module ArtService
               pid.identifier AS arv_number,
               cum.cum_outcome state,
               cum.outcome_date,
-              current_order.start_date vl_order_date
+              current_order.start_date vl_order_date,
+              st.start_date recorded_state_start_date
             FROM temp_patient_outcomes cum
             INNER JOIN temp_earliest_start_date e ON e.patient_id = cum.patient_id
+            INNER JOIN temp_max_patient_state st ON st.patient_id = cum.patient_id
             INNER JOIN (
               SELECT prescriptions.patient_id, regimens.name AS regimen_category, prescriptions.drugs, prescriptions.prescription_date
               FROM (
