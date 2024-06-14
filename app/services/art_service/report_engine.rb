@@ -12,6 +12,7 @@ module ArtService
       'ARCHIVING_CANDIDATES' => ArtService::Reports::ArchivingCandidates,
       'APPOINTMENTS' => ArtService::Reports::AppointmentsReport,
       'ARV_REFILL_PERIODS' => ArtService::Reports::ArvRefillPeriods,
+      'VL_SUPRESSION' => ArtService::Reports::Clinic::VlSupressionReport,
       'COHORT' => ArtService::Reports::ArtCohort,
       'COHORT_DISAGGREGATED' => ArtService::Reports::Cohort::Disaggregated,
       'COHORT_DISAGGREGATED_ADDITIONS' => ArtService::Reports::CohortDisaggregatedAdditions,
