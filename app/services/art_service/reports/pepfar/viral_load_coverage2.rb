@@ -180,12 +180,12 @@ module ArtService
           length = 6 if patient['maternal_status'] == 'FP'
           length = 6 if patient['maternal_status'] == 'FBf'
           length = 6 if patient['current_regimen'].to_s.match(/P/i)
-          # length = 6 if patient['diff_in_months'] < 12 && patient['vl_order_date'].blank?
+          length = 6 if patient['diff_in_months'] < 12 && patient['vl_order_date'].blank?
 
           if patient['vl_order_date'] && patient['vl_order_date'].to_date >= end_date - 12.months && patient['vl_order_date'].to_date <= end_date
             return false
           end
-          return false if last_date.to_date + length.months < end_date.to_date
+          return false if last_date.to_date + length.months < (patient['state'] == 'Defaulted' ? end_date.to_date : patient['outcome_date'].to_date)
 
           true
         end
