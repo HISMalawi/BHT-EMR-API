@@ -107,7 +107,7 @@ module OpdService
                       .joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         RIGHT JOIN person_address a ON a.person_id = encounter.patient_id')\
-                      .select('encounter.encounter_type, obs.value_coded, p.*,
+                      .select('p.person_id, encounter.encounter_type, obs.value_coded, p.*,
         a.state_province district, a.township_division ta, a.city_village village')
 
       stats = {}
@@ -121,12 +121,12 @@ module OpdService
         address = "#{district}, #{ta}, #{village}"
         if stats[concept.name].blank?
           stats[concept.name] = {}
-          stats[concept.name][address] = 0
+          stats[concept.name][address] = []
         elsif stats[concept.name][address].blank?
-          stats[concept.name][address] = 0
+          stats[concept.name][address] = []
         end
 
-        stats[concept.name][address] += 1
+        stats[concept.name][address] << record['person_id']
       end
 
       stats
