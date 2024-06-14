@@ -22,7 +22,6 @@ module ArtService
 
         def find_report
           rebuild_report if rebuild
-          update_outcomes unless rebuild
           process_initialization
           process_data
           flatten_and_sort_data

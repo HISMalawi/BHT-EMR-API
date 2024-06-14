@@ -116,9 +116,9 @@ module ArtService
       LOGGER = Rails.logger
 
       def find_saved_report
-        result = Report.where(type: @type, name: "#{@name} #{@occupation}",
+        @report = Report.where(type: @type, name: "#{@name} #{@occupation}",
                               start_date: @start_date, end_date: @end_date)
-        result&.map { |r| r['id'] } || []
+        @report&.map { |r| r['id'] } || []
       end
 
       # Writes the report to database
@@ -158,8 +158,17 @@ module ArtService
       end
 
       def clear_drill_down
+        saved_reports = find_saved_report
+        return if saved_reports.blank?
+
         ActiveRecord::Base.connection.execute <<~SQL
-          DELETE FROM cohort_drill_down #{find_saved_report.count.positive? ? "WHERE reporting_report_design_resource_id IN (#{find_saved_report.join(',')})" : ''}
+          DELETE FROM cohort_drill_down WHERE reporting_report_design_resource_id IN (#{saved_reports.join(',')})
+        SQL
+        ActiveRecord::Base.connection.execute <<~SQL
+          DELETE FROM reporting_report_design_resource WHERE report_design_id IN (#{saved_reports.join(',')})
+        SQL
+        ActiveRecord::Base.connection.execute <<~SQL
+          DELETE FROM reporting_report_design WHERE id IN (#{saved_reports.join(',')})
         SQL
       end
 
