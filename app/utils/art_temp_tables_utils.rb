@@ -16,7 +16,11 @@ module ArtTempTablesUtils
   def prepare_cohort_tables
     create_temp_cohort_members_table unless check_if_table_exists('temp_cohort_members')
     unless count_table_columns('temp_cohort_members') == 12
-      drop_temp_cohort_members_table
+        drop_temp_cohort_members_table
+    end
+    create_tmp_patient_table unless check_if_table_exists('temp_earliest_start_date')
+    unless count_table_columns('temp_earliest_start_date') == 11
+      drop_tmp_patient_table
     end
   end
 
@@ -78,62 +82,109 @@ module ArtTempTablesUtils
   #  Cohort Table Management Region
   # ===================================
 
-  # rubocop:disable Metrics/MethodLength
-      # rubocop:disable Metrics/AbcSize
-      def drop_temp_cohort_members_table
-        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_cohort_members')
-        create_temp_cohort_members_table
-      end
+  def drop_temp_cohort_members_table
+    ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_cohort_members')
+    create_temp_cohort_members_table
+  end
 
-      def create_temp_cohort_members_table
-        ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE temp_cohort_members (
-            patient_id INT PRIMARY KEY,
-            date_enrolled DATE,
-            earliest_start_date DATE,
-            recorded_start_date DATE DEFAULT NULL,
-            birthdate DATE DEFAULT NULL,
-            birthdate_estimated BOOLEAN,
-            death_date DATE,
-            gender VARCHAR(32),
-            age_at_initiation INT DEFAULT NULL,
-            age_in_days INT DEFAULT NULL,
-            reason_for_starting_art INT DEFAULT NULL,
-            occupation VARCHAR(255) DEFAULT NULL
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-        SQL
-      end
+  def create_temp_cohort_members_table
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_cohort_members (
+        patient_id INT PRIMARY KEY,
+        date_enrolled DATE,
+        earliest_start_date DATE,
+        recorded_start_date DATE DEFAULT NULL,
+        birthdate DATE DEFAULT NULL,
+        birthdate_estimated BOOLEAN,
+        death_date DATE,
+        gender VARCHAR(32),
+        age_at_initiation INT DEFAULT NULL,
+        age_in_days INT DEFAULT NULL,
+        reason_for_starting_art INT DEFAULT NULL,
+        occupation VARCHAR(255) DEFAULT NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+    SQL
+    create_temp_cohort_members_index
+  end
 
-      def create_temp_cohort_members_index
-        ActiveRecord::Base.connection.execute(
-            'CREATE INDEX member_id_index ON temp_cohort_members (patient_id)'
-          )
-          ActiveRecord::Base.connection.execute(
-            'CREATE INDEX member_enrolled_index ON temp_cohort_members (date_enrolled)'
-          )
-  
-          ActiveRecord::Base.connection.execute(
-            'CREATE INDEX member_date_enrolled_index ON temp_cohort_members (patient_id, date_enrolled)'
-          )
-  
-          ActiveRecord::Base.connection.execute(
-            'CREATE INDEX member_start_date_index ON temp_cohort_members (earliest_start_date)'
-          )
-          ActiveRecord::Base.connection.execute(
-            'CREATE INDEX member_start_date__date_enrolled_index ON temp_cohort_members (patient_id, earliest_start_date, date_enrolled, gender)'
-          )
-          ActiveRecord::Base.connection.execute(
-            'CREATE INDEX member_reason ON temp_cohort_members (reason_for_starting_art)'
-          )
-          ActiveRecord::Base.connection.execute(
-            'CREATE INDEX member_birthdate_idx ON temp_cohort_members (birthdate)'
-          )
-          ActiveRecord::Base.connection.execute(
-            'CREATE INDEX member_occupation_idx ON temp_cohort_members (birthdate)'
-          )
-      end
-      # rubocop:enable Metrics/AbcSize
-      # rubocop:enable Metrics/MethodLength
+  def create_temp_cohort_members_index
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX member_id_index ON temp_cohort_members (patient_id)'
+    )
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX member_enrolled_index ON temp_cohort_members (date_enrolled)'
+    )
+
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX member_date_enrolled_index ON temp_cohort_members (patient_id, date_enrolled)'
+    )
+
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX member_start_date_index ON temp_cohort_members (earliest_start_date)'
+    )
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX member_start_date__date_enrolled_index ON temp_cohort_members (patient_id, earliest_start_date, date_enrolled, gender)'
+    )
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX member_reason ON temp_cohort_members (reason_for_starting_art)'
+    )
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX member_birthdate_idx ON temp_cohort_members (birthdate)'
+    )
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX member_occupation_idx ON temp_cohort_members (birthdate)'
+    )
+  end
+
+  def drop_tmp_patient_table
+    ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_earliest_start_date')
+    create_tmp_patient_table
+  end
+
+  def create_tmp_patient_table
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE IF NOT EXISTS temp_earliest_start_date (
+         patient_id INT PRIMARY KEY,
+         date_enrolled DATE,
+         earliest_start_date DATE,
+         recorded_start_date DATE DEFAULT NULL,
+         birthdate DATE DEFAULT NULL,
+         birthdate_estimated BOOLEAN,
+         death_date DATE,
+         gender VARCHAR(32),
+         age_at_initiation INT DEFAULT NULL,
+         age_in_days INT DEFAULT NULL,
+         reason_for_starting_art INT DEFAULT NULL
+      )
+    SQL
+    create_tmp_patient_table_indexes
+  end
+
+  def create_tmp_patient_table_indexes
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX patient_id_index ON temp_earliest_start_date (patient_id)'
+    )
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX date_enrolled_index ON temp_earliest_start_date (date_enrolled)'
+    )
+
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX patient_id__date_enrolled_index ON temp_earliest_start_date (patient_id, date_enrolled)'
+    )
+
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX earliest_start_date_index ON temp_earliest_start_date (earliest_start_date)'
+    )
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX earliest_start_date__date_enrolled_index ON temp_earliest_start_date (patient_id, earliest_start_date, date_enrolled, gender)'
+    )
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX idx_reason_for_art ON temp_earliest_start_date (reason_for_starting_art)'
+    )
+    ActiveRecord::Base.connection.execute(
+      'CREATE INDEX birthdate_idx ON temp_earliest_start_date (birthdate)'
+    )
+  end
 
   # ===================================
   #  Outcome Table Management Region
