@@ -817,32 +817,6 @@ module ArtService
       end
 
       def update_tb_status(end_date)
-        ActiveRecord::Base.connection.execute(
-          'DROP TABLE IF EXISTS `temp_patient_tb_status`'
-        )
-
-        ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE temp_patient_tb_status (
-            patient_id INT(11) PRIMARY KEY,
-            tb_status INT(11)
-          )
-        SQL
-
-        ActiveRecord::Base.connection.execute(
-          'ALTER TABLE temp_patient_tb_status
-           ADD INDEX patient_id_index (patient_id)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'ALTER TABLE temp_patient_tb_status
-           ADD INDEX tb_status_index (tb_status)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'ALTER TABLE temp_patient_tb_status
-           ADD INDEX patient_id_tb_status_index (patient_id, tb_status)'
-        )
-        prepare_latest_tb_status_table
         create_temp_latest_tb_status(end_date)
 
         ActiveRecord::Base.connection.execute <<~SQL
@@ -859,19 +833,6 @@ module ArtService
       end
 
       private
-
-      def prepare_latest_tb_status_table
-        ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE IF NOT EXISTS temp_latest_tb_status(
-            person_id INT PRIMARY KEY,
-            obs_datetime DATETIME
-          )
-        SQL
-        unless ActiveRecord::Base.connection.index_exists?(:temp_latest_tb_status, :obs_datetime)
-          ActiveRecord::Base.connection.execute 'CREATE INDEX tlts_date ON temp_latest_tb_status(obs_datetime)'
-        end
-        ActiveRecord::Base.connection.execute 'TRUNCATE temp_latest_tb_status'
-      end
 
       def create_temp_latest_tb_status(end_date)
         ActiveRecord::Base.connection.select_all <<~SQL
@@ -1185,16 +1146,6 @@ module ArtService
       end
 
       def create_tmp_max_adherence(end_date)
-        drop_tmp_max_adherence
-        ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE tmp_max_adherence (
-            person_id INT PRIMARY KEY,
-            visit_date DATE
-          )
-        SQL
-
-        ActiveRecord::Base.connection.execute('CREATE INDEX tma_date ON tmp_max_adherence (visit_date)')
-
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO tmp_max_adherence
           SELECT obs.person_id, DATE(MAX(obs.obs_datetime)) AS visit_date
@@ -1213,10 +1164,6 @@ module ArtService
               AND obs.voided = 0
             GROUP BY obs.person_id;
         SQL
-      end
-
-      def drop_tmp_max_adherence
-        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS tmp_max_adherence')
       end
 
       def adherence_encounter
@@ -1690,9 +1637,8 @@ module ArtService
       end
 
       def create_temp_pregnant_obs(start_date, end_date)
-        ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_pregnant_obs;'
         ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE temp_pregnant_obs
+          INSERT INTO temp_pregnant_obs
           SELECT o.person_id,o.value_coded, DATE(o.obs_datetime) obs_datetime
           FROM obs o
           WHERE o.concept_id IN (6131,1755,7972,7563)
@@ -1700,8 +1646,6 @@ module ArtService
             AND o.voided = 0
             AND o.obs_datetime >= '#{start_date}' AND o.obs_datetime < '#{end_date}' + INTERVAL 1 DAY;
         SQL
-        ActiveRecord::Base.connection.execute 'CREATE INDEX fre_person ON temp_pregnant_obs(person_id);'
-        ActiveRecord::Base.connection.execute 'CREATE INDEX fre_obs_time ON temp_pregnant_obs(obs_datetime);'
       end
 
       def pregnant_females_all_ages(start_date, end_date)

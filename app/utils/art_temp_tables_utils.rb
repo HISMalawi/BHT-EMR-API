@@ -15,29 +15,27 @@ module ArtTempTablesUtils
   # rubocop:disable Metrics/CyclomaticComplexity
   def prepare_cohort_tables
     create_temp_cohort_members_table unless check_if_table_exists('temp_cohort_members')
-    unless count_table_columns('temp_cohort_members') == 12
-        drop_temp_cohort_members_table
-    end
+    drop_temp_cohort_members_table unless count_table_columns('temp_cohort_members') == 12
     create_tmp_patient_table unless check_if_table_exists('temp_earliest_start_date')
-    unless count_table_columns('temp_earliest_start_date') == 11
-      drop_tmp_patient_table
-    end
+    drop_tmp_patient_table unless count_table_columns('temp_earliest_start_date') == 11
     create_temp_other_patient_types unless check_if_table_exists('temp_other_patient_types')
-    unless count_table_columns('temp_other_patient_types') == 1
-      drop_temp_other_patient_types
-    end
+    drop_temp_other_patient_types unless count_table_columns('temp_other_patient_types') == 1
     create_temp_register_start_date_table unless check_if_table_exists('temp_register_start_date')
-    unless count_table_columns('temp_register_start_date') == 2
-      drop_temp_register_start_date_table
-    end
+    drop_temp_register_start_date_table unless count_table_columns('temp_register_start_date') == 2
     create_temp_order_details unless check_if_table_exists('temp_order_details')
-    unless count_table_columns('temp_order_details') == 2
-      drop_temp_order_details
-    end
+    drop_temp_order_details unless count_table_columns('temp_order_details') == 2
     create_art_start_date unless check_if_table_exists('temp_art_start_date')
-    unless count_table_columns('temp_art_start_date') == 2
-      drop_art_start_date
-    end
+    drop_art_start_date unless count_table_columns('temp_art_start_date') == 2
+    create_temp_patient_tb_status unless check_if_table_exists('temp_patient_tb_status')
+    drop_temp_patient_tb_status unless count_table_columns('temp_patient_tb_status') == 2
+    create_temp_latest_tb_status unless check_if_table_exists('temp_latest_tb_status')
+    drop_temp_latest_tb_status unless count_table_columns('temp_latest_tb_status') == 2
+    create_tmp_max_adherence unless check_if_table_exists('tmp_max_adherence')
+    drop_tmp_max_adherence unless count_table_columns('tmp_max_adherence') == 2
+    create_temp_pregnant_obs unless check_if_table_exists('temp_pregnant_obs')
+    drop_temp_pregnant_obs unless count_table_columns('temp_pregnant_obs') == 3
+    create_temp_patient_side_effects unless check_if_table_exists('temp_patient_side_effects')
+    drop_temp_patient_side_effects unless count_table_columns('temp_patient_side_effects') == 2
     truncate_cohort_tables
   end
 
@@ -285,6 +283,120 @@ module ArtTempTablesUtils
     ActiveRecord::Base.connection.execute 'CREATE INDEX tasd_date ON temp_art_start_date (value_datetime)'
   end
 
+  def drop_temp_patient_tb_status
+    ActiveRecord::Base.connection.execute(
+      'DROP TABLE IF EXISTS `temp_patient_tb_status`'
+    )
+    create_temp_patient_tb_status
+  end
+
+  def create_temp_patient_tb_status
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_patient_tb_status (
+        patient_id INT(11) PRIMARY KEY,
+        tb_status INT(11)
+      )
+    SQL
+    create_temp_patient_tb_status_indexes
+  end
+
+  def create_temp_patient_tb_status_indexes
+    ActiveRecord::Base.connection.execute(
+      'ALTER TABLE temp_patient_tb_status
+       ADD INDEX patient_id_index (patient_id)'
+    )
+    ActiveRecord::Base.connection.execute(
+      'ALTER TABLE temp_patient_tb_status
+       ADD INDEX tb_status_index (tb_status)'
+    )
+    ActiveRecord::Base.connection.execute(
+      'ALTER TABLE temp_patient_tb_status
+       ADD INDEX patient_id_tb_status_index (patient_id, tb_status)'
+    )
+  end
+
+  def drop_temp_latest_tb_status
+    ActiveRecord::Base.connection.execute(
+      'DROP TABLE IF EXISTS temp_latest_tb_status'
+    )
+    create_temp_latest_tb_status
+  end
+
+  def create_temp_latest_tb_status
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_latest_tb_status(
+        person_id INT PRIMARY KEY,
+        obs_datetime DATETIME
+      )
+    SQL
+  end
+
+  def create_temp_latest_tb_status_indexes
+    ActiveRecord::Base.connection.execute 'CREATE INDEX tlts_date ON temp_latest_tb_status(obs_datetime)'
+  end
+
+  def drop_tmp_max_adherence
+    ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS tmp_max_adherence')
+    create_tmp_max_adherence
+  end
+
+  def create_tmp_max_adherence
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE tmp_max_adherence (
+        person_id INT PRIMARY KEY,
+        visit_date DATE
+      )
+    SQL
+    create_tmp_max_adherence_indexes
+  end
+
+  def create_tmp_max_adherence_indexes
+    ActiveRecord::Base.connection.execute('CREATE INDEX tma_date ON tmp_max_adherence (visit_date)')
+  end
+
+  def drop_temp_pregnant_obs
+    ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_pregnant_obs;'
+    create_temp_pregnant_obs
+  end
+
+  def create_temp_pregnant_obs
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_pregnant_obs(
+        person_id INT PRIMARY KEY,
+        value_coded INT  NULL,
+        obs_datetime DATE NULL
+      )
+    SQL
+    create_temp_pregnant_obs_indexes
+  end
+
+  def create_temp_pregnant_obs_indexes
+    ActiveRecord::Base.connection.execute 'CREATE INDEX fre_obs_time ON temp_pregnant_obs(obs_datetime);'
+  end
+
+  def drop_temp_patient_side_effects
+    ActiveRecord::Base.connection.execute <<~SQL
+      DROP TABLE IF EXISTS temp_patient_side_effects
+    SQL
+    create_temp_patient_side_effects
+  end
+
+  def create_temp_patient_side_effects
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_patient_side_effects (
+        patient_id INT(11) PRIMARY KEY,
+        has_se VARCHAR(120) NOT NULL
+      )
+    SQL
+    create_temp_patient_side_effects_indexes
+  end
+
+  def create_temp_patient_side_effects_indexes
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE INDEX idx_side_effects ON temp_patient_side_effects (patient_id, has_se)
+    SQL
+  end
+
   # ===================================
   #  Outcome Table Management Region
   # ===================================
@@ -481,6 +593,11 @@ module ArtTempTablesUtils
     ActiveRecord::Base.connection.execute('TRUNCATE temp_register_start_date')
     ActiveRecord::Base.connection.execute('TRUNCATE temp_order_details')
     ActiveRecord::Base.connection.execute('TRUNCATE temp_art_start_date')
+    ActiveRecord::Base.connection.execute('TRUNCATE temp_patient_tb_status')
+    ActiveRecord::Base.connection.execute('TRUNCATE temp_latest_tb_status')
+    ActiveRecord::Base.connection.execute('TRUNCATE tmp_max_adherence')
+    ActiveRecord::Base.connection.execute('TRUNCATE temp_pregnant_obs')
+    ActiveRecord::Base.connection.execute('TRUNCATE temp_patient_side_effects')
   end
 
   # ===================================
