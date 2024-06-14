@@ -351,7 +351,6 @@ class DdeService
   # patients to take on a structure similar to that of local
   # patients.
   def package_patients(local_patients, remote_patients, auto_push_singular_local: false)
-    Rails.logger.info "These are our records.\nLocal: #{local_patients}\nRemote: #{remote_patients}"
     patients = resolve_patients(local_patients:,
                                 remote_patients:,
                                 auto_push_singular_local:)
@@ -428,7 +427,6 @@ class DdeService
     else
       resolved_patients = local_patients
     end
-    Rails.logger.info "These are the resolved: #{{ locals: resolved_patients, remotes: remote_patients }}"
     { locals: resolved_patients, remotes: remote_patients }
   end
 
