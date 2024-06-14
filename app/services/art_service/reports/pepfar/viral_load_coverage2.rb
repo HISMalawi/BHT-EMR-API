@@ -180,11 +180,12 @@ module ArtService
           length = 6 if patient['maternal_status'] == 'FP'
           length = 6 if patient['maternal_status'] == 'FBf'
           length = 6 if patient['current_regimen'].to_s.match(/P/i)
+          # length = 6 if patient['diff_in_months'] < 12 && patient['vl_order_date'].blank?
 
           if patient['vl_order_date'] && patient['vl_order_date'].to_date >= end_date - 12.months && patient['vl_order_date'].to_date <= end_date
             return false
           end
-          return false if last_date.to_date + length.months < patient['recorded_state_start_date'].to_date
+          return false if last_date.to_date + length.months < end_date.to_date
 
           true
         end
@@ -353,7 +354,8 @@ module ArtService
               cum.cum_outcome state,
               cum.outcome_date,
               current_order.start_date vl_order_date,
-              st.start_date recorded_state_start_date
+              st.start_date recorded_state_start_date,
+              TIMESTAMPDIFF(month, e.earliest_start_date, '2024-03-31') diff_in_months
             FROM temp_patient_outcomes cum
             INNER JOIN temp_earliest_start_date e ON e.patient_id = cum.patient_id
             INNER JOIN temp_max_patient_state st ON st.patient_id = cum.patient_id
