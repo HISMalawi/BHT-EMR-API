@@ -20,7 +20,7 @@ module ArtService
       label = ZebraPrinter::Lib::StandardLabel.new
       # label.draw_text("Printed: #{Date.today.strftime('%b %d %Y')}",597,280,0,1,1,1,false)
       label.draw_text(seen_by(patient, date).to_s, 597, 250, 0, 1, 1, 1, false)
-      label.draw_text(date&.strftime('%B %d %Y').upcase, 25, 30, 0, 3, 1, 1, false)
+      label.draw_text(date&.strftime('%d/%b/%Y'), 25, 30, 0, 3, 1, 1, false)
       label.draw_text(arv_number.to_s, 565, 30, 0, 3, 1, 1, true)
       label.draw_text("#{patient.person.name}(#{patient.gender}) #{owner}", 25, 60, 0, 3, 1, 1, false)
       label.draw_text(('(' + visit.visit_by + ')' unless visit.visit_by.blank?).to_s, 255, 30, 0, 2, 1, 1, false)

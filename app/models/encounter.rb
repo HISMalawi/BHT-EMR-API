@@ -49,6 +49,11 @@ class Encounter < VoidableRecord
               include: {
                 concept_names: {}
               }
+            },
+            drug: {
+              include: {
+                drug_cms: {}
+              }
             }
           }
         }

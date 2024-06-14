@@ -27,13 +27,6 @@ production:
 # Uncomment out the following and update them accordingly if
 # you need to sync hts and anc to RDS.
 
-#metadata:
-#  host: <mysql_host>
-#  username: <mysql_username>
-#  password: <mysql_pass>
-#  database: <db_name>
-#
-#
 #hts:
 #  adapter: mysql2
 #  username: root
@@ -58,6 +51,10 @@ healthdata:
   host: localhost
   pool: 500
 
-concepts_merge_db:
-  <<: *default
-  database: openmrs_test
+# concepts_merge_db:
+#  adapter: mysql2
+#  username: root
+#  database: openmrs
+#  password:
+#  host: localhost
+#  pool: 500

@@ -69,7 +69,7 @@ module AncService
                       )")
                          .where("obs.person_id = #{@patient.id}")
 
-      @hb = syphil['HB TEST RESULT'] + " g/dl" rescue nil
+      @hb = "#{syphil['HEPATITIS B TEST RESULT']&.humanize} g/dl"
 
       # @hb1_date = hb["HB TEST RESULT DATE 1"] rescue nil
 
