@@ -22,6 +22,23 @@ module ArtTempTablesUtils
     unless count_table_columns('temp_earliest_start_date') == 11
       drop_tmp_patient_table
     end
+    create_temp_other_patient_types unless check_if_table_exists('temp_other_patient_types')
+    unless count_table_columns('temp_other_patient_types') == 1
+      drop_temp_other_patient_types
+    end
+    create_temp_register_start_date_table unless check_if_table_exists('temp_register_start_date')
+    unless count_table_columns('temp_register_start_date') == 2
+      drop_temp_register_start_date_table
+    end
+    create_temp_order_details unless check_if_table_exists('temp_order_details')
+    unless count_table_columns('temp_order_details') == 2
+      drop_temp_order_details
+    end
+    create_art_start_date unless check_if_table_exists('temp_art_start_date')
+    unless count_table_columns('temp_art_start_date') == 2
+      drop_art_start_date
+    end
+    truncate_cohort_tables
   end
 
   def prepare_outcome_tables
@@ -184,6 +201,88 @@ module ArtTempTablesUtils
     ActiveRecord::Base.connection.execute(
       'CREATE INDEX birthdate_idx ON temp_earliest_start_date (birthdate)'
     )
+  end
+
+  def drop_temp_register_start_date_table
+    ActiveRecord::Base.connection.execute <<-SQL
+      DROP TABLE IF EXISTS temp_register_start_date
+    SQL
+    create_temp_register_start_date_table
+  end
+
+  def create_temp_register_start_date_table
+    ActiveRecord::Base.connection.execute <<-SQL
+      CREATE TABLE temp_register_start_date (
+        patient_id INT(11) NOT NULL,
+        start_date DATE NOT NULL,
+        PRIMARY KEY (patient_id)
+      )
+    SQL
+    create_temp_register_start_date_table_indexes
+  end
+
+  def create_temp_register_start_date_table_indexes
+    ActiveRecord::Base.connection.execute 'CREATE INDEX trsd_date ON temp_register_start_date (start_date)'
+  end
+
+  def drop_temp_other_patient_types
+    ActiveRecord::Base.connection.execute <<~SQL
+      DROP TABLE IF EXISTS temp_other_patient_types
+    SQL
+    create_temp_other_patient_types
+  end
+
+  def create_temp_other_patient_types
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_other_patient_types (
+        patient_id INT(11) NOT NULL,
+        PRIMARY KEY (patient_id)
+      )
+    SQL
+  end
+
+  def drop_temp_order_details
+    ActiveRecord::Base.connection.execute <<~SQL
+      DROP TABLE IF EXISTS temp_order_details
+    SQL
+    create_temp_order_details
+  end
+
+  def create_temp_order_details
+    ActiveRecord::Base.connection.execute <<-SQL
+      CREATE TABLE temp_order_details (
+        patient_id INT NOT NULL,
+        start_date DATE NOT NULL,
+        PRIMARY KEY (patient_id)
+      )
+    SQL
+    create_temp_order_details_indexes
+  end
+
+  def create_temp_order_details_indexes
+    ActiveRecord::Base.connection.execute 'CREATE INDEX tod_date ON temp_order_details (start_date)'
+  end
+
+  def drop_art_start_date
+    ActiveRecord::Base.connection.execute <<~SQL
+      DROP TABLE IF EXISTS temp_art_start_date
+    SQL
+    create_art_start_date
+  end
+
+  def create_art_start_date
+    ActiveRecord::Base.connection.execute <<-SQL
+      CREATE TABLE temp_art_start_date (
+        patient_id INT(11) NOT NULL,
+        value_datetime DATE NOT NULL,
+        PRIMARY KEY (patient_id)
+      )
+    SQL
+    create_art_start_date_indexes
+  end
+
+  def create_art_start_date_indexes
+    ActiveRecord::Base.connection.execute 'CREATE INDEX tasd_date ON temp_art_start_date (value_datetime)'
   end
 
   # ===================================
@@ -370,5 +469,29 @@ module ArtTempTablesUtils
     ActiveRecord::Base.connection.execute <<~SQL
       UPDATE temp_patient_outcomes#{start ? '_start' : ''} SET step = 0 WHERE step >= #{portion ? 1 : 4}
     SQL
+  end
+
+  # ===================================
+  #  Cohort Table Data Management Region
+  # ===================================
+  def truncate_cohort_tables
+    ActiveRecord::Base.connection.execute('TRUNCATE temp_cohort_members')
+    ActiveRecord::Base.connection.execute('TRUNCATE temp_earliest_start_date')
+    ActiveRecord::Base.connection.execute('TRUNCATE temp_other_patient_types')
+    ActiveRecord::Base.connection.execute('TRUNCATE temp_register_start_date')
+    ActiveRecord::Base.connection.execute('TRUNCATE temp_order_details')
+    ActiveRecord::Base.connection.execute('TRUNCATE temp_art_start_date')
+  end
+
+  # ===================================
+  #  Outcome Table Data Management Region
+  # ===================================
+  def truncate_outcome_tables(start: false)
+    ActiveRecord::Base.connection.execute("TRUNCATE temp_patient_outcomes#{start ? '_start' : ''}")
+    ActiveRecord::Base.connection.execute("TRUNCATE temp_max_drug_orders#{start ? '_start' : ''}")
+    ActiveRecord::Base.connection.execute("TRUNCATE temp_min_auto_expire_date#{start ? '_start' : ''}")
+    ActiveRecord::Base.connection.execute("TRUNCATE temp_max_patient_state#{start ? '_start' : ''}")
+    ActiveRecord::Base.connection.execute("TRUNCATE temp_current_state#{start ? '_start' : ''}")
+    ActiveRecord::Base.connection.execute("TRUNCATE temp_current_medication#{start ? '_start' : ''}")
   end
 end

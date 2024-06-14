@@ -9,6 +9,7 @@ module ArtService
 
       include ModelUtils
       include CommonSqlQueryUtils
+      include ArtTempTablesUtils
 
       def initialize(outcomes_definition: 'moh')
         unless %w[moh pepfar].include?(outcomes_definition.downcase)
@@ -19,32 +20,22 @@ module ArtService
       end
 
       def init_temporary_tables(_start_date, end_date, occupation)
-        create_temp_cohort_members_table
-        create_tmp_patient_table
-        drop_temp_register_start_date_table
-        drop_temp_other_patient_types
-        drop_temp_order_details
-        drop_art_start_date
-        create_temp_other_patient_types(end_date)
-        create_temp_register_start_date_table(end_date)
-        create_temp_order_details(end_date)
-        create_art_start_date(end_date)
+        prepare_tables
+        load_temp_other_patient_types(end_date)
+        load_temp_register_start_date_table(end_date)
+        load_temp_order_details(end_date)
+        load_art_start_date(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
         update_cum_outcome(end_date)
       end
 
       def build(cohort_struct, start_date, end_date, occupation)
         # load_tmp_patient_table(cohort_struct)
-        create_temp_cohort_members_table
-        create_tmp_patient_table
-        drop_temp_register_start_date_table
-        drop_temp_other_patient_types
-        drop_temp_order_details
-        drop_art_start_date
-        create_temp_other_patient_types(end_date)
-        create_temp_register_start_date_table(end_date)
-        create_temp_order_details(end_date)
-        create_art_start_date(end_date)
+        prepare_tables
+        load_temp_other_patient_types(end_date)
+        load_temp_register_start_date_table(end_date)
+        load_temp_order_details(end_date)
+        load_art_start_date(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
 
         # create_tmp_patient_table_2(end_date)
@@ -720,69 +711,10 @@ module ArtService
       end
       # rubocop:enable Metrics/MethodLength
 
-      ##
-      # This will hold crucial information for cohort members
-      # rubocop:disable Metrics/MethodLength
-      # rubocop:disable Metrics/AbcSize
-      def create_temp_cohort_members_table
-        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_cohort_members')
-        ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE temp_cohort_members (
-            patient_id INT PRIMARY KEY,
-            date_enrolled DATE,
-            earliest_start_date DATE,
-            recorded_start_date DATE DEFAULT NULL,
-            birthdate DATE DEFAULT NULL,
-            birthdate_estimated BOOLEAN,
-            death_date DATE,
-            gender VARCHAR(32),
-            age_at_initiation INT DEFAULT NULL,
-            age_in_days INT DEFAULT NULL,
-            reason_for_starting_art INT DEFAULT NULL,
-            occupation VARCHAR(255) DEFAULT NULL
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-        SQL
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_id_index ON temp_cohort_members (patient_id)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_enrolled_index ON temp_cohort_members (date_enrolled)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_date_enrolled_index ON temp_cohort_members (patient_id, date_enrolled)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_start_date_index ON temp_cohort_members (earliest_start_date)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_start_date__date_enrolled_index ON temp_cohort_members (patient_id, earliest_start_date, date_enrolled, gender)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_reason ON temp_cohort_members (reason_for_starting_art)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_birthdate_idx ON temp_cohort_members (birthdate)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_occupation_idx ON temp_cohort_members (birthdate)'
-        )
-      end
-      # rubocop:enable Metrics/AbcSize
-      # rubocop:enable Metrics/MethodLength
-
-      def create_temp_other_patient_types(end_date)
+      def load_temp_other_patient_types(end_date)
         type_of_patient_concept = concept('Type of patient').concept_id
         drug_refill_concept = concept('Drug refill').concept_id
         external_concept = concept('External Consultation').concept_id
-        ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE temp_other_patient_types (
-            patient_id INT(11) NOT NULL,
-            PRIMARY KEY (patient_id)
-          )
-        SQL
 
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_other_patient_types (patient_id)
@@ -796,48 +728,6 @@ module ArtService
           AND pp.voided = 0
           GROUP BY patient_id
         SQL
-      end
-
-      def drop_temp_other_patient_types
-        ActiveRecord::Base.connection.execute <<~SQL
-          DROP TABLE IF EXISTS temp_other_patient_types
-        SQL
-      end
-
-      def drop_temp_order_details
-        ActiveRecord::Base.connection.execute <<~SQL
-          DROP TABLE IF EXISTS temp_order_details
-        SQL
-      end
-
-      def drop_art_start_date
-        ActiveRecord::Base.connection.execute <<~SQL
-          DROP TABLE IF EXISTS temp_art_start_date
-        SQL
-      end
-
-      def create_art_start_date(end_date)
-        ActiveRecord::Base.connection.execute <<-SQL
-          CREATE TABLE temp_art_start_date (
-            patient_id INT(11) NOT NULL,
-            value_datetime DATE NOT NULL,
-            PRIMARY KEY (patient_id)
-          )
-        SQL
-        ActiveRecord::Base.connection.execute 'CREATE INDEX tasd_date ON temp_art_start_date (value_datetime)'
-        load_art_start_date(end_date)
-      end
-
-      def create_temp_order_details(end_date)
-        ActiveRecord::Base.connection.execute <<-SQL
-          CREATE TABLE temp_order_details (
-            patient_id INT NOT NULL,
-            start_date DATE NOT NULL,
-            PRIMARY KEY (patient_id)
-          )
-        SQL
-        ActiveRecord::Base.connection.execute 'CREATE INDEX tod_date ON temp_order_details (start_date)'
-        load_temp_order_details(end_date)
       end
 
       def load_temp_order_details(end_date)
@@ -866,18 +756,10 @@ module ArtService
         SQL
       end
 
-      def create_temp_register_start_date_table(end_date)
+      def load_temp_register_start_date_table(end_date)
         type_of_patient_concept = concept('Type of patient').concept_id
         new_patient_concept = concept('New patient').concept_id
 
-        ActiveRecord::Base.connection.execute <<-SQL
-          CREATE TABLE temp_register_start_date (
-            patient_id INT(11) NOT NULL,
-            start_date DATE NOT NULL,
-            PRIMARY KEY (patient_id)
-          )
-        SQL
-        ActiveRecord::Base.connection.execute 'CREATE INDEX trsd_date ON temp_register_start_date (start_date)'
         ActiveRecord::Base.connection.execute <<-SQL
           INSERT INTO temp_register_start_date (patient_id, start_date)
           SELECT pp.patient_id as patient_id, MIN(o.obs_datetime) AS start_date
@@ -890,12 +772,6 @@ module ArtService
           WHERE pp.program_id = 1
           AND pp.voided = 0
           GROUP BY patient_id
-        SQL
-      end
-
-      def drop_temp_register_start_date_table
-        ActiveRecord::Base.connection.execute <<-SQL
-          DROP TABLE IF EXISTS temp_register_start_date
         SQL
       end
 
@@ -933,49 +809,6 @@ module ArtService
       end
       # rubocop:enable Metrics/MethodLength
       # rubocop:enable Metrics/AbcSize
-
-      def create_tmp_patient_table
-        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_earliest_start_date')
-        ActiveRecord::Base.connection.execute(
-          'CREATE TABLE IF NOT EXISTS temp_earliest_start_date (
-             patient_id INT PRIMARY KEY,
-             date_enrolled DATE,
-             earliest_start_date DATE,
-             recorded_start_date DATE DEFAULT NULL,
-             birthdate DATE DEFAULT NULL,
-             birthdate_estimated BOOLEAN,
-             death_date DATE,
-             gender VARCHAR(32),
-             age_at_initiation INT DEFAULT NULL,
-             age_in_days INT DEFAULT NULL,
-             reason_for_starting_art INT DEFAULT NULL
-          );'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX patient_id_index ON temp_earliest_start_date (patient_id)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX date_enrolled_index ON temp_earliest_start_date (date_enrolled)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX patient_id__date_enrolled_index ON temp_earliest_start_date (patient_id, date_enrolled)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX earliest_start_date_index ON temp_earliest_start_date (earliest_start_date)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX earliest_start_date__date_enrolled_index ON temp_earliest_start_date (patient_id, earliest_start_date, date_enrolled, gender)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX idx_reason_for_art ON temp_earliest_start_date (reason_for_starting_art)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX birthdate_idx ON temp_earliest_start_date (birthdate)'
-        )
-      end
 
       def update_cum_outcome(end_date)
         ArtService::Reports::Cohort::Outcomes.new(end_date:,
