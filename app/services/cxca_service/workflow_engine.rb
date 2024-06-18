@@ -135,10 +135,13 @@ module CxcaService
       ).order(encounter_datetime: :desc).first
 
       unless encounter.blank?
+        treatment_option = ConceptName.find_by_name('Directly observed treatment option').concept_id
+        referral_concept = ConceptName.find_by_name('Referral').concept_id
+        return false unless encounter.observations.find_by(concept_id: treatment_option,
+                                                         value_coded: referral_concept).blank? 
+
         screening_results_available = ConceptName.find_by_name('Screening results available').concept_id
-        concept_no = ConceptName.find_by_name('No').concept_id
-        return encounter.observations.find_by(concept_id: screening_results_available,
-          value_coded: concept_no).blank? ? false : true
+        return false unless encounter.observations.find_by(concept_id: screening_results_available).blank?
       end
 
       return true

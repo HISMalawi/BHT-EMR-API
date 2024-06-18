@@ -9,7 +9,7 @@ module CxcaService
         include Utils
         include ModelUtils
 
-        def initialize(start_date:, end_date:)
+        def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
           @end_date = end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S')
         end
@@ -52,26 +52,28 @@ module CxcaService
         end
 
         def fetch_query
-          cxca_program = Program.find_by_name('CxCa program').id
+           cxca_program = Program.find_by_name('CxCa program').id
+            art_program = Program.find_by_name('HIV Program').id
 
           ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT
-              p.patient_id,
-              reason_name.name reason_for_not_screening
-            FROM patient p
-            INNER JOIN encounter on encounter.patient_id = p.patient_id
-            AND encounter.voided = 0
-            AND encounter.program_id = #{cxca_program}
-            AND encounter.encounter_datetime >= '#{@start_date}'
-            AND encounter.encounter_datetime <= '#{@end_date}'
-            INNER JOIN obs reason ON reason.encounter_id = encounter.encounter_id
-                AND reason.voided = 0
-                AND reason.concept_id = #{concept('Reason for NOT offering CxCa').concept_id}
-            INNER JOIN concept_name reason_name ON reason_name.concept_id = reason.value_coded
-                AND reason_name.voided = 0
-            WHERE p.voided = 0
-            GROUP BY p.patient_id
-          SQL
+          SELECT
+            p.patient_id,
+            reason_name.name AS reason_for_not_screening
+          FROM patient p
+          INNER JOIN encounter ON encounter.patient_id = p.patient_id
+          AND encounter.voided = 0
+          AND (encounter.program_id = #{cxca_program} OR encounter.program_id = #{art_program})
+          AND encounter.encounter_datetime >= '#{@start_date}'
+          AND encounter.encounter_datetime <= '#{@end_date}'
+          INNER JOIN obs reason ON reason.encounter_id = encounter.encounter_id
+          AND reason.voided = 0
+          AND reason.concept_id = #{concept('Reason for NOT offering CxCa').concept_id}
+          INNER JOIN concept_name reason_name ON reason_name.concept_id = reason.value_coded
+          AND reason_name.voided = 0
+          WHERE p.voided = 0
+          GROUP BY p.patient_id, reason_name.name
+         SQL
+
         end
       end
     end
