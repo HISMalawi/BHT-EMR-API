@@ -107,7 +107,7 @@ module OpdService
                       .joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         RIGHT JOIN person_address a ON a.person_id = encounter.patient_id')\
-                      .select('p.person_id, encounter.encounter_type, obs.value_coded, p.*,
+                      .select('encounter.encounter_type, obs.value_coded, p.*,
         a.state_province district, a.township_division ta, a.city_village village')
 
       stats = {}
