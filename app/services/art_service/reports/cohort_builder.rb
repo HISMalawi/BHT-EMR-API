@@ -82,7 +82,7 @@ module ArtService
         cohort_struct.quarterly_all_males = males(quarter_start_date, end_date)
 
         # Pregnant females (all ages)
-        create_temp_pregnant_obs(cum_start_date, end_date)
+        load_temp_pregnant_obs(cum_start_date, end_date)
         cohort_struct.pregnant_females_all_ages = pregnant_females_all_ages(start_date, end_date)
         cohort_struct.cum_pregnant_females_all_ages = pregnant_females_all_ages(cum_start_date, end_date)
         cohort_struct.quarterly_pregnant_females_all_ages = pregnant_females_all_ages(quarter_start_date, end_date)
@@ -817,7 +817,7 @@ module ArtService
       end
 
       def update_tb_status(end_date)
-        create_temp_latest_tb_status(end_date)
+        load_temp_latest_tb_status(end_date)
 
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_patient_tb_status
@@ -834,7 +834,7 @@ module ArtService
 
       private
 
-      def create_temp_latest_tb_status(end_date)
+      def load_temp_latest_tb_status(end_date)
         ActiveRecord::Base.connection.select_all <<~SQL
           INSERT INTO temp_latest_tb_status
           SELECT t.person_id, MAX(t.obs_datetime) obs_datetime
@@ -1092,7 +1092,7 @@ module ArtService
       def latest_art_adherence(patients_alive_and_on_art, _start_date, end_date)
         patients_alive_and_on_art = Set.new(patients_alive_and_on_art.map { |patient| patient['patient_id'] })
         end_date = ActiveRecord::Base.connection.quote(end_date)
-        create_tmp_max_adherence(end_date)
+        load_tmp_max_adherence(end_date)
 
         not_adherent = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT adherence.person_id
@@ -1145,7 +1145,7 @@ module ArtService
         [adherent, not_adherent, unknown_adherence]
       end
 
-      def create_tmp_max_adherence(end_date)
+      def load_tmp_max_adherence(end_date)
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO tmp_max_adherence
           SELECT obs.person_id, DATE(MAX(obs.obs_datetime)) AS visit_date
@@ -1636,7 +1636,7 @@ module ArtService
         )
       end
 
-      def create_temp_pregnant_obs(start_date, end_date)
+      def load_temp_pregnant_obs(start_date, end_date)
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_pregnant_obs
           SELECT o.person_id,o.value_coded, DATE(o.obs_datetime) obs_datetime
@@ -1644,7 +1644,8 @@ module ArtService
           WHERE o.concept_id IN (6131,1755,7972,7563)
             AND o.value_coded IN (1065,1755)
             AND o.voided = 0
-            AND o.obs_datetime >= '#{start_date}' AND o.obs_datetime < '#{end_date}' + INTERVAL 1 DAY;
+            AND o.obs_datetime >= '#{start_date}' AND o.obs_datetime < '#{end_date}' + INTERVAL 1 DAY
+          GROUP BY o.person_id
         SQL
       end
 
