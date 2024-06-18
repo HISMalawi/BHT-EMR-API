@@ -165,11 +165,13 @@ module Api
       end
 
       def tx_ml
-        render json: service.tx_ml(params[:start_date], params[:end_date], occupation: params[:occupation])
+        render json: service.tx_ml(params[:start_date], params[:end_date], occupation: params[:occupation],
+                                                                           rebuild: params[:rebuild])
       end
 
       def tx_rtt
-        render json: service.tx_rtt(params[:start_date], params[:end_date], occupation: params[:occupation])
+        render json: service.tx_rtt(params[:start_date], params[:end_date], occupation: params[:occupation],
+                                                                            rebuild: params[:rebuild])
       end
 
       def moh_tpt
@@ -234,8 +236,8 @@ module Api
       end
 
       def cxca_reports
-        render json: service.cxca_reports(params[:start_date], params[:end_date], params[:report_name], 
-                                         screening_method: params[:screening_method])
+        render json: service.cxca_reports(params[:start_date], params[:end_date], params[:report_name],
+                                          screening_method: params[:screening_method])
       end
 
       def radiology_reports

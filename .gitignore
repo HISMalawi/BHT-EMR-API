@@ -63,6 +63,8 @@ db/lims_metadata/*.json
 
 .solargraph.yml
 .vscode
+.idea
+vendor_bk
 
 # Ignore json files under hts_metadata
 db/hts_metadata/*.json

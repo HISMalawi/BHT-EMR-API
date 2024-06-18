@@ -1,3 +1,4 @@
+# rubocop:disable Metrics/MethodLength, Metrics/ClassLength, Style/Documentation, Metrics/AbcSize, Metrics/BlockLength, Security/Eval
 # frozen_string_literal: true
 
 module ArtService
@@ -16,7 +17,9 @@ module ArtService
       'INCOMPLETE VISITS' => 'incomplete_visit',
       'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
       'MISSING VL RESULTS' => 'missing_vl_results',
-      'DIFFERENT PREGNANCY VALUE ON SAME DATE' => 'different_pregnancy_value_on_same_date'
+      'DIFFERENT PREGNANCY VALUE ON SAME DATE' => 'different_pregnancy_value_on_same_date',
+      'MISSING ART START DATE' => 'missing_start_date',
+      'MULTIPLE OPEN STATES' => 'multiple_open_states'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -27,7 +30,7 @@ module ArtService
 
     def results
       eval(TOOLS[@tool_name.to_s])
-    rescue Exception => e
+    rescue StandardError => e
       "#{e.class}: #{e.message}"
     end
 
@@ -41,6 +44,33 @@ module ArtService
         WHERE identifier = '#{identifier}'
         AND identifier_type = 3
         AND voided = 0
+      SQL
+    end
+
+    def missing_start_date
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+        o.person_id AS patient_id,
+        p.birthdate,
+        p.gender,
+        pn.given_name,
+        pn.family_name,
+        pi.identifier AS arv_number,
+        DATE(MIN(o.value_datetime)) value_datetime
+        FROM encounter e
+        INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
+        INNER JOIN person_name pn ON pn.person_id = p.person_id AND pn.voided = 0
+        INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0
+          AND o.concept_id = #{concept('Date antiretrovirals started').concept_id}
+          AND e.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'HIV CLINIC REGISTRATION' LIMIT 1)
+          AND e.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program' LIMIT 1)
+          AND e.voided = 0
+        LEFT JOIN patient_identifier pi ON pi.patient_id = o.person_id
+          AND pi.identifier_type = #{indetifier_type} AND pi.voided = 0
+          AND o.obs_datetime < #{ActiveRecord::Base.connection.quote(@end_date)}
+        WHERE e.voided = 0
+        GROUP BY o.person_id, o.value_datetime
+        HAVING o.value_datetime IS NULL
       SQL
     end
 
@@ -437,7 +467,7 @@ module ArtService
       data = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
           p.person_id, given_name, family_name, gender, birthdate,
-          i.identifier arv_number
+          i.identifier arv_number, obs.obs_datetime visit_date
         FROM person p
         INNER JOIN obs ON obs.person_id = p.person_id AND (p.gender != 'F' AND p.gender != 'Female')
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
@@ -458,7 +488,7 @@ module ArtService
       client = []
 
       (data || []).each do |person|
-        client << {
+        record = {
           arv_number: person['arv_number'],
           given_name: person['given_name'],
           family_name: person['family_name'],
@@ -466,6 +496,10 @@ module ArtService
           birthdate: person['birthdate'],
           patient_id: person['person_id']
         }
+
+        record['visit_date'] = person['visit_date'].to_date.strftime('%d-%b-%Y') if person['visit_date'].present?
+
+        client << record
       end
 
       client
@@ -571,6 +605,24 @@ module ArtService
       SQL
     end
 
+    def multiple_open_states
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT p.person_id patient_id, n.given_name,n.family_name, p.gender,p.birthdate,a.identifier arv_number, i.identifier national_id,
+        ps.start_date, GROUP_CONCAT(DISTINCT(cn.name)) states, COUNT(DISTINCT(ps.state)) state_count
+        FROM patient_state ps
+        INNER JOIN patient_program pp ON pp.patient_program_id = ps.patient_program_id AND pp.voided = 0 AND pp.program_id = 1 -- HIV Program
+        INNER JOIN person p ON p.person_id = pp.patient_id AND p.voided = 0
+        INNER JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        INNER JOIN program_workflow_state pws ON pws.program_workflow_state_id = ps.state AND pws.retired = 0
+        INNER JOIN concept_name cn ON cn.concept_id = pws.concept_id AND cn.voided = 0 AND cn.concept_name_type = 'FULLY_SPECIFIED'
+        LEFT JOIN patient_identifier a ON a.patient_id = p.person_id AND a.voided = 0 AND a.identifier_type = #{indetifier_type}
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.voided = 0 AND i.identifier_type = 3
+        WHERE ps.voided = 0 AND ps.start_date BETWEEN '#{@start_date}' AND '#{@end_date}' AND (ps.end_date IS NULL OR ps.end_date > '#{@end_date}')
+        AND p.person_id NOT IN(#{external_clients})
+        GROUP BY p.person_id, ps.start_date HAVING state_count > 1;
+      SQL
+    end
+
     def concept(name)
       ConceptName.find_by_name(name)
     end
@@ -580,7 +632,8 @@ module ArtService
     end
 
     def indetifier_type
-      @indetifier_type ||= PatientIdentifierType.find_by_name!(GlobalPropertyService.use_filing_numbers? ? 'Filing Number' : 'ARV Number').id
+      @indetifier_type ||= PatientIdentifierType\
+                           .find_by_name!(GlobalPropertyService.use_filing_numbers? ? 'Filing Number' : 'ARV Number').id
     end
 
     ##
@@ -620,3 +673,5 @@ module ArtService
     end
   end
 end
+
+# rubocop:enable Metrics/MethodLength, Metrics/ClassLength, Style/Documentation, Metrics/AbcSize, Metrics/BlockLength, Security/Eval

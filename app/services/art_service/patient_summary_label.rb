@@ -66,7 +66,7 @@ module ArtService
       initial_weight = PatientService.get_patient_attribute_value(patient, 'initial_weight')
 
       label = ZebraPrinter::Lib::StandardLabel.new
-      label.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 450, 300, 0, 1, 1, 1, false)
+      label.draw_text("Printed on: #{Date.today.strftime('%A, %d/%b/%Y')}", 450, 300, 0, 1, 1, 1, false)
       label.draw_text(demographics.arv_number.to_s, 575, 30, 0, 3, 1, 1, false)
       label.draw_text('PATIENT DETAILS', 25, 30, 0, 3, 1, 1, false)
       label.draw_text("Name:   #{demographics.name} (#{demographics.sex})", 25, 60, 0, 3, 1, 1, false)
@@ -128,7 +128,7 @@ module ArtService
         'N/A'
       end})", 370, 30, 0, 2, 1, 1, false)
       label2.draw_text(demographics.arv_number.to_s, 580, 20, 0, 3, 1, 1, false)
-      label2.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 25, 300, 0, 1, 1, 1, false)
+      label2.draw_text("Printed on: #{Date.today.strftime('%A, %d/%b/%Y')}", 25, 300, 0, 1, 1, 1, false)
 
       label2.draw_text("RFS: #{demographics.reason_for_art_eligibility}", 25, 70, 0, 2, 1, 1, false)
       label2.draw_text("#{cd4_count} #{cd4_count_date}", 25, 110, 0, 2, 1, 1, false)
@@ -185,7 +185,7 @@ module ArtService
         label3.draw_text('STAGE DEFINING CONDITIONS', 25, line, 0, 3, 1, 1, false)
         label3.draw_text(PatientService.get_patient_identifier(patient, 'ARV Number').to_s, 370, line, 0, 2, 1, 1,
                          false)
-        label3.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 450, 300, 0, 1, 1, 1, false)
+        label3.draw_text("Printed on: #{Date.today.strftime('%A, %d/%b/%Y')}", 450, 300, 0, 1, 1, 1, false)
         begin
           extra_lines.each do |condition|
             label3.draw_text(condition, 25, line += 30, 0, 2, 1, 1, false)

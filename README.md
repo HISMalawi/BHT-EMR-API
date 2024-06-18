@@ -1,32 +1,33 @@
-# BHT EMR API
+# HIS EMR API
 
 Table of Contents
 =================
 
-   * [HIS EMR API](#his-emr-api)
-      * [Requirements](#requirements)
-      * [Setting up](#setting-up)
-         * [Configuration](#configuration)
-         * [Setting up rails](#setting-up-rails)
-            * [Database](#database)
-               * [Using an existing database](#using-an-existing-database)
-               * [Using an empty database](#using-an-empty-database)
-         * [DDE](#dde)
-            * [Configuration](#configuration-1)
-            * [Enabling DDE](#enabling-dde)
-         * [Updating Metadata](#updating-metadata)
-         * [EMC to POC](#emc-to-poc)
-         * [AIT Intergration](#ait-intergration)
-         * [Running the API](#running-the-api)
-      * [Creating a Service](#creating-a-service)
-      * [Raw Data Store](#raw-data-store)
-      * [For developers](#for-developers)
-         * [Documentation](#documentation)
-            * [Building the Documentation](#building-the-documentation)
-         * [Testing](#testing)
-         * [Coding style/standards](#coding-stylestandards)
-         * [Useful (recommended) tools for development](#useful-recommended-tools-for-development)
-         * [Dev Container](#dev-container)
+- [HIS EMR API](#his-emr-api)
+  - [Requirements](#requirements)
+  - [Setting up](#setting-up)
+    - [Configuration](#configuration)
+    - [Setting up rails](#setting-up-rails)
+    - [Setting up Production mode](#setting-up-production-mode)
+      - [Database](#database)
+        - [Using an existing database](#using-an-existing-database)
+        - [Using an empty database](#using-an-empty-database)
+      - [DDE](#dde)
+    - [Updating Metadata](#updating-metadata)
+    - [EMC to POC](#emc-to-poc)
+    - [AIT Intergration](#ait-intergration)
+    - [Running the API](#running-the-api)
+  - [Creating a Service](#creating-a-service)
+  - [Raw Data Store](#raw-data-store)
+  - [For developers](#for-developers)
+    - [Documentation](#documentation)
+      - [Building the Documentation](#building-the-documentation)
+    - [Testing](#testing)
+    - [Coding style/standards](#coding-stylestandards)
+    - [Useful (recommended) tools for development](#useful-recommended-tools-for-development)
+    - [Dev Container](#dev-container)
+    - [Data Cleaning](#data-cleaning)
+   - [Contributors](#contributors)
 
 ## Requirements
 
@@ -208,7 +209,7 @@ You will have to choose the environment you want to update the metadata for.
 - Developers
 To add metadata into the system
 ```bash
-bin/dump_metadata.sh [production|development|test]
+bin/dump_metadata.sh
 ```
 
 Commit the changes to the repository. And as always make sure you create a PR to be reviewed.
@@ -405,5 +406,20 @@ See the following for more:
 * You don't need to worry about setting up the storage, the container comes with it pre-configured
 * You don't need to worry about setting up the locale, the container comes with it pre-configured
 * You don't need to worry about setting up the gems, the container comes with them pre-installed
+
+### Data Cleaning
+
+- [ANC](/bin/ANC/README.md)
+
+## Contributors
+These are organizations that have contributed to the development of the HIS EMR API
+<p>
+    <img src="public/malawi.png" alt="Malawi Government" style="background: white !important;height:60px;padding: 5px;border-radius:1%" />
+    <img src="public/PEPFAR.jpg" alt="PEPFAR" style="background: white !important;height:60px;padding: 5px; object-fit:fit;border-radius:1%;" />
+    <img src="public/egpaf.png" alt="Elizabeth Glaser Pediatric AIDS Foundation" style="background: white !important;height:60px;padding: 5px; object-fit:fit;border-radius:1%;" />
+    <img src="public/baobab.png" alt="Baobab Health Trust" style="background: white !important;height:60px;padding: 5px; object-fit:fit;border-radius:1%;" />
+    <img src="public/LIN.jpg" alt="Luke International" style="background: white !important;height:60px;padding: 5px; object-fit:fit;border-radius:1%;" />
+</p>
+
 
 [Back to top](#table-of-contents)

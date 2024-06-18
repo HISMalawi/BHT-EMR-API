@@ -604,7 +604,7 @@ class DdeMergingService
   end
 
   def reassign_remote_patient_npid(patient_doc_id)
-    response, status = dde_client.post('reassign_npid', { doc_id: patient_doc_id })
+    response, status = dde_client.post('reassign_npid', doc_id: patient_doc_id)
 
     raise "Failed to reassign remote patient npid: DDE Response => #{status} - #{response}" unless status == 200
 
