@@ -20,12 +20,16 @@ module ArtService
           init_report
           fetch_due_clients
           flatten_data
+        rescue StandardError => e
+          Rails.logger.error("Error generating VL Supression report: #{e.message}")
+          Rails.logger.error(e.backtrace.join("\n"))
+          raise e
         end
 
         private
 
         def init_report
-          @report = COHORT_REGIMENS.each_with_object({}) do |regimen, report|
+          @report = (COHORT_REGIMENS + ['N/A']).each_with_object({}) do |regimen, report|
             report[regimen] = {
               due_for_vl: [],
               drawn: [],
@@ -39,8 +43,9 @@ module ArtService
         def fetch_due_clients
           clients = coverage_service.process_due_people
           clients.each do |patient|
-            regimen = patient['current_regimen']
-            regimen = regimen.gsub(/(\d+[A-Za-z]*P)\z/, '\1P') if regimen.match?(/\A\d+[A-Za-z]*[^P]P\z/)
+            regimen = patient['current_regimen'] || 'N/A'
+            Rails.logger.info("Patient: #{patient} has regimen: #{regimen}") if regimen.blank?
+            regimen = regimen&.gsub(/(\d+[A-Za-z]*P)\z/, '\1P') if regimen&.match?(/\A\d+[A-Za-z]*[^P]P\z/)
             patient['current_regimen'] = regimen
             report[regimen][:due_for_vl] << patient['patient_id']
           end
