@@ -165,11 +165,11 @@ module Api
       end
 
       def tx_ml
-        render json: service.tx_ml(params[:start_date], params[:end_date], occupation: params[:occupation])
+        render json: service.tx_ml(params[:start_date], params[:end_date], occupation: params[:occupation], rebuild: params[:rebuild])
       end
 
       def tx_rtt
-        render json: service.tx_rtt(params[:start_date], params[:end_date], occupation: params[:occupation])
+        render json: service.tx_rtt(params[:start_date], params[:end_date], occupation: params[:occupation], rebuild: params[:rebuild])
       end
 
       def moh_tpt
