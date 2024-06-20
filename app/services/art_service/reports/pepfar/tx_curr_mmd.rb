@@ -1,5 +1,6 @@
 # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/ClassLength, Style/Documentation
 # frozen_string_literal: true
+require 'parallel'
 
 module ArtService
   module Reports
@@ -8,6 +9,8 @@ module ArtService
         include ModelUtils
         include Pepfar::Utils
         include CommonSqlQueryUtils
+
+        attr_reader :report
 
         def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
@@ -20,7 +23,7 @@ module ArtService
 
         def init_report
           pepfar_age_groups.each_with_object({}) do |age_group, report|
-            report[age_group] = %w[Male Female].each_with_object({}) do |gender, age_group_report|
+            report[age_group] = %w[M F Unknown].each_with_object({}) do |gender, age_group_report|
               age_group_report[gender] = {
                 less_than_three_months: [],
                 three_to_five_months: [],
@@ -95,21 +98,22 @@ module ArtService
 
           p_ids = patients.map { |a| a['patient_id'] }.uniq
 
-          (p_ids || []).each do |id|
+          threads = ENV.fetch('RAILS_MAX_THREADS', 5).to_i
+          mutex = Mutex.new
+
+          Parallel.each(p_ids, in_threads: threads - 1) do |id|
             data = patients.select { |p| p['patient_id'] == id }
             patient_weight = weights.select { |p| p['patient_id'] == id }&.first
+            regimen_index = data.first['regimen']&.to_i
 
             ingredient = ingredients.select do |i|
-              i['min_weight'] >= patient_weight['weight'].to_f && i['max_weight'] <= patient_weight['weight'].to_f
+              i['min_weight'] >= patient_weight['weight'].to_f\
+               && i['max_weight'] <= patient_weight['weight'].to_f\
+               && i['regimen_index'] == regimen_index
             end
 
-            sex = data[0]['gender']
-            age_group = data[0]['age_group']
-
-            gender = (sex.blank? ? 'Unknown' : sex)
-            if gender != 'Unknown'
-              gender = (gender.match(/F/i) ? 'Female' : 'Male')
-            end
+            age_group = data.first['age_group']
+            gender = data.first['gender'] || 'Unknown'
 
             len = get_dispensing_info(data, ingredient)
 
@@ -121,10 +125,12 @@ module ArtService
                           'greater_than_six_months'
                         end
 
-            @report[age_group][gender][indicator.to_sym] << id
+            mutex.synchronize do
+              report[age_group][gender][indicator.to_sym] << id
+            end
           end
 
-          @report
+          report
         end
 
         def get_dispensing_info(data, ingredients)
