@@ -26,6 +26,8 @@ Rails.application.routes.draw do
       resources :users do
         post '/activate', to: 'users#activate'
         post '/deactivate', to: 'users#deactivate'
+        put '/update_username', to: 'users#update_username'
+
       end
 
       resources :hts_reports, only: %i[index]
@@ -304,6 +306,7 @@ Rails.application.routes.draw do
       resources :drug_cms, only: %i[index]
 
       post '/immunization/administer_vaccine', to: 'administer_vaccine#administer_vaccine'
+      get '/immunization/stats', to: 'immunization_report#stats'
     end
   end
 

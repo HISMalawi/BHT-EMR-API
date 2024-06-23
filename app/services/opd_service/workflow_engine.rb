@@ -34,13 +34,13 @@ module OpdService
     # Encounter types
     INITIAL_STATE = 0 # Start terminal for encounters graph
     END_STATE = 1 # End terminal for encounters graph
-    SOCIAL_HISTORY = 'SOCIAL HISTORY'
-    PATIENT_REGISTRATION = 'PATIENT REGISTRATION'
     VITALS = 'VITALS'
     PRESENTING_COMPLAINTS = 'PRESENTING COMPLAINTS'
+    LAB_RESULTS = 'LAB RESULTS'
+    LAB_ORDERS = 'LAB ORDERS'
     OUTPATIENT_DIAGNOSIS = 'OUTPATIENT DIAGNOSIS'
     PRESCRIPTION = 'PRESCRIPTION'
-    DISPENSING = 'DISPENSING'
+    PATIENT_OUTCOME = 'PATIENT OUTCOME'
     TREATMENT = 'TREATMENT'
     #     # Encounters graph
     #     ENCOUNTER_SM = {
@@ -55,47 +55,46 @@ module OpdService
     #     }.freeze
     # Encounters graph
     ENCOUNTER_SM = {
-      INITIAL_STATE => PATIENT_REGISTRATION,
-      PATIENT_REGISTRATION => VITALS,
-      VITALS => PRESENTING_COMPLAINTS,
-      PRESENTING_COMPLAINTS => OUTPATIENT_DIAGNOSIS,
+      INITIAL_STATE => VITALS,
+      VITALS  => PRESENTING_COMPLAINTS,
+      PRESENTING_COMPLAINTS => LAB_RESULTS,
+      LAB_RESULTS => OUTPATIENT_DIAGNOSIS,
       OUTPATIENT_DIAGNOSIS => PRESCRIPTION,
-      PRESCRIPTION => DISPENSING,
-      DISPENSING => END_STATE
+      PRESCRIPTION => PATIENT_OUTCOME,
+      PATIENT_OUTCOME => END_STATE
     }.freeze
 
     STATE_CONDITIONS = {
-      PATIENT_REGISTRATION => %i[patient_not_registered_today?],
       VITALS => %i[patient_does_not_have_height_and_weight?],
       PRESENTING_COMPLAINTS => %i[patient_does_not_have_complaints?],
+      LAB_RESULTS => %i[patient_does_not_have_lab_results?],
       OUTPATIENT_DIAGNOSIS => %i[patient_does_not_have_diagnosis?],
       PRESCRIPTION => %i[patient_does_not_have_prescription?],
-      DISPENSING => %i[patient_does_not_have_dispensation?]
+      PATIENT_OUTCOME => %i[patient_does_not_have_outcomes?]
     }.freeze
 
     def load_user_activities
-      # activities = ['Patient registration,Social history']
-      activities = user_property('OPD_activities')&.property_value
-      activities = 'Patient registration,Social history,Vitals' if activities.blank?
+      activities = "Clinical Assessment,Investigations,Diagnosis,Treatment,Outcome"     
+      # activities = user_property('OPD_activities')&.property_value
+      # activities = 'Patient registration,Social history,Vitals' if activities.blank?
 
+      LOGGER.debug "Re-map activities to encounters: #{activities}"
       encounters = (activities&.split(',') || []).collect do |activity|
         # Re-map activities to encounters
         puts activity
         case activity
-        when /Patient registration/i
-          PATIENT_REGISTRATION
-        when /Social history/i
-          SOCIAL_HISTORY
         when /Vitals/i
           VITALS
-        when /Presenting complaints/i
+        when /Clinical Assessment/i
           PRESENTING_COMPLAINTS
-        when /Outpatient diagnosis/i
+        when /Investigations/i
+          LAB_RESULTS
+        when /Diagnosis/i
           OUTPATIENT_DIAGNOSIS
-        when /Prescription/i
+        when /Treatment/i
           PRESCRIPTION
-        when /Dispensing/i
-          DISPENSING
+        when /Outcome/i
+          PATIENT_OUTCOME
         else
           Rails.logger.warn "Invalid OPD activity in user properties: #{activity}"
         end
@@ -153,6 +152,30 @@ module OpdService
       encounter.blank?
     end
 
+    # Checks if patient has lab  in today
+    #
+    def patient_does_not_have_lab_results?
+        encounter_type = EncounterType.find_by name: LAB_RESULTS
+        encounter = Encounter.joins(:type).where(
+          'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+          @patient.patient_id, encounter_type.encounter_type_id, @date
+        ).order(encounter_datetime: :desc).first
+        Rails.logger.warn "encounter.blank? activity in user properties: #{encounter.blank?}"
+        encounter.blank?
+    end
+
+    # Checks if patient has lab  in today
+    #
+    def patient_does_not_have_lab_order?
+      encounter_type = EncounterType.find_by name: LAB_ORDERS
+      encounter = Encounter.joins(:type).where(
+        'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
+        @patient.patient_id, encounter_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      encounter.blank?
+    end
+
     # Checks if patient has diagnosis today
     #
     def patient_does_not_have_diagnosis?
@@ -179,8 +202,8 @@ module OpdService
 
     # Checks if patient has prescription today
     #
-    def patient_does_not_have_dispensation?
-      encounter_type = EncounterType.find_by name: DISPENSING
+    def patient_does_not_have_outcomes?
+      encounter_type = EncounterType.find_by name: PATIENT_OUTCOME
       encounter = Encounter.joins(:type).where(
         'patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)',
         @patient.patient_id, encounter_type.encounter_type_id, @date

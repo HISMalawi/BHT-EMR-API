@@ -16,6 +16,15 @@ module Api
         render json: User.find(params[:id]), status: :ok
       end
 
+      def update_username
+        update_params = params.require(%i[new_username])
+        new_username,  = update_params
+        id = user.user_id
+        return unless validate_username(new_username)
+        user =  UserService.update_username User.find(id), new_username
+        render json: { message: ['username updated successfully'], user: }
+      end
+
       def create
         create_params = params.require(%i[username password given_name family_name roles location_id])
         username, password, given_name, family_name, roles, location_id = create_params
@@ -44,7 +53,7 @@ module Api
       end
 
       def update
-        update_params = params.permit :password, :given_name, :family_name, :must_append_roles,
+        update_params = params.permit :password, :given_name, :family_name, :must_append_roles, :location_id,
                                       roles: [], programs: []
 
         # Makes sure roles are an array if provided
