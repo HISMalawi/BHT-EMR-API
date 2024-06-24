@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-  class TbService::PatientTransferOutLabel
+module TbService
+  class PatientTransferOutLabel
     def initialize(patient, date)
       @patient = patient
       @date = date
@@ -16,7 +17,7 @@
     private
 
     def printer_instance
-      printer = ZebraPrinter::Label.new(776, 329, 'T')
+      printer = ZebraPrinter::Lib::Label.new(776, 329, 'T')
       printer.line_spacing = 0
       printer.top_margin = 30
       printer.bottom_margin = 30
@@ -39,9 +40,9 @@
       # Print patient program information!
       @printer.draw_multi_text("TB start date: #{start_date}", font_reverse: false)
       @printer.draw_multi_text("Transfer out date: #{transfer_date}", font_reverse: false)
-      @printer.draw_multi_text("Current regimen", font_reverse: true)
+      @printer.draw_multi_text('Current regimen', font_reverse: true)
       @printer.draw_multi_text(@note.current_regimen, font_reverse: false)
-      @printer.draw_multi_text("Drugs dispensed today", font_reverse: true)
+      @printer.draw_multi_text('Drugs dispensed today', font_reverse: true)
       @printer.draw_multi_text(@note.drugs_dispensed, font_reverse: false)
     end
 
@@ -61,3 +62,4 @@
       "Name: #{@patient.name} (#{@patient.gender.first})\nAge: #{@patient.age}"
     end
   end
+end

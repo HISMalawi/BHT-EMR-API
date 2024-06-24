@@ -20,7 +20,7 @@ module TbService
       when 'second-line-concepts'
         second_line_concepts
       when 'current-regimen'
-        find_regimens(person)
+        find_regimens(patient: person)
       when 'secondline-supplements'
         secondline_supplements(patient:)
       end
@@ -134,7 +134,7 @@ module TbService
     end
 
     def find_regimens(patient:)
-      mdr = mdr_service(patient)
+      mdr = mdr_service(patient:)
 
       patient = patient[:patient] if patient.is_a? Hash
 
@@ -158,14 +158,14 @@ module TbService
     end
 
     def find_regimens_by_patient(patient:)
-      find_regimens(patient)
+      find_regimens(patient:)
     end
 
     def averse_to_strepto?(patient)
       !meningitis_tb?(patient:) || pregnant?(patient:)
     end
 
-    def mdr_service(patient)
+    def mdr_service(patient:)
       TbService::TbMdrService.new(patient, @program, Time.now)
     end
   end
