@@ -94,7 +94,7 @@ module TbService::Reports::MdrInterimOutcomes
     end
 
     def mdr_patient_query
-      TbService::TbQueries::MDRPatientQuery.new
+      TbService::TbQueries::MdrPatientQuery.new
     end
 
     def mdr_examination_query

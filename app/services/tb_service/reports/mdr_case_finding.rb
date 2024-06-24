@@ -117,7 +117,7 @@ module TbService
         end
 
         def mdr_patient_query
-          TbService::TbQueries::MDRPatientQuery.new
+          TbService::TbQueries::MdrPatientQuery.new
         end
 
         def mdr_diagnosis_query

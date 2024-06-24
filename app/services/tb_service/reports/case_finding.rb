@@ -1,21 +1,32 @@
 # frozen_string_literal: true
 
 module TbService::Reports::CaseFinding
-  AGE_GROUPS = {
-    '0-4' => [0, 4],
-    '5-14' => [5, 14],
-    '15-24' => [15, 24],
-    '25-34' => [25, 34],
-    '35-44' => [35, 44],
-    '45-54' => [45, 54],
-    '55-64' => [55, 64],
-    '65+' => [65, 200]
-  }.freeze
-
+  
   class << self
+    
+    AGE_GROUPS = {
+      '0-4' => [0, 4],
+      '5-14' => [5, 14],
+      '15-24' => [15, 24],
+      '25-34' => [25, 34],
+      '35-44' => [35, 44],
+      '45-54' => [45, 54],
+      '55-64' => [55, 64],
+      '65+' => [65, 200]
+    }.freeze
+    
     def new_pulmonary_clinically_diagnosed(start_date, end_date)
       new_patients = patients_query.new_patients(start_date, end_date)
       return [] if new_patients.empty?
+    end
+
+    def format_report(indicator:, report_data:)
+      data = report_format(indicator)
+      report_data&.each do |patient|
+        process_patient(patient, data)
+      end
+      data
+    end    
 
 
     def report_format(indicator)
@@ -287,6 +298,7 @@ module TbService::Reports::CaseFinding
       patients = patients_query.with_encounters(['TB_Initial', 'Lab Orders', 'Lab Results'], start_date, end_date)\
                                .without_encounters(['Treatment'], start_date, end_date)\
                                .with_obs('Lab Results', 'TB Status', 'Positive', start_date, end_date)
+    end
 
     def unknown_previous_treatment_history_eptb(start_date, end_date)
       query = tx_history_query.ref(start_date, end_date)
@@ -316,29 +328,28 @@ module TbService::Reports::CaseFinding
     def patients_with_presumptive_tb_with_positive_bacteriological_examination_via_microscopy(start_date, end_date)
       presumptives_query.via_microscopy_pos(start_date, end_date)
     end
-
-    private
-
     def patients_query
-      TbQueries::PatientsQuery.new.search
+      TbService::TbQueries::PatientsQuery.new.search
+    end
+    
+    def presumptives_query
+      TbService::TbQueries::PresumptivesQuery.new
     end
 
     def patient_states_query
-      TbQueries::PatientStatesQuery.new
+      TbService::TbQueries::PatientStatesQuery.new
     end
 
     def obs_query
-      TbQueries::ObservationsQuery.new
+      TbService::TbQueries::ObservationsQuery.new
     end
 
     def clinically_diagnosed_patients
-      TbQueries::ClinicallyDiagnosedPatientsQuery.new
+      TbService::TbQueries::ClinicallyDiagnosedPatientsQuery.new
     end
 
     def relapse_patients_query
-      TbQueries::RelapsePatientsQuery.new
+      TbService::TbQueries::RelapsePatientsQuery.new
     end
-end
-end
-end
+  end
 end

@@ -29,8 +29,7 @@ module TbService::Reports::MdrOutcomes
 
     def format_report(indicator:, report_data:)
       data = report_format(indicator)
-      report_data
-      &.each do |patient|
+      report_data&.each do |patient|
         process_patient(patient, data)
       end
       data
@@ -44,7 +43,7 @@ module TbService::Reports::MdrOutcomes
     end
 
     def total_cohort_cases_started(start_date, end_date)
-        mdr_patient_query.ref(start_date, end_date)
+      mdr_patient_query.ref(start_date, end_date)
     end
 
     def cured(start_date, end_date)
@@ -76,7 +75,7 @@ module TbService::Reports::MdrOutcomes
     end
 
     def mdr_patient_query
-      TbService::TbQueries::MDRPatientQuery.new
+      TbService::TbQueries::MdrPatientQuery.new
     end
 
   end
