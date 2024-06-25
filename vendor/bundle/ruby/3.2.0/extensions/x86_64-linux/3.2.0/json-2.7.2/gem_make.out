@@ -1,0 +1,16 @@
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/3.2.0/gems/json-2.7.2/ext/json
+/usr/share/rvm/rubies/ruby-3.2.0/bin/ruby -I /usr/share/rvm/rubies/ruby-3.2.0/lib/ruby/3.2.0 extconf.rb
+creating Makefile
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/3.2.0/gems/json-2.7.2/ext/json
+make DESTDIR\= sitearchdir\=./.gem.20240408-127564-i3edr4 sitelibdir\=./.gem.20240408-127564-i3edr4 clean
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/3.2.0/gems/json-2.7.2/ext/json
+make DESTDIR\= sitearchdir\=./.gem.20240408-127564-i3edr4 sitelibdir\=./.gem.20240408-127564-i3edr4
+make: Nothing to be done for 'all'.
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/3.2.0/gems/json-2.7.2/ext/json
+make DESTDIR\= sitearchdir\=./.gem.20240408-127564-i3edr4 sitelibdir\=./.gem.20240408-127564-i3edr4 install
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/3.2.0/gems/json-2.7.2/ext/json
+make DESTDIR\= sitearchdir\=./.gem.20240408-127564-i3edr4 sitelibdir\=./.gem.20240408-127564-i3edr4 clean

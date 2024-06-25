@@ -1,0 +1,9 @@
+Description:
+    Installs the Lab engine.
+
+Example:
+    rails generate lab:install
+
+    This will create:
+        config/initializers/rswag-ui-lab.rb
+        swagger/lab/v1/swagger.yaml

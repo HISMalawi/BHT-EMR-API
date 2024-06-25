@@ -1,0 +1,53 @@
+have_header: checking for CommonCrypto/CommonDigest.h... -------------------- no
+
+"gcc -o conftest -I/usr/share/rvm/rubies/ruby-2.5.3/include/ruby-2.5.0/x86_64-linux -I/usr/share/rvm/rubies/ruby-2.5.3/include/ruby-2.5.0/ruby/backward -I/usr/share/rvm/rubies/ruby-2.5.3/include/ruby-2.5.0 -I.    -O3 -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wno-tautological-compare -Wno-parentheses-equality -Wno-constant-logical-operand -Wno-self-assign -Wunused-variable -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wmisleading-indentation -Wno-packed-bitfield-compat -Wsuggest-attribute=noreturn -Wsuggest-attribute=format -Wimplicit-fallthrough=0 -Wduplicated-cond -Wrestrict  -fPIC conftest.c  -L. -L/usr/share/rvm/rubies/ruby-2.5.3/lib -Wl,-rpath,/usr/share/rvm/rubies/ruby-2.5.3/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-rpath,'/../lib' -Wl,-rpath,'/../lib' -lruby  -lpthread -lgmp -ldl -lcrypt -lm   -lc"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return 0;
+6: }
+/* end */
+
+"gcc -E -I/usr/share/rvm/rubies/ruby-2.5.3/include/ruby-2.5.0/x86_64-linux -I/usr/share/rvm/rubies/ruby-2.5.3/include/ruby-2.5.0/ruby/backward -I/usr/share/rvm/rubies/ruby-2.5.3/include/ruby-2.5.0 -I.    -O3 -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wno-tautological-compare -Wno-parentheses-equality -Wno-constant-logical-operand -Wno-self-assign -Wunused-variable -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wmisleading-indentation -Wno-packed-bitfield-compat -Wsuggest-attribute=noreturn -Wsuggest-attribute=format -Wimplicit-fallthrough=0 -Wduplicated-cond -Wrestrict  -fPIC  conftest.c -o conftest.i"
+conftest.c:3:10: fatal error: CommonCrypto/CommonDigest.h: No such file or directory
+    3 | #include <CommonCrypto/CommonDigest.h>
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <CommonCrypto/CommonDigest.h>
+/* end */
+
+--------------------
+
+have_type: checking for u_int8_t... -------------------- yes
+
+"gcc -I/usr/share/rvm/rubies/ruby-2.5.3/include/ruby-2.5.0/x86_64-linux -I/usr/share/rvm/rubies/ruby-2.5.3/include/ruby-2.5.0/ruby/backward -I/usr/share/rvm/rubies/ruby-2.5.3/include/ruby-2.5.0 -I.    -O3 -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wno-tautological-compare -Wno-parentheses-equality -Wno-constant-logical-operand -Wno-self-assign -Wunused-variable -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wmisleading-indentation -Wno-packed-bitfield-compat -Wsuggest-attribute=noreturn -Wsuggest-attribute=format -Wimplicit-fallthrough=0 -Wduplicated-cond -Wrestrict  -fPIC   -c conftest.c"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: /*top*/
+4: typedef u_int8_t conftest_type;
+5: int conftestval[sizeof(conftest_type)?1:-1];
+/* end */
+
+--------------------
+
+have_header: checking for sys/cdefs.h... -------------------- yes
+
+"gcc -E -I/usr/share/rvm/rubies/ruby-2.5.3/include/ruby-2.5.0/x86_64-linux -I/usr/share/rvm/rubies/ruby-2.5.3/include/ruby-2.5.0/ruby/backward -I/usr/share/rvm/rubies/ruby-2.5.3/include/ruby-2.5.0 -I.    -O3 -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wno-tautological-compare -Wno-parentheses-equality -Wno-constant-logical-operand -Wno-self-assign -Wunused-variable -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wmisleading-indentation -Wno-packed-bitfield-compat -Wsuggest-attribute=noreturn -Wsuggest-attribute=format -Wimplicit-fallthrough=0 -Wduplicated-cond -Wrestrict  -fPIC  conftest.c -o conftest.i"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <sys/cdefs.h>
+/* end */
+
+--------------------
+

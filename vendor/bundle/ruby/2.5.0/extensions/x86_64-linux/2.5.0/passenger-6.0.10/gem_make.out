@@ -1,0 +1,22 @@
+current directory: /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/passenger-6.0.10/src/helper-scripts/download_binaries
+/usr/share/rvm/rubies/ruby-2.5.3/bin/ruby -I /usr/share/rvm/rubies/ruby-2.5.3/lib/ruby/site_ruby/2.5.0 -r ./siteconf20211118-22814-1xe7dly.rb extconf.rb
+Attempting to download https://github.com/phusion/passenger/releases/download/release-6.0.10/rubyext-ruby-2.5.3-x86_64-linux.tar.gz into /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/passenger-6.0.10/download_cache
+*** Could not download https://github.com/phusion/passenger/releases/download/release-6.0.10/rubyext-ruby-2.5.3-x86_64-linux.tar.gz: The requested URL returned error: 404 
+Attempting to download https://oss-binaries.phusionpassenger.com/binaries/passenger/by_release/6.0.10/rubyext-ruby-2.5.3-x86_64-linux.tar.gz into /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/passenger-6.0.10/download_cache
+*** Could not download https://oss-binaries.phusionpassenger.com/binaries/passenger/by_release/6.0.10/rubyext-ruby-2.5.3-x86_64-linux.tar.gz: The requested URL returned error: 404 
+Attempting to download https://s3.amazonaws.com/phusion-passenger/binaries/passenger/by_release/6.0.10/rubyext-ruby-2.5.3-x86_64-linux.tar.gz into /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/passenger-6.0.10/download_cache
+*** Could not download https://s3.amazonaws.com/phusion-passenger/binaries/passenger/by_release/6.0.10/rubyext-ruby-2.5.3-x86_64-linux.tar.gz: The requested URL returned error: 403 Forbidden
+Attempting to download https://github.com/phusion/passenger/releases/download/release-6.0.10/nginx-1.20.1-x86_64-linux.tar.gz into /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/passenger-6.0.10/download_cache
+Attempting to download https://github.com/phusion/passenger/releases/download/release-6.0.10/agent-x86_64-linux.tar.gz into /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/passenger-6.0.10/download_cache
+
+current directory: /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/passenger-6.0.10/src/helper-scripts/download_binaries
+make "DESTDIR=" clean
+true
+
+current directory: /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/passenger-6.0.10/src/helper-scripts/download_binaries
+make "DESTDIR="
+true
+
+current directory: /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/passenger-6.0.10/src/helper-scripts/download_binaries
+make "DESTDIR=" install
+true

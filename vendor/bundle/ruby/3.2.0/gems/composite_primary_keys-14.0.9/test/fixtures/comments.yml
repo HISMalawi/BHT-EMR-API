@@ -1,0 +1,23 @@
+employee_comment:
+  id: 1
+  article: first
+  person_id: 1
+  person_type: Employee
+
+user_comment_1:
+  id: 2
+  article: second
+  person_id: 1
+  person_type: User
+
+user_comment_2:
+  id: 3
+  article: second
+  person_id: 2
+  person_type: User
+  
+user_comment_3:
+  id: 4
+  article: first
+  person_id: 1
+  person_type: User1
