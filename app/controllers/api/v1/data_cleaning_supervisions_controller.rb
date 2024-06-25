@@ -3,7 +3,7 @@
 module Api
   module V1
     # Data Cleaning Supervision Controller
-    class DataCleaningController < ApplicationController
+    class DataCleaningSupervisionsController < ApplicationController
       def index
         render json: paginate(DataCleaningSupervision.all.order(data_cleaning_datetime: :desc))
       end

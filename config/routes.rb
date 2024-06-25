@@ -21,6 +21,7 @@ Rails.application.routes.draw do
 
       # Routes down here ... Best we move everything above into own modules
       resources :internal_sections, only: %i[index show create update destroy]
+      resources :data_cleaning_supervisions, only: %i[index show create update destroy]
       resources :appointments
       resources :dispensations, only: %i[index create destroy]
       resources :users do
@@ -392,9 +393,6 @@ Rails.application.routes.draw do
   get '/api/v1/sc_arvdisp', to: 'api/v1/reports#sc_arvdisp'
 
   get 'api/v1/radiology_reports', to: 'api/v1/reports#radiology_reports'
-
-  get '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#view'
-  post '/api/v1/data_cleaning_confirmation', to: 'api/v1/data_cleaning#create'
 
   post '/api/v1/pharmacy/items/batch_update', to: 'api/v1/pharmacy/items#batch_update'
 
