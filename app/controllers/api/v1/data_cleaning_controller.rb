@@ -2,31 +2,40 @@
 
 module Api
   module V1
+    # Data Cleaning Supervision Controller
     class DataCleaningController < ApplicationController
-      def view
-        render json: DataCleaningSupervision.all.collect { |tool|
-          {
-            data_cleaning_tool_id: tool.data_cleaning_tool_id,
-            data_cleaning_datetime: tool.data_cleaning_datetime,
-            supervisors: tool.supervisors.split(';'),
-            date_created: tool.created_at
-          }
-        }
+      def index
+        render json: paginate(DataCleaningSupervision.all.order(data_cleaning_datetime: :desc))
+      end
+
+      def show
+        render json: @data_cleaning_tool
       end
 
       def create
-        data = {
-          data_cleaning_datetime: params[:data_cleaning_datetime],
-          supervisors: params[:supervisors].join(';'),
-          creator: User.current.user_id
-        }
+        data_supervision = DataCleaningSupervision.create!(data_cleaning_params)
+        render json: data_supervision, status: :created
+      end
 
-        @data_cleaning_tool = DataCleaningSupervision.create(data)
-        render json: {
-          data_cleaning_tool_id: @data_cleaning_tool.data_cleaning_tool_id,
-          supervision_datetime: @data_cleaning_tool.data_cleaning_datetime,
-          supervisors: @data_cleaning_tool.supervisors.split(';').map(&:strip)
-        }
+      def update
+        @data_cleaning_tool.update!(data_cleaning_params)
+        render json: @data_cleaning_tool, status: :ok
+      end
+
+      def destroy
+        reason = params[:reason]
+        @data_cleaning_tool.void(reason)
+        render json: { message: 'removed successfully' }, status: :ok
+      end
+
+      private
+
+      def set_data_cleaning
+        @data_cleaning_tool = DataCleaningSupervision.find(params[:id])
+      end
+
+      def data_cleaning_params
+        params.permit(:data_cleaning_datetime, :supervisors, :comments)
       end
     end
   end
