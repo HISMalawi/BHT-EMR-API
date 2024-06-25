@@ -4,6 +4,8 @@ module Api
   module V1
     # Data Cleaning Supervision Controller
     class DataCleaningSupervisionsController < ApplicationController
+      before_action :set_data_cleaning, only: %i[show update destroy]
+
       def index
         render json: paginate(DataCleaningSupervision.all.order(data_cleaning_datetime: :desc))
       end
@@ -23,7 +25,7 @@ module Api
       end
 
       def destroy
-        reason = params[:reason]
+        reason = params.require(:reason)
         @data_cleaning_tool.void(reason)
         render json: { message: 'removed successfully' }, status: :ok
       end
