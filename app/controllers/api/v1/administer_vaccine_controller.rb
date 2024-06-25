@@ -28,6 +28,17 @@ module Api
           end
 
           DispensationService.create(program, dispensations, provider)
+
+                  # Broadcast to the ImmunizationReportChannel
+          ActionCable.server.broadcast(
+            'immunization_report',
+            {
+              action: 'fetch_data',
+              start_date: '2024-01-01',
+              end_date: '2024-12-31'
+            }
+          )
+          
           render json: orders, status: :created
         end
     end
