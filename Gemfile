@@ -58,14 +58,11 @@ gem 'parallel', '~> 1.20.1'
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
-  gem 'spring'
-end
-
-group :test do
   gem 'factory_bot_rails'
   gem 'rspec'
   gem 'rspec-rails'
   gem 'rswag-specs'
+  gem 'spring'
 end
 
 group :development do

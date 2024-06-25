@@ -7,21 +7,25 @@ class DataCleaningSupervision < VoidableRecord
 
   # belongs to users table
   belongs_to :created_by, class_name: 'User', foreign_key: :creator, optional: true
-  belongs_to :voider, class_name: 'User', foreign_key: :voided_by
+  belongs_to :voider, class_name: 'User', foreign_key: :voided_by, optional: true
   belongs_to :updated_by, class_name: 'User', foreign_key: :changed_by, optional: true
 
   def as_json(options = {})
     super(options.merge(
-      only: %i[data_cleaning_tool_id data_cleaning_datetime comments],
+      only: %i[data_cleaning_tool_id data_cleaning_datetime comments date_created date_changed],
+      # the model user has a method name that returns the person name
       include: {
-        created_by: { only: %i[user_id username] },
-        updated_by: { only: %i[user_id username] }
+        created_by: {
+          only: %i[user_id],
+          methods: %i[name]
+        },
+        updated_by: { only: %i[user_id], methods: %i[name] }
       },
       methods: %i[all_supervisors]
     ))
   end
 
   def all_supervisors
-    supervisors.split(';')
+    supervisors.split(';').map(&:strip)
   end
 end
