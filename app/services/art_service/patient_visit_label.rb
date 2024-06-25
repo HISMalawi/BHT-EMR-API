@@ -37,7 +37,6 @@ module ArtService
                                                                   "(PC:#{pill_count[0..24]})"
                                                                 end}", 25, 95, 0, 2, 1, 1, false
       )
-
       label.draw_text('SE', 25, 130, 0, 3, 1, 1, false)
       label.draw_text('TB', 110, 130, 0, 3, 1, 1, false)
       label.draw_text('Adh', 185, 130, 0, 3, 1, 1, false)
@@ -120,7 +119,7 @@ module ArtService
       over_100_done = false
       below_100_done = false
 
-      adherence_data.each_value do |adh|
+      adherence_data.each do |_drug, adh|
         next if adh.blank?
 
         drug_adherence = adh.to_i
