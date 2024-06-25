@@ -48,6 +48,13 @@ class Drug < ActiveRecord::Base
     Drug.where("concept_id in #{concepts_placeholders}", *concepts)
   end
 
+  def self.bp_drugs
+    bp_drugs_concept = ConceptName.find_by_name('HYPERTENSION DRUGS').concept_id
+    concepts = ConceptSet.where('concept_set = ?', bp_drugs_concept).map(&:concept_id)
+    concepts_placeholders = "(#{(['?'] * concepts.size).join(', ')})"
+    Drug.where("concept_id in #{concepts_placeholders}", *concepts)
+  end
+
   def self.first_line_tb_drugs
     first_line_concept = ConceptName.find_by(name: 'First-line tuberculosis drugs').concept_id
     concepts = ConceptSet.where('concept_set = ?', first_line_concept).map(&:concept_id)

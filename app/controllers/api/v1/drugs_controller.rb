@@ -29,6 +29,10 @@ module Api
         render json: Drug.tb_drugs, status: :ok
       end
 
+      def bp_drugs
+        render json: Drug.bp_drugs, status: :ok
+      end
+
       def drug_sets
         drug_sets = {}
         set_names = {}

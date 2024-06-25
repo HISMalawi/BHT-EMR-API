@@ -228,6 +228,7 @@ Rails.application.routes.draw do
       end
       get '/arv_drugs' => 'drugs#arv_drugs'
       get '/tb_drugs' => 'drugs#tb_drugs'
+      get '/bp_drugs' => 'drugs#bp_drugs'
 
       resources :drug_orders
       resources :orders do
