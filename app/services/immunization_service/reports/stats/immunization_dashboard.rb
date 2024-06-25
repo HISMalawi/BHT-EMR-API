@@ -53,38 +53,32 @@ module ImmunizationService
                   
 
                 def total_children_vaccinated_today
-                    cutoff_date = 18.years.ago.to_date
-
                     base_query.where(
-                        encounter_type: { name: "IMMUNIZATION RECORD" }, 
-                        concept_name: { name: "Batch Number"},
-                        obs: { obs_datetime: @start_date..@end_date },
-                        person: { birthdate: cutoff_date..Date.today}
-                    ).select(:concept_id).count
-                end
-
-                def total_women_vaccinated_today
-                    eighteen_years_ago = 18.years.ago.to_date
-                  
-                    base_query.where(
-                      encounter_type: { name: "IMMUNIZATION RECORD" }, 
+                      encounter_type: { name: "IMMUNIZATION RECORD" },
                       concept_name: { name: "Batch Number" },
-                      obs: { obs_datetime: Date.current.beginning_of_day..Date.current.end_of_day },
-                      person: { gender: "F", birthdate: eighteen_years_ago..Float::INFINITY }
-                    ).select(:concept_id).count
+                      obs: { obs_datetime: Date.today.beginning_of_day..Date.today.end_of_day }
+                    ).where('TIMESTAMPDIFF(YEAR, person.birthdate, CURDATE()) < 18').select(:concept_id).count
+                end
+                  
+                def total_women_vaccinated_today
+                    base_query.where(
+                      encounter_type: { name: "IMMUNIZATION RECORD" },
+                      concept_name: { name: "Batch Number" },
+                      obs: { obs_datetime: Date.today.beginning_of_day..Date.today.end_of_day },
+                      person: { gender: "F" }
+                    ).where('TIMESTAMPDIFF(YEAR, person.birthdate, CURDATE()) >= 18').select(:concept_id).count
                 end
                   
                 def total_men_vaccinated_today
-                    eighteen_years_ago = 18.years.ago.to_date
-                  
                     base_query.where(
-                      encounter_type: { name: "IMMUNIZATION RECORD" }, 
+                      encounter_type: { name: "IMMUNIZATION RECORD" },
                       concept_name: { name: "Batch Number" },
-                      obs: { obs_datetime: Date.current.beginning_of_day..Date.current.end_of_day },
-                      person: { gender: "M", birthdate: eighteen_years_ago..Float::INFINITY }
-                    ).select(:concept_id).count
+                      obs: { obs_datetime: Date.today.beginning_of_day..Date.today.end_of_day },
+                      person: { gender: "M" }
+                    ).where('TIMESTAMPDIFF(YEAR, person.birthdate, CURDATE()) >= 18').select(:concept_id).count
                 end
                   
+                
             end
         end
     end
