@@ -235,7 +235,7 @@ module ArtService
         def load_patients_who_died(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
-            SELECT patients.patient_id, 'Patient died', patient_state.start_date, 1
+            SELECT patients.patient_id, 'Patient died', patients.outcome_date, 1
             FROM temp_current_state#{start ? '_start' : ''} AS patients
             WHERE patients.outcomes = 1 AND patients.cum_outcome = 'Patient died'
             GROUP BY patients.patient_id
