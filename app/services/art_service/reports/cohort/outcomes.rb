@@ -32,7 +32,7 @@ module ArtService
 
         def update_outcomes_by_definition
           [false, true].each do |start|
-            update_steps(start:,portion: true)
+            update_steps(start:, portion: true)
             load_patients_on_treatment(start:)
             load_without_clinical_contact(start:)
             load_defaulters(start:)
@@ -102,7 +102,7 @@ module ArtService
             INNER JOIN drug_order ON drug_order.order_id = o.order_id AND drug_order.quantity > 0
               AND drug_order.drug_inventory_id IN (#{arv_drug})
             WHERE o.order_type_id = 1 -- drug order
-              AND o.start_date < (DATE(#{start ? start_date : end_date }) + INTERVAL 1 DAY)
+              AND o.start_date < (DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY)
               AND o.voided = 0
             GROUP BY o.patient_id
             ON DUPLICATE KEY UPDATE start_date = VALUES(start_date), min_order_date = VALUES(min_order_date)
@@ -118,8 +118,8 @@ module ArtService
             INNER JOIN drug_order ON drug_order.order_id = o.order_id AND drug_order.quantity > 0
               AND drug_order.drug_inventory_id IN (#{arv_drug})
             WHERE o.order_type_id = 1 -- drug order
-              AND o.start_date < (DATE(#{start ? start_date : end_date }) + INTERVAL 1 DAY)
-              AND o.start_date >= (DATE(#{start ? prev_date : start_date }) + INTERVAL 1 DAY)
+              AND o.start_date < (DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY)
+              AND o.start_date >= (DATE(#{start ? prev_date : start_date}) + INTERVAL 1 DAY)
               AND o.voided = 0
             GROUP BY o.patient_id
             ON DUPLICATE KEY UPDATE start_date = VALUES(start_date), min_order_date = VALUES(min_order_date)
@@ -236,22 +236,8 @@ module ArtService
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
             SELECT patients.patient_id, 'Patient died', patient_state.start_date, 1
-            FROM temp_earliest_start_date AS patients
-            INNER JOIN patient_program
-              ON patient_program.patient_id = patients.patient_id
-              AND patient_program.program_id = 1
-              AND patient_program.voided = 0
-            INNER JOIN patient_state
-              ON patient_state.patient_program_id = patient_program.patient_program_id
-              AND patient_state.state = (#{program_states('Patient died').limit(1).to_sql})
-              AND patient_state.start_date < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY
-              AND patient_state.voided = 0
-            WHERE patients.date_enrolled < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY
-            AND patient_state.date_created = (
-              SELECT MAX(date_created)
-              FROM patient_state ps
-              WHERE ps.patient_program_id = patient_state.patient_program_id
-              AND ps.state = patient_state.state AND ps.voided = 0 AND ps.start_date < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY)
+            FROM temp_current_state#{start ? '_start' : ''} AS patients
+            WHERE patients.outcomes = 1 AND patients.cum_outcome = 'Patient died'
             GROUP BY patients.patient_id
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
           SQL
