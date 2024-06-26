@@ -17,7 +17,7 @@ module ArtService
           @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
           @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
           @org = kwargs[:definition]
-          @rebuild = false
+          @rebuild = kwargs[:rebuild]&.casecmp?('true')
           @occupation = kwargs[:occupation]
           @report = init_report
         end
@@ -51,12 +51,12 @@ module ArtService
                   WHEN 'F' THEN 'Female'
                   ELSE 'Unknown'
                 END gender,
-                disaggregated_age_group(tesd.birthdate, '2024-03-31') age_group,
+                disaggregated_age_group(tesd.birthdate, '#{@end_date}') age_group,
                 TIMESTAMPDIFF(DAY, tcm.start_date, MIN(tcm.expiry_date)) prescribed_days
             FROM temp_earliest_start_date tesd
             INNER JOIN temp_patient_outcomes tpo ON tpo.patient_id = tesd.patient_id AND tpo.cum_outcome = 'On antiretrovirals'
             INNER JOIN temp_current_medication tcm ON tcm.patient_id = tesd.patient_id
-            WHERE tesd.date_enrolled <= '2024-03-31'
+            WHERE tesd.date_enrolled <= '#{@end_date}'
             GROUP BY tesd.patient_id;
           SQL
 
