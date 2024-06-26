@@ -103,7 +103,7 @@ module ArtService
             INNER JOIN drug_order ON drug_order.order_id = o.order_id AND drug_order.quantity > 0
               AND drug_order.drug_inventory_id IN (#{arv_drug})
             WHERE o.order_type_id = 1 -- drug order
-              AND o.start_date < (DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY)
+              AND o.start_date < (DATE(#{start ? start_date : end_date}) #{start ? '' : '+ INTERVAL 1 DAY'})
               AND o.voided = 0
             GROUP BY o.patient_id
             ON DUPLICATE KEY UPDATE start_date = VALUES(start_date), min_order_date = VALUES(min_order_date)
@@ -119,8 +119,8 @@ module ArtService
             INNER JOIN drug_order ON drug_order.order_id = o.order_id AND drug_order.quantity > 0
               AND drug_order.drug_inventory_id IN (#{arv_drug})
             WHERE o.order_type_id = 1 -- drug order
-              AND o.start_date < (DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY)
-              AND o.start_date >= (DATE(#{start ? prev_date : start_date}) + INTERVAL 1 DAY)
+              AND o.start_date < (DATE(#{start ? start_date : end_date}) #{start ? '' : '+ INTERVAL 1 DAY'})
+              AND o.start_date >= (DATE(#{start ? prev_date : start_date}) #{start ? '' : '+ INTERVAL 1 DAY'})
               AND o.voided = 0
             GROUP BY o.patient_id
             ON DUPLICATE KEY UPDATE start_date = VALUES(start_date), min_order_date = VALUES(min_order_date)
@@ -143,7 +143,7 @@ module ArtService
             SELECT pp.patient_id, MAX(ps.start_date) start_date
             FROM patient_state ps
             INNER JOIN patient_program pp ON pp.patient_program_id = ps.patient_program_id AND pp.program_id = 1 AND pp.voided = 0
-            WHERE ps.start_date < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY
+            WHERE ps.start_date < DATE(#{start ? start_date : end_date}) #{start ? '' : '+ INTERVAL 1 DAY'}
               AND ps.voided = 0 AND pp.patient_id IN (SELECT patient_id FROM temp_earliest_start_date)
             GROUP BY pp.patient_id
             HAVING start_date IS NOT NULL
