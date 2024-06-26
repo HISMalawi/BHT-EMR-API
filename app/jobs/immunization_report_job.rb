@@ -6,6 +6,6 @@ class ImmunizationReportJob < ApplicationJob
     dashboard = ImmunizationService::Reports::Stats::ImmunizationDashboard.new(start_date: start_date, end_date: end_date)
     data = dashboard.data
 
-    ActionCable.server.broadcast("immunization_report", data)
+    ActionCable.server.broadcast('immunization_report_channel', data)
   end
 end
