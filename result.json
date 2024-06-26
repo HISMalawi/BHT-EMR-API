@@ -638,6 +638,12 @@
             "concept_id": 10048
           }
         ]
+      },
+      {
+        "testType": "CSF CrAg",
+        "indicators": [
+
+        ]
       }
     ]
   },
@@ -787,6 +793,12 @@
             "name": "ZN",
             "concept_id": 10105
           }
+        ]
+      },
+      {
+        "testType": "Biopsy",
+        "indicators": [
+
         ]
       },
       {
@@ -1804,7 +1816,10 @@
       {
         "testType": "FBS",
         "indicators": [
-
+          {
+            "name": "FBS",
+            "concept_id": 10231
+          }
         ]
       },
       {
@@ -1922,6 +1937,12 @@
             "name": "RBS",
             "concept_id": 10617
           }
+        ]
+      },
+      {
+        "testType": "Serum Crag",
+        "indicators": [
+
         ]
       }
     ]
