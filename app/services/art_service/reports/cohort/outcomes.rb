@@ -39,13 +39,6 @@ module ArtService
           end
         end
 
-        def update_outcomes_by_definition
-          update_steps(portion: true)
-          load_patients_on_treatment
-          load_without_clinical_contact
-          load_defaulters
-        end
-
         private
 
         # The main idea here is to come up with cumulative outcomes for patients in temp_earliest_start_date
@@ -326,7 +319,7 @@ module ArtService
         def load_defaulters(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
-            SELECT patient_id, #{patient_outcome_function('patient_id')}, NULL, 6
+            SELECT patient_id, #{patient_outcome_function('patient_id', start)}, NULL, 6
             FROM temp_earliest_start_date
             WHERE date_enrolled < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY
             AND (patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3, 4, 5))
@@ -339,10 +332,10 @@ module ArtService
         # ===================================
         #  Function Management Region
         # ===================================
-        def patient_outcome_function(sql_column)
+        def patient_outcome_function(sql_column, start)
           case @definition
-          when 'moh' then "patient_outcome(#{sql_column}, #{end_date})"
-          when 'pepfar' then "pepfar_patient_outcome(#{sql_column}, #{end_date})"
+          when 'moh' then "patient_outcome(#{sql_column}, #{start ? "'#{start_date.to_date - 1.day}'" : end_date})"
+          when 'pepfar' then "pepfar_patient_outcome(#{sql_column}, #{start ? "'#{start_date.to_date - 1.day}'" : end_date})"
           else raise "Invalid outcomes definition: #{@definition}"
           end
         end
