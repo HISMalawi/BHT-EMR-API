@@ -16,14 +16,14 @@ module ArtService
           @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
           @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
           @org = kwargs[:definition]
-          @rebuild = kwargs[:rebuild]&.casecmp?('true')
+          @rebuild = false
           @occupation = kwargs[:occupation]
           @report = init_report
         end
 
         def init_report
           pepfar_age_groups.each_with_object({}) do |age_group, report|
-            report[age_group] = %w[M F Unknown].each_with_object({}) do |gender, age_group_report|
+            report[age_group] = %w[Male Female Unknown].each_with_object({}) do |gender, age_group_report|
               age_group_report[gender] = {
                 less_than_three_months: [],
                 three_to_five_months: [],
@@ -113,7 +113,7 @@ module ArtService
             end
 
             age_group = data.first['age_group']
-            gender = data.first['gender'] || 'Unknown'
+            gender = data.first['gender'] == 'M' ? 'Male' : 'Female' || 'Unknown'
 
             len = get_dispensing_info(data, ingredient)
 
