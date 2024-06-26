@@ -121,12 +121,12 @@ module OpdService
         address = "#{district}, #{ta}, #{village}"
         if stats[concept.name].blank?
           stats[concept.name] = {}
-          stats[concept.name][address] = 0
+          stats[concept.name][address] = []
         elsif stats[concept.name][address].blank?
-          stats[concept.name][address] = 0
+          stats[concept.name][address] = []
         end
 
-        stats[concept.name][address] += 1
+        stats[concept.name][address] << record['person_id']
       end
 
       stats

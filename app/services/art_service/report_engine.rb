@@ -33,6 +33,7 @@ module ArtService
       'TB_PREV2' => ArtService::Reports::Pepfar::TbPrev3,
       'TPT_NEWLY_INITIATED' => ArtService::Reports::TptNewlyInitiated,
       'TX_CURR' => ArtService::Reports::PatientsAliveAndOnTreatment,
+      'TX_CURR_MMD' => ArtService::Reports::Pepfar::TxCurrMmd,
       'TX_ML' => ArtService::Reports::Pepfar::TxMl,
       'TX_RTT' => ArtService::Reports::Pepfar::TxRtt,
       'IPT_COVERAGE' => ArtService::Reports::IptCoverage,
