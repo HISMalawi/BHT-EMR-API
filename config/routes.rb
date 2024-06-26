@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   mount EmrOhspInterface::Engine => '/'
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
+  mount ActionCable.server => '/cable'
   mount Sidekiq::Web => '/sidekiq'
 
   namespace :api do
