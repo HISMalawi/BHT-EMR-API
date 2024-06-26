@@ -28,17 +28,13 @@ module Api
           end
 
           DispensationService.create(program, dispensations, provider)
-
-                  # Broadcast to the ImmunizationReportChannel
-          ActionCable.server.broadcast(
-            'immunization_report',
-            {
-              action: 'fetch_data',
-              start_date: '2024-01-01',
-              end_date: '2024-12-31'
-            }
-          )
           
+          start_date = 1.year.ago.to_date.to_s
+          end_date = Date.today.to_s
+
+      
+          ImmunizationReportJob.perform_later(start_date, end_date)
+
           render json: orders, status: :created
         end
     end
