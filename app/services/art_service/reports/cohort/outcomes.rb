@@ -73,6 +73,7 @@ module ArtService
           # HIC SUNT DRACONIS: The order of the operations below matters,
           # do not change it unless you know what you are doing!!!
           load_patients_who_died(start:)
+          load_other_patient_who_died(start:)
           load_patients_who_stopped_treatment(start:)
           load_patients_without_drug_orders(start:)
           load_patients_on_treatment(start:)
@@ -239,6 +240,19 @@ module ArtService
             FROM temp_current_state#{start ? '_start' : ''} AS patients
             WHERE patients.outcomes = 1 AND patients.cum_outcome = 'Patient died'
             GROUP BY patients.patient_id
+            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
+          SQL
+        end
+
+        def load_other_patient_who_died(start: false)
+          ActiveRecord::Base.connection.execute <<~SQL
+            INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
+            SELECT tesd.patient_id, 'Patient died', MAX(ps.start_date), 1
+            FROM temp_earliest_start_date tesd
+            INNER JOIN patient_program pp ON pp.patient_id = tesd.patient_id AND pp.program_id = 1 AND pp.voided = 0
+            INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.state = 2 AND ps.voided = 0 AND ps.start_date <= #{end_date}
+            WHERE tesd.patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step = 1)
+            GROUP BY tesd.patient_id
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
           SQL
         end
