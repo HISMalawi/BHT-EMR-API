@@ -61,7 +61,7 @@ class DdeClient
     LOGGER.debug 'Loading DDE connection'
     if connection[:expires] < Time.now
       LOGGER.debug 'DDE connection expired'
-      establish_connection(connection[:config])
+      establish_connection(**connection[:config])
     else
       @base_url = connection[:config][:url]
       connection
@@ -120,7 +120,7 @@ class DdeClient
     return handle_response e.response unless @auto_login
 
     LOGGER.debug 'Auto-logging into DDE...'
-    establish_connection(@connection[:config])
+    establish_connection(**@connection[:config])
     LOGGER.debug "Reset connection: #{@connection}"
     retry # Retry last request...
   rescue RestClient::BadRequest => e
