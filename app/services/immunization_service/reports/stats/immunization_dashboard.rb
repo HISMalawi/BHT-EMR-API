@@ -3,8 +3,7 @@ module ImmunizationService
         module Stats
             class ImmunizationDashboard
 
-               
-
+            
                 def initialize(start_date:, end_date:)
                     @current_date = Date.current
                     @start_date = Date.parse(start_date).beginning_of_day
@@ -31,12 +30,16 @@ module ImmunizationService
                 end
 
                 def total_vaccinated
-                    base_query.where(
-                        encounter_type: { name: "IMMUNIZATION RECORD" }, 
-                        concept_name: { name: "Batch Number"},
+                    base_query
+                      .where(
+                        encounter_type: { name: "IMMUNIZATION RECORD" },
+                        concept_name: { name: "Batch Number" },
                         obs: { obs_datetime: @start_date..@end_date }
-                    ).select(:concept_id).count
+                      )
+                      .distinct
+                      .count(:person_id)
                 end
+                  
 
                 def  total_due_for_vaccination_today
                     
@@ -46,68 +49,81 @@ module ImmunizationService
 
                 end
 
-                def total_vaccinated_today 
-                    base_query.where(
-                      encounter_type: { name: "IMMUNIZATION RECORD" }, 
-                      concept_name: { name: "Batch Number" },
-                      obs: { obs_datetime: @current_date.beginning_of_day..@current_date.end_of_day }
-                    ).select(:concept_id).count
-                end
+                def total_vaccinated_today
+                    base_query
+                      .where(
+                        encounter_type: { name: "IMMUNIZATION RECORD" },
+                        concept_name: { name: "Batch Number" },
+                        obs: { obs_datetime: @current_date.beginning_of_day..@current_date.end_of_day }
+                      )
+                      .distinct
+                      .count(:person_id)
+                  end
                   
-
                 def total_children_vaccinated_today
-                    base_query.where(
-                      encounter_type: { name: "IMMUNIZATION RECORD" },
-                      concept_name: { name: "Batch Number" },
-                      obs: { obs_datetime: @current_date.beginning_of_day..@current_date.end_of_day }
-                    ).where('TIMESTAMPDIFF(YEAR, person.birthdate, CURDATE()) < 18').select(:concept_id).count
+                    base_query
+                        .where(
+                        encounter_type: { name: "IMMUNIZATION RECORD" },
+                        concept_name: { name: "Batch Number" },
+                        obs: { obs_datetime: @current_date.beginning_of_day..@current_date.end_of_day }
+                        )
+                        .where('TIMESTAMPDIFF(YEAR, person.birthdate, CURDATE()) < 18')
+                        .distinct
+                        .count(:person_id)
                 end
                   
                 def total_women_vaccinated_today
-                    base_query.where(
-                      encounter_type: { name: "IMMUNIZATION RECORD" },
-                      concept_name: { name: "Batch Number" },
-                      obs: { obs_datetime: @current_date.beginning_of_day..@current_date.end_of_day },
-                      person: { gender: "F" }
-                    ).where('TIMESTAMPDIFF(YEAR, person.birthdate, CURDATE()) >= 18').select(:concept_id).count
+                    base_query
+                        .where(
+                        encounter_type: { name: "IMMUNIZATION RECORD" },
+                        concept_name: { name: "Batch Number" },
+                        obs: { obs_datetime: @current_date.beginning_of_day..@current_date.end_of_day },
+                        person: { gender: "F" }
+                        )
+                        .where('TIMESTAMPDIFF(YEAR, person.birthdate, CURDATE()) >= 18')
+                        .distinct
+                        .count(:person_id)
                 end
                   
                 def total_men_vaccinated_today
-                    base_query.where(
-                      encounter_type: { name: "IMMUNIZATION RECORD" },
-                      concept_name: { name: "Batch Number" },
-                      obs: { obs_datetime: @current_date.beginning_of_day..@current_date.end_of_day },
-                      person: { gender: "M" }
-                    ).where('TIMESTAMPDIFF(YEAR, person.birthdate, CURDATE()) >= 18').select(:concept_id).count
+                    base_query
+                        .where(
+                        encounter_type: { name: "IMMUNIZATION RECORD" },
+                        concept_name: { name: "Batch Number" },
+                        obs: { obs_datetime: @current_date.beginning_of_day..@current_date.end_of_day },
+                        person: { gender: "M" }
+                        )
+                        .where('TIMESTAMPDIFF(YEAR, person.birthdate, CURDATE()) >= 18')
+                        .distinct
+                        .count(:person_id)
                 end
-
-
+                  
                 def vaccination_counts_by_month
                     current_date = Date.today
                     months = []
                     vaccinations = []
-                
+                    
                     12.times do |i|
-                      start_date = current_date.beginning_of_month - i.months
-                      end_date = current_date.end_of_month - i.months
-                
-                      month_name = start_date.strftime("%b") # Short month name
-                      count = base_query
+                        start_date = current_date.beginning_of_month - i.months
+                        end_date = current_date.end_of_month - i.months
+                    
+                        month_name = start_date.strftime("%b") # Short month name
+                        count = base_query
                                 .where(
-                                  encounter_type: { name: "IMMUNIZATION RECORD" },
-                                  concept_name: { name: "Batch Number" },
-                                  obs: { obs_datetime: start_date..end_date }
+                                    encounter_type: { name: "IMMUNIZATION RECORD" },
+                                    concept_name: { name: "Batch Number" },
+                                    obs: { obs_datetime: start_date..end_date }
                                 )
-                                .select(:concept_id)
-                                .count
-                
-                      months << month_name
-                      vaccinations << count
+                                .distinct
+                                .count(:person_id)
+                    
+                        months << month_name
+                        vaccinations << count
                     end
-                
+                    
                     { months: months.reverse, vaccinations: vaccinations.reverse }
                 end
-
+                  
 
         
             end
