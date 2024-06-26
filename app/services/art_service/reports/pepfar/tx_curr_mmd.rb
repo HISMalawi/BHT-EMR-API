@@ -16,7 +16,7 @@ module ArtService
           @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
           @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
           @org = kwargs[:definition]
-          @rebuild = false
+          @rebuild = kwargs[:rebuild]&.casecmp?('true')
           @occupation = kwargs[:occupation]
           @report = init_report
         end
