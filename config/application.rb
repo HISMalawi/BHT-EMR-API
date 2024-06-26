@@ -50,5 +50,8 @@ module BHTEmrApi
     config.middleware.use ActionDispatch::Cookies
 
     config.middleware.use config.session_store, config.session_options
+
+    # Use Sidekiq for Active Job
+    config.active_job.queue_adapter = :sidekiq
   end
 end
