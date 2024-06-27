@@ -37,6 +37,30 @@ module Api
 
           render json: orders, status: :created
         end
+
+        def add_adverse_effects
+          encounter_id, adverse_effects, program_id = params.require(%i[encounter_id adverse_effects program_id])
+  
+          encounter = Encounter.find(encounter_id)
+  
+          unless encounter.type.name == 'IMMUNIZATION FOLLOW UP'
+            return render json: { errors: "Not an immunization encounter ##{encounter.encounter_id}" },
+                          status: :bad_request
+          end
+  
+          created_observations = service.add_adverse_effects(
+            encounter: encounter, 
+            adverse_effects: adverse_effects
+          )
+  
+          render json: created_observations, status: :created
+        end
+  
+        private
+        
+        def service
+          ImmunizationService::ClientAdverseEffect.new
+        end
     end
   end
 end
