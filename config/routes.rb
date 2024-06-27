@@ -307,6 +307,8 @@ Rails.application.routes.draw do
 
       post '/immunization/administer_vaccine', to: 'administer_vaccine#administer_vaccine'
       get '/immunization/stats', to: 'immunization_report#stats'
+      post '/immunization/adverse_effects', to: 'administer_vaccine#add_adverse_effects'
+      
     end
   end
 
