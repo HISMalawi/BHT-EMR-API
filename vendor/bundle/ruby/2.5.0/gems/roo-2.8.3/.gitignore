@@ -1,0 +1,11 @@
+/pkg/
+/log/
+/coverage/
+.ruby-version
+.project
+*.lock
+.idea
+.buildpath
+*~
+.bundle/
+lbin/

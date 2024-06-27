@@ -38,5 +38,20 @@ module BHTEmrApi
     config.time_zone = 'Africa/Blantyre' # Your local time zone
     config.active_record.default_timezone = :local
     config.active_record.time_zone_aware_attributes = false
+
+    #Action Cable
+    config.action_cable.mount_path = '/cable'
+    config.action_cable.disable_request_forgery_protection = true
+
+    # This also configures session_options for use below
+    config.session_store :cookie_store, key: '_interslice_session'
+
+    # Required for all session management (regardless of session_store)
+    config.middleware.use ActionDispatch::Cookies
+
+    config.middleware.use config.session_store, config.session_options
+
+    # Use Sidekiq for Active Job
+    config.active_job.queue_adapter = :sidekiq
   end
 end

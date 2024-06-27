@@ -1,0 +1,79 @@
+current directory: /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.7.0/gems/mysql2-0.5.3/ext/mysql2
+/usr/share/rvm/rubies/ruby-2.7.2/bin/ruby -I /usr/share/rvm/rubies/ruby-2.7.2/lib/ruby/2.7.0 -r ./siteconf20211103-22153-16czv59.rb extconf.rb
+checking for rb_absint_size()... yes
+checking for rb_absint_singlebit_p()... yes
+checking for rb_wait_for_single_fd()... yes
+-----
+Using mysql_config at /usr/bin/mysql_config
+-----
+checking for mysql.h... yes
+checking for errmsg.h... yes
+checking for SSL_MODE_DISABLED in mysql.h... yes
+checking for SSL_MODE_PREFERRED in mysql.h... yes
+checking for SSL_MODE_REQUIRED in mysql.h... yes
+checking for SSL_MODE_VERIFY_CA in mysql.h... yes
+checking for SSL_MODE_VERIFY_IDENTITY in mysql.h... yes
+checking for MYSQL.net.vio in mysql.h... yes
+checking for MYSQL.net.pvio in mysql.h... no
+checking for MYSQL_ENABLE_CLEARTEXT_PLUGIN in mysql.h... yes
+checking for SERVER_QUERY_NO_GOOD_INDEX_USED in mysql.h... yes
+checking for SERVER_QUERY_NO_INDEX_USED in mysql.h... yes
+checking for SERVER_QUERY_WAS_SLOW in mysql.h... yes
+checking for MYSQL_OPTION_MULTI_STATEMENTS_ON in mysql.h... yes
+checking for MYSQL_OPTION_MULTI_STATEMENTS_OFF in mysql.h... yes
+checking for my_bool in mysql.h... no
+-----
+Setting libpath to /usr/lib/x86_64-linux-gnu
+-----
+creating Makefile
+
+current directory: /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.7.0/gems/mysql2-0.5.3/ext/mysql2
+make "DESTDIR=" clean
+
+current directory: /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.7.0/gems/mysql2-0.5.3/ext/mysql2
+make "DESTDIR="
+compiling client.c
+client.c: In function ‘rb_mysql_query’:
+client.c:787:14: warning: passing argument 1 of ‘rb_rescue2’ from incompatible pointer type [-Wincompatible-pointer-types]
+  787 |   rb_rescue2(do_send_query, (VALUE)&args, disconnect_and_raise, self, rb_eException, (VALUE)0);
+      |              ^~~~~~~~~~~~~
+      |              |
+      |              VALUE (*)(void *) {aka long unsigned int (*)(void *)}
+In file included from /usr/share/rvm/rubies/ruby-2.7.2/include/ruby-2.7.0/ruby.h:33,
+                 from ./mysql2_ext.h:10,
+                 from client.c:1:
+/usr/share/rvm/rubies/ruby-2.7.2/include/ruby-2.7.0/ruby/ruby.h:1988:18: note: expected ‘VALUE (*)(VALUE)’ {aka ‘long unsigned int (*)(long unsigned int)’} but argument is of type ‘VALUE (*)(void *)’ {aka ‘long unsigned int (*)(void *)’}
+ 1988 | VALUE rb_rescue2(VALUE(*)(VALUE),VALUE,VALUE(*)(VALUE,VALUE),VALUE,...);
+      |                  ^~~~~~~~~~~~~~~
+client.c:795:16: warning: passing argument 1 of ‘rb_rescue2’ from incompatible pointer type [-Wincompatible-pointer-types]
+  795 |     rb_rescue2(do_query, (VALUE)&async_args, disconnect_and_raise, self, rb_eException, (VALUE)0);
+      |                ^~~~~~~~
+      |                |
+      |                VALUE (*)(void *) {aka long unsigned int (*)(void *)}
+In file included from /usr/share/rvm/rubies/ruby-2.7.2/include/ruby-2.7.0/ruby.h:33,
+                 from ./mysql2_ext.h:10,
+                 from client.c:1:
+/usr/share/rvm/rubies/ruby-2.7.2/include/ruby-2.7.0/ruby/ruby.h:1988:18: note: expected ‘VALUE (*)(VALUE)’ {aka ‘long unsigned int (*)(long unsigned int)’} but argument is of type ‘VALUE (*)(void *)’ {aka ‘long unsigned int (*)(void *)’}
+ 1988 | VALUE rb_rescue2(VALUE(*)(VALUE),VALUE,VALUE(*)(VALUE,VALUE),VALUE,...);
+      |                  ^~~~~~~~~~~~~~~
+client.c: At top level:
+cc1: warning: unrecognized command line option ‘-Wno-used-but-marked-unused’
+cc1: warning: unrecognized command line option ‘-Wno-static-in-inline’
+cc1: warning: unrecognized command line option ‘-Wno-reserved-id-macro’
+cc1: warning: unrecognized command line option ‘-Wno-missing-variable-declarations’
+cc1: warning: unrecognized command line option ‘-Wno-documentation-unknown-command’
+cc1: warning: unrecognized command line option ‘-Wno-disabled-macro-expansion’
+cc1: warning: unrecognized command line option ‘-Wno-covered-switch-default’
+cc1: warning: unrecognized command line option ‘-Wno-conditional-uninitialized’
+cc1: warning: unrecognized command line option ‘-Wno-self-assign’
+cc1: warning: unrecognized command line option ‘-Wno-parentheses-equality’
+cc1: warning: unrecognized command line option ‘-Wno-constant-logical-operand’
+compiling infile.c
+compiling mysql2_ext.c
+compiling result.c
+compiling statement.c
+linking shared-object mysql2/mysql2.so
+
+current directory: /home/egpaf/BHT-EMR-API/vendor/bundle/ruby/2.7.0/gems/mysql2-0.5.3/ext/mysql2
+make "DESTDIR=" install
+/usr/bin/install -m 0755 mysql2.so ./.gem.20211103-22153-zcxlv3/mysql2

@@ -1,0 +1,11 @@
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/io-wait-0.3.0/ext/io/wait
+/usr/share/rvm/rubies/ruby-2.5.3/bin/ruby -I /usr/share/rvm/rubies/ruby-2.5.3/lib/ruby/site_ruby/2.5.0 -r ./siteconf20230413-176046-qsekwv.rb extconf.rb
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/io-wait-0.3.0/ext/io/wait
+make "DESTDIR=" clean
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/io-wait-0.3.0/ext/io/wait
+make "DESTDIR="
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/io-wait-0.3.0/ext/io/wait
+make "DESTDIR=" install

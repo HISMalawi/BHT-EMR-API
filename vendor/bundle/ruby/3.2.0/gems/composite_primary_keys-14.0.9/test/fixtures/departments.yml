@@ -1,0 +1,19 @@
+accounting:
+  id: 1
+  location_id: 1
+
+engineering:
+  id: 2
+  location_id: 1
+
+human_resources:
+  id: 3
+  location_id: 2
+
+offsite_accounting:
+  id: 1
+  location_id: 2
+
+offsite_engineering:
+  id: 2
+  location_id: 2

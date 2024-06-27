@@ -1,0 +1,24 @@
+{
+  "name": "ruby-socket.io-client-simple",
+  "description": "A simple ruby client for node.js's socket.io. Supports only WebSocket.",
+  "private": true,
+  "author": "Sho Hashimoto <hashimoto@shokai.org>",
+  "license": "MIT",
+  "homepage": "https://github.com/shokai/ruby-socket.io-client-simple",
+  "dependencies": {
+    "socket.io": "^1.4",
+    "socket.io-client": "^1.4",
+    "coffee-script": "^1.10"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "coffee samples/chat_server.coffee"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/shokai/ruby-socket.io-client-simple.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shokai/ruby-socket.io-client-simple/issues"
+  }
+}

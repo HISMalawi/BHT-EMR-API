@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style type="text/css">
+      <%= css %>
+      
+      body {
+        font-family: "Source Sans Pro", sans-serif;
+        color: #444;
+      }
+
+      h1, h2, h3, h4, h5, h6, strong {
+        font-weight: 600;
+      }
+
+      h1, h2, h3, h4, h5, h6 {
+        color: #333;
+      }
+
+      @media (min-width: 768px) {
+        body {
+          font-size: 18px;
+        }
+
+        pre {
+          font-size: 14px;
+        }
+
+        h1 { font-size: 40px; }
+        h2 { font-size: 34px; }
+        h3 { font-size: 28px; }
+        h4 { font-size: 22px; }
+        h5 { font-size: 20px; }
+
+        p {
+          line-height: 1.55;
+        }
+      }
+
+      ul ul,
+      ul ol,
+      ol ol,
+      ol ul {
+        margin-bottom: 9px;
+      }
+
+      img {
+        max-width: 100%;
+      }
+
+      #container {
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      @media(max-width: 830px) {
+        #container {
+          max-width: auto;
+          margin-left: 1em;
+          margin-right: 1em;
+        }
+      }
+
+      #top-vertical-container-margin {
+        margin-top: 20px;
+      }
+
+      #bottom-vertical-container-margin {
+        margin-bottom: 20px;
+      }
+
+      #logo {
+        text-align: center;
+        margin-bottom: 9px;
+      }
+
+      #title {
+        color: black;
+        text-align: center;
+        font-size: 300%;
+        line-height: 1em;
+        padding-bottom: 30px;
+        margin-bottom: 30px;
+        border-bottom: solid 1px #d0d0d0;
+      }
+
+      #toc {
+        margin-bottom: 20px;
+      }
+
+      #toc .level-2 {
+        margin-left: 18px;
+      }
+
+      #toc .level-3 {
+        margin-left: 36px;
+      }
+
+      footer {
+        border-top: solid 1px #d0d0d0;
+        margin-top: 9px;
+        padding-top: 9px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="container" class="container">
+      <div id="top-vertical-container-margin"></div>
+      <div id="logo">
+        <a href="http://www.phusion.nl/"><img src="images/phusion_banner_small.png" alt="Phusion docs" width="350" height="59"></a>
+      </div>
+      <div id="title"><%= title %></div>
+
+      <div id="toc" style="display: none">
+        <div class="header"><strong>Table of contents</strong></div>
+      </div>
+
+      <%= content %>
+
+      <footer>
+        <p>&copy; Phusion</p>
+      </footer>
+
+      <div id="bottom-vertical-container-margin"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-migrate-1.4.1.min.js"></script>
+    <script>
+      (function() {
+        var toc = $('#toc');
+        var i = 1;
+
+        $('h1,h2,h3').each(function() {
+          var level = parseInt(this.nodeName.match(/\d+/)[0]);
+          var id = "header_" + i;
+          var item = $('<div><a></a></div>').appendTo(toc);
+          item.addClass("level-" + level);
+          item.find('a').
+            text($(this).text()).
+            prop('href', '#' + id);
+          $(this).prop('id', id);
+          i++;
+        });
+
+        toc.show();
+      })();
+    </script>
+
+  </body>
+</html>

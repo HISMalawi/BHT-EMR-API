@@ -28,6 +28,13 @@ module Api
           end
 
           DispensationService.create(program, dispensations, provider)
+          
+          start_date = 1.year.ago.to_date.to_s
+          end_date = Date.today.to_s
+
+      
+          ImmunizationReportJob.perform_later(start_date, end_date)
+
           render json: orders, status: :created
         end
     end
