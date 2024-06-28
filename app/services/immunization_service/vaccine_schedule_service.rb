@@ -49,18 +49,17 @@ module VaccineScheduleService
  
 
   def self.format_schedule(schedule, vaccines_given, patient_dob)
-    debugger
     schedule.map.with_index(1) do |(milestone_name, antigens), index|
       {
         visit: index,
         milestone_status: milestone_status(milestone_name, patient_dob),
         age: milestone_name,
-        antigens: antigens.map { |item|
-          vaccine_given = vaccines_given.find { |vaccine| vaccine[:drug_inventory_id] == item.drug_id }
+        antigens: antigens.map { |drug|
+          vaccine_given = vaccines_given.find { |vaccine| vaccine[:drug_inventory_id] == drug[:drug_id] }
           {
-            concept_id: item.concept_id,
-            drug_id: item.drug_id,
-            drug_name: item.drug_name,
+            drug_id: drug[:drug_id],
+            drug_name: drug[:drug_name],
+            window_period: drug[:window_period],
             status: vaccine_given ? 'administered' : 'pending',
             date_administered: vaccine_given ? vaccine_given[:obs_datetime]&.strftime('%d/%b/%Y %H:%M:%S') : nil,
             vaccine_batch_number: vaccine_given ? vaccine_given[:batch_number] : nil
