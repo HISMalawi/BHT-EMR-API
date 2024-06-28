@@ -412,5 +412,5 @@ Rails.application.routes.draw do
   post 'api/v1/sync_to_ait', to: 'api/v1/patients#sync_to_ait'
 
   # EIR
-  get '/api/v1/eir/schedule', to: 'api/v1/eir#vaccine_schedule'
+  get '/api/v1/eir/schedule', to: 'api/v1/vaccine_schedule#vaccine_schedule'
 end
