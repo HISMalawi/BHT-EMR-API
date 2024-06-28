@@ -48,11 +48,11 @@ module VaccineScheduleService
 
  
 
-  def self.format_schedule(schedule, vaccines_given, patient_dob)
+  def self.format_schedule(schedule, vaccines_given, client_dob)
     schedule.map.with_index(1) do |(milestone_name, antigens), index|
       {
         visit: index,
-        milestone_status: milestone_status(milestone_name, patient_dob),
+        milestone_status: milestone_status(milestone_name, client_dob),
         age: milestone_name,
         antigens: antigens.map { |drug|
           vaccine_given = vaccines_given.find { |vaccine| vaccine[:drug_inventory_id] == drug[:drug_id] }
@@ -60,6 +60,7 @@ module VaccineScheduleService
             drug_id: drug[:drug_id],
             drug_name: drug[:drug_name],
             window_period: drug[:window_period],
+            can_administer: drug[:window_period].blank? ? 'Unknown' : can_administer_drug?(drug, client_dob),
             status: vaccine_given ? 'administered' : 'pending',
             date_administered: vaccine_given ? vaccine_given[:obs_datetime]&.strftime('%d/%b/%Y %H:%M:%S') : nil,
             vaccine_batch_number: vaccine_given ? vaccine_given[:batch_number] : nil
@@ -129,4 +130,8 @@ module VaccineScheduleService
     end
   end
 
+  def self.can_administer_drug?(drug, dob )
+    value, units = drug[:window_period].split
+    (dob + value.to_i.send(units.downcase)) > Date.today
+  end
 end
