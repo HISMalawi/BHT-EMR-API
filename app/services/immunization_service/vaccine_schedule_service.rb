@@ -40,7 +40,6 @@ module VaccineScheduleService
                                 .where(concept_set: ConceptName.where(name: category).pluck(:concept_id))
                                 .select('concept.concept_id, concept_name.name, drug.drug_id')
     elsif category == 'Over five immunizations'
-      debugger
       immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
                                 .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
                                 .where.not(concept_set: ConceptName.where(name: 'Under five immunizations').pluck(:concept_id))
