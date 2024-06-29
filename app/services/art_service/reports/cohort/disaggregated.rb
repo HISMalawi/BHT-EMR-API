@@ -73,7 +73,8 @@ module ArtService
         def process_db_data
           fetch_data.each do |data|
             age_group = data['age_group']
-            regimen = data['regimen']
+            regimen = data['regimen'] || 'unknown'
+            regimen = 'unknown' unless COHORT_REGIMENS.include?(regimen)
             patient_id = data['patient_id']
             # we need to handle regimes that only have one P to become PP. Otherwise if it is already PP or PA we leave
             # it as is. Regimens are in this format NUMBERLETTERS
@@ -157,7 +158,7 @@ module ArtService
                     earliest_start_date.gender
                 FROM temp_current_medication tcm
                 INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = tcm.patient_id AND outcomes.cum_outcome = 'On antiretrovirals'
-                INNER JOIN temp_earliest_start_date AS earliest_start_date ON earliest_start_date.patient_id = tcm.patient_id
+                INNER JOIN temp_earliest_start_date AS earliest_start_date ON earliest_start_date.patient_id = tcm.patient_id AND earliest_start_date.gender IN ('M','F')
                 GROUP BY tcm.patient_id
             ) AS prescriptions
             LEFT JOIN (
