@@ -17,7 +17,10 @@ module ArtService
         end
 
         def data
-          ArtService::Reports::CohortBuilder.new(outcomes_definition: "pepfar").init_temporary_tables(start_date, end_date, occupation) if rebuild
+          if rebuild
+            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar').init_temporary_tables(start_date,
+                                                                                                        end_date, occupation)
+          end
           process_data
         end
 
@@ -81,7 +84,7 @@ module ArtService
             INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id AND o.cum_outcome IN ('Defaulted', 'Patient died', 'Treatment stopped', 'Patient transferred out')
             LEFT JOIN (#{current_occupation_query}) a ON a.person_id = e.patient_id
             WHERE e.patient_id IN (SELECT patient_id FROM temp_patient_outcomes_start WHERE cum_outcome = 'On antiretrovirals')
-            AND DATE(e.date_enrolled) < '#{start_date.to_date}'
+            AND DATE(e.earliest_start_date) < '#{start_date.to_date}'
             GROUP BY e.patient_id
           SQL
         end
@@ -101,7 +104,7 @@ module ArtService
             FROM temp_earliest_start_date e
             INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id AND o.cum_outcome IN ('Defaulted', 'Patient died', 'Treatment stopped', 'Patient transferred out')
             LEFT JOIN (#{current_occupation_query}) a ON a.person_id = e.patient_id
-            WHERE e.date_enrolled BETWEEN DATE('#{start_date}') AND DATE('#{end_date}')
+            WHERE e.earliest_start_date BETWEEN DATE('#{start_date}') AND DATE('#{end_date}')
             GROUP BY e.patient_id
           SQL
         end
