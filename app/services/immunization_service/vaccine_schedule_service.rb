@@ -56,7 +56,7 @@ module VaccineScheduleService
             drug_id: drug[:drug_id],
             drug_name: drug[:drug_name],
             window_period: drug[:window_period],
-            can_administer: drug[:window_period]&.blank? ? 'Unknown' : can_administer_drug?(drug, client_dob),
+            can_administer: drug[:window_period]&.blank? ? (milestone_status(mileston_name, client_dob) == 'current') : can_administer_drug?(drug, client_dob),
             status: vaccine_given ? 'administered' : 'pending',
             date_administered: vaccine_given&.[](:obs_datetime)&.strftime('%d/%b/%Y %H:%M:%S'),
             administered_by: vaccine_given&.[](:administered_by),
@@ -83,7 +83,7 @@ module VaccineScheduleService
           given_name: obs.given_name,
           family_name: obs.family_name
         },
-        location_administered: Location.find_by_location_id(obs.location_id).to_h
+        location_administered: Location.find_by_location_id(obs.location_id)
       }
     end
   end
