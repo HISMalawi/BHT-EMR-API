@@ -56,7 +56,7 @@ module VaccineScheduleService
             drug_id: drug[:drug_id],
             drug_name: drug[:drug_name],
             window_period: drug[:window_period],
-            can_administer: drug[:window_period]&.blank? ? (milestone_status(mileston_name, client_dob) == 'current') : can_administer_drug?(drug, client_dob),
+            can_administer: can_administer_drug?(drug, client_dob),
             status: vaccine_given ? 'administered' : 'pending',
             date_administered: vaccine_given&.[](:obs_datetime)&.strftime('%d/%b/%Y %H:%M:%S'),
             administered_by: vaccine_given&.[](:administered_by),
@@ -104,30 +104,30 @@ module VaccineScheduleService
       else
         'upcoming'
       end
-    elsif milestone.include?('weeks')
+    elsif milestone.downcase.include?('weeks')
       milestone_weeks = milestone.split.first.to_i
       age_in_weeks = (today - dob).to_i / 7
       return 'current' if milestone ==  age_in_weeks.to_i
 
       age_in_weeks > milestone_weeks ? 'passed' : 'upcoming'
-    elsif milestone.include?('months')
+    elsif milestone.downcase.include?('months')
       milestone_months = milestone.split.first.to_i
       age_in_months = (today.year * 12 + today.month) - (dob.year * 12 + dob.month)
       return 'current' if milestone_months == age_in_months
 
       age_in_months > milestone_months ? 'passed' : 'upcoming'
-    elsif milestone.include?('years')
+    elsif milestone.downcase.include?('years')
       milestone_years = milestone.split.first.to_i
       age_in_years = today.year - dob.year
       case milestone_years
-      when 9
-        return 'current' if age_in_years >= 9 && age_in_years <= 14
-      when 12
-        return 'current' if age_in_years > 12
-      when 15
-        return 'current' if age_in_years >= 15 && age_in_years <= 45
-      when 18
-        return 'current' if age_in_years >= 18
+      when 9 && age_in_years >= 9 && age_in_years <= 14
+        return 'current'
+      when 12 && age_in_years >= 12
+        return 'current'
+      when 15 && age_in_years >= 15 && age_in_years <= 45
+        return 'current'
+      when 18 && age_in_years >= 18
+        return 'current' 
       else
         return 'current' if milestone_years == age_in_years
 
@@ -137,18 +137,20 @@ module VaccineScheduleService
   end
 
   def self.can_administer_drug?(drug, dob )
-    return if drug[:window_period].blank?
-
-    age = Date.today - dob
-    # Handle atigens that are valid in a range of ages
-    value, units = drug[:window_period].split
-    case units.downcase
-    when 'weeks'
-      compare_age(age.to_i / 7, value)
-    when 'months'
-      compare_age(age.to_i / 30, value)
-    when 'years'
-      compare_age(age.to_i / 365, value)
+    if drug[:window_period].blank?
+      milestone_status(drug[:milestone], dob) == 'current'
+    else
+      age = Date.today - dob
+      # Handle atigens that are valid in a range of ages
+      value, units = drug[:window_period].split
+      case units.downcase
+      when 'weeks'
+        compare_age(age.to_i / 7, value)
+      when 'months'
+        compare_age(age.to_i / 30, value)
+      when 'years'
+        compare_age(age.to_i / 365, value)
+      end
     end
   end
 
