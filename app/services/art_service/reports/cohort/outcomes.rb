@@ -148,14 +148,15 @@ module ArtService
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_current_state#{start ? '_start' : ''}
             SELECT mps.patient_id, cn.name AS cum_outcome, ps.start_date as outcome_date, ps.state, count(DISTINCT(ps.state)) outcomes, MAX(ps.patient_state_id) patient_state_id
-            FROM patient_state ps
-            INNER JOIN patient_program pp ON pp.patient_program_id = ps.patient_program_id AND pp.program_id = 1 AND pp.voided = 0
-            INNER JOIN temp_max_patient_state#{start ? '_start' : ''} mps ON mps.patient_id = pp.patient_id AND mps.start_date = ps.start_date
+            FROM temp_max_patient_state#{start ? '_start' : ''}  AS mps
+            INNER JOIN patient_program  AS pp ON pp.patient_id = mps.patient_id AND pp.program_id = 1 AND pp.voided = 0
+            INNER JOIN patient_state  AS ps ON ps.patient_program_id = pp.patient_program_id AND ps.start_date = mps.start_date AND ps.voided = 0
+              AND (ps.end_date IS NULL OR ps.end_date > DATE(#{end_date}))
             INNER JOIN program_workflow_state pws ON pws.program_workflow_state_id = ps.state AND pws.retired = 0
-            INNER JOIN concept_name cn ON cn.concept_id = pws.concept_id AND cn.voided = 0 AND cn.concept_name_type = 'FULLY_SPECIFIED'
-            LEFT JOIN patient_state ps2 ON ps.patient_program_id = ps2.patient_program_id AND ps.start_date = ps2.start_date AND ps.date_created < ps2.date_created AND ps2.voided = 0
-            AND ps2.start_date < DATE(#{start ? start_date : end_date}) #{start ? '' : '+ INTERVAL 1 DAY'}
-            WHERE ps2.patient_program_id IS NULL AND ps.voided = 0 AND ps.start < DATE(#{start ? start_date : end_date}) #{start ? '' : '+ INTERVAL 1 DAY'}
+            INNER JOIN concept_name cn ON cn.concept_id = pws.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.voided = 0
+            LEFT JOIN patient_state  AS ps2 ON ps.patient_program_id = ps2.patient_program_id AND ps.start_date = ps2.start_date AND ps.date_created < ps2.date_created AND ps2.voided = 0
+              AND ps2.start_date < DATE(#{start ? start_date : end_date}) #{start ? '' : '+ INTERVAL 1 DAY'}
+            WHERE ps2.patient_program_id IS NULL AND ps.voided = 0 AND ps.start_date < DATE(#{start ? start_date : end_date}) #{start ? '' : '+ INTERVAL 1 DAY'}
             GROUP BY mps.patient_id
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), state = VALUES(state), outcomes = VALUES(outcomes), patient_state_id = VALUES(patient_state_id)
           SQL
