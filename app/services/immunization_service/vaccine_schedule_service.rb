@@ -4,37 +4,97 @@ module VaccineScheduleService
     # Get Vaccine Schedule
     # begin
       # Immunization Drugs
-      immunization_drugs = ConceptSet.joins(concept: %i[concept_names drugs])
-                                     .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
-                                     .select('concept.concept_id, concept_name.name, drug.drug_id')
+    immunization_drugs = if age_in_years(patient.birthdate) < 5
+      immunization_drugs('Under five immunizations')
+                         else
+      immunization_drugs('Over five immunizations')
+                         end
                  
       # For each of these get the window period and schedule
-      immunization_with_window = immunization_drugs.map do |immunization_drug| 
-        window_period = vaccine_attribute(immunization_drug.concept_id, 'Immunization window period')
-        milestone = vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones')
-        {drug_id: immunization_drug.drug_id, drug_name: immunization_drug.name, window_period:, milestone:}
-      end
+    immunization_with_window = immunization_drugs.map do |immunization_drug| 
+      window_period = vaccine_attribute(immunization_drug.concept_id, 'Immunization window period')
+      milestone = vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones')
+      {drug_id: immunization_drug.drug_id, drug_name: immunization_drug.name, window_period:, milestone:}
+    end
 
-      # if patient.gender == ('M' || 'Male')
-      #   female_immunization_concepts = ConceptName.where(name: 'Female only Immunizations').pluck(:concept_id)
-      #   female_concepts = ConceptSet.where(concept_set: female_immunization_concepts).pluck(:concept_id)
-      #   concept_set = ConceptSet.where(concept_set: immunization_concepts)
-      #                           .where.not(concept_id: female_concepts).pluck(:concept_id)
-      # else
-      #   concept_set = ConceptSet.where(concept_set: immunization_concepts).pluck(:concept_id)
-      # end
-      # schedule = Drug.joins(concept: :concept_names).where(concept_id: concept_set)
-      #                .select('concept_name.concept_id AS concept_id,
-      #                         concept_name.name AS concept_name,
-      #                         drug.drug_id AS drug_id,
-      #                         drug.name AS drug_name')
+    vaccines_given = administered_vaccines(patient.person_id, immunization_with_window.pluck(:drug_id))
+    grouped_immuminzations = immunization_with_window.group_by { | immunizations | immunizations[:milestone] }
+    vaccines = format_schedule(grouped_immuminzations, vaccines_given, patient.birthdate)
 
-      vaccines_given = administered_vaccines(patient.person_id, immunization_with_window.pluck(:drug_id))
-      grouped_immuminzations = immunization_with_window.group_by { | immunizations | immunizations[:milestone] }
-      return {vaccine_schedule: format_schedule(grouped_immuminzations, vaccines_given, patient.birthdate)}
+    return {vaccine_schedule: update_milestone_status(vaccines)}
     # rescue => e
-      return {error: e.message}
+    return {error: e.message}
     #end
+  end
+
+  def self.age_in_years(birthdate)
+    today = Date.today
+    age = today.year - birthdate.year
+    age -= 1 if today.month < birthdate.month || (today.month == birthdate.month && today.day < birthdate.day)
+    age
+  end
+
+  def self.immunization_drugs(category)
+    if category == 'Under five immunizations'
+      immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
+                                .where(concept_set: ConceptName.where(name: category).pluck(:concept_id))
+                                .select('concept.concept_id, concept_name.name, drug.drug_id')
+    elsif category == 'Over five immunizations'
+      debugger
+      immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
+                                .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
+                                .where.not(concept_set: ConceptName.where(name: 'Under five immunizations').pluck(:concept_id))
+                                .select('concept.concept_id, concept_name.name, drug.drug_id')
+    end
+
+    immunizations
+  end
+
+ 
+  def self.update_milestone_status(vaccine_schedule)
+    visit_one = vaccine_schedule.find { |visit| visit[:visit] == 1 }
+
+    if visit_one[:antigens].all? { |antigen| antigen[:status] != 'administered' }
+      visit_one[:milestone_status] = 'current'
+
+      vaccine_schedule.each do |visit|
+        next if visit[:visit] == 1
+
+        visit[:milestone_status] = 'upcoming'
+        visit[:antigens].each do |antigen|
+          antigen[:can_administer] = false
+        end
+      end
+    elsif visit_one[:antigens].all? { |antigen| antigen[:status] == 'administered' }
+      visit_one[:milestone_status] = 'passed'
+      administered_date = Date.strptime(visit_one[:antigens].first[:date_administered], "%d/%b/%Y %H:%M:%S")
+
+      vaccine_schedule.each_with_index do |visit, index|
+        next if visit[:visit] <= 1
+
+        next_age_days = parse_age_to_days(visit[:age])
+        visit[:milestone_status] = 'upcoming'
+
+        if administered_date + next_age_days <= Date.today
+          visit[:milestone_status] = 'current'
+          break
+        end
+      end
+    end
+
+    vaccine_schedule
+  end
+
+  def self.parse_age_to_days(age)
+    units = {
+      'day' => 1,
+      'week' => 7,
+      'month' => 30,
+      'year' => 365
+    }
+
+    amount, unit = age.split
+    amount.to_i * units[unit.downcase.chomp('s')]
   end
 
   def self.vaccine_attribute(drug_id, attribute_type)
