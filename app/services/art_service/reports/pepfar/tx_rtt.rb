@@ -17,12 +17,18 @@ module ArtService
         end
 
         def find_report
-           ArtService::Reports::CohortBuilder.new(outcomes_definition: "pepfar").init_temporary_tables(start_date, end_date, occupation) if rebuild
+          if rebuild
+            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar').init_temporary_tables(start_date,
+                                                                                                        end_date, occupation)
+          end
           process_report
         end
 
         def data
-          ArtService::Reports::CohortBuilder.new(outcomes_definition: "pepfar").init_temporary_tables(start_date, end_date, occupation) if rebuild
+          if rebuild
+            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar').init_temporary_tables(start_date,
+                                                                                                        end_date, occupation)
+          end
           process_report
         rescue StandardError => e
           Rails.logger.error "Error running TX_RTT Report: #{e}"
@@ -145,10 +151,9 @@ module ArtService
             FROM temp_earliest_start_date e
             INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id AND o.cum_outcome = 'On antiretrovirals'
             INNER JOIN temp_patient_outcomes_start s ON s.patient_id = e.patient_id AND s.cum_outcome IN ('Defaulted', 'Treatment stopped')
-            INNER JOIN temp_current_state_start c ON c.patient_id = e.patient_id
+            LEFT JOIN temp_current_state_start c ON c.patient_id = e.patient_id
             INNER JOIN temp_max_drug_orders ord ON ord.patient_id = e.patient_id
             LEFT JOIN obs cd4_result ON cd4_result.person_id = e.patient_id AND cd4_result.concept_id = #{concept_name('CD4 count').concept_id} AND cd4_result.voided = 0
-            WHERE e.date_enrolled < #{start_date}
             GROUP BY e.patient_id
           SQL
         end
