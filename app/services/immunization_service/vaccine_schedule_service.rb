@@ -44,10 +44,6 @@ module VaccineScheduleService
               .select('concept_name.name').first&.name
   end
 
-
-
- 
-
   def self.format_schedule(schedule, vaccines_given, client_dob)
     schedule.map.with_index(1) do |(milestone_name, antigens), index|
       {
@@ -60,10 +56,12 @@ module VaccineScheduleService
             drug_id: drug[:drug_id],
             drug_name: drug[:drug_name],
             window_period: drug[:window_period],
-            can_administer: drug[:window_period].blank? ? 'Unknown' : can_administer_drug?(drug, client_dob),
+            can_administer: drug[:window_period]&.blank? ? 'Unknown' : can_administer_drug?(drug, client_dob),
             status: vaccine_given ? 'administered' : 'pending',
-            date_administered: vaccine_given ? vaccine_given[:obs_datetime]&.strftime('%d/%b/%Y %H:%M:%S') : nil,
-            vaccine_batch_number: vaccine_given ? vaccine_given[:batch_number] : nil
+            date_administered: vaccine_given&.[](:obs_datetime)&.strftime('%d/%b/%Y %H:%M:%S'),
+            administered_by: vaccine_given&.[](:administered_by),
+            location_administered: vaccine_given&.[](:location_administered),
+            vaccine_batch_number: vaccine_given&.[](:batch_number)
           }
         }
       }
@@ -71,19 +69,27 @@ module VaccineScheduleService
   end
 
   def self.administered_vaccines(patient_id, drugs)
-    Observation.joins(order: :drug_order)
+    Observation.joins(person: :names)
+               .joins(order: :drug_order)
                .where(drug_order: { drug_inventory_id: drugs }, person_id: patient_id)
-               .select(:obs_datetime, :drug_inventory_id, :order_id).map do |obs|
+               .select(:obs_datetime, :drug_inventory_id, :order_id, :location_id, 
+                       :creator, :given_name, :family_name).map do |obs|
       {
         obs_datetime: obs.obs_datetime,
         drug_inventory_id: obs.drug_inventory_id,
-        batch_number: get_batch_id(obs.order_id)
+        batch_number: get_batch_id(obs.order_id),
+        administered_by: {
+          person_id: obs.creator,
+          given_name: obs.given_name,
+          family_name: obs.family_name
+        },
+        location_administered: Location.find_by_location_id(obs.location_id).to_h
       }
     end
   end
 
   def self.get_batch_id(order_id)
-     Observation.where(concept_id: ConceptName.where(name: 'Batch Number').pluck(:concept_id), order_id:).first&.value_text
+    Observation.where(concept_id: ConceptName.where(name: 'Batch Number').pluck(:concept_id), order_id:).first&.value_text
   end
 
   
@@ -131,7 +137,27 @@ module VaccineScheduleService
   end
 
   def self.can_administer_drug?(drug, dob )
+    return if drug[:window_period].blank?
+
+    age = Date.today - dob
+    # Handle atigens that are valid in a range of ages
     value, units = drug[:window_period].split
-    (dob + value.to_i.send(units.downcase)) > Date.today
+    case units.downcase
+    when 'weeks'
+      compare_age(age.to_i / 7, value)
+    when 'months'
+      compare_age(age.to_i / 30, value)
+    when 'years'
+      compare_age(age.to_i / 365, value)
+    end
+  end
+
+  def self.compare_age(age, window_period)
+    if window_period.include?('-')
+      start_age, end_age = window_period.split('-').map(&:to_i)
+      (age >= start_age) && (age <= end_age)
+    else
+      age <= window_period.to_i
+    end
   end
 end
