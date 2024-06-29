@@ -298,7 +298,7 @@ module ArtService
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
             SELECT patients.patient_id, 'On antiretrovirals', COALESCE(cs.outcome_date, patients.start_date), 4
             FROM temp_min_auto_expire_date#{start ? '_start' : ''} AS patients
-            LEFT JOIN temp_current_state#{start ? '_start' : ''} AS cs ON cs.patient_id = patients.patient_id
+            INNER JOIN temp_current_state#{start ? '_start' : ''} AS cs ON cs.patient_id = patients.patient_id AND cs.outcomes = 1
             WHERE patients.#{@definition == 'pepfar' ? 'pepfar_defaulter_date' : 'moh_defaulter_date'} > DATE(#{start ? start_date : end_date}) #{start ? '- INTERVAL 1 DAY' : ''}
             AND (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3))
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
@@ -310,7 +310,7 @@ module ArtService
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
             SELECT patients.patient_id, 'Defaulted', #{@definition == 'pepfar' ? 'pepfar_defaulter_date' : 'moh_defaulter_date'}, 5
             FROM temp_current_medication#{start ? '_start' : ''} AS patients
-            LEFT JOIN temp_current_state#{start ? '_start' : ''} AS cs ON cs.patient_id = patients.patient_id
+            INNER JOIN temp_current_state#{start ? '_start' : ''} AS cs ON cs.patient_id = patients.patient_id AND cs.outcomes = 1
             WHERE patients.#{@definition == 'pepfar' ? 'pepfar_defaulter_date' : 'moh_defaulter_date'} <= DATE(#{start ? start_date : end_date}) #{start ? '- INTERVAL 1 DAY' : ''}
             AND (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3, 4))
             ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
