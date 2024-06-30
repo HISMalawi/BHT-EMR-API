@@ -4,11 +4,12 @@ module VaccineScheduleService
     # Get Vaccine Schedule
     # begin
       # Immunization Drugs
-    immunization_drugs = if age_in_years(patient.birthdate) < 5
-      immunization_drugs('Under five immunizations')
-                         else
-      immunization_drugs('Over five immunizations')
-                         end
+    if age_in_years(patient.birthdate) < 5
+      immunization_drugs = immunization_drugs('Under five immunizations')
+    else
+      immunization_drugs = immunization_drugs('Over five immunizations')
+      immunization_drugs = filter_female_specific_immunizations(immunization_drugs) if patient.gender.split.first.casecmp?('M')
+    end
                  
       # For each of these get the window period and schedule
     immunization_with_window = immunization_drugs.map do |immunization_drug| 
@@ -45,11 +46,20 @@ module VaccineScheduleService
                                 .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
                                 .where.not(concept_id: ConceptSet.where(concept_set: ConceptName.where(name: 'Under five immunizations')
                                 .pluck(:concept_id)).pluck(:concept_id))
-                                .select('concept.concept_id, concept_name.name, drug.drug_id')
+                                .group('concept.concept_id')
+                                .select('concept.concept_id, MAX(concept_name.name) as name, MAX(drug.drug_id) drug_id')
     end
-
     immunizations
   end
+  
+  def self.filter_female_specific_immunizations(immunizations)
+    immunizations.reject do |immunization|
+      ConceptSet.where(concept_set: ConceptName
+                .where(name: 'Female only immunizations').pluck(:concept_id))
+                .pluck(:concept_id).include?(immunization.concept_id)
+    end
+  end
+
 
  
   def self.update_milestone_status(vaccine_schedule)
