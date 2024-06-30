@@ -29,9 +29,6 @@ module Api
 
           dispensation = DispensationService.create(program, dispensations, provider)
 
-          StockUpdateJob.perform_later("process_dispensation", user_id: User.current.user_id,
-             location_id: User.current.location_id, dispensation_id:  dispensation.first["obs_id"])
-          
           start_date = 1.year.ago.to_date.to_s
           end_date = Date.today.to_s
 
