@@ -35,16 +35,16 @@ module VaccineScheduleService
   end
 
   def self.immunization_drugs(category)
-    if category == 'Under five immunizations'
+    #if category == 'Under five immunizations'
       immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
                                 .where(concept_set: ConceptName.where(name: category).pluck(:concept_id))
                                 .select('concept.concept_id, concept_name.name, drug.drug_id')
-    elsif category == 'Over five immunizations'
-      immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
-                                .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
-                                .where.not(concept_set: ConceptName.where(name: 'Under five immunizations').pluck(:concept_id))
-                                .select('concept.concept_id, concept_name.name, drug.drug_id')
-    end
+    #elsif category == 'Over five immunizations'
+    #   immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
+    #                             .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
+    #                             .where.not(concept_set: ConceptName.where(name: 'Under five immunizations').pluck(:concept_id))
+    #                             .select('concept.concept_id, concept_name.name, drug.drug_id')
+    # end
 
     immunizations
   end
@@ -52,10 +52,14 @@ module VaccineScheduleService
  
   def self.update_milestone_status(vaccine_schedule)
     visit_one = vaccine_schedule.find { |visit| visit[:visit] == 1 }
-
-    if visit_one[:antigens].all? { |antigen| antigen[:status] != 'administered' }
+    if visit_one[:antigens].any? { |antigen| antigen[:status] != 'administered' }
       visit_one[:milestone_status] = 'current'
-
+      visit_one[:antigens].each do |antigen|
+        if antigen[:status] == 'pending'
+          antigen[:can_administer] = true
+        end
+      end
+      
       vaccine_schedule.each do |visit|
         next if visit[:visit] == 1
 
@@ -74,10 +78,13 @@ module VaccineScheduleService
         next_age_days = parse_age_to_days(visit[:age])
         visit[:milestone_status] = 'upcoming'
 
-        if administered_date + next_age_days <= Date.today
-          visit[:milestone_status] = 'current'
-          break
+        next unless administered_date + next_age_days <= Date.today
+        
+        visit[:milestone_status] = 'current'
+        visit[:antigens].each do |antigen|
+          antigen[:can_administer] = true
         end
+        break
       end
     end
 
@@ -115,7 +122,7 @@ module VaccineScheduleService
             drug_id: drug[:drug_id],
             drug_name: drug[:drug_name],
             window_period: drug[:window_period],
-            can_administer: drug[:window_period]&.blank? ? (milestone_status(mileston_name, client_dob) == 'current') : can_administer_drug?(drug, client_dob),
+            can_administer: false,
             status: vaccine_given ? 'administered' : 'pending',
             date_administered: vaccine_given&.[](:obs_datetime)&.strftime('%d/%b/%Y %H:%M:%S'),
             administered_by: vaccine_given&.[](:administered_by),
