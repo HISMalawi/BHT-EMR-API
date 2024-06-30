@@ -35,16 +35,18 @@ module VaccineScheduleService
   end
 
   def self.immunization_drugs(category)
-    #if category == 'Under five immunizations'
+    if category == 'Under five immunizations'
       immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
                                 .where(concept_set: ConceptName.where(name: category).pluck(:concept_id))
+                                .group('concept.concept_id')
+                                .select('concept.concept_id, MAX(concept_name.name) as name, MAX(drug.drug_id) drug_id')
+    elsif category == 'Over five immunizations'
+      immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
+                                .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
+                                .where.not(concept_id: ConceptSet.where(concept_set: ConceptName.where(name: 'Under five immunizations')
+                                .pluck(:concept_id)).pluck(:concept_id))
                                 .select('concept.concept_id, concept_name.name, drug.drug_id')
-    #elsif category == 'Over five immunizations'
-    #   immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
-    #                             .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
-    #                             .where.not(concept_set: ConceptName.where(name: 'Under five immunizations').pluck(:concept_id))
-    #                             .select('concept.concept_id, concept_name.name, drug.drug_id')
-    # end
+    end
 
     immunizations
   end
@@ -55,9 +57,7 @@ module VaccineScheduleService
     if visit_one[:antigens].any? { |antigen| antigen[:status] != 'administered' }
       visit_one[:milestone_status] = 'current'
       visit_one[:antigens].each do |antigen|
-        if antigen[:status] == 'pending'
-          antigen[:can_administer] = true
-        end
+        antigen[:can_administer] = true if antigen[:status] == 'pending'
       end
       
       vaccine_schedule.each do |visit|
