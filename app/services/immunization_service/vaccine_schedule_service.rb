@@ -4,44 +4,135 @@ module VaccineScheduleService
     # Get Vaccine Schedule
     # begin
       # Immunization Drugs
-      immunization_drugs = ConceptSet.joins(concept: %i[concept_names drugs])
-                                     .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
-                                     .select('concept.concept_id, concept_name.name, drug.drug_id')
-                 
+    if age_in_years(patient.birthdate) < 5
+      immunization_drugs = immunization_drugs('Under five immunizations')
+    else
+      immunization_drugs = immunization_drugs('Over five immunizations')
+      immunization_drugs = filter_female_specific_immunizations(immunization_drugs) if patient.gender.split.first.casecmp?('M')
+    end
+    
       # For each of these get the window period and schedule
-      immunization_with_window = immunization_drugs.map do |immunization_drug| 
-        window_period = vaccine_attribute(immunization_drug.concept_id, 'Immunization window period')
-        milestone = vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones')
-        {drug_id: immunization_drug.drug_id, drug_name: immunization_drug.name, window_period:, milestone:}
-      end
+    immunization_with_window = immunization_drugs.map do |immunization_drug| 
+      window_period = vaccine_attribute(immunization_drug.concept_id, 'Immunization window period')&.name
+      milestone = vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones')
 
-      # if patient.gender == ('M' || 'Male')
-      #   female_immunization_concepts = ConceptName.where(name: 'Female only Immunizations').pluck(:concept_id)
-      #   female_concepts = ConceptSet.where(concept_set: female_immunization_concepts).pluck(:concept_id)
-      #   concept_set = ConceptSet.where(concept_set: immunization_concepts)
-      #                           .where.not(concept_id: female_concepts).pluck(:concept_id)
-      # else
-      #   concept_set = ConceptSet.where(concept_set: immunization_concepts).pluck(:concept_id)
-      # end
-      # schedule = Drug.joins(concept: :concept_names).where(concept_id: concept_set)
-      #                .select('concept_name.concept_id AS concept_id,
-      #                         concept_name.name AS concept_name,
-      #                         drug.drug_id AS drug_id,
-      #                         drug.name AS drug_name')
+      {drug_id: immunization_drug.drug_id, drug_name: immunization_drug.name, window_period:, milestone:}
+    end
+    
+    vaccines_given = administered_vaccines(patient.person_id, immunization_with_window.pluck(:drug_id))
+    grouped_immunizations = immunization_with_window.group_by { | immunizations | immunizations[:milestone][:name] }
+    sorted_grouped_immunizations = grouped_immunizations.sort_by { |milestone| milestone[1][0][:milestone][:sort_weight] }.to_h
+    vaccines = format_schedule(make_unique(sorted_grouped_immunizations), vaccines_given, patient.birthdate)
 
-      vaccines_given = administered_vaccines(patient.person_id, immunization_with_window.pluck(:drug_id))
-      grouped_immuminzations = immunization_with_window.group_by { | immunizations | immunizations[:milestone] }
-      return {vaccine_schedule: format_schedule(grouped_immuminzations, vaccines_given, patient.birthdate)}
+    return {vaccine_schedule: update_milestone_status(vaccines)}
     # rescue => e
-      return {error: e.message}
+    return {error: e.message}
     #end
+  end
+
+  
+  def self.make_unique(data)
+    unique_data = data.each_with_object({}) do |(concept_set_id, milestone), hash|
+      milestone.each do |drug|
+        hash[concept_set_id] ||= []  # Initialize empty array for milestone drugs if not present
+        hash[concept_set_id] << drug unless hash[concept_set_id].any? { |d| d[:drug_name] == drug[:drug_name] }
+      end
+    end
+
+    unique_data
+  end
+
+
+  def self.age_in_years(birthdate)
+    today = Date.today
+    age = today.year - birthdate.year
+    age -= 1 if today.month < birthdate.month || (today.month == birthdate.month && today.day < birthdate.day)
+    age
+  end
+
+  def self.immunization_drugs(category)
+    if category == 'Under five immunizations'
+      immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
+                                .where(concept_set: ConceptName.where(name: category).pluck(:concept_id))
+                                .group('concept.concept_id')
+                                .select('concept.concept_id, MAX(concept_name.name) as name, MAX(drug.drug_id) drug_id')
+    elsif category == 'Over five immunizations'
+      immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
+                                .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
+                                .where.not(concept_id: ConceptSet.where(concept_set: ConceptName.where(name: 'Under five immunizations')
+                                .pluck(:concept_id)).pluck(:concept_id))
+                                .group('concept.concept_id')
+                                .select('concept.concept_id, MAX(concept_name.name) as name, MAX(drug.drug_id) drug_id')
+    end
+    immunizations
+  end
+  
+  def self.filter_female_specific_immunizations(immunizations)
+    immunizations.reject do |immunization|
+      ConceptSet.where(concept_set: ConceptName
+                .where(name: 'Female only immunizations').pluck(:concept_id))
+                .pluck(:concept_id).include?(immunization.concept_id)
+    end
+  end
+
+
+ 
+  def self.update_milestone_status(vaccine_schedule)
+    visit_one = vaccine_schedule.find { |visit| visit[:visit] == 1 }
+    if visit_one[:antigens].any? { |antigen| antigen[:status] != 'administered' }
+      visit_one[:milestone_status] = 'current'
+      visit_one[:antigens].each do |antigen|
+        antigen[:can_administer] = true if antigen[:status] == 'pending'
+      end
+      
+      vaccine_schedule.each do |visit|
+        next if visit[:visit] == 1
+
+        visit[:milestone_status] = 'upcoming'
+        visit[:antigens].each do |antigen|
+          antigen[:can_administer] = false
+        end
+      end
+    elsif visit_one[:antigens].all? { |antigen| antigen[:status] == 'administered' }
+      visit_one[:milestone_status] = 'passed'
+      administered_date = Date.strptime(visit_one[:antigens].first[:date_administered], "%d/%b/%Y %H:%M:%S")
+
+      vaccine_schedule.each_with_index do |visit, index|
+        next if visit[:visit] <= 1
+
+        next_age_days = parse_age_to_days(visit[:age])
+        visit[:milestone_status] = 'upcoming'
+
+        next unless administered_date + next_age_days <= Date.today
+        
+        visit[:milestone_status] = 'current'
+        visit[:antigens].each do |antigen|
+          antigen[:can_administer] = true
+        end
+        break
+      end
+    end
+
+    vaccine_schedule
+  end
+
+  def self.parse_age_to_days(age)
+    units = {
+      'day' => 1,
+      'week' => 7,
+      'month' => 30,
+      'year' => 365
+    }
+
+    amount, unit = age.split
+    amount.to_i * units[unit.downcase.chomp('s')]
   end
 
   def self.vaccine_attribute(drug_id, attribute_type)
     ConceptSet.joins(concept: :concept_names)
               .where(concept_set: ConceptName.where(name: attribute_type).pluck(:concept_id))
               .where(concept_id: ConceptSet.where(concept_set: drug_id).pluck(:concept_id))
-              .select('concept_name.name').first&.name
+              .select('concept_name.name, concept_set.sort_weight').first
   end
 
   def self.format_schedule(schedule, vaccines_given, client_dob)
@@ -56,7 +147,7 @@ module VaccineScheduleService
             drug_id: drug[:drug_id],
             drug_name: drug[:drug_name],
             window_period: drug[:window_period],
-            can_administer: drug[:window_period]&.blank? ? (milestone_status(mileston_name, client_dob) == 'current') : can_administer_drug?(drug, client_dob),
+            can_administer: false,
             status: vaccine_given ? 'administered' : 'pending',
             date_administered: vaccine_given&.[](:obs_datetime)&.strftime('%d/%b/%Y %H:%M:%S'),
             administered_by: vaccine_given&.[](:administered_by),
@@ -95,7 +186,6 @@ module VaccineScheduleService
   
   def self.milestone_status(milestone, dob)
     today = Date.today
-
     if milestone.casecmp('At Birth').zero?
       if today == dob
         'current'
