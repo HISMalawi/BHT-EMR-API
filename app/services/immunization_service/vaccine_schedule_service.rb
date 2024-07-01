@@ -10,23 +10,38 @@ module VaccineScheduleService
       immunization_drugs = immunization_drugs('Over five immunizations')
       immunization_drugs = filter_female_specific_immunizations(immunization_drugs) if patient.gender.split.first.casecmp?('M')
     end
-                 
+    
       # For each of these get the window period and schedule
     immunization_with_window = immunization_drugs.map do |immunization_drug| 
-      window_period = vaccine_attribute(immunization_drug.concept_id, 'Immunization window period')
+      window_period = vaccine_attribute(immunization_drug.concept_id, 'Immunization window period')&.name
       milestone = vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones')
+
       {drug_id: immunization_drug.drug_id, drug_name: immunization_drug.name, window_period:, milestone:}
     end
-
+    
     vaccines_given = administered_vaccines(patient.person_id, immunization_with_window.pluck(:drug_id))
-    grouped_immuminzations = immunization_with_window.group_by { | immunizations | immunizations[:milestone] }
-    vaccines = format_schedule(grouped_immuminzations, vaccines_given, patient.birthdate)
+    grouped_immunizations = immunization_with_window.group_by { | immunizations | immunizations[:milestone][:name] }
+    sorted_grouped_immunizations = grouped_immunizations.sort_by { |milestone| milestone[1][0][:milestone][:sort_weight] }.to_h
+    vaccines = format_schedule(make_unique(sorted_grouped_immunizations), vaccines_given, patient.birthdate)
 
     return {vaccine_schedule: update_milestone_status(vaccines)}
     # rescue => e
     return {error: e.message}
     #end
   end
+
+  
+  def self.make_unique(data)
+    unique_data = data.each_with_object({}) do |(concept_set_id, milestone), hash|
+      milestone.each do |drug|
+        hash[concept_set_id] ||= []  # Initialize empty array for milestone drugs if not present
+        hash[concept_set_id] << drug unless hash[concept_set_id].any? { |d| d[:drug_name] == drug[:drug_name] }
+      end
+    end
+
+    unique_data
+  end
+
 
   def self.age_in_years(birthdate)
     today = Date.today
@@ -117,7 +132,7 @@ module VaccineScheduleService
     ConceptSet.joins(concept: :concept_names)
               .where(concept_set: ConceptName.where(name: attribute_type).pluck(:concept_id))
               .where(concept_id: ConceptSet.where(concept_set: drug_id).pluck(:concept_id))
-              .select('concept_name.name').first&.name
+              .select('concept_name.name, concept_set.sort_weight').first
   end
 
   def self.format_schedule(schedule, vaccines_given, client_dob)
@@ -171,7 +186,6 @@ module VaccineScheduleService
   
   def self.milestone_status(milestone, dob)
     today = Date.today
-
     if milestone.casecmp('At Birth').zero?
       if today == dob
         'current'
