@@ -195,6 +195,7 @@ module ArtService
                 END AS diastolic_classification,
                 UPPER(LEFT(p.gender, 1)) gender,
                 disaggregated_age_group(p.birthdate, #{@end_date}) age_group,
+                patient_start_date(tpo.patient_id) art_start_date,
                 i.identifier arv_number,
                 latest_drug_order.start_date,
                 GROUP_CONCAT(DISTINCT d.name) drug_names
@@ -279,7 +280,8 @@ module ArtService
             arv_number: data['arv_number'],
             gender: data['gender'],
             diastolic: data['diastolic'],
-            systolic: data['systolic']
+            systolic: data['systolic'],
+            art_start_date: data['art_start_date']
           }
         end
       end
