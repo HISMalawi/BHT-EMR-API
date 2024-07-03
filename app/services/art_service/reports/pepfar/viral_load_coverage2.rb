@@ -253,7 +253,7 @@ module ArtService
             SELECT tpo.patient_id, LEFT(tesd.gender, 1) AS gender, disaggregated_age_group(tesd.birthdate, DATE('#{end_date.to_date}')) age_group
             FROM temp_patient_outcomes tpo
             INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = tpo.patient_id
-            WHERE tpo.cum_outcome = 'On antiretrovirals'
+            WHERE tpo.pepfar_cum_outcome = 'On antiretrovirals'
           SQL
         end
 
@@ -335,12 +335,12 @@ module ArtService
               disaggregated_age_group(e.birthdate, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) AS age_group,
               regimen.regimen_category current_regimen,
               e.earliest_start_date art_start_date,
-              if(cum.cum_outcome = 'Defaulted', cum.outcome_date, null) defaulter_date,
+              if(cum.pepfar_cum_outcome = 'Defaulted', cum.pepfar_outcome_date, null) defaulter_date,
               e.birthdate,
               LEFT(e.gender,1) gender,
               pid.identifier AS arv_number,
-              cum.cum_outcome state,
-              cum.outcome_date,
+              cum.pepfar_cum_outcome state,
+              cum.pepfar_outcome_date outcome_date,
               current_order.start_date vl_order_date,
               st.start_date recorded_state_start_date,
               TIMESTAMPDIFF(month, e.earliest_start_date, '2024-03-31') diff_in_months
@@ -379,7 +379,7 @@ module ArtService
               GROUP BY ab.patient_id
             ) current_order ON current_order.patient_id = cum.patient_id
             WHERE cum.step > 0 AND e.date_enrolled < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
-              AND ((cum.cum_outcome != 'On antiretrovirals' AND cum.outcome_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH)) OR cum.cum_outcome = 'On antiretrovirals')
+              AND ((cum.pepfar_cum_outcome != 'On antiretrovirals' AND cum.pepfar_outcome_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH)) OR cum.pepfar_cum_outcome = 'On antiretrovirals')
             GROUP BY cum.patient_id
           SQL
         end
