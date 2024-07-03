@@ -108,7 +108,7 @@ module ArtService
           INNER JOIN program_workflow_state ws ON ws.program_workflow_state_id = s2.state
           INNER JOIN program_workflow w ON w.program_workflow_id = ws.program_workflow_id
           INNER JOIN concept_name n2 ON n2.concept_id = ws.concept_id
-          WHERE o.cum_outcome = '#{outcome_state}'
+          WHERE o.#{report_type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome = '#{outcome_state}'
             AND pp.voided = 0
             AND s2.voided = 0
             AND s2.start_date
