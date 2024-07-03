@@ -137,8 +137,8 @@ module ArtService
               e.patient_id,
               disaggregated_age_group(e.birthdate, #{end_date}) AS age_group,
               e.gender,
-              s.cum_outcome initial_outcome,
-              o.cum_outcome final_outcome,
+              s.pepfar_cum_outcome initial_outcome,
+              o.pepfar_cum_outcome final_outcome,
               TIMESTAMPDIFF(MONTH, COALESCE(s.outcome_date, c.outcome_date), ord.min_order_date) months,
               CASE
                 WHEN cd4_result.value_numeric < 200 THEN 'cd4_less_than_200'
@@ -149,8 +149,8 @@ module ArtService
                 ELSE 'unknown_cd4_count'
               END cd4_count_group
             FROM temp_earliest_start_date e
-            INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id AND o.cum_outcome = 'On antiretrovirals'
-            INNER JOIN temp_patient_outcomes_start s ON s.patient_id = e.patient_id AND s.cum_outcome IN ('Defaulted', 'Treatment stopped')
+            INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id AND o.pepfar_cum_outcome = 'On antiretrovirals'
+            INNER JOIN temp_patient_outcomes_start s ON s.patient_id = e.patient_id AND s.pepfar_cum_outcome IN ('Defaulted', 'Treatment stopped')
             LEFT JOIN temp_current_state_start c ON c.patient_id = e.patient_id
             INNER JOIN temp_max_drug_orders ord ON ord.patient_id = e.patient_id
             LEFT JOIN obs cd4_result ON cd4_result.person_id = e.patient_id AND cd4_result.concept_id = #{concept_name('CD4 count').concept_id} AND cd4_result.voided = 0
