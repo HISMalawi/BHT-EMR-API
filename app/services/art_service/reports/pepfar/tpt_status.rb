@@ -117,11 +117,11 @@ module ArtService
             # check if they have been on ART for less than 3 months, they are eligible
             # if they have been on ART continuosly for more than 3 months, they are not eligible
             three_hp_eligible = true if diff_in_months <= 1
-            if diff_in_months > 1 && (arv_drug_runout_date && difference_in_months(arv_drug_runout_date.to_date,
-                                                                                   art_start_date.to_date) < 3)
+            if diff_in_months > 1 &&  difference_in_months(end_date.to_date, art_start_date.to_date) < 3
               #  Patient defaulted for ART and TPT and was on ART for less than 3 months: patient TPT status is reset
+              
               three_hp_eligible = true
-              six_h_eligible = true
+              six_h_eligible = false
               tpt_end_date = nil
               tpt_init_date = nil
               @tpt_status.merge!({ tpt: nil })
@@ -133,10 +133,9 @@ module ArtService
             # check if they have been on ART for less than 3 months, they are eligible
             # if they have been on ART continuosly for more than 3 months, they are not eligible
             six_h_eligible = true if diff_in_months <= 2
-            if diff_in_months > 2 && (arv_drug_runout_date && difference_in_months(arv_drug_runout_date.to_date,
-                                                                                   art_start_date.to_date) < 3)
+            if diff_in_months > 2 && difference_in_months(end_date.to_date, art_start_date.to_date) < 3
               #  Patient defaulted for ART and TPT and was on ART for less than 3 months: patient TPT status is reset
-              three_hp_eligible = true
+              three_hp_eligible = false
               six_h_eligible = true
               tpt_end_date = nil
               tpt_init_date = nil
@@ -157,10 +156,14 @@ module ArtService
           if tpt == '3HP'
             init_date = patient['tpt_initiation_date'].to_date
             end_date = patient['auto_expire_date'].to_date
-            days_on_medication = (end_date - init_date).to_i
-            days_on_medication >= 80
+            if patient['drug_concepts'].split(',').length > 1
+              days_on_medication = (end_date - init_date).to_i
+              days_on_medication >= 84
+            else
+              patient['total_pills_taken'].to_i >= 36
+            end
           else
-            patient['total_days_on_medication'].to_i >= 176
+            patient['total_days_on_medication'].to_i >= 182
           end
         end
 
@@ -175,7 +178,8 @@ module ArtService
         end
 
         def difference_in_months(date1, date2)
-          (date1.year * 12 + date1.month) - (date2.year * 12 + date2.month)
+          result = ActiveRecord::Base.connection.select_one("SELECT TIMESTAMPDIFF(MONTH, '#{date2}', '#{date1}') months")
+          result['months'].to_i
         end
       end
     end
