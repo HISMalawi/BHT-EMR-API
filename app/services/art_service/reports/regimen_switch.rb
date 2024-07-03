@@ -43,7 +43,7 @@ module ArtService
           INNER JOIN drug_order d ON d.order_id = o.order_id AND d.quantity > 0
           INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
           INNER JOIN arv_drug On arv_drug.drug_id = drug.drug_id
-          INNER JOIN temp_patient_outcomes t ON o.patient_id = t.patient_id AND t.cum_outcome = 'On antiretrovirals'
+          INNER JOIN temp_patient_outcomes t ON o.patient_id = t.patient_id AND t.moh_cum_outcome = 'On antiretrovirals'
           INNER JOIN person ON person.person_id = o.patient_id AND person.voided = 0
           INNER JOIN (
             SELECT MAX(o.start_date) start_date, o.patient_id
