@@ -179,7 +179,7 @@ module ArtService
             SELECT tpo.patient_id, LEFT(tesd.gender, 1) AS gender, disaggregated_age_group(tesd.birthdate, DATE('#{end_date.to_date}')) age_group
             FROM temp_patient_outcomes tpo
             INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = tpo.patient_id
-            WHERE tpo.cum_outcome = 'On antiretrovirals'
+            WHERE tpo.pepfar_cum_outcome = 'On antiretrovirals'
           SQL
         end
 
