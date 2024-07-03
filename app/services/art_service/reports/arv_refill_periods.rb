@@ -27,9 +27,9 @@ module ArtService
         program_id = Program.find_by(name: 'HIV PROGRAM').id
         arv_concept_set = ConceptName.find_by(name: 'ARVS').concept_id
         encounter_type = EncounterType.find_by(name: 'DISPENSING').id
+        report_type = (@org.match(/pepfar/i) ? 'pepfar' : 'moh')
 
         if @initialize_tables
-          report_type = (@org.match(/pepfar/i) ? 'pepfar' : 'moh')
           ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date,
                                                                                                          @end_date, @occupation)
         end
@@ -37,12 +37,12 @@ module ArtService
         patients = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
             p.patient_id, p.date_enrolled, p.birthdate, p.gender,
-            outcome.cum_outcome AS outcome
+            outcome.#{type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome AS outcome
           FROM temp_earliest_start_date p
           LEFT JOIN temp_patient_outcomes outcome USING(patient_id)
           WHERE DATE(date_enrolled) <= DATE('#{@end_date}')
           AND TIMESTAMPDIFF(year, p.birthdate, DATE('#{@end_date}')) BETWEEN #{@min_age} AND #{@max_age}
-          AND cum_outcome = 'On antiretrovirals';
+          AND #{report_type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome = 'On antiretrovirals';
         SQL
 
         return {} if patients.blank?
