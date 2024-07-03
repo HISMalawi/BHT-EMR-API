@@ -42,7 +42,7 @@ module ArtTempTablesUtils
   def prepare_outcome_tables
     [false, true].each do |start|
       create_outcome_table(start:) unless check_if_table_exists("temp_patient_outcomes#{start ? '_start' : ''}")
-      unless count_table_columns("temp_patient_outcomes#{start ? '_start' : ''}") == 4
+      unless count_table_columns("temp_patient_outcomes#{start ? '_start' : ''}") == 6
         drop_temp_patient_outcome_table(start:)
       end
       unless check_if_table_exists("temp_max_drug_orders#{start ? '_start' : ''}")
@@ -496,8 +496,10 @@ module ArtTempTablesUtils
     ActiveRecord::Base.connection.execute <<~SQL
       CREATE TABLE IF NOT EXISTS temp_patient_outcomes#{start ? '_start' : ''} (
       patient_id INT NOT NULL,
-      cum_outcome VARCHAR(120) NOT NULL,
-      outcome_date DATE DEFAULT NULL,
+      moh_cum_outcome VARCHAR(120) NOT NULL,
+      moh_outcome_date DATE DEFAULT NULL,
+      pepfar_cum_outcome VARCHAR(120) NOT NULL,
+      pepfar_outcome_date DATE DEFAULT NULL,
       step INT DEFAULT 0,
       PRIMARY KEY (patient_id)
       )
@@ -507,10 +509,16 @@ module ArtTempTablesUtils
 
   def create_outcome_indexes(start: false)
     ActiveRecord::Base.connection.execute <<~SQL
-      CREATE INDEX idx_outcome#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (cum_outcome)
+      CREATE INDEX moh_outcome#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (moh_cum_outcome)
     SQL
     ActiveRecord::Base.connection.execute <<~SQL
-      CREATE INDEX idx_out_date#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (outcome_date)
+      CREATE INDEX moh_out_date#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (moh_outcome_date)
+    SQL
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE INDEX pepfar_outcome#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (pepfar_cum_outcome)
+    SQL
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE INDEX pepfar_out_date#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (pepfar_outcome_date)
     SQL
     ActiveRecord::Base.connection.execute <<~SQL
       CREATE INDEX idx_out_step#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (step)
