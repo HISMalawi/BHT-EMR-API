@@ -52,7 +52,7 @@ module ArtService
             art_reason.name art_reason, a.value cell_number, landmark.value landmark,
             s.state_province district, s.county_district ta,
             s.city_village village, TIMESTAMPDIFF(year, DATE(e.birthdate), DATE('#{@end_date}')) age,
-            o.#{type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }outcome_date AS defaulter_date
+            o.#{report_type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }outcome_date AS defaulter_date,
             DATE(appointment.appointment_date) AS appointment_date
           FROM temp_earliest_start_date e
           INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
