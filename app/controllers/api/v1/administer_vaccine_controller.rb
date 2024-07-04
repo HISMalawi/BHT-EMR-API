@@ -27,8 +27,8 @@ module Api
             end
           end
 
-          DispensationService.create(program, dispensations, provider)
-          
+          dispensation = DispensationService.create(program, dispensations, provider)
+
           start_date = 1.year.ago.to_date.to_s
           end_date = Date.today.to_s
 
