@@ -76,7 +76,7 @@ module ArtService
               e.gender,
               e.date_enrolled,
               e.earliest_start_date,
-              o.pepfar_outcome_date,
+              o.pepfar_outcome_date outcome_date,
               TIMESTAMPDIFF(MONTH, DATE(e.earliest_start_date), DATE(o.pepfar_outcome_date)) months,
               disaggregated_age_group(e.birthdate, DATE('#{end_date}')) age_group,
               o.pepfar_cum_outcome outcome
@@ -97,7 +97,7 @@ module ArtService
               e.gender,
               e.date_enrolled,
               e.earliest_start_date,
-              o.pepfar_outcome_date,
+              o.pepfar_outcome_date outcome_date,
               TIMESTAMPDIFF(MONTH, DATE(e.earliest_start_date), DATE(o.pepfar_outcome_date)) months,
               disaggregated_age_group(e.birthdate, DATE('#{end_date}')) age_group,
               o.pepfar_cum_outcome outcome
