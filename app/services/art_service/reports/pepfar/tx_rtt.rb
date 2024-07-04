@@ -139,7 +139,7 @@ module ArtService
               e.gender,
               s.pepfar_cum_outcome initial_outcome,
               o.pepfar_cum_outcome final_outcome,
-              TIMESTAMPDIFF(MONTH, COALESCE(s.outcome_date, c.outcome_date), ord.min_order_date) months,
+              TIMESTAMPDIFF(MONTH, COALESCE(s.pepfar_outcome_date, c.pepfar_outcome_date), ord.min_order_date) months,
               CASE
                 WHEN cd4_result.value_numeric < 200 THEN 'cd4_less_than_200'
                 WHEN cd4_result.value_numeric = 200 AND cd4_result.value_modifier = '=' THEN 'cd4_greater_than_or_equal_to_200'
