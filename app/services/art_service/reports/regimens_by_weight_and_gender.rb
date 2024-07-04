@@ -71,7 +71,7 @@ module ArtService
         query = TempPatientOutcome.joins('INNER JOIN temp_earliest_start_date USING (patient_id)')
                                   .select("patient_current_regimen(patient_id, #{date}) as regimen, count(*) AS count")
                                   .where(patient_id: patients_in_weight_band(start_weight, end_weight))
-                                  .where(cum_outcome: 'On Antiretrovirals')
+                                  .where(moh_cum_outcome: 'On Antiretrovirals')
                                   .group(:regimen)
 
         query = gender ? query.where('gender LIKE ?', "#{gender}%") : query.where('gender IS NULL')
@@ -99,7 +99,7 @@ module ArtService
       def patients_with_known_weight
         Observation.joins('INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = obs.person_id')
                    .where(concept_id: ConceptName.where(name: 'Weight (kg)').select(:concept_id),
-                          outcomes: { cum_outcome: 'On antiretrovirals' })
+                          outcomes: { moh_cum_outcome: 'On antiretrovirals' })
                    .where('DATE(obs.obs_datetime) <= ?', end_date)
                    .group(:person_id)
       end
