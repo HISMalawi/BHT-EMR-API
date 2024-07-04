@@ -127,9 +127,9 @@ module AncService
         cohort_struct.total_hiv_positive_first_visit = @total_hiv_positive_first_visit
 
         first_art_start_dates = on_art_before_anc_final(cohort_struct.total_hiv_positive_first_visit)
-        cohort_struct.on_art_before_anc_first_visit = first_art_start_dates[:art_before_anc]
-        cohort_struct.start_art_zero_to_twenty_seven_for_first_visit = first_art_start_dates[:zero_to_twenty_seven_weeks]
-        cohort_struct.start_art_plus_twenty_eight_for_first_visit = first_art_start_dates[:twenty_eight_plus_weeks]
+        cohort_struct.on_art_before_anc_first_visit = first_art_start_dates[:art_before_anc] || []
+        cohort_struct.start_art_zero_to_twenty_seven_for_first_visit = first_art_start_dates[:zero_to_twenty_seven_weeks] || []
+        cohort_struct.start_art_plus_twenty_eight_for_first_visit = first_art_start_dates[:twenty_eight_plus_weeks] || []
         cohort_struct.not_on_art_first_visit = cohort_struct.total_hiv_positive_first_visit - first_art_start_dates&.values&.flatten || []
 
         # Indicators for the cohort block
@@ -200,9 +200,9 @@ module AncService
 
         cohort_struct.not_on_art_final_visit = cohort_struct.c_total_hiv_positive - on_art_final
         final_art_start_dates = on_art_before_anc_final(on_art_final)
-        cohort_struct.on_art_before_anc_final_visit = final_art_start_dates[:art_before_anc]
-        cohort_struct.start_art_zero_to_twenty_seven_for_final_visit = final_art_start_dates[:zero_to_twenty_seven_weeks]
-        cohort_struct.start_art_plus_twenty_eight_for_final_visit = final_art_start_dates[:twenty_eight_plus_weeks]
+        cohort_struct.on_art_before_anc_final_visit = final_art_start_dates[:art_before_anc] || []
+        cohort_struct.start_art_zero_to_twenty_seven_for_final_visit = final_art_start_dates[:zero_to_twenty_seven_weeks] || []
+        cohort_struct.start_art_plus_twenty_eight_for_final_visit = final_art_start_dates[:twenty_eight_plus_weeks] || []
 
         cohort_struct.on_cpt = patients_final_on_cpt(cohort_struct.c_total_hiv_positive)
         cohort_struct.not_on_cpt = cohort_struct.c_total_hiv_positive - cohort_struct.on_cpt
@@ -248,7 +248,7 @@ module AncService
       end
 
       def on_art_before_anc_final(patients_on_art)
-        return [] unless patients_on_art.present?
+        return {} unless patients_on_art.present?
 
         art_before_anc = []
         zero_to_twenty_seven_weeks = []
@@ -751,6 +751,8 @@ module AncService
       end
 
       def patient_sp_doses
+        return [] unless @cohort_patients.any?
+
         @patient_sp_doses ||= ActiveRecord::Base.connection.select_all <<~SQL
           SELECT encounter.patient_id, count(encounter.encounter_id) as count
           FROM orders o
@@ -1023,6 +1025,16 @@ module AncService
       end
 
       def c_patients_hiv_statuses
+        hiv_statuses = {
+          prev_negative: [],
+          prev_positive: [],
+          new_negative: [],
+          new_positive: [],
+          not_done: []
+        }
+
+        return hiv_statuses unless @cohort_patients.any?
+
         data = ActiveRecord::Base.connection.select_all <<~SQL
                           SELECT e.patient_id, prev_hiv_results, first_visit.hiv_status first_hiv_status, first_visit.date_tested, final_test.final_status, final_test.final_tested_date
               FROM encounter e
@@ -1074,13 +1086,7 @@ module AncService
               WHERE e.patient_id IN (#{@cohort_patients.join(',')})
           group by e.patient_id
         SQL
-        hiv_statuses = {
-          prev_negative: [],
-          prev_positive: [],
-          new_negative: [],
-          new_positive: [],
-          not_done: []
-        }
+
         data&.each do |d|
           hiv_statuses[:prev_positive] << d['patient_id'] if d['prev_hiv_results'] == POSITIVE.concept_id
 
