@@ -5,12 +5,12 @@ module ArtService
     class RegimensByWeightAndGender
       include ConcurrencyUtils
 
-      attr_reader :start_date, :end_date
+      attr_reader :start_date, :end_date, :rebuild
 
       def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date
         @end_date = end_date
-        @rebuild_outcomes = true
+        @rebuild = kwargs[:rebuild]&.casecmp?('true')
         @occupation = kwargs[:occupation]
       end
 
@@ -37,9 +37,7 @@ module ArtService
 
       def regimen_counts
         with_lock(ArtCohort::LOCK_FILE) do
-          PatientsAliveAndOnTreatment.new(start_date:, end_date:, occupation: @occupation)
-                                     .refresh_outcomes_table
-
+          rebuild_patient_outcomes if rebuild
           WEIGHT_BANDS.map do |start_weight, end_weight|
             {
               weight: weight_band_to_string(start_weight, end_weight),
@@ -49,6 +47,11 @@ module ArtService
             }
           end
         end
+      end
+
+      def rebuild_patient_outcomes
+        PatientsAliveAndOnTreatment.new(start_date:, end_date:, occupation: @occupation)
+                                     .refresh_outcomes_table
       end
 
       def weight_band_to_string(start_weight, end_weight)
