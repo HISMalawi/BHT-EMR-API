@@ -9,7 +9,7 @@ def patients
         SELECT MAX(ob2.obs_datetime) start_date, ob2.person_id
         FROM obs ob2
           INNER JOIN encounter ON ob2.encounter_id = encounter.encounter_id
-          AND encounter.encounter_type = #{EncounterType.find_by_name('ANC VISIT TYPE')}
+          AND encounter.encounter_type = #{EncounterType.find_by_name('ANC VISIT TYPE').id}
           AND encounter.voided = 0
         AND ob2.concept_id = #{Concept.find_by_name('Reason for visit').id}
         AND ob2.value_numeric = 1 /*First visit for a new preganancy*/
@@ -20,8 +20,8 @@ def patients
       AND encounter.voided = 0
       AND encounter.program_id = #{Program.find_by_name('ANC PROGRAM').id}
     WHERE ob.obs_datetime > IF(latest_preg_visit1.start_date, latest_preg_visit1.start_date, DATE("1901-01-01 00:00:00"))
-    AND ob.concept_id = #{Concept.find_by_name('Date of last menstrual period').id}
     AND ob.voided = 0
+    AND ob.concept_id = #{Concept.find_by_name('Date of last menstrual period').id}
     AND ob.value_datetime IS NOT NULL
     AND encounter_datetime >= '2023-10-01' /*this is the point it all started to go wrong and also previous data do not have the new pregancy encounter*/
     GROUP BY ob.person_id
