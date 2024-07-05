@@ -126,8 +126,10 @@ module ArtService
             next unless AGE_GROUPS.include?(age_group)
             next unless GENDER.include?(gender)
 
+            patient = client_info(row)
+
             cluster = @report[age_group][gender][:due_screening]
-            cluster << row['patient_id']
+            cluster << patient
             @due_clients << row['patient_id']
           end
         end
@@ -231,7 +233,12 @@ module ArtService
 
         def due_for_bp_screening
           ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT p.person_id patient_id, disaggregated_age_group(p.birthdate, #{@end_date}) age_group, UPPER(LEFT(p.gender, 1)) gender, TIMESTAMPDIFF(YEAR, DATE(COALESCE(latest_bp.obs_date, MIN(ps2.start_date))), DATE(#{@start_date})) due
+            SELECT p.person_id patient_id,
+              disaggregated_age_group(p.birthdate, #{@end_date}) age_group,
+              UPPER(LEFT(p.gender, 1)) gender,
+              TIMESTAMPDIFF(YEAR, DATE(COALESCE(latest_bp.obs_date, MIN(ps2.start_date))), DATE(#{@start_date})) due,
+              patient_start_date(p.person_id) art_start_date,
+              i.identifier arv_number
             FROM person p
             INNER JOIN patient_program pp2 ON pp2.patient_id = p.person_id AND pp2.voided = 0 AND pp2.program_id = 1 -- HIV PROGRAM
             INNER JOIN (
@@ -250,6 +257,7 @@ module ArtService
               AND o.voided = 0 AND o.obs_datetime < DATE(#{@start_date})
               GROUP BY o.person_id
             ) AS latest_bp ON latest_bp.patient_id = p.person_id
+             LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.identifier_type = 4 AND i.voided = 0
             WHERE p.voided = 0 AND p.person_id NOT IN (#{external_clients}) AND p.dead = 0 AND p.death_date IS NULL
             GROUP BY p.person_id
             HAVING due >= 1
