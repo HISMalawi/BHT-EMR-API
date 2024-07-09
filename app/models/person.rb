@@ -40,6 +40,7 @@ class Person < VoidableRecord
 
   def as_json(options = {})
     super(options.merge(
+      methods: %i[art_start_date],
       include: {
         names: {},
         addresses: {},
@@ -55,5 +56,9 @@ class Person < VoidableRecord
     relationships.each { |relationship| relationship.void(reason) if relationship['voided'].zero? }
     person_attributes.each { |attribute| attribute.void(reason) if attribute['voided'].zero? }
     # We are going to rely on patient => encounter => obs to void those
+  end
+
+  def art_start_date
+    patient&.art_start_date
   end
 end

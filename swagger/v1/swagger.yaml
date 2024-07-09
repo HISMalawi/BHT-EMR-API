@@ -707,6 +707,142 @@ paths:
                 properties:
                   message:
                     type: string
+  "/api/v1/data_cleaning_supervisions":
+    get:
+      summary: list data_cleaning_supervisions
+      tags:
+      - Data Cleaning Supervision Endpoints
+      description: List data cleaning supervisions
+      security:
+      - api_key: []
+      parameters:
+      - name: paginate
+        in: query
+        description: paginate results
+        schema:
+          type: boolean
+      - name: page
+        in: query
+        description: page number
+        schema:
+          type: integer
+      - name: page_size
+        in: query
+        description: per page count
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/data_cleaning_supervision"
+    post:
+      summary: create data_cleaning_supervision
+      tags:
+      - Data Cleaning Supervision Endpoints
+      description: Create data cleaning supervision
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/data_cleaning_supervision"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data_cleaning_datetime:
+                  type: string
+                  format: date-time
+                comments:
+                  type: string
+                supervisors:
+                  type: string
+                  description: Supervisors separated by ;
+  "/api/v1/data_cleaning_supervisions/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: show data_cleaning_supervision
+      tags:
+      - Data Cleaning Supervision Endpoints
+      description: Show data cleaning supervision
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/data_cleaning_supervision"
+    put:
+      summary: update data_cleaning_supervision
+      tags:
+      - Data Cleaning Supervision Endpoints
+      description: Update data cleaning supervision
+      security:
+      - api_key: []
+      parameters: []
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/data_cleaning_supervision"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data_cleaning_datetime:
+                  type: string
+                  format: date-time
+                comments:
+                  type: string
+                supervisors:
+                  type: string
+                  description: Supervisors separated by ;
+    delete:
+      summary: delete data_cleaning_supervision
+      tags:
+      - Data Cleaning Supervision Endpoints
+      description: Delete data cleaning supervision
+      security:
+      - api_key: []
+      parameters:
+      - name: reason
+        in: query
+        description: reason for deletion
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
   "/api/v1/search/identifiers/multiples":
     get:
       summary: Retrieve patients with data problems
@@ -2196,10 +2332,10 @@ paths:
                     type: string
   "/api/v1/tx_rtt":
     get:
-      summary: PEPFAR TX RTT Report
+      summary: Pepfar TX RTT Report
       tags:
       - Pepfar Reports
-      description: This shows PEPFAR TX RTT report
+      description: This shows Pepfar TX RTT report
       security:
       - api_key: []
       parameters:
@@ -2221,7 +2357,7 @@ paths:
           type: string
       responses:
         '200':
-          description: PEPFAR TX RTT Report found
+          description: Pepfar TX RTT Report found
           content:
             application/json:
               schema:
@@ -2229,7 +2365,7 @@ paths:
                 items:
                   "$ref": "#/components/schemas/tx_rtt"
         '404':
-          description: PEPFAR TX RTT Report not found
+          description: Pepfar TX RTT Report not found
           content:
             application/json:
               schema:
@@ -2906,6 +3042,49 @@ components:
           type: array
           items:
             type: integer
+    data_cleaning_supervision:
+      type: object
+      properties:
+        data_cleaning_tool_id:
+          type: integer
+          example: 1
+        data_cleaning_datetime:
+          type: string
+          format: date-time
+          example: '2020-01-01'
+        comments:
+          type: string
+          example: Comments
+        date_created:
+          type: string
+          format: date-time
+          example: '2020-01-01'
+        date_changed:
+          type: string
+          format: date-time
+          example: '2020-01-01'
+        created_by:
+          type: object
+          properties:
+            user_id:
+              type: integer
+              example: 1
+            name:
+              type: string
+              example: John Doe
+        updated_by:
+          type: object
+          properties:
+            user_id:
+              type: integer
+              example: 1
+            name:
+              type: string
+              example: John Doe
+        all_supervisors:
+          type: array
+          items:
+            type: string
     aetc_dissag_diagnosis:
       type: object
       properties:

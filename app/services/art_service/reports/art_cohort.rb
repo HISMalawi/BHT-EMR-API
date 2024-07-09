@@ -83,32 +83,21 @@ module ArtService
       def cohort_report_drill_down(id)
         id = ActiveRecord::Base.connection.quote(id)
 
-        patients = ActiveRecord::Base.connection.select_all <<~SQL
+        ActiveRecord::Base.connection.select_all <<~SQL
           SELECT i.identifier arv_number, p.birthdate,
                  p.gender, n.given_name, n.family_name, p.person_id patient_id,
-                 outcomes.cum_outcome AS outcome
+                 outcomes.cum_outcome AS outcome, tesd.earliest_start_date art_start_date
           FROM person p
           INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
           INNER JOIN temp_patient_outcomes AS outcomes
             ON outcomes.patient_id = c.patient_id
+          INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = p.person_id
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
           AND i.voided = 0 AND i.identifier_type = 4
           LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
           WHERE c.reporting_report_design_resource_id = #{id}
           GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
         SQL
-
-        patients.map do |person|
-          {
-            person_id: person['patient_id'],
-            given_name: person['given_name'],
-            family_name: person['family_name'],
-            birthdate: person['birthdate'],
-            gender: person['gender'],
-            arv_number: person['arv_number'],
-            outcome: person['outcome']
-          }
-        end
       end
 
       private
