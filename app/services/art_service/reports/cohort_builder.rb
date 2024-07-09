@@ -753,6 +753,7 @@ module ArtService
           AND o.obs_datetime < (DATE('#{end_date}') + INTERVAL 1 DAY) AND e.voided = 0
           WHERE e.voided = 0
           GROUP BY o.person_id
+          HAVING value_datetime IS NOT NULL
         SQL
       end
 
