@@ -1,5 +1,5 @@
 # config/initializers/load_application_yml.rb
-config = YAML.load_file(Rails.root.join('config', 'application.yml'))[Rails.env]
+config = YAML.safe_load(File.read(Rails.root.join('config', 'application.yml')), aliases: true)[Rails.env]
 config.each do |key, value|
   ENV[key.upcase] ||= value
 end

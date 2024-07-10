@@ -25,7 +25,10 @@ class SendSmsJob < ApplicationJob
       response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
         http.request(request)
       end
-        
+
+      Rails.logger.info("SMS Gateway Response........pamzey: #{response.code} - #{response.body}")
+      puts "SMS Gateway Response........pamzey: #{response.code} - #{response.body}"
+  
       raise "Failed to send SMS" unless response.is_a?(Net::HTTPSuccess)
   
       response.body
