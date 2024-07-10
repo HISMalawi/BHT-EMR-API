@@ -1,5 +1,5 @@
 # config/initializers/sidekiq.rb
-Sidekiq.default_worker_options = { 'retry' => true } # Retry indefinitely
+Sidekiq.default_job_options = { 'retry' => true } # Retry indefinitely
 
 Sidekiq.configure_server do |config|
   config.redis = { url: 'redis://localhost:6379/0' }
