@@ -120,7 +120,7 @@ module ArtService
         # rubocop:enable Metrics/MethodLength
 
         def process_due_clients
-          @due_clients = []
+          @due_clients = [0]
           (due_for_bp_screening || []).each do |row|
             age_group = row['age_group']
             gender = row['gender']

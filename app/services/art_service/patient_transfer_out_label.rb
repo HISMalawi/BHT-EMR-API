@@ -37,7 +37,7 @@ module ArtService
       label.draw_multi_text("Name: #{patient.name} (#{patient.gender.first})\nAge: #{patient.age}", font_reverse: false)
 
       # Print information on Diagnosis!
-      art_start_date = transfer_out_note.date_antiretrovirals_started&.strftime('%d-%b-%Y')
+      art_start_date = transfer_out_note.date_antiretrovirals_started&.strftime('%d/%b/%Y')
       label.draw_multi_text('Stage defining conditions:', font_reverse: true)
       label.draw_multi_text("Reason for starting: #{who_stage}", font_reverse: false)
       label.draw_multi_text("ART start date: #{art_start_date}", font_reverse: false)
@@ -60,7 +60,7 @@ module ArtService
 
       first_cd4_count = "CD count #{transfer_out_note.cd4_count}" if transfer_out_note.cd4_count
       unless transfer_out_note.cd4_count_date.blank?
-        first_cd4_count_date = "CD count date #{transfer_out_note.cd4_count_date.strftime('%d-%b-%Y')}"
+        first_cd4_count_date = "CD count date #{transfer_out_note.cd4_count_date.strftime('%d/%b/%Y')}"
       end
       # renamed current status to Initial height/weight as per minimum requirements
       label.draw_multi_text('Initial Height/Weight', font_reverse: true)
@@ -101,7 +101,7 @@ module ArtService
       label.draw_multi_text('Current ART drugs', font_reverse: true)
       label.draw_multi_text(reg, font_reverse: false)
       label.draw_multi_text('Transfer out date:', font_reverse: true)
-      label.draw_multi_text(actual_transfer_out_date.strftime('%d-%b-%Y').to_s, font_reverse: false)
+      label.draw_multi_text(actual_transfer_out_date.strftime('%d/%b/%Y').to_s, font_reverse: false)
 
       label.print(1)
     end

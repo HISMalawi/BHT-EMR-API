@@ -31,13 +31,13 @@ class DdeClient
     end
   end
 
-  def post(resource, data)
+  def post(resource, **data)
     exec_request resource do |url, headers|
       RestClient.post url, data.to_json, headers
     end
   end
 
-  def put(resource, data)
+  def put(resource, **data)
     exec_request resource do |url, headers|
       RestClient.put url, data.to_json, headers
     end

@@ -13,6 +13,7 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 -- gets all lmp observations
+DROP TABLE IF EXISTS `last_menstraul_period_date`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 VIEW `last_menstraul_period_date` AS
   SELECT `person_id`, `encounter_id`, `value_datetime` AS `lmp`, `obs_datetime`, `date_created`
@@ -23,6 +24,7 @@ VIEW `last_menstraul_period_date` AS
 
 
 -- ANC visit encounter_type with reason for visit/ type of visit observations
+DROP TABLE IF EXISTS `anc_visit_observations`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 VIEW `anc_visit_observations` AS
   SELECT `person_id`, `e`.`encounter_id`, `o`.`value_numeric`, `e`.`encounter_datetime`
@@ -33,6 +35,7 @@ VIEW `anc_visit_observations` AS
 
 
 -- pulling all HIV status and HIV test date observations
+DROP TABLE IF EXISTS `hiv_status_obs`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 VIEW `hiv_status_obs` AS
   SELECT `o`.`person_id`, `o`.`encounter_id`, IFNULL(`o`.`value_coded`, `o`.`value_text`) AS `hiv_status`,`o`.`obs_datetime`
@@ -42,6 +45,7 @@ VIEW `hiv_status_obs` AS
   ORDER BY `o`.`person_id`, `o`.`obs_datetime` DESC;
 
 -- pulling all HIV test date observations
+DROP TABLE IF EXISTS `hiv_test_date_obs`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 VIEW `hiv_test_date_obs` AS
    SELECT `obs`.`person_id`, `obs`.`encounter_id`, IFNULL(`obs`.`value_datetime`, `obs`.`value_text`) AS `hiv_test_date`, `obs`.`obs_datetime`
@@ -52,6 +56,7 @@ VIEW `hiv_test_date_obs` AS
 
 
 -- pulling all patients with hiv_status and hiv_test_date observations
+DROP TABLE IF EXISTS `hiv_test_and_hiv_test_date_obs`;
 CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
 VIEW `hiv_test_and_hiv_test_date_obs` AS
 SELECT

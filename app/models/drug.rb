@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# This does not inherit from RetirableRecord because of historical data. Inheriting from RetirableRecord will cause
+# retired drugs to not be displayed in the drug list.
 class Drug < ActiveRecord::Base
   self.table_name = :drug
   self.primary_key = :drug_id

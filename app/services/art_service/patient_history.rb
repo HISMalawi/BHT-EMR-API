@@ -14,7 +14,7 @@ module ArtService
       # demographics = mastercard_demographics(patient)
 
       label = ZebraPrinter::Lib::StandardLabel.new
-      label.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 450, 300, 0, 1, 1, 1, false)
+      label.draw_text("Printed on: #{Date.today.strftime('%A, %d/%b/%Y')}", 450, 300, 0, 1, 1, 1, false)
       label.draw_text(arv_number || 'N/A', 575, 30, 0, 3, 1, 1, false)
       label.draw_text('PATIENT DETAILS', 25, 30, 0, 3, 1, 1, false)
       label.draw_text("Name:   #{name} (#{sex})", 25, 60, 0, 3, 1, 1, false)
@@ -70,9 +70,9 @@ module ArtService
       label2.draw_line(25, 170, 795, 3)
       # label data
       label2.draw_text('STATUS AT ART INITIATION', 25, 30, 0, 3, 1, 1, false)
-      label2.draw_text("(DSA: #{art_start_date&.strftime('%d-%b-%Y') || 'N/A'})", 370, 30, 0, 2, 1, 1, false)
+      label2.draw_text("(DSA: #{art_start_date&.strftime('%d/%b/%Y') || 'N/A'})", 370, 30, 0, 2, 1, 1, false)
       label2.draw_text(arv_number, 580, 20, 0, 3, 1, 1, false)
-      label2.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 25, 300, 0, 1, 1, 1, false)
+      label2.draw_text("Printed on: #{Date.today.strftime('%A, %d/%b/%Y')}", 25, 300, 0, 1, 1, 1, false)
 
       label2.draw_text("RFS: #{reason_for_art_eligibility}", 25, 70, 0, 2, 1, 1, false)
       label2.draw_text("#{cd4_count} #{cd4_count_date}", 25, 110, 0, 2, 1, 1, false)
@@ -105,7 +105,7 @@ module ArtService
         label3 = ZebraPrinter::Lib::StandardLabel.new
         label3.draw_text('STAGE DEFINING CONDITIONS', 25, line, 0, 3, 1, 1, false)
         label3.draw_text(identifier('ARV Number'), 370, line, 0, 2, 1, 1, false)
-        label3.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 450, 300, 0, 1, 1, 1, false)
+        label3.draw_text("Printed on: #{Date.today.strftime('%A, %d/%b/%Y')}", 450, 300, 0, 1, 1, 1, false)
         extra_lines.each do |condition|
           label3.draw_text(condition, 25, line += 30, 0, 2, 1, 1, false)
         end
