@@ -407,3 +407,10 @@ See the following for more:
 * You don't need to worry about setting up the gems, the container comes with them pre-installed
 
 [Back to top](#table-of-contents)
+
+# SMS Gateway for the immunization app
+  * You need to ask any of the team members for the api key
+  * To get the api key from https://gateway.seven.io
+  * Login to the account using the provided creditials 
+  * copy the api key 
+  * go to config/application.yml and add the sms_api_key

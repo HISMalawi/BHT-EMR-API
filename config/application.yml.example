@@ -105,12 +105,12 @@ idsr_sms:
 
 development:
   sms_gateway_url: 'https://gateway.seven.io/api/sms'
-  sms_api_key: 'c73C9ac143c557296F3E928f7b29ffB6da32473d93fa873e87Fb5521E1D7eBEB'
+  sms_api_key: '' #To get the key go the gateway.seven.io account
 
 test:
   sms_gateway_url: 'https://gateway.seven.io/api/sms'
-  sms_api_key: 'c73C9ac143c557296F3E928f7b29ffB6da32473d93fa873e87Fb5521E1D7eBEB'
+  sms_api_key: ''
 
 production:
   sms_gateway_url: 'https://gateway.seven.io/api/sms'
-  sms_api_key: 'c73C9ac143c557296F3E928f7b29ffB6da32473d93fa873e87Fb5521E1D7eBEB'
+  sms_api_key: ''
