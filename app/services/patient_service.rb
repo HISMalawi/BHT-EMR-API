@@ -375,9 +375,9 @@ class PatientService
 
   # Source: NART/models/patients#patient_eligible_for_htn_screening
   def patient_eligible_for_htn_screening(patient, date = Date.today)
-    threshold = global_property('htn.screening.age.threshold')&.property_value&.to_i || 0
-    sbp_threshold = global_property('htn.systolic.threshold')&.property_value&.to_i || 0
-    dbp_threshold = global_property('htn.diastolic.threshold')&.property_value&.to_i || 0
+    threshold = global_property('htn.screening.age.threshold')&.property_value.to_i
+    sbp_threshold = global_property('htn.systolic.threshold')&.property_value.to_i
+    dbp_threshold = global_property('htn.diastolic.threshold')&.property_value.to_i
 
     if patient.age(today: date) >= threshold || patient.programs.map(&:name).include?('HYPERTENSION PROGRAM')
 
@@ -488,14 +488,14 @@ class PatientService
       SELECT patient_outcome(#{patient_id}, DATE('#{visit_date}')) outcome;
     SQL
 
-    ActiveRecord::Base.connection.select_one <<-SQL
+    current_weight = ActiveRecord::Base.connection.select_one <<-SQL
       SELECT  IF(value_numeric is null ,value_text, value_numeric) weight
       FROM obs WHERE person_id = #{patient_id}
       AND voided = 0 AND DATE(obs_datetime) = DATE('#{visit_date}')
       AND concept_id = 5089 ORDER BY date_created DESC LIMIT 1;
     SQL
 
-    current_weight = ActiveRecord::Base.connection.select_one <<-SQL
+    current_height = ActiveRecord::Base.connection.select_one <<-SQL
       SELECT  IF(value_numeric is null ,value_text, value_numeric) height
       FROM obs WHERE person_id = #{patient_id}
       AND voided = 0 AND DATE(obs_datetime) = DATE('#{visit_date}')
@@ -559,7 +559,7 @@ class PatientService
         ''
       end,
       height: begin
-        current_weight['height']
+        current_height['height']
       rescue StandardError
         ''
       end,
