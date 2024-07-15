@@ -8,6 +8,7 @@ require_relative 'person_service'
 module UserService
   AUTHENTICATION_TOKEN_VALIDITY_PERIOD = 24.hours
   LOGGER = Logger.new $stdout
+  HSA_ROLE = "Health Surveillance Assistant"
 
   class UserCreateError < StandardError; end
 
@@ -17,7 +18,8 @@ module UserService
     query
   end
 
-  def self.create_user(username:, password:, given_name:, family_name:, roles:, programs:, location_id:)
+  def self.create_user(username:, password:, given_name:, family_name:, roles:, programs:, location_id:, villages:)
+
     person = person_service.create_person(
       birthdate: nil, birthdate_estimated: false, gender: nil
     )
@@ -39,9 +41,23 @@ module UserService
       creator: User.current.id,
       location_id:
     )
+
     roles.each do |rolename|
-      role = Role.find rolename
-      UserRole.create role:, user:
+      role = Role.find_by(role: rolename)
+
+      UserRole.create(role:, user:)
+
+      # For users with HSA roles villages will have to be assigned to them 
+      if role.role == HSA_ROLE
+        villages.each do |village_id|
+          UserVillage.create( 
+            user_id: user.user_id, 
+            village_id: village_id, 
+            creator: User.current.id
+            )
+        end
+      end 
+
     end
     # user programs
     programs&.each do |program_id|
