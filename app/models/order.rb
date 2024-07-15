@@ -4,7 +4,7 @@ class Order < VoidableRecord
   self.table_name = :orders
   self.primary_key = :order_id
 
-  after_void :clear_dispensed_drugs
+  after_void :clear_dispensed_drugs, :clear_associated_obs
 
   belongs_to :order_type
   belongs_to :concept
@@ -35,5 +35,11 @@ class Order < VoidableRecord
     # Skip validations which check for existence of order, in this case we have just voided it
     # so it doesn't exist.
     drug_order.save(validate: false)
+  end
+
+  def clear_associated_obs
+    observations.each do |obs|
+      obs.void('Order voided')
+    end
   end
 end
