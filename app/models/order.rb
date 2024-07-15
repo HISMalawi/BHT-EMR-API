@@ -27,7 +27,7 @@ class Order < VoidableRecord
     errors.add(:start_date, ' cannot be in the future')
   end
 
-  def void_records
+  def void_records(void_reason)
     clear_associated_obs(void_reason)
     clear_dispensed_drugs(void_reason)
   end
