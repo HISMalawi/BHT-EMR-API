@@ -104,13 +104,13 @@ idsr_sms:
 #   password: test
 
 development:
-  sms_gateway_url: 'https://gateway.seven.io/api/sms'
-  sms_api_key: '' #To get the key go the gateway.seven.io account
+  sms_gateway_url: ''
+  sms_api_key: '' #To get the key ask any team members
 
 test:
-  sms_gateway_url: 'https://gateway.seven.io/api/sms'
+  sms_gateway_url: ''
   sms_api_key: ''
 
 production:
-  sms_gateway_url: 'https://gateway.seven.io/api/sms'
+  sms_gateway_url: ''
   sms_api_key: ''
