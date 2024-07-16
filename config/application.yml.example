@@ -103,9 +103,10 @@ idsr_sms:
 #   username: admin
 #   password: test
 
+#To get the sms key ask any team members
 development:
   sms_gateway_url: ''
-  sms_api_key: '' #To get the key ask any team members
+  sms_api_key: '' 
 
 test:
   sms_gateway_url: ''
