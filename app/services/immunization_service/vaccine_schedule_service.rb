@@ -3,7 +3,7 @@ module VaccineScheduleService
   def self.vaccine_schedule(patient)
     # Get Vaccine Schedule
     # begin
-      # Immunization Drugs
+    # Immunization Drugs
     if age_in_years(patient.birthdate) < 5
       immunization_drugs = immunization_drugs('Under five immunizations')
     else
@@ -11,7 +11,7 @@ module VaccineScheduleService
       immunization_drugs = filter_female_specific_immunizations(immunization_drugs) if patient.gender.split.first.casecmp?('M')
     end
     
-      # For each of these get the window period and schedule
+    # For each of these get the window period and schedule
     immunization_with_window = immunization_drugs.map do |immunization_drug| 
       window_period = vaccine_attribute(immunization_drug.concept_id, 'Immunization window period')&.name
       milestone = vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones')
@@ -24,7 +24,7 @@ module VaccineScheduleService
     sorted_grouped_immunizations = grouped_immunizations.sort_by { |milestone| milestone[1][0][:milestone][:sort_weight] }.to_h
     vaccines = format_schedule(make_unique(sorted_grouped_immunizations), vaccines_given, patient.birthdate)
 
-    return {vaccine_schedule: update_milestone_status(vaccines)}
+    return {vaccine_schedule: vaccines}
     # rescue => e
     return {error: e.message}
     #end
@@ -147,7 +147,7 @@ module VaccineScheduleService
             drug_id: drug[:drug_id],
             drug_name: drug[:drug_name],
             window_period: drug[:window_period],
-            can_administer: false,
+            can_administer: can_administer_drug?(drug, client_dob),
             status: vaccine_given ? 'administered' : 'pending',
             date_administered: vaccine_given&.[](:obs_datetime)&.strftime('%d/%b/%Y %H:%M:%S'),
             administered_by: vaccine_given&.[](:administered_by),
