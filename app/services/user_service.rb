@@ -8,7 +8,7 @@ require_relative 'person_service'
 module UserService
   AUTHENTICATION_TOKEN_VALIDITY_PERIOD = 24.hours
   LOGGER = Logger.new $stdout
-  HSA_ROLE = "Health Surveillance Assistant"
+  HSA_ROLE = "HSA"
 
   class UserCreateError < StandardError; end
 
