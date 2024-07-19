@@ -12,6 +12,16 @@ module Api
                           status: :bad_request
           end
 
+        
+          drug_orders.each do |drug_order|
+            #Verify if batch number exists in pharmacy batches
+            unless PharmacyBatch.find_by(batch_number: drug_order["batch_number"]).present?
+              return render json: { errors: "Batch number #{drug_order["batch_number"]} does not exist"},
+                        status: :bad_request
+            end
+          end
+        
+
           orders = DrugOrderService.create_drug_orders(encounter: , drug_orders:)
 
           program = Program.find(program_id)
