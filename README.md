@@ -409,8 +409,11 @@ See the following for more:
 [Back to top](#table-of-contents)
 
 # SMS Gateway for the immunization app
-  * You need to ask any of the team members for the api key
+  * You need to ask any of the team members for the api key or follow the following steps
   * To get the api key from https://gateway.seven.io
-  * Login to the account using the provided creditials 
-  * copy the api key 
-  * go to config/application.yml and add the sms_api_key
+  * The documentation is in Germany so make sure you use firefox for easy page transalation to English
+  * Login to the account seven.io account using the provided creditials 
+  * On the botton right corner click on documentation
+  * In the documentation click on SMS under endpoints section to get sms_gateway_url
+  * Still in the documentation click on Account under endpoints section to get sms_api_key
+  * Finally go to config/application.yml and add the sms_api_key and sms_gateway_url

@@ -103,7 +103,7 @@ idsr_sms:
 #   username: admin
 #   password: test
 
-#To get the sms key ask any team members
+#To get the sms key follow the following steps in the ReadMe
 development:
   sms_gateway_url: ''
   sms_api_key: '' 
