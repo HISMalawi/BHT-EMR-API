@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
-
 module TbService
   class ReportEngine
     attr_reader :program
-    
+
     include TimeUtils
     include ModelUtils
 
@@ -25,7 +24,6 @@ module TbService
     }.freeze
 
     def find_report(type:, name:, start_date:, end_date:)
-
       report = REPORTS[type.upcase]
       raise InvalidParameterError, "Report type (#{type}) not known" unless report
 
@@ -35,7 +33,7 @@ module TbService
       start_date = start_date.to_time
       _, end_date = TimeUtils.day_bounds(end_date)
 
-      report.format_report(indicator: name, report_data: indicator.call(start_date, end_date), start_date:, end_date:)
+      report.format_report(indicator: name, report_data: indicator.call(start_date, end_date))
     end
 
     def dashboard_stats(date)
