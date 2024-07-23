@@ -27,7 +27,7 @@ module TbService::Reports::MdrOutcomes
       format_
     end
 
-    def format_report(indicator:, report_data:)
+    def format_report(indicator:, report_data:, **kwargs)
       data = report_format(indicator)
       report_data&.each do |patient|
         process_patient(patient, data)

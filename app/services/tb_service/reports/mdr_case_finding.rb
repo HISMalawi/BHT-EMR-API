@@ -4,9 +4,9 @@ module TbService
   module Reports
     module MdrCaseFinding # rubocop:disable Style/Documentation
       class << self
-        def format_report(indicator:, report_data:)
-          { 
-            indicator: indicator, 
+        def format_report(indicator:, report_data:, **_kwargs)
+          {
+            indicator:,
             data: report_data
           }
         end

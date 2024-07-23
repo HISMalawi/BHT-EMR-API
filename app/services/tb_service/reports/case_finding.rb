@@ -20,7 +20,7 @@ module TbService
           [] if new_patients.empty?
         end
 
-        def format_report(indicator:, report_data:)
+        def format_report(indicator:, report_data:, **_kwargs)
           data = report_format(indicator)
           report_data&.each do |patient|
             process_patient(patient, data)
@@ -33,6 +33,7 @@ module TbService
           gender = patient.gender == 'M' ? :male : :female
           age_group = AGE_GROUPS.keys.find { |k| age.between?(*AGE_GROUPS[k]) }
           data[age_group][gender] << patient.id
+          data
         end
 
         def report_format(indicator)
@@ -49,78 +50,144 @@ module TbService
         end
 
         def new_eptb(start_date, end_date)
-          new_patients = patients_query.new_patients(start_date, end_date)
+          new_patients = obs_query.new_patients(start_date, end_date)
           return [] if new_patients.empty?
 
-          ids = new_patients.map(&:patient_id)
+          ids = new_patients.map(&:person_id)
 
           with_mtb = obs_query.with_answer(ids, 'Extrapulmonary tuberculosis (EPTB)', start_date, end_date)
 
           return [] if with_mtb.empty?
 
-          persons = with_mtb.map(&:person_id)
-
-          patients_query.ntp_age_groups(persons)
+          Patient.where(patient_id: with_mtb.map(&:person_id))
         end
 
         def new_mtb_detected_xpert(start_date, end_date)
-          new_patients = patients_query.new_patients(start_date, end_date)
+          new_patients = obs_query.new_patients(start_date, end_date)
           return [] if new_patients.empty?
 
-          ids = new_patients.map(&:patient_id)
+          ids = new_patients.map(&:person_id)
 
           with_mtb = obs_query.with_answer(ids, 'MTB Detetcted', start_date, end_date)
 
           return [] if with_mtb.empty?
 
-          persons = with_mtb.map(&:person_id)
-
-          patients_query.ntp_age_groups(persons)
+          Patient.where(patient_id: with_mtb.map(&:person_id))
         end
 
         def new_smear_positive(start_date, end_date)
-          new_patients = patients_query.new_patients(start_date, end_date)
+          new_patients = obs_query.new_patients(start_date, end_date)
           return [] if new_patients.empty?
 
-          ids = new_patients.map(&:patient_id)
+          ids = new_patients.map(&:person_id)
 
           with_mtb = obs_query.with_answer(ids, 'AFB Positive', start_date, end_date)
 
           return [] if with_mtb.empty?
 
-          persons = with_mtb.map(&:person_id)
-
-          patients_query.ntp_age_groups(persons)
+          Patient.where(patient_id: with_mtb.map(&:person_id))
         end
 
         def relapse_bacteriologically_confirmed(start_date, end_date)
-          patients = relapse_patients_query.bacteriologically_confirmed(start_date, end_date)
+          states = {
+            RX: 92, # in treatment
+            RP: 168, # relapse
+            CR: 97 # cured
+          }.freeze
 
-          return [] if patients.empty?
-
-          ids = patients.map { |patient| patient['patient_id'] }
-
-          patients_query.ntp_age_groups(ids)
+          type = encounter_type('Lab Results').encounter_type_id
+          value = concept('Positive').concept_id
+          program = program('TB Program')
+          ActiveRecord::Base.connection.select_all(
+            <<~SQL
+              SELECT States.patient_id
+              FROM
+              (
+                SELECT DISTINCT(patient_id), patient_state.date_created
+                FROM
+                  patient JOIN patient_program USING(patient_id)
+                JOIN patient_state USING(patient_program_id)
+                WHERE patient_state.state = '#{states[:RP]}' AND patient_state.end_date IS NULL AND patient_state.voided = 0
+              ) AS States
+              JOIN
+              (
+                SELECT DISTINCT(person_id), obs_datetime
+                FROM encounter JOIN obs USING(encounter_id)
+                WHERE
+                  value_coded = '#{value}' AND encounter_datetime BETWEEN "#{start_date}"
+                  AND "#{end_date}" AND encounter_type = '#{type}' AND encounter.voided = 0
+                  AND encounter.program_id = '#{program.id}'
+              ) AS BactConfirmed
+              ON States.patient_id = BactConfirmed.person_id
+              WHERE BactConfirmed.obs_datetime <= States.date_created;
+            SQL
+          )
         end
 
         def relapse_clinical_pulmonary(start_date, end_date)
-          patients = relapse_patients_query.clinical_pulmonary(start_date, end_date)
+          states = {
+            RX: 92, # in treatment
+            RP: 168, # relapse
+            CR: 97 # cured
+          }.freeze
 
-          return [] if patients.empty?
-
-          ids = patients.map { |patient| patient['patient_id'] }
-
-          patients_query.ntp_age_groups(ids)
+          type = encounter_type('Diagnosis').encounter_type_id
+          value = concept('Positive').concept_id
+          program = program('TB Program')
+          ActiveRecord::Base.connection.select_all(
+            <<~SQL
+              SELECT States.patient_id
+              FROM
+              (
+                SELECT DISTINCT(patient_id), patient_state.date_created
+                FROM
+                  patient JOIN patient_program USING(patient_id)
+                JOIN patient_state USING(patient_program_id)
+                WHERE patient_state.state = '#{states[:RP]}' AND patient_state.end_date IS NULL AND patient_state.voided = 0
+              ) AS States
+              JOIN
+              (
+                SELECT DISTINCT(person_id), obs_datetime
+                FROM encounter JOIN obs USING(encounter_id)
+                WHERE
+                  value_coded = '#{value}' AND encounter_datetime BETWEEN "#{start_date}"
+                  AND "#{end_date}" AND encounter_type = '#{type}' AND encounter.voided = 0
+                  AND encounter.program_id = #{program.id}
+              ) AS ClinicConfirmed
+              ON States.patient_id = ClinicConfirmed.person_id
+              WHERE ClinicConfirmed.obs_datetime <= States.date_created;
+            SQL
+          )
         end
 
         def relapse_eptb(start_date, end_date)
-          patients = relapse_patients_query.eptb(start_date, end_date)
-
-          return [] if patients.empty?
-
-          ids = patients.map { |patient| patient['patient_id'] }
-
-          patients_query.ntp_age_groups(ids)
+          states = {
+            RX: 92, # in treatment
+            RP: 168, # relapse
+            CR: 97 # cured
+          }.freeze
+          value = concept('Extrapulmonary tuberculosis (EPTB) ')
+          ActiveRecord::Base.connection.select_all(
+            <<~SQL
+              SELECT States.patient_id
+              FROM
+              (
+                SELECT DISTINCT(patient_id), patient_state.date_created
+                FROM
+                  patient JOIN patient_program USING(patient_id)
+                JOIN patient_state USING(patient_program_id)
+                WHERE patient_state.state = '#{states[:RP]}' AND patient_state.end_date IS NULL AND patient_state.voided = 0
+              ) AS States
+              JOIN
+              (
+                SELECT DISTINCT(person_id), obs_datetime
+                FROM obs
+                WHERE value_coded = '#{value}' AND obs_datetime BETWEEN "#{start_date}" AND "#{end_date}" AND obs.voided = 0
+              ) AS Eptb
+              ON States.patient_id = Eptb.person_id
+              WHERE Eptb.obs_datetime <= States.date_created;
+            SQL
+          )
         end
 
         def treatment_failure_bacteriologically_confirmed(start_date, end_date)
@@ -134,7 +201,7 @@ module TbService
 
           return [] if fails.empty?
 
-          patients_query.ntp_age_groups(fails)
+          Patient.where(patient_id: fails.map(&:patient_id))
         end
 
         def treatment_ltf_bacteriologically_confirmed(_start_date, _end_date)
@@ -148,7 +215,7 @@ module TbService
 
           return [] if ltf.empty?
 
-          patients_query.ntp_age_groups(ltf)
+          Patient.where(patient_id: ltf.map(&:patient_id))
         end
 
         def treatment_ltf_clinically_diagnosed_pulmonary(_start_date, _end_date)
@@ -162,7 +229,7 @@ module TbService
 
           return [] if ltf.empty?
 
-          patients_query.ntp_age_groups(ltf)
+          Patient.where(patient_id: ltf.map(&:patient_id))
         end
 
         def treatment_ltf_eptb(_start_date, _end_date)
@@ -176,10 +243,10 @@ module TbService
 
           return [] if ltf.empty?
 
-          patients_query.ntp_age_groups(ltf)
+          Patient.where(patient_id: ltf.map(&:patient_id))
         end
 
-        def other_previuosly_treated_bacteriologically_confirmed(start_date, end_date)
+        def other_previously_treated_bacteriologically_confirmed(start_date, end_date)
           type = encounter_type('Lab Results')
           program = program('TB Program')
           status = concept('TB Status')
@@ -199,12 +266,10 @@ module TbService
 
           return [] if patients.empty?
 
-          ids = patients.map(&:patient_id)
-
-          patients_query.ntp_age_groups(ids)
+          Patient.where(patient_id: patients.map(&:patient_id))
         end
 
-        def other_previuosly_treated_clinical_pulmonary(start_date, end_date)
+        def other_previously_treated_clinical_pulmonary(start_date, end_date)
           type = encounter_type('Diagnosis')
           program = program('TB Program')
           status = concept('TB Status')
@@ -224,12 +289,10 @@ module TbService
 
           return [] if patients.empty?
 
-          ids = patients.map(&:patient_id)
-
-          patients_query.ntp_age_groups(ids)
+          Patient.where(patient_id: patients.map(&:patient_id))
         end
 
-        def other_previuosly_treated_eptb(start_date, end_date)
+        def other_previously_treated_eptb(start_date, end_date)
           type = encounter_type('Lab Results')
           program = program('TB Program')
           status = concept('Type of Tuberculosis')
@@ -249,9 +312,7 @@ module TbService
 
           return [] if patients.empty?
 
-          ids = patients.map(&:patient_id)
-
-          patients_query.ntp_age_groups(ids)
+          Patient.where(patient_id: patients.map(&:patient_id))
         end
 
         def unknown_previous_treatment_history_bacteriological(start_date, end_date)
@@ -260,9 +321,7 @@ module TbService
 
           return [] if patients.empty?
 
-          ids = patients.map(&:patient_id)
-
-          patients_query.ntp_age_groups(ids)
+          Patient.where(patient_id: patients.map(&:patient_id))
         end
 
         def unknown_previous_treatment_history_pulmonary_clinical(start_date, end_date)
@@ -272,9 +331,7 @@ module TbService
 
           return [] if patients.empty?
 
-          ids = patients.map(&:patient_id)
-
-          patients_query.ntp_age_groups(ids)
+          Patient.where(patient_id: patients.map(&:patient_id))
         end
 
         def unknown_previous_treatment_history_eptb(start_date, end_date)
@@ -284,9 +341,7 @@ module TbService
 
           return [] if patients.empty?
 
-          ids = patients.map(&:patient_id)
-
-          patients_query.ntp_age_groups(ids)
+          Patient.where(patient_id: patients.map(&:patient_id))
         end
 
         def patients_with_presumptive_tb_undergoing_bacteriological_examination(start_date, end_date)
@@ -295,24 +350,17 @@ module TbService
 
           return [] if patients.empty?
 
-          patient_ids = patients.map(&:patient_id)
-
-          patients_query.ntp_age_groups(patient_ids)
+          Patient.where(patient_id: patients.map(&:patient_id))
         end
 
         def patients_with_presumptive_tb_with_positive_bacteriological_examination(start_date, end_date)
-          patients_query.with_encounters(['TB_Initial', 'Lab Orders', 'Lab Results'], start_date, end_date)\
-                        .without_encounters(['Treatment'], start_date, end_date)\
-                        .with_obs('Lab Results', 'TB Status', 'Positive', start_date, end_date)
-        end
+          patients = patients_query.with_encounters(['TB_Initial', 'Lab Orders', 'Lab Results'], start_date, end_date)\
+                                   .without_encounters(['Treatment'], start_date, end_date)\
+                                   .with_obs('Lab Results', 'TB Status', 'Positive', start_date, end_date)
 
-        def unknown_previous_treatment_history_eptb(start_date, end_date)
-          query = tx_history_query.ref(start_date, end_date)
-          query.eptb(start_date, end_date)
-        end
+          return [] if patients.empty?
 
-        def patients_with_presumptive_tb_undergoing_bacteriological_examination(start_date, end_date)
-          presumptives_query.undergoing_bacteriological_examination(start_date, end_date)
+          Patient.where(patient_id: patients.map(&:patient_id))
         end
 
         def patients_with_presumptive_tb_undergoing_bacteriological_examination_via_xpert(start_date, end_date)

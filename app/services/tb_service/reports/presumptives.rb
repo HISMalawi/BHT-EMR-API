@@ -10,7 +10,7 @@ module TbService::Reports::Presumptives
       }
     end
 
-    def format_report(indicator:, report_data:)
+    def format_report(indicator:, report_data:, **kwargs)
       data = report_format(indicator: indicator)
       report_data&.each do |patient|
         process_patient(patient, data)

@@ -13,7 +13,7 @@ module TbService
           }
         end
 
-        def format_report(indicator:, report_data:)
+        def format_report(indicator:, report_data:, **kwargs)
           data = report_format(indicator)
           report_data&.each do |patient|
             process_patient(patient, data)
@@ -64,7 +64,8 @@ module TbService
         def started_cpt(start_date, end_date)
           query = new_patients_query.ref(start_date, end_date)
           relapses = relapse_patients_query.ref(start_date, end_date)
-          Patient.where(patient_id: (relapses.on_cpt + query.on_cpt))
+          ids = (query.on_cpt + relapses.on_cpt).map(&:patient_id)
+          Patient.where(patient_id: ids)
         end
 
         def started_art_before_tb_treatment(start_date, end_date)

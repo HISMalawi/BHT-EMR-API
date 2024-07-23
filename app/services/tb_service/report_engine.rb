@@ -33,7 +33,7 @@ module TbService
       start_date = start_date.to_time
       _, end_date = TimeUtils.day_bounds(end_date)
 
-      report.format_report(indicator: name, report_data: indicator.call(start_date, end_date))
+      report.format_report(indicator: name, report_data: indicator.call(start_date, end_date), start_date:, end_date:)
     end
 
     def dashboard_stats(date)
