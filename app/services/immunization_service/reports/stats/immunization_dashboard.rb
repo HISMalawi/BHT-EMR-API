@@ -12,6 +12,9 @@ module ImmunizationService
 
                 def data
                     {
+                        total_client_registered:,
+                        total_male_registered:,
+                        total_female_registered:,
                         total_vaccinated:,
                         total_due_for_vaccination_today:,
                         total_missed_doses:,
@@ -27,6 +30,38 @@ module ImmunizationService
                     Observation.joins(concept: :concept_names, 
                                 encounter: %i[program type], person: [])
                                .where( program: { program_id: 33 })
+                end
+
+                def total_client_registered
+                    base_query
+                        .where(
+                            encounter_type: { name: "REGISTRATION"},
+                            obs: { obs_datetime: @start_date..@end_date }
+                        )
+                        .distinct
+                        .count(:person_id)
+                end
+
+                def total_male_registered
+                    base_query
+                    .where(
+                    encounter_type: { name: "REGISTRATION" },
+                    obs: { obs_datetime: @start_date..@end_date },
+                    person: { gender: "M" }
+                    )
+                    .distinct
+                    .count(:person_id)
+                end
+
+                def total_female_registered
+                    base_query
+                    .where(
+                    encounter_type: { name: "REGISTRATION" },
+                    obs: { obs_datetime: @start_date..@end_date },
+                    person: { gender: "F" }
+                    )
+                    .distinct
+                    .count(:person_id)
                 end
 
                 def total_vaccinated

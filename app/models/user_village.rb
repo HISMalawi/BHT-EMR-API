@@ -1,4 +1,4 @@
-class UserVillage << ApplicationRecord
+class UserVillage < ApplicationRecord
     self.table_name = :user_villages
     self.primary_key = :user_village_id
 
