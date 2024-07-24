@@ -22,7 +22,9 @@ module ImmunizationService
                         total_children_vaccinated_today:,
                         total_women_vaccinated_today:,
                         total_men_vaccinated_today:,
-                        vaccination_counts_by_month:
+                        vaccination_counts_by_month:,
+                        client_overdue_under_five_years:,
+                        client_overdue_over_five_years:
                     }
                 end
 
@@ -158,9 +160,32 @@ module ImmunizationService
                     
                     { months: months.reverse, vaccinations: vaccinations.reverse }
                 end
-                  
 
-        
+                def  client_overdue_under_five_years
+                   followup_service.over_due_stats[:under_five]
+                end
+                
+                def  client_overdue_over_five_years
+                    followup_service.over_due_stats[:over_five]
+                end
+
+                def clients_due_today
+
+                end 
+
+                def clients_due_this_week
+
+                end
+                
+                def clients_due_this_month
+                    
+                end
+
+                private
+                def followup_service
+                    ImmunizationService::FollowUp.new()
+                end
+                  
             end
         end
     end
