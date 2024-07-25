@@ -9,42 +9,17 @@ module ImmunizationService
 
     # Fetch all missed immunizations or milestones 
     def fetch_missed_immunizations(location_id)
-      immunization_clients = Patient.joins(:encounters, person: :names)
-                                    .where("encounter.program_id = ? AND patient.voided = ? AND encounter.location_id = ?", 
-                                            PROGRAM_ID, false, location_id)
-                                    .distinct
-                                    .pluck("patient.patient_id, person.birthdate, person_name.given_name, person_name.family_name")
-
-
-      under_five_missed_visits = []
-      over_five_missed_visits = []
-      under_five_count = 0
-      over_five_count = 0
+      immunization_clients = fetch_immunization_clients(location_id)
+      under_five_missed_visits, over_five_missed_visits, under_five_count, over_five_count = [], [], 0, 0
+      under_five_missed_doses, over_five_missed_doses = [], []
 
       immunization_clients.each do |patient_id, birthdate, given_name, family_name|
         immunization_client = OpenStruct.new(patient_id: patient_id, birthdate: birthdate, given_name: given_name, family_name: family_name)
+        client_missed_visits, vaccine_schedules = [], ImmunizationService::VaccineScheduleService.vaccine_schedule(find_patient(patient_id))
 
-        vaccine_schedules = ImmunizationService::VaccineScheduleService.vaccine_schedule(find_patient(immunization_client.patient_id))
+        process_vaccine_schedules(vaccine_schedules, client_missed_visits, under_five_missed_doses, over_five_missed_doses, immunization_client)
 
-        client_missed_visits = []
-
-        vaccine_schedules.each do |vaccine_schedule|
-          vaccine_schedule[1].each do |visit|
-            missed_antigens = visit[:antigens].select do |antigen|
-              antigen[:can_administer] && antigen[:status] == "pending"
-            end
-            
-            unless missed_antigens.empty?
-              client_missed_visits << { 
-                visit: visit[:visit], 
-                milestone_status: visit[:milestone_status],
-                age: visit[:age],
-                antigens: missed_antigens }
-            end
-          end
-        end
-
-        unless client_missed_visits.empty?
+        if client_missed_visits.any?
           if age_in_years(immunization_client.birthdate) < 5
             under_five_missed_visits << { client: immunization_client, missed_visits: client_missed_visits }
             under_five_count += 1
@@ -55,20 +30,75 @@ module ImmunizationService
         end
       end
 
-
-      { under_five_missed_visits: under_five_missed_visits, over_five_missed_visits: over_five_missed_visits, 
-        under_five_count: under_five_count, over_five_count: over_five_count }
-    end
-
-    # Count total clients with missed vaccines
-    def over_due_stats
-      missed_visits = fetch_missed_immunizations
       {
-        under_five: missed_visits[:under_five_count],
-        over_five: missed_visits[:over_five_count]
+        under_five_missed_visits: under_five_missed_visits,
+        over_five_missed_visits: over_five_missed_visits,
+        under_five_count: under_five_count,
+        over_five_count: over_five_count,
+        under_five_missed_doses: under_five_missed_doses,
+        over_five_missed_doses: over_five_missed_doses
       }
     end
 
+    # Count total clients with missed vaccines
+    def over_due_stats(location_id)
+      missed_visits = fetch_missed_immunizations(location_id)
+      {
+        under_five: missed_visits[:under_five_count],
+        over_five: missed_visits[:over_five_count],
+        under_five_missed_doses: missed_visits[:under_five_missed_doses],
+        over_five_missed_doses: missed_visits[:over_five_missed_doses]
+      }
+    end
+
+    private
+
+    # Fetch clients eligible for immunization follow-up
+    def fetch_immunization_clients(location_id)
+      Patient.joins(:encounters, person: :names)
+             .where("encounter.program_id = ? AND patient.voided = ? AND encounter.location_id = ?", PROGRAM_ID, false, location_id)
+             .distinct
+             .pluck("patient.patient_id, person.birthdate, person_name.given_name, person_name.family_name")
+    end
+
+    # Process vaccine schedules and determine missed doses
+    def process_vaccine_schedules(vaccine_schedules, client_missed_visits, under_five_missed_doses, over_five_missed_doses, immunization_client)
+      vaccine_schedules.each do |vaccine_schedule|
+        vaccine_schedule[1].each do |visit|
+          missed_antigens = visit[:antigens].select { |antigen| antigen[:can_administer] && antigen[:status] == "pending" }
+
+          unless missed_antigens.empty?
+            client_missed_visits << { visit: visit[:visit], milestone_status: visit[:milestone_status], age: visit[:age], antigens: missed_antigens }
+            update_missed_doses(missed_antigens, immunization_client.birthdate, under_five_missed_doses, over_five_missed_doses)
+          end
+        end
+      end
+    end
+
+    # Update missed doses for under-five and over-five groups
+    def update_missed_doses(missed_antigens, birthdate, under_five_missed_doses, over_five_missed_doses)
+      missed_antigens.each do |antigen|
+        missed_dose = { drug_id: antigen[:drug_id], drug_name: antigen[:drug_name], missed_doses: 1 }
+
+        if age_in_years(birthdate) < 5
+          update_dose_list(under_five_missed_doses, missed_dose)
+        else
+          update_dose_list(over_five_missed_doses, missed_dose)
+        end
+      end
+    end
+
+    # Update dose list, incrementing missed doses count if already present
+    def update_dose_list(dose_list, missed_dose)
+      existing_dose = dose_list.find { |dose| dose[:drug_id] == missed_dose[:drug_id] }
+      if existing_dose
+        existing_dose[:missed_doses] += 1
+      else
+        dose_list << missed_dose
+      end
+    end
+
+    # Calculate age in years based on birthdate
     def age_in_years(birthdate)
       today = Date.today
       age = today.year - birthdate.year
@@ -76,6 +106,7 @@ module ImmunizationService
       age
     end
 
+    # Find patient by ID
     def find_patient(patient_id)
       Person.find(patient_id)
     end
