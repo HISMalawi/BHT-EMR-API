@@ -12,17 +12,21 @@ module VaccineScheduleService
     end
     
     # For each of these get the window period and schedule
-    immunization_with_window = immunization_drugs.map do |immunization_drug| 
-      window_period = vaccine_attribute(immunization_drug.concept_id, 'Immunization window period')&.name
-      milestone = vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones')
-
-      {drug_id: immunization_drug.drug_id, drug_name: immunization_drug.name, window_period:, milestone:}
+    immunization_with_window = immunization_drugs.flat_map do |immunization_drug|
+      vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones').map do |milestone|
+        { 
+          milestone_name: milestone.name, 
+          sort_weight: milestone.sort_weight,
+          drug_id: immunization_drug.drug_id,
+          drug_name: immunization_drug.name,
+          window_period: vaccine_attribute(immunization_drug.concept_id, 'Immunization window period').first&.name
+        }
+      end
     end
-    
     vaccines_given = administered_vaccines(patient.person_id, immunization_with_window.pluck(:drug_id))
-    grouped_immunizations = immunization_with_window.group_by { | immunizations | immunizations[:milestone][:name] }
-    sorted_grouped_immunizations = grouped_immunizations.sort_by { |milestone| milestone[1][0][:milestone][:sort_weight] }.to_h
-    vaccines = format_schedule(make_unique(sorted_grouped_immunizations), vaccines_given, patient.birthdate)
+    grouped_immunizations = immunization_with_window.group_by { | immunizations | immunizations[:milestone_name] }
+    sorted_grouped_immunizations = grouped_immunizations.sort_by { |milestone| milestone[1][0][:sort_weight]}.to_h
+    vaccines = format_schedule(sorted_grouped_immunizations, vaccines_given, patient.birthdate)
 
     return {vaccine_schedule: vaccines}
     # rescue => e
@@ -54,15 +58,15 @@ module VaccineScheduleService
     if category == 'Under five immunizations'
       immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
                                 .where(concept_set: ConceptName.where(name: category).pluck(:concept_id))
-                                .group('concept.concept_id')
-                                .select('concept.concept_id, MAX(concept_name.name) as name, MAX(drug.drug_id) drug_id')
+                                .group('concept.concept_id, drug.name, drug.drug_id')
+                                .select('concept.concept_id, drug.name as name, drug.drug_id as drug_id')
     elsif category == 'Over five immunizations'
       immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
                                 .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
                                 .where.not(concept_id: ConceptSet.where(concept_set: ConceptName.where(name: 'Under five immunizations')
                                 .pluck(:concept_id)).pluck(:concept_id))
-                                .group('concept.concept_id')
-                                .select('concept.concept_id, MAX(concept_name.name) as name, MAX(drug.drug_id) drug_id')
+                                .group('concept.concept_id, drug.name, drug.drug_id')
+                                .select('concept.concept_id, drug.name as name, drug.drug_id drug_id')
     end
     immunizations
   end
@@ -128,11 +132,11 @@ module VaccineScheduleService
     amount.to_i * units[unit.downcase.chomp('s')]
   end
 
-  def self.vaccine_attribute(drug_id, attribute_type)
+  def self.vaccine_attribute(drug_concept_id, attribute_type)
     ConceptSet.joins(concept: :concept_names)
               .where(concept_set: ConceptName.where(name: attribute_type).pluck(:concept_id))
-              .where(concept_id: ConceptSet.where(concept_set: drug_id).pluck(:concept_id))
-              .select('concept_name.name, concept_set.sort_weight').first
+              .where(concept_id: ConceptSet.where(concept_set: drug_concept_id).pluck(:concept_id))
+              .select('concept_name.name, concept_set.sort_weight')
   end
 
   def self.format_schedule(schedule, vaccines_given, client_dob)
@@ -141,22 +145,26 @@ module VaccineScheduleService
         visit: index,
         milestone_status: milestone_status(milestone_name, client_dob),
         age: milestone_name,
-        antigens: antigens.map { |drug|
+        antigens: antigens.map do |drug|
           vaccine_given = vaccines_given.find { |vaccine| vaccine[:drug_inventory_id] == drug[:drug_id] }
           {
             drug_id: drug[:drug_id],
             drug_name: drug[:drug_name],
             window_period: drug[:window_period],
-            can_administer: can_administer_drug?(drug, client_dob),
+            can_administer: can_administer_drug?(drug, client_dob, milestone_name),
             status: vaccine_given ? 'administered' : 'pending',
             date_administered: vaccine_given&.[](:obs_datetime)&.strftime('%d/%b/%Y %H:%M:%S'),
             administered_by: vaccine_given&.[](:administered_by),
             location_administered: vaccine_given&.[](:location_administered),
             vaccine_batch_number: vaccine_given&.[](:batch_number)
           }
-        }
+        end
       }
     end
+  end
+
+  def vaccine_given?(drug_id)
+    
   end
 
   def self.administered_vaccines(patient_id, drugs)
@@ -226,28 +234,33 @@ module VaccineScheduleService
     end
   end
 
-  def self.can_administer_drug?(drug, dob )
+  def self.can_administer_drug?(drug, dob, milestone)
     return if drug[:window_period].blank?
 
+    if milestone == 'At birth'
+      milestone_days = 7
+    else
+      milestone_days = parse_age_to_days(milestone)
+    end
     age = Date.today - dob
     # Handle atigens that are valid in a range of ages
     value, units = drug[:window_period].split
     case units.downcase
     when 'weeks'
-      compare_age(age.to_i / 7, value)
+      compare_age(age.to_i / 7, value, milestone_days / 7)
     when 'months'
-      compare_age(age.to_i / 30, value)
+      compare_age(age.to_i / 30, value, milestone_days / 30)
     when 'years'
-      compare_age(age.to_i / 365, value)
+      compare_age(age.to_i / 365, value, milestone_days / 365)
     end
   end
 
-  def self.compare_age(age, window_period)
+  def self.compare_age(age, window_period, milestone_days)
     if window_period.include?('-')
       start_age, end_age = window_period.split('-').map(&:to_i)
-      (age >= start_age) && (age <= end_age)
+      (age >= start_age) && (age <= end_age) && (age >= milestone_days.to_i)
     else
-      age <= window_period.to_i
+      (age <= window_period.to_i) && (age >= milestone_days.to_i)
     end
   end
 end
