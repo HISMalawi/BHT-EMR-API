@@ -26,7 +26,7 @@ module VaccineScheduleService
     vaccines_given = administered_vaccines(patient.person_id, immunization_with_window.pluck(:drug_id))
     grouped_immunizations = immunization_with_window.group_by { | immunizations | immunizations[:milestone_name] }
     sorted_grouped_immunizations = grouped_immunizations.sort_by { |milestone| milestone[1][0][:sort_weight]}.to_h
-    vaccines = format_schedule(sorted_grouped_immunizations, vaccines_given, patient.birthdate)
+    vaccines = format_schedule(make_unique(sorted_grouped_immunizations), vaccines_given, patient.birthdate)
 
     return {vaccine_schedule: vaccines}
     # rescue => e
