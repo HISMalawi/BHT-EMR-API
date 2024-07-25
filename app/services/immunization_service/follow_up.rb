@@ -8,10 +8,10 @@ module ImmunizationService
     end
 
     # Fetch all missed immunizations or milestones 
-    def fetch_missed_immunizations
+    def fetch_missed_immunizations(location_id)
       immunization_clients = Patient.joins(:encounters, person: :names)
                                     .where("encounter.program_id = ? AND patient.voided = ? AND encounter.location_id = ?", 
-                                            PROGRAM_ID, false, User.current.location_id)
+                                            PROGRAM_ID, false, location_id)
                                     .distinct
                                     .pluck("patient.patient_id, person.birthdate, person_name.given_name, person_name.family_name")
 
@@ -54,6 +54,7 @@ module ImmunizationService
           end
         end
       end
+
 
       { under_five_missed_visits: under_five_missed_visits, over_five_missed_visits: over_five_missed_visits, 
         under_five_count: under_five_count, over_five_count: over_five_count }

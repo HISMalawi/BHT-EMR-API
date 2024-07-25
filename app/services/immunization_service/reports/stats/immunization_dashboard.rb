@@ -4,10 +4,11 @@ module ImmunizationService
             class ImmunizationDashboard
 
             
-                def initialize(start_date:, end_date:)
+                def initialize(start_date:, end_date:, location_id:)
                     @current_date = Date.current
                     @start_date = Date.parse(start_date).beginning_of_day
                     @end_date = Date.parse(end_date).end_of_day
+                    @location_id = location_id
                 end
 
                 def data
@@ -38,7 +39,8 @@ module ImmunizationService
                     base_query
                         .where(
                             encounter_type: { name: "REGISTRATION"},
-                            obs: { obs_datetime: @start_date..@end_date }
+                            obs: { obs_datetime: @start_date..@end_date },
+                            location_id: location_id
                         )
                         .distinct
                         .count(:person_id)
