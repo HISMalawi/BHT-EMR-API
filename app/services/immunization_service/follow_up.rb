@@ -9,18 +9,22 @@ module ImmunizationService
 
     # Fetch all missed immunizations or milestones 
     def fetch_missed_immunizations
-      immunization_clients = Patient.joins(:encounters).distinct.select("patient.patient_id")
-                                  .where("encounter.program_id = ? and
-                                  patient.voided = ? and encounter.location_id = ?", 
-                                  PROGRAM_ID, false, User.current.location_id)
+      immunization_clients = Patient.joins(:encounters, person: :names)
+                                    .where("encounter.program_id = ? AND patient.voided = ? AND encounter.location_id = ?", 
+                                            PROGRAM_ID, false, User.current.location_id)
+                                    .distinct
+                                    .pluck("patient.patient_id, person.birthdate, person_name.given_name, person_name.family_name")
+
 
       under_five_missed_visits = []
       over_five_missed_visits = []
       under_five_count = 0
       over_five_count = 0
 
-      immunization_clients.each do |immunization_client|
-        vaccine_schedules = ImmunizationService::VaccineScheduleService.vaccine_schedule(immunization_client.person)
+      immunization_clients.each do |patient_id, birthdate, given_name, family_name|
+        immunization_client = OpenStruct.new(patient_id: patient_id, birthdate: birthdate, given_name: given_name, family_name: family_name)
+
+        vaccine_schedules = ImmunizationService::VaccineScheduleService.vaccine_schedule(find_patient(immunization_client.patient_id))
 
         client_missed_visits = []
 
@@ -41,7 +45,7 @@ module ImmunizationService
         end
 
         unless client_missed_visits.empty?
-          if age_in_years(immunization_client.person.birthdate) < 5
+          if age_in_years(immunization_client.birthdate) < 5
             under_five_missed_visits << { client: immunization_client, missed_visits: client_missed_visits }
             under_five_count += 1
           else
@@ -71,5 +75,8 @@ module ImmunizationService
       age
     end
 
+    def find_patient(patient_id)
+      Person.find(patient_id)
+    end
   end
 end
