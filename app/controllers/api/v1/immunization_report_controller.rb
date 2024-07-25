@@ -9,13 +9,7 @@ class Api::V1::ImmunizationReportController < ApplicationController
                 status: :unprocessable_entity
         end
 
-        #ImmunizationReportJob.perform_later(start_date, end_date)
-        dashboard = ImmunizationService::Reports::Stats::ImmunizationDashboard.new(
-            start_date: start_date,
-            end_date: end_date
-        )
-
+        DashboardStatsJob.perform_later
        
-        ActionCable.server.broadcast('immunization_report_channel', dashboard.data)
     end
 end
