@@ -23,24 +23,22 @@ module ImmunizationService
                         total_children_vaccinated_today:,
                         total_women_vaccinated_today:,
                         total_men_vaccinated_today:,
-                        vaccination_counts_by_month:,
-                        client_overdue_under_five_years:,
-                        client_overdue_over_five_years:
+                        vaccination_counts_by_month:
                     }
                 end
 
                 def base_query
                     Observation.joins(concept: :concept_names, 
                                 encounter: %i[program type], person: [])
-                               .where( program: { program_id: 33 })
+                               .where( program: { program_id: 33 },  
+                                      location_id: @location_id)
                 end
 
                 def total_client_registered
                     base_query
                         .where(
                             encounter_type: { name: "REGISTRATION"},
-                            obs: { obs_datetime: @start_date..@end_date },
-                            location_id: location_id
+                            obs: { obs_datetime: @start_date..@end_date }
                         )
                         .distinct
                         .count(:person_id)
@@ -163,31 +161,7 @@ module ImmunizationService
                     { months: months.reverse, vaccinations: vaccinations.reverse }
                 end
 
-                def  client_overdue_under_five_years
-                   followup_service.over_due_stats[:under_five]
-                end
                 
-                def  client_overdue_over_five_years
-                    followup_service.over_due_stats[:over_five]
-                end
-
-                def clients_due_today
-
-                end 
-
-                def clients_due_this_week
-
-                end
-                
-                def clients_due_this_month
-                    
-                end
-
-                private
-                def followup_service
-                    ImmunizationService::FollowUp.new()
-                end
-                  
             end
         end
     end
