@@ -44,8 +44,7 @@ module Api
 
       
           ImmunizationReportJob.perform_later(start_date, end_date, User.current.location_id)
-          ImmunizationOverdueJob.perform_later(User.current.location_id)
-
+    
           render json: orders, status: :created
         end
     end
