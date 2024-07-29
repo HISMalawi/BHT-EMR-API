@@ -235,7 +235,7 @@ module VaccineScheduleService
   end
 
   def self.can_administer_drug?(drug, dob, milestone)
-    return if drug[:window_period].blank?
+    drug[:window_period] = '100 years' if drug[:window_period].blank?
 
     if milestone == 'At birth'
       milestone_days = 7
@@ -246,21 +246,22 @@ module VaccineScheduleService
     # Handle atigens that are valid in a range of ages
     value, units = drug[:window_period].split
     case units.downcase
-    when 'weeks'
-      compare_age(age.to_i / 7, value, milestone_days / 7)
-    when 'months'
-      compare_age(age.to_i / 30, value, milestone_days / 30)
-    when 'years'
-      compare_age(age.to_i / 365, value, milestone_days / 365)
+    when 'week', 'weeks'
+      compare_age(age.to_f / 7, value, milestone_days.to_f / 7)
+    when 'month', 'months'
+      compare_age(age.to_f / 30, value, milestone_days.to_f / 30)
+    when 'year', 'years'
+      compare_age(age.to_f / 365, value, milestone_days.to_f / 365)
     end
   end
+  
 
   def self.compare_age(age, window_period, milestone_days)
     if window_period.include?('-')
       start_age, end_age = window_period.split('-').map(&:to_i)
-      (age >= start_age) && (age <= end_age) && (age >= milestone_days.to_i)
+      (age >= start_age) && (age <= end_age) && (age >= milestone_days)
     else
-      (age <= window_period.to_i) && (age >= milestone_days.to_i)
+      (age <= window_period.to_f) && (age >= milestone_days)
     end
   end
 end
