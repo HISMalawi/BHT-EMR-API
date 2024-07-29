@@ -15,6 +15,13 @@ module ArtService
           @num = 0
         end
 
+        def map_orders(orders)
+          orders.map do |order|
+            order['test_results'] = Hash[JSON.parse("[#{order['test_results']}]").flat_map(&:to_a)]
+            order
+          end
+        end
+
         def find_report
           report.sex = build_genders
           report.age = build_age
@@ -24,7 +31,7 @@ module ArtService
           report.symptom_screening = build_symptom_screening(symptoms)
           report.criteria_met = build_criteria_met(symptoms)
           report.who_stage = build_who_stage
-          orders = run(builder.ahd_lab_orders)
+          orders = map_orders(run(builder.ahd_lab_orders))
           report.cd4_results = build_cd4_results(orders)
           report.hiv_viral_load = build_hiv_viral_load(orders)
           report.crag = build_crag(orders)
@@ -33,6 +40,8 @@ module ArtService
           report.genexpert = build_genexpert(orders)
           report.chest_xray = build_chest_xray(orders)
           report.fash = build_fash(orders)
+          report.treatment_given = build_treatment_given
+          report.seriously_ill = build_seriously_ill
           report.outcome = build_outcomes
           report.table
         end
@@ -53,6 +62,18 @@ module ArtService
           push_to_report('Criteria Met', data.keys, data)
         end
 
+        def build_seriously_ill
+          # TODO: make calculations for this
+          data = build_indicators(%w[male fp])
+          push_to_report('Seriously ill', data.keys, data)
+        end
+
+        def build_treatment_given
+          # TODO: make calculations for this
+          data = build_indicators(%w[tb meningitis cryptococcemia ks other missing])
+          push_to_report('Treatnent given', data.keys, data)
+        end
+
         def build_outcomes
           data = build_indicators(%w[discharged transfered_out ltfu died missing total])
           values = run(builder.ahd_outcomes)
@@ -70,10 +91,13 @@ module ArtService
 
         def build_chest_xray(orders)
           data = build_indicators(%w[abnormal normal missing total])
-          crag = orders.filter { |o| o['name'] == 'Chest x-ray' }
-          crag.each do |row|
-            _, value = row['test_results'].split(',')
+          orders.each do |row|
+            labs = row['test_results']
+
+            next unless labs.keys.include?('Chest X-ray')
+
             data['total'] << row['patient_id']
+            _, value = labs['Chest X-ray'].split(',')
             if value == 'Normal'
               data['normal'] << row['patient_id']
             elsif value == 'Abnormal'
@@ -88,10 +112,13 @@ module ArtService
 
         def build_fash(orders)
           data = build_indicators(%w[abnormal normal missing total])
-          crag = orders.filter { |o| o['name'] == 'FASH' }
-          crag.each do |row|
-            _, value = row['test_results'].split(',')
+          orders.each do |row|
+            labs = row['test_results']
+
+            next unless labs.keys.include?('FASH')
+
             data['total'] << row['patient_id']
+            _, value = labs['FASH'].split(',')
             if value == 'Normal'
               data['normal'] << row['patient_id']
             elsif value == 'Abnormal'
@@ -105,10 +132,13 @@ module ArtService
 
         def build_genexpert(orders)
           data = build_indicators(%w[positive negative missing total])
-          crag = orders.filter { |o| o['name'] == 'GeneXpert' }
-          crag.each do |row|
-            _, value = row['test_results'].split(',')
+          orders.each do |row|
+            labs = row['test_results']
+
+            next unless labs.keys.include?('GeneXpert')
+
             data['total'] << row['patient_id']
+            _, value = labs['GeneXpert'].split(',')
             if value == 'Positive'
               data['positive'] << row['patient_id']
             elsif value == 'Negative'
@@ -122,10 +152,13 @@ module ArtService
 
         def build_urine_lam(orders)
           data = build_indicators(%w[positive negative missing total])
-          crag = orders.filter { |o| o['name'] == 'Urine LAM' }
-          crag.each do |row|
-            _, value = row['test_results'].split(',')
+          orders.each do |row|
+            labs = row['test_results']
+
+            next unless labs.keys.include?('Urine LAM')
+
             data['total'] << row['patient_id']
+            _, value = labs['Urine LAM'].split(',')
             if value == 'Positive'
               data['positive'] << row['patient_id']
             elsif value == 'Negative'
@@ -139,10 +172,13 @@ module ArtService
 
         def build_csf_crag(orders)
           data = build_indicators(%w[positive negative missing total])
-          crag = orders.filter { |o| o['name'] == 'CSF CrAg' }
-          crag.each do |row|
-            _, value = row['test_results'].split(',')
+          orders.each do |row|
+            labs = row['test_results']
+
+            next unless labs.keys.include?('CSF crAg')
+
             data['total'] << row['patient_id']
+            _, value = labs['CSF crAg'].split(',')
             if value == 'Positive'
               data['positive'] << row['patient_id']
             elsif value == 'Negative'
@@ -156,10 +192,14 @@ module ArtService
 
         def build_crag(orders)
           data = build_indicators(%w[positive negative missing total])
-          crag = orders.filter { |o| o['name'] == 'CrAg' }
-          crag.each do |row|
-            _, value = row['test_results'].split(',')
+          orders.each do |row|
+            labs = row['test_results']
+
+            next unless labs.keys.include?('crAg')
+
             data['total'] << row['patient_id']
+            _, value = labs['crAg'].split(',')
+
             if value == 'Positive'
               data['positive'] << row['patient_id']
             elsif value == 'Negative'
@@ -173,10 +213,15 @@ module ArtService
 
         def build_hiv_viral_load(orders)
           data = build_indicators(%w[<1000 1000+ missing total])
-          vl = orders.filter { |o| o['name'] == 'HIV Viral load' }
 
-          vl.each do |row|
+          orders.each do |row|
+            labs = row['test_results']
+
+            next unless labs.keys.include?('HIV Viral load')
+
             data['total'] << row['patient_id']
+            labs['HIV Viral load'].split(',')
+
             modifier, value = row['test_results'].split(',')
             if modifier == '<' && value.to_i <= 1000
               data['<1000'] << row['patient_id']
@@ -191,10 +236,14 @@ module ArtService
 
         def build_cd4_results(orders)
           data = build_indicators(%w[<200 1000+ not_done missing total])
-          cd4_tests = orders.filter { |o| o['name'] == 'CD4 count' }
-          cd4_tests.each do |row|
+          orders.each do |row|
+            labs = row['test_results']
+
+            next unless labs.keys.include?('CD4 count')
+
             data['total'] << row['patient_id']
-            modifier, value = row['test_results'].split(',')
+            modifier, value = labs['CD4 count'].split(',')
+
             if modifier == '<' && value.to_i <= 200
               data['<200'] << row['patient_id']
             elsif modifier == '>' && value.to_i >= 1000

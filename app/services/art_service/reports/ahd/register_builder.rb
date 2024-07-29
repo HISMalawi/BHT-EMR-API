@@ -5,7 +5,6 @@ include ModelUtils
 module ArtService
   module Reports
     module Ahd
-      # Generates a discrepancy report for a clinic
       class RegisterBuilder
         attr_reader :start_date, :end_date
 
@@ -20,11 +19,13 @@ module ArtService
           ahd_encounter = EncounterType.find_by_name('SYMPTOM SCREENING')
 
           @relation.joins(encounters: [:observations])
+                   .joins(:person)
                    .where(encounter: { program_id: @hiv_program.id })
                    .where(encounter: { encounter_datetime: start_date...end_date })
                    .where(encounter: { encounter_type: ahd_encounter.encounter_type_id })
                    .group('patient.patient_id')
                    .select('patient.patient_id')
+                   .select('TIMESTAMPDIFF(YEAR, person.birthdate, CURDATE()) AS age')
         end
 
         module Scopes
@@ -36,6 +37,66 @@ module ArtService
 
           def ahd_outcomes
             select("pepfar_patient_outcome(patient.patient_id, '#{Date.today}') AS outcome")
+          end
+
+          def itt; end
+
+          def guardian_visits(start_date, end_date)
+            reception_encounter = EncounterType.find_by_name('HIV RECEPTION')
+
+            select('IF(guardian.patient_id IS NOT NULL, "Yes", "No") AS guardian_visit')
+              .joins <<~SQL
+                LEFT JOIN (
+                  SELECT guardian_enc.patient_id
+                  FROM encounter guardian_enc
+                  INNER JOIN obs present ON present.encounter_id = guardian_enc.encounter_id
+                    AND present.voided = 0
+                    AND present.concept_id = #{Concept.find_by_name('Responsible person present').concept_id}
+                    AND present.value_coded = #{concept('Yes').concept_id}
+                    AND guardian_enc.encounter_type = #{reception_encounter.encounter_type_id}
+                    AND guardian_enc.voided = 0
+                    AND guardian_enc.encounter_datetime >= '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+                    AND guardian_enc.encounter_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+                  INNER JOIN obs patient_absent ON patient_absent.encounter_id = guardian_enc.encounter_id
+                    AND patient_absent.voided = 0
+                    AND patient_absent.concept_id = #{Concept.find_by_name('Patient present for consultation').concept_id}
+                    AND patient_absent.value_coded = #{concept('No').concept_id}
+                  GROUP BY guardian_enc.patient_id
+                )  AS guardian ON guardian.patient_id = patient.patient_id
+              SQL
+          end
+
+          def missed_appointments(start_date, end_date)
+            appointment_encounter = EncounterType.find_by_name('APPOINTMENT')
+            treatment_encounter = EncounterType.find_by_name('TREATMENT')
+            arv_drugs = Drug.arv_drugs.map(&:drug_id).join(',')
+
+            select('IF (app_missed.patient_id IS NOT NULL, "Yes", "No") AS missed_appointment')
+              .joins <<~SQL
+                LEFT JOIN(
+                  SELECT app.patient_id
+                  FROM orders o
+                  INNER JOIN encounter app ON app.patient_id = o.patient_id
+                    AND app.encounter_type = #{appointment_encounter.encounter_type_id}
+                    AND app.voided = 0
+                    AND app.encounter_datetime >= '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+                    AND app.encounter_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+                  INNER JOIN obs app_date ON app_date.encounter_id = app.encounter_id
+                    AND app_date.voided = 0
+                    AND app_date.concept_id = #{concept('Appointment Date').concept_id}
+                  LEFT JOIN encounter client_came ON client_came.patient_id = o.patient_id
+                    AND client_came.voided = 0
+                    AND client_came.encounter_type = #{treatment_encounter.encounter_type_id}#{' '}
+                    AND client_came.encounter_datetime >= DATE(app.encounter_datetime) + INTERVAL 1 DAY#{' '}
+                    AND client_came.encounter_datetime <= app_date.value_datetime
+                  INNER JOIN drug_order d ON d.order_id = o.order_id
+                    AND d.quantity > 0
+                    AND d.drug_inventory_id IN(#{arv_drugs})
+                  WHERE o.voided = 0
+                  AND app_date.value_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+                  GROUP BY app.patient_id
+                ) as app_missed ON app_missed.patient_id = patient.patient_id
+              SQL
           end
 
           def ahd_lab_orders
@@ -51,20 +112,19 @@ module ArtService
 
             test_type_ids = test_types.map { |type| concept(type).concept_id }
 
-            select('tt.name, GROUP_CONCAT(DISTINCT CONCAT(result.value_modifier, ",",
-                             COALESCE(result.value_numeric, result.value_text, result.value_coded))) AS test_results')
+            select('GROUP_CONCAT(DISTINCT JSON_OBJECT(COALESCE(tt.name, "N/A"), CONCAT(result.value_modifier, ",",    COALESCE(result.value_numeric, result.value_text, result.value_coded)))) AS test_results')
               .joins <<~SQL
                 LEFT JOIN orders ON orders.patient_id = encounter.patient_id
                 AND orders.voided = 0
                 LEFT JOIN obs test_type ON test_type.order_id = orders.order_id
                 AND test_type.concept_id = #{concept('Test type').concept_id}
                 AND test_type.value_coded IN (#{test_type_ids.join(', ')})
-                INNER JOIN concept_name tt ON tt.concept_id = test_type.value_coded
+                LEFT JOIN concept_name tt ON tt.concept_id = test_type.value_coded
                 LEFT JOIN obs tr ON tr.order_id = orders.order_id
                 AND tr.voided = 0
                 AND tr.concept_id = 7363
                 AND tr.obs_group_id = test_type.obs_id
-                INNER JOIN obs result ON result.obs_group_id = tr.obs_id
+                LEFT JOIN obs result ON result.obs_group_id = tr.obs_id
               SQL
           end
 
