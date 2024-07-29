@@ -102,3 +102,16 @@ idsr_sms:
 # test_credentials:
 #   username: admin
 #   password: test
+
+#To get the sms key follow the following steps in the ReadMe
+development:
+  sms_gateway_url: ''
+  sms_api_key: '' 
+
+test:
+  sms_gateway_url: ''
+  sms_api_key: ''
+
+production:
+  sms_gateway_url: ''
+  sms_api_key: ''
