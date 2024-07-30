@@ -30,7 +30,6 @@ module ArtService
           report.itt = []
           report.guardian_visits = []
           report.ma = []
-          report.all = []
           map_results
 
           report
@@ -106,7 +105,6 @@ module ArtService
 
             report.total_eligible = report.total_eligible.uniq
 
-            report.all << row
             # TODO: Add ITT
           end
         end
