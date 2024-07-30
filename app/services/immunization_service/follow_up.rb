@@ -1,3 +1,5 @@
+require 'date'
+
 module ImmunizationService
   class FollowUp
     
@@ -10,6 +12,13 @@ module ImmunizationService
     # Fetch all missed immunizations or milestones 
     def fetch_missed_immunizations(location_id)
       immunization_clients = fetch_immunization_clients(location_id)
+      today = Date.today
+      start_of_week = today - today.wday
+      end_of_week = start_of_week + 6
+      start_of_month = Date.new(today.year, today.month, 1)
+      end_of_month = Date.new(today.year, today.month, -1)
+
+      due_today,  due_this_week,  due_this_month = [], [], []
       under_five_missed_visits, over_five_missed_visits, under_five_count, over_five_count = [], [], 0, 0
       under_five_missed_doses, over_five_missed_doses = [], []
 
@@ -17,7 +26,9 @@ module ImmunizationService
         immunization_client = OpenStruct.new(patient_id: patient_id, birthdate: birthdate, given_name: given_name, family_name: family_name)
         client_missed_visits, vaccine_schedules = [], ImmunizationService::VaccineScheduleService.vaccine_schedule(find_patient(patient_id))
 
-        process_vaccine_schedules(vaccine_schedules, client_missed_visits, under_five_missed_doses, over_five_missed_doses, immunization_client)
+        process_vaccine_schedules(vaccine_schedules, client_missed_visits, under_five_missed_doses,
+                                  over_five_missed_doses, due_today, due_this_week, due_this_month,
+                                  today, start_of_week, end_of_week, start_of_month, end_of_month, immunization_client)
 
         if client_missed_visits.any?
           if age_in_years(immunization_client.birthdate) < 5
@@ -36,7 +47,13 @@ module ImmunizationService
         under_five_count: under_five_count,
         over_five_count: over_five_count,
         under_five_missed_doses: under_five_missed_doses,
-        over_five_missed_doses: over_five_missed_doses
+        over_five_missed_doses: over_five_missed_doses,
+        due_today_count: due_today.count,
+        due_this_week_count: due_this_week.count,
+        due_this_month_count: due_this_month.count,
+        due_today: due_today,
+        due_this_week: due_this_week,
+        due_this_month: due_this_month
       }
     end
 
@@ -62,14 +79,30 @@ module ImmunizationService
     end
 
     # Process vaccine schedules and determine missed doses
-    def process_vaccine_schedules(vaccine_schedules, client_missed_visits, under_five_missed_doses, over_five_missed_doses, immunization_client)
+    def process_vaccine_schedules(vaccine_schedules, client_missed_visits, under_five_missed_doses,
+       over_five_missed_doses, due_today, due_this_week, due_this_month, today, start_of_week,
+       end_of_week, start_of_month, end_of_month, immunization_client)
+
       vaccine_schedules.each do |vaccine_schedule|
         vaccine_schedule[1].each do |visit|
+
           missed_antigens = visit[:antigens].select { |antigen| antigen[:can_administer] && antigen[:status] == "pending" }
 
           unless missed_antigens.empty?
             client_missed_visits << { visit: visit[:visit], milestone_status: visit[:milestone_status], age: visit[:age], antigens: missed_antigens }
             update_missed_doses(missed_antigens, immunization_client.birthdate, under_five_missed_doses, over_five_missed_doses)
+
+            # Calculate if the vaccine can be admnistered and its pending 
+            due_date = calculate_due_date(immunization_client.birthdate, visit[:age])
+
+            if due_date == today
+              due_today << immunization_client
+            elsif due_date >= start_of_week && due_date <= end_of_week
+              due_this_week << immunization_client
+            elsif due_date >= start_of_month && due_date <= end_of_month
+              due_this_month << immunization_client
+            end
+
           end
         end
       end
@@ -109,6 +142,27 @@ module ImmunizationService
     # Find patient by ID
     def find_patient(patient_id)
       Person.find(patient_id)
+    end
+
+    def calculate_due_date(birthdate, age_string)
+      return birthdate if age_string.downcase == 'at birth'
+
+      age_parts = age_string.split(' ')
+      number = age_parts[0].to_i
+      unit = age_parts[1]
+
+      case unit
+      when 'days', 'day'
+        birthdate + number
+      when 'weeks', 'week'
+        birthdate + (number * 7)
+      when 'months', 'month'
+        birthdate >> number
+      when 'years', 'year'
+        birthdate >> (number * 12)
+      else
+        birthdate
+      end
     end
   end
 end
