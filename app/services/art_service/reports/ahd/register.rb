@@ -50,35 +50,16 @@ module ArtService
 
         private
 
-        def build_criteria_met(orders, who_stages)
+        def build_criteria_met(patients, who_stages)
           data = build_indicators(%w[yes no total missing])
-          stage_3 = ['WHO stage 3', 'WHO stage III adult', 'WHO stage III peds',
-                     'WHO stage III criteria present', 'WHO stage III adult and peds']
+          who_stage_ids = who_stage_3_and_4_ids
 
-          stage_4 = ['WHO stage 4', 'WHO stage IV adult', 'WHO stage IV peds',
-                     'WHO stage IV criteria present', 'WHO stage IV adult and peds']
-
-          who_stage_ids = [stage_3 + stage_4].map { |x| x.map { |y| concept(y).concept_id } }.flatten
-
-          orders.each do |order|
-            patient_id = order['patient_id']
-            labs = order['test_results']
+          patients.each do |patient|
+            patient_id = patient['patient_id']
+            labs = patient['test_results']
             who_stage = who_stages.find { |row| row['patient_id'] == patient_id }['who_stage']&.to_i
 
-            data['yes'] << patient_id if order['age']&.to_i&.< 5
-
-            data['yes'] << patient_id if who_stage_ids.include?(who_stage)
-
-            if labs.keys.include?('CD4 count')
-              measure, result = labs['CD4 count'].split(',')
-              data['yes'] << patient_id if measure == '<' && result.to_f <= 200
-            end
-
-            if labs.keys.include?('HIV Viral load')
-              measure, result = labs['HIV Viral load'].split(',')
-              data['yes'] << patient_id if result.to_f > 1000 || (measure == '=' && result == 'LDL')
-            end
-
+            data['yes'] << patient_id if patient_meets_criteria?(patient, who_stage_ids, labs, who_stage)
             data['no'] << patient_id unless data['yes'].include?(patient_id)
           end
 
@@ -105,10 +86,16 @@ module ArtService
             outcome = row['outcome']&.downcase
             patient_id = row['patient_id']
 
-            data['discharged'] << patient_id if outcome == 'discharged'
-            data['transfered_out'] << patient_id if outcome == 'transfered out'
-            data['ltfu'] << patient_id if outcome == 'lost to follow up'
-            data['died'] << patient_id if outcome == 'died'
+            case outcome
+            when 'discharged'
+              data['discharged'] << patient_id
+            when 'transfered out'
+              data['transfered_out'] << patient_id
+            when 'lost to follow up'
+              data['ltfu'] << patient_id
+            when 'died'
+              data['died'] << patient_id
+            end
 
             data['total'] = data['discharged'] + data['transfered_out'] + data['ltfu'] + data['died']
           end
@@ -117,201 +104,69 @@ module ArtService
         end
 
         def build_chest_xray(orders)
-          data = build_indicators(%w[abnormal normal missing total])
-          orders.each do |row|
-            labs = row['test_results']
-            patient_id = row['patient_id']
-
-            next unless labs.keys.include?('Chest X-ray')
-
-            data['total'] << patient_id
-            _, value = labs['Chest X-ray'].split(',')
-            if value == 'Normal'
-              data['normal'] << patient_id
-            elsif value == 'Abnormal'
-              data['abnormal'] << patient_id
-            else
-              data['missing'] << patient_id
-            end
-          end
-
-          push_to_report('Chest x-ray', data.keys, data)
+          build_test_results_report(orders, 'Chest X-ray', %w[abnormal normal missing total], 'Chest x-ray')
         end
 
         def build_fash(orders)
-          data = build_indicators(%w[abnormal normal missing total])
-          orders.each do |row|
-            labs = row['test_results']
-            patient_id = row['patient_id']
-
-            next unless labs.keys.include?('FASH')
-
-            data['total'] << patient_id
-            _, value = labs['FASH'].split(',')
-            if value == 'Normal'
-              data['normal'] << patient_id
-            elsif value == 'Abnormal'
-              data['abnormal'] << patient_id
-            else
-              data['missing'] << patient_id
-            end
-          end
-          push_to_report('Chest x-ray', data.keys, data)
+          build_test_results_report(orders, 'FASH', %w[abnormal normal missing total], 'FASH')
         end
 
         def build_genexpert(orders)
-          data = build_indicators(%w[positive negative missing total])
-          orders.each do |row|
-            labs = row['test_results']
-            patient_id = row['patient_id']
-
-            next unless labs.keys.include?('GeneXpert')
-
-            data['total'] << patient_id
-            _, value = labs['GeneXpert'].split(',')
-            if value == 'Positive'
-              data['positive'] << patient_id
-            elsif value == 'Negative'
-              data['negative'] << patient_id
-            else
-              data['missing'] << patient_id
-            end
-          end
-          push_to_report('Chest x-ray', data.keys, data)
+          build_test_results_report(orders, 'GeneXpert', %w[positive negative missing total], 'GeneXpert')
         end
 
         def build_urine_lam(orders)
-          data = build_indicators(%w[positive negative missing total])
-          orders.each do |row|
-            labs = row['test_results']
-            patient_id = row['patient_id']
-
-            next unless labs.keys.include?('Urine LAM')
-
-            data['total'] << patient_id
-            _, value = labs['Urine LAM'].split(',')
-            if value == 'Positive'
-              data['positive'] << patient_id
-            elsif value == 'Negative'
-              data['negative'] << patient_id
-            else
-              data['missing'] << patient_id
-            end
-          end
-          push_to_report('Chest x-ray', data.keys, data)
+          build_test_results_report(orders, 'Urine LAM', %w[positive negative missing total], 'Urine LAM')
         end
 
         def build_csf_crag(orders)
-          data = build_indicators(%w[positive negative missing total])
-          orders.each do |row|
-            labs = row['test_results']
-            patient_id = row['patient_id']
-
-            next unless labs.keys.include?('CSF crAg')
-
-            data['total'] << patient_id
-            _, value = labs['CSF crAg'].split(',')
-            if value == 'Positive'
-              data['positive'] << patient_id
-            elsif value == 'Negative'
-              data['negative'] << patient_id
-            else
-              data['missing'] << patient_id
-            end
-          end
-          push_to_report('Chest x-ray', data.keys, data)
+          build_test_results_report(orders, 'CSF crAg', %w[positive negative missing total], 'CSF crAg')
         end
 
         def build_crag(orders)
-          data = build_indicators(%w[positive negative missing total])
-          orders.each do |row|
-            labs = row['test_results']
-            patient_id = row['patient_id']
-
-            next unless labs.keys.include?('crAg')
-
-            data['total'] << patient_id
-            _, value = labs['crAg'].split(',')
-
-            if value == 'Positive'
-              data['positive'] << patient_id
-            elsif value == 'Negative'
-              data['negative'] << patient_id
-            else
-              data['missing'] << patient_id
-            end
-          end
-          push_to_report('Chest x-ray', data.keys, data)
+          build_test_results_report(orders, 'crAg', %w[positive negative missing total], 'crAg')
         end
 
         def build_hiv_viral_load(orders)
-          data = build_indicators(%w[<1000 1000+ missing total])
-
-          orders.each do |row|
-            labs = row['test_results']
-            patient_id = row['patient_id']
-
-            next unless labs.keys.include?('HIV Viral load')
-
-            data['total'] << patient_id
-            modifier, value = labs['HIV Viral load'].split(',')
+          build_test_results_report(orders, 'HIV Viral load', %w[<1000 1000+ missing total],
+                                    'HIV Viral load') do |modifier, value|
             if modifier == '<' && value.to_i <= 1000
-              data['<1000'] << patient_id
+              '<1000'
             elsif modifier == '>' && value.to_i >= 1000
-              data['1000+'] << patient_id
+              '1000+'
             else
-              data['missing'] << patient_id
+              'missing'
             end
           end
-          push_to_report('Chest x-ray', data.keys, data)
         end
 
         def build_cd4_results(orders)
-          data = build_indicators(%w[<200 1000+ not_done missing total])
-          orders.each do |row|
-            labs = row['test_results']
-            patient_id = row['patient_id']
-
-            next unless labs.keys.include?('CD4 count')
-
-            data['total'] << patient_id
-            modifier, value = labs['CD4 count'].split(',')
-
+          build_test_results_report(orders, 'CD4 count', %w[<200 1000+ not_done missing total],
+                                    'CD4 Count') do |modifier, value|
             if modifier == '<' && value.to_i <= 200
-              data['<200'] << patient_id
+              '<200'
             elsif modifier == '>' && value.to_i >= 1000
-              data['1000+'] << patient_id
+              '1000+'
             else
-              data['not_done'] << patient_id
+              'not_done'
             end
           end
-
-          push_to_report('CD4 Count', data.keys, data)
         end
 
         def build_who_stage(who_stages)
           data = build_indicators(%w[who_1 who_2 who_3 who_4])
           values = who_stages
 
-          stage_1 = ['WHO stage 1', 'WHO stage I',
-                     'WHO stage I adult', 'WHO stage I peds',
-                     'WHO stage I criteria present',
-                     'WHO stage I adult and peds']
-
-          stage_2 = ['WHO stage 2', 'WHO stage II',
-                     'WHO stage II adult', 'WHO stage II peds',
-                     'WHO stage II criteria present',
-                     'WHO stage II adult and peds']
-
-          stage_3 = ['WHO stage 3', 'WHO stage III',
-                     'WHO stage III adult', 'WHO stage III peds',
-                     'WHO stage III criteria present',
-                     'WHO stage III adult and peds']
-
-          stage_4 = ['WHO stage 4', 'WHO stage IV',
-                     'WHO stage IV adult', 'WHO stage IV peds',
-                     'WHO stage IV criteria present',
-                     'WHO stage IV adult and peds']
+          stage_groups = {
+            'who_1' => ['WHO stage 1', 'WHO stage I', 'WHO stage I adult', 'WHO stage I peds',
+                        'WHO stage I criteria present', 'WHO stage I adult and peds'],
+            'who_2' => ['WHO stage 2', 'WHO stage II', 'WHO stage II adult', 'WHO stage II peds',
+                        'WHO stage II criteria present', 'WHO stage II adult and peds'],
+            'who_3' => ['WHO stage 3', 'WHO stage III', 'WHO stage III adult', 'WHO stage III peds',
+                        'WHO stage III criteria present', 'WHO stage III adult and peds'],
+            'who_4' => ['WHO stage 4', 'WHO stage IV', 'WHO stage IV adult', 'WHO stage IV peds',
+                        'WHO stage IV criteria present', 'WHO stage IV adult and peds']
+          }
 
           values.each_key do |row|
             who_stage = row['who_stage']&.to_i
@@ -690,44 +545,39 @@ module ArtService
 
           values.each do |row|
             who_stage = row['who_stage']&.to_i
+            patient_id = row['patient_id']
 
-            data['who_1'] << row['patient_id'] if ConceptName.where(name: stage_1)
-                                                             .pluck('concept_id')
-                                                             .include?(who_stage)
-            data['who_2'] << row['patient_id'] if ConceptName.where(name: stage_2)
-                                                             .pluck('concept_id')
-                                                             .include?(who_stage)
-            data['who_3'] << row['patient_id'] if ConceptName.where(name: stage_3)
-                                                             .pluck('concept_id')
-                                                             .include?(who_stage)
-            data['who_4'] << row['patient_id'] if ConceptName.where(name: stage_4)
-                                                             .pluck('concept_id')
-                                                             .include?(who_stage)
+            stage_groups.each do |key, stages|
+              data[key] << patient_id if ConceptName.where(name: stages).pluck('concept_id').include?(who_stage)
+            end
           end
 
           push_to_report('WHO Stage', data.keys, data)
         end
 
-        def build_symptom_screening(s)
-          data = build_indicators(%w[cough thrive fever mouth_sores shortness_of_breath cns yellow_eyes vomiting
-                                     diarrhea neuropathy trunk missing])
-          values = s
-
+        def build_symptom_screening(values)
+          symptom_map = {
+            'cough' => 'Cough',
+            'thrive' => 'Thrive',
+            'fever' => 'Fever or Night sweats',
+            'mouth_sores' => 'Mouth sores',
+            'shortness_of_breath' => 'Shortness of breath',
+            'cns' => 'Central nervous system',
+            'yellow_eyes' => 'Yellow eyes',
+            'vomiting' => 'Vomiting/Abdominal pain',
+            'diarrhea' => 'Diarrhea',
+            'trunk' => 'Trunk',
+            'neuropathy' => 'Peripheral Neuropathy',
+            'missing' => ''
+          }
+          data = build_indicators(symptom_map.keys)
           values.each do |row|
             symptoms = row['symptoms'].split(',')
             patient_id = row['patient_id']
 
-            data['cough'] << patient_id if symptoms.include?('Cough')
-            data['thrive'] << patient_id if symptoms.include?('Thrive')
-            data['fever'] << patient_id if symptoms.include?('Fever or Night sweats')
-            data['mouth_sores'] << patient_id if symptoms.include?('Mouth sores')
-            data['shortness_of_breath'] << patient_id if symptoms.include?('Shortness of breath')
-            data['cns'] << patient_id if symptoms.include?('Central nervous system')
-            data['yellow_eyes'] << patient_id if symptoms.include?('Yellow eyes')
-            data['vomiting'] << patient_id if symptoms.include?('Vomiting/Abdominal pain')
-            data['diarrhea'] << patient_id if symptoms.include?('Diarrhea')
-            data['trunk'] << patient_id if symptoms.include?('Trunk')
-            data['neropathy'] << patient_id if symptoms.include?('Peripheral Neropathy')
+            symptom_map.each do |key, symptom|
+              data[key] << patient_id if symptoms.include?(symptom)
+            end
           end
 
           push_to_report('Symptom Screening', data.keys, data)
@@ -798,6 +648,88 @@ module ArtService
           end
 
           push_to_report('Sex', data.keys, data)
+        end
+
+        def build_stage_report(values, stage_groups, report_title)
+          data = initialize_data(stage_groups.keys)
+          values.each do |row|
+            who_stage = row['who_stage']&.to_i
+            stage_groups.each do |key, stages|
+              data[key] << row['patient_id'] if ConceptName.where(name: stages).pluck('concept_id').include?(who_stage)
+            end
+          end
+          push_to_report(report_title, data.keys, data)
+        end
+
+        def build_symptom_report(values, symptom_map, report_title)
+          data = initialize_data(symptom_map.keys)
+          values.each do |row|
+            symptoms = row['symptoms'].split(',')
+            patient_id = row['patient_id']
+            symptom_map.each do |key, symptom|
+              data[key] << patient_id if symptoms.include?(symptom)
+            end
+          end
+          push_to_report(report_title, data.keys, data)
+        end
+
+        def build_test_results_report(orders, test_name, indicators, report_title)
+          data = build_indicators(indicators)
+
+          orders.each do |row|
+            labs = row['test_results']
+            patient_id = row['patient_id']
+
+            next unless labs.keys.include?(test_name)
+
+            data['total'] << patient_id
+            modifier, value = labs[test_name].split(',')
+
+            result = if block_given?
+                       yield(modifier, value)
+                     else
+                       value.downcase
+                     end
+
+            data[result] << patient_id if data.keys.include?(result)
+          end
+
+          push_to_report(report_title, data.keys, data)
+        end
+
+        def patient_meets_criteria?(patient, who_stage_ids, labs, who_stage)
+          age_under_5?(patient['age']) ||
+            who_stage_criteria_met?(who_stage_ids, who_stage) ||
+            cd4_count_criteria_met?(labs['CD4 count']) ||
+            hiv_viral_load_criteria_met?(labs['HIV Viral load'])
+        end
+
+        def who_stage_3_and_4_ids
+          stage_3 = ['WHO stage 3', 'WHO stage III adult', 'WHO stage III peds',
+                     'WHO stage III criteria present', 'WHO stage III adult and peds']
+
+          stage_4 = ['WHO stage 4', 'WHO stage IV adult', 'WHO stage IV peds',
+                     'WHO stage IV criteria present', 'WHO stage IV adult and peds']
+
+          [stage_3 + stage_4].flatten.map { |x| concept(x).concept_id }
+        end
+
+        def age_under_5?(age)
+          age&.to_i&.< 5
+        end
+
+        def who_stage_criteria_met?(who_stage_ids, who_stage)
+          who_stage_ids.include?(who_stage)
+        end
+
+        def cd4_count_criteria_met?(cd4_count)
+          measure, result = cd4_count.split(',')
+          measure == '<' && result.to_f <= 200
+        end
+
+        def hiv_viral_load_criteria_met?(hiv_viral_load)
+          measure, result = hiv_viral_load.split(',')
+          result.to_f > 1000 || (measure == '=' && result == 'LDL')
         end
 
         def push_to_report(caption, indicators, data)
