@@ -11,7 +11,6 @@ module ArtService
           @start_date = ActiveRecord::Base.connection.quote(start_date)
           @end_date = ActiveRecord::Base.connection.quote(end_date)
           @report = OpenStruct.new
-          @struct = %w[index label value]
         end
 
         def find_report

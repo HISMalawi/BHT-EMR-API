@@ -23,15 +23,17 @@ module ArtService
         end
 
         def find_report
+          symptoms = run(builder.ahd_symptoms)
+          who_stages = run(builder.who_stage)
+          orders = map_orders(run(builder.ahd_lab_orders))
+
           report.sex = build_genders
           report.age = build_age
           report.hiv_status = build_hiv_status
           report.last_taken_arvs = build_last_taken_arvs
-          symptoms = run(builder.ahd_symptoms)
           report.symptom_screening = build_symptom_screening(symptoms)
-          report.criteria_met = build_criteria_met(symptoms)
-          report.who_stage = build_who_stage
-          orders = map_orders(run(builder.ahd_lab_orders))
+          report.who_stage = build_who_stage(who_stages)
+          report.criteria_met = build_criteria_met(orders, who_stages)
           report.cd4_results = build_cd4_results(orders)
           report.hiv_viral_load = build_hiv_viral_load(orders)
           report.crag = build_crag(orders)
@@ -48,15 +50,36 @@ module ArtService
 
         private
 
-        def build_criteria_met(symptoms)
+        def build_criteria_met(orders, who_stages)
           data = build_indicators(%w[yes no total missing])
+          stage_3 = ['WHO stage 3', 'WHO stage III adult', 'WHO stage III peds',
+                     'WHO stage III criteria present', 'WHO stage III adult and peds']
 
-          symptoms.each do |row|
-            p_symptoms = row['symptoms'].split(',')
-            data['total'] << row['patient_id']
-            data['missing'] << row['patient_id'] if symptoms.empty?
-            data['yes'] << row['patient_id'] if p_symptoms.count >= 2
-            data['no'] << row['patient_id'] if p_symptoms.count < 2
+          stage_4 = ['WHO stage 4', 'WHO stage IV adult', 'WHO stage IV peds',
+                     'WHO stage IV criteria present', 'WHO stage IV adult and peds']
+
+          who_stage_ids = [stage_3 + stage_4].map { |x| x.map { |y| concept(y).concept_id } }.flatten
+
+          orders.each do |order|
+            patient_id = order['patient_id']
+            labs = order['test_results']
+            who_stage = who_stages.find { |row| row['patient_id'] == patient_id }['who_stage']&.to_i
+
+            data['yes'] << patient_id if order['age']&.to_i&.< 5
+
+            data['yes'] << patient_id if who_stage_ids.include?(who_stage)
+
+            if labs.keys.include?('CD4 count')
+              measure, result = labs['CD4 count'].split(',')
+              data['yes'] << patient_id if measure == '<' && result.to_f <= 200
+            end
+
+            if labs.keys.include?('HIV Viral load')
+              measure, result = labs['HIV Viral load'].split(',')
+              data['yes'] << patient_id if result.to_f > 1000 || (measure == '=' && result == 'LDL')
+            end
+
+            data['no'] << patient_id unless data['yes'].include?(patient_id)
           end
 
           push_to_report('Criteria Met', data.keys, data)
@@ -79,11 +102,15 @@ module ArtService
           values = run(builder.ahd_outcomes)
 
           values.each do |row|
-            data['total'] << row['patient_id']
-            data['discharged'] << row['patient_id'] if row['outcome'] == 'Discharged'
-            data['transfered_out'] << row['patient_id'] if row['outcome'] == 'Transfered out'
-            data['ltfu'] << row['patient_id'] if row['outcome'] == 'Lost to follow up'
-            data['died'] << row['patient_id'] if row['outcome'] == 'Died'
+            outcome = row['outcome']&.downcase
+            patient_id = row['patient_id']
+
+            data['discharged'] << patient_id if outcome == 'discharged'
+            data['transfered_out'] << patient_id if outcome == 'transfered out'
+            data['ltfu'] << patient_id if outcome == 'lost to follow up'
+            data['died'] << patient_id if outcome == 'died'
+
+            data['total'] = data['discharged'] + data['transfered_out'] + data['ltfu'] + data['died']
           end
 
           push_to_report('Outcome', data.keys, data)
@@ -93,17 +120,18 @@ module ArtService
           data = build_indicators(%w[abnormal normal missing total])
           orders.each do |row|
             labs = row['test_results']
+            patient_id = row['patient_id']
 
             next unless labs.keys.include?('Chest X-ray')
 
-            data['total'] << row['patient_id']
+            data['total'] << patient_id
             _, value = labs['Chest X-ray'].split(',')
             if value == 'Normal'
-              data['normal'] << row['patient_id']
+              data['normal'] << patient_id
             elsif value == 'Abnormal'
-              data['abnormal'] << row['patient_id']
+              data['abnormal'] << patient_id
             else
-              data['missing'] << row['patient_id']
+              data['missing'] << patient_id
             end
           end
 
@@ -114,17 +142,18 @@ module ArtService
           data = build_indicators(%w[abnormal normal missing total])
           orders.each do |row|
             labs = row['test_results']
+            patient_id = row['patient_id']
 
             next unless labs.keys.include?('FASH')
 
-            data['total'] << row['patient_id']
+            data['total'] << patient_id
             _, value = labs['FASH'].split(',')
             if value == 'Normal'
-              data['normal'] << row['patient_id']
+              data['normal'] << patient_id
             elsif value == 'Abnormal'
-              data['abnormal'] << row['patient_id']
+              data['abnormal'] << patient_id
             else
-              data['missing'] << row['patient_id']
+              data['missing'] << patient_id
             end
           end
           push_to_report('Chest x-ray', data.keys, data)
@@ -134,17 +163,18 @@ module ArtService
           data = build_indicators(%w[positive negative missing total])
           orders.each do |row|
             labs = row['test_results']
+            patient_id = row['patient_id']
 
             next unless labs.keys.include?('GeneXpert')
 
-            data['total'] << row['patient_id']
+            data['total'] << patient_id
             _, value = labs['GeneXpert'].split(',')
             if value == 'Positive'
-              data['positive'] << row['patient_id']
+              data['positive'] << patient_id
             elsif value == 'Negative'
-              data['negative'] << row['patient_id']
+              data['negative'] << patient_id
             else
-              data['missing'] << row['patient_id']
+              data['missing'] << patient_id
             end
           end
           push_to_report('Chest x-ray', data.keys, data)
@@ -154,17 +184,18 @@ module ArtService
           data = build_indicators(%w[positive negative missing total])
           orders.each do |row|
             labs = row['test_results']
+            patient_id = row['patient_id']
 
             next unless labs.keys.include?('Urine LAM')
 
-            data['total'] << row['patient_id']
+            data['total'] << patient_id
             _, value = labs['Urine LAM'].split(',')
             if value == 'Positive'
-              data['positive'] << row['patient_id']
+              data['positive'] << patient_id
             elsif value == 'Negative'
-              data['negative'] << row['patient_id']
+              data['negative'] << patient_id
             else
-              data['missing'] << row['patient_id']
+              data['missing'] << patient_id
             end
           end
           push_to_report('Chest x-ray', data.keys, data)
@@ -174,17 +205,18 @@ module ArtService
           data = build_indicators(%w[positive negative missing total])
           orders.each do |row|
             labs = row['test_results']
+            patient_id = row['patient_id']
 
             next unless labs.keys.include?('CSF crAg')
 
-            data['total'] << row['patient_id']
+            data['total'] << patient_id
             _, value = labs['CSF crAg'].split(',')
             if value == 'Positive'
-              data['positive'] << row['patient_id']
+              data['positive'] << patient_id
             elsif value == 'Negative'
-              data['negative'] << row['patient_id']
+              data['negative'] << patient_id
             else
-              data['missing'] << row['patient_id']
+              data['missing'] << patient_id
             end
           end
           push_to_report('Chest x-ray', data.keys, data)
@@ -194,18 +226,19 @@ module ArtService
           data = build_indicators(%w[positive negative missing total])
           orders.each do |row|
             labs = row['test_results']
+            patient_id = row['patient_id']
 
             next unless labs.keys.include?('crAg')
 
-            data['total'] << row['patient_id']
+            data['total'] << patient_id
             _, value = labs['crAg'].split(',')
 
             if value == 'Positive'
-              data['positive'] << row['patient_id']
+              data['positive'] << patient_id
             elsif value == 'Negative'
-              data['negative'] << row['patient_id']
+              data['negative'] << patient_id
             else
-              data['missing'] << row['patient_id']
+              data['missing'] << patient_id
             end
           end
           push_to_report('Chest x-ray', data.keys, data)
@@ -216,19 +249,18 @@ module ArtService
 
           orders.each do |row|
             labs = row['test_results']
+            patient_id = row['patient_id']
 
             next unless labs.keys.include?('HIV Viral load')
 
-            data['total'] << row['patient_id']
-            labs['HIV Viral load'].split(',')
-
-            modifier, value = row['test_results'].split(',')
+            data['total'] << patient_id
+            modifier, value = labs['HIV Viral load'].split(',')
             if modifier == '<' && value.to_i <= 1000
-              data['<1000'] << row['patient_id']
+              data['<1000'] << patient_id
             elsif modifier == '>' && value.to_i >= 1000
-              data['1000+'] << row['patient_id']
+              data['1000+'] << patient_id
             else
-              data['missing'] << row['patient_id']
+              data['missing'] << patient_id
             end
           end
           push_to_report('Chest x-ray', data.keys, data)
@@ -238,27 +270,28 @@ module ArtService
           data = build_indicators(%w[<200 1000+ not_done missing total])
           orders.each do |row|
             labs = row['test_results']
+            patient_id = row['patient_id']
 
             next unless labs.keys.include?('CD4 count')
 
-            data['total'] << row['patient_id']
+            data['total'] << patient_id
             modifier, value = labs['CD4 count'].split(',')
 
             if modifier == '<' && value.to_i <= 200
-              data['<200'] << row['patient_id']
+              data['<200'] << patient_id
             elsif modifier == '>' && value.to_i >= 1000
-              data['1000+'] << row['patient_id']
+              data['1000+'] << patient_id
             else
-              data['not_done'] << row['patient_id']
+              data['not_done'] << patient_id
             end
           end
 
           push_to_report('CD4 Count', data.keys, data)
         end
 
-        def build_who_stage
+        def build_who_stage(who_stages)
           data = build_indicators(%w[who_1 who_2 who_3 who_4])
-          values = run(builder.who_stage)
+          values = who_stages
 
           stage_1 = ['WHO stage 1', 'WHO stage I',
                      'WHO stage I adult', 'WHO stage I peds',
@@ -682,18 +715,19 @@ module ArtService
 
           values.each do |row|
             symptoms = row['symptoms'].split(',')
+            patient_id = row['patient_id']
 
-            data['cough'] << row['patient_id'] if symptoms.include?('Cough')
-            data['thrive'] << row['patient_id'] if symptoms.include?('Thrive')
-            data['fever'] << row['patient_id'] if symptoms.include?('Fever or Night sweats')
-            data['mouth_sores'] << row['patient_id'] if symptoms.include?('Mouth sores')
-            data['shortness_of_breath'] << row['patient_id'] if symptoms.include?('Shortness of breath')
-            data['cns'] << row['patient_id'] if symptoms.include?('Central nervous system')
-            data['yellow_eyes'] << row['patient_id'] if symptoms.include?('Yellow eyes')
-            data['vomiting'] << row['patient_id'] if symptoms.include?('Vomiting/Abdominal pain')
-            data['diarrhea'] << row['patient_id'] if symptoms.include?('Diarrhea')
-            data['trunk'] << row['patient_id'] if symptoms.include?('Trunk')
-            data['neropathy'] << row['patient_id'] if symptoms.include?('Peripheral Neropathy')
+            data['cough'] << patient_id if symptoms.include?('Cough')
+            data['thrive'] << patient_id if symptoms.include?('Thrive')
+            data['fever'] << patient_id if symptoms.include?('Fever or Night sweats')
+            data['mouth_sores'] << patient_id if symptoms.include?('Mouth sores')
+            data['shortness_of_breath'] << patient_id if symptoms.include?('Shortness of breath')
+            data['cns'] << patient_id if symptoms.include?('Central nervous system')
+            data['yellow_eyes'] << patient_id if symptoms.include?('Yellow eyes')
+            data['vomiting'] << patient_id if symptoms.include?('Vomiting/Abdominal pain')
+            data['diarrhea'] << patient_id if symptoms.include?('Diarrhea')
+            data['trunk'] << patient_id if symptoms.include?('Trunk')
+            data['neropathy'] << patient_id if symptoms.include?('Peripheral Neropathy')
           end
 
           push_to_report('Symptom Screening', data.keys, data)
@@ -706,10 +740,12 @@ module ArtService
           no = concept('No').concept_id.to_s
 
           values.each do |row|
-            data['male'] << row['patient_id'] if row['arv'] == yes && row['gender'] == 'M'
-            data['fp'] << row['patient_id'] if row['arv'] == yes && row['preg'] == yes
-            data['fbf'] << row['patient_id'] if row['arv'] == yes && row['bf'] == yes
-            data['current'] << row['patient_id'] if row['arv'] == no && row['current'].present?
+            patient_id = row['patient_id']
+
+            data['male'] << patient_id if row['arv'] == yes && row['gender'] == 'M'
+            data['fp'] << patient_id if row['arv'] == yes && row['preg'] == yes
+            data['fbf'] << patient_id if row['arv'] == yes && row['bf'] == yes
+            data['current'] << patient_id if row['arv'] == no && row['current'].present?
           end
 
           push_to_report('Last Taken ARVs', data.keys, data)
@@ -723,9 +759,10 @@ module ArtService
           values = run(builder.ahd_classification)
 
           values.each do |row|
-            data['new_positive'] << row['patient_id'] if row['classification'] == new
-            data['prev_positive'] << row['patient_id'] if row['classification'] == prev
-            data['missing'] << row['patient_id'] if row['classification'] == 'Unknown'
+            patient_id = row['patient_id']
+            data['new_positive'] << patient_id if row['classification'] == new
+            data['prev_positive'] << patient_id if row['classification'] == prev
+            data['missing'] << patient_id if row['classification'] == 'Unknown'
           end
 
           push_to_report('HIV Status', data.keys, data)
@@ -736,9 +773,10 @@ module ArtService
           values = run(builder.genders)
 
           values.each do |row|
-            data['male'] << row['patient_id'] if row['gender'] == 'M'
-            data['fp'] << row['patient_id'] if row['preg'] == 'Yes'
-            data['fbf'] << row['patient_id'] if row['bf'] == 'Yes'
+            patient_id = row['patient_id']
+            data['male'] << patient_id if row['gender'] == 'M'
+            data['fp'] << patient_id if row['preg'] == 'Yes'
+            data['fbf'] << patient_id if row['bf'] == 'Yes'
           end
 
           push_to_report('Age', data.keys, data)
@@ -749,12 +787,14 @@ module ArtService
           values = run(builder.genders)
 
           values.each do |row|
-            data['total'] << row['patient_id']
-            data['male'] << row['patient_id'] if row['gender'] == 'M'
-            data['fp'] << row['patient_id'] if row['preg'] == 'Yes'
-            data['fbf'] << row['patient_id'] if row['bf'] == 'Yes'
-            data['fnp'] << row['patient_id'] if row['gender'] == 'F' && \
-                                                [row['preg'], row['bf']].all? { |x| x == 'No' }
+            patient_id = row['patient_id']
+
+            data['total'] << patient_id
+            data['male'] << patient_id if row['gender'] == 'M'
+            data['fp'] << patient_id if row['preg'] == 'Yes'
+            data['fbf'] << patient_id if row['bf'] == 'Yes'
+            data['fnp'] << patient_id if row['gender'] == 'F' &&
+                                         [row['preg'], row['bf']].all? { |x| x == 'No' }
           end
 
           push_to_report('Sex', data.keys, data)
