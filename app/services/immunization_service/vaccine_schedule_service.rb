@@ -42,8 +42,6 @@ module ImmunizationService
           hash[concept_set_id] ||= []  # Initialize empty array for milestone drugs if not present
           hash[concept_set_id] << drug unless hash[concept_set_id].any? { |d| d[:drug_name] == drug[:drug_name] }
         end
-    
-        unique_data
       end
   
       unique_data
@@ -116,9 +114,8 @@ module ImmunizationService
           visit[:antigens].each do |antigen|
             antigen[:can_administer] = true
           end
+          break
         end
-    
-        vaccine_schedule
       end
   
       vaccine_schedule
@@ -165,9 +162,6 @@ module ImmunizationService
             }
           end
         }
-    
-        amount, unit = age.split
-        amount.to_i * units[unit.downcase.chomp('s')]
       end
     end
   
@@ -285,5 +279,5 @@ module ImmunizationService
         (age <= window_period.to_f) && (age >= milestone_days)
       end
     end
-  end  
+  end
 end

@@ -1,5 +1,3 @@
-require './app/services/immunization_service/vaccine_schedule_service'
-
 class Api::V1::VaccineScheduleController < ApplicationController
   def vaccine_schedule
     patient = Person.find(immunization_schedule_params[:patient_id].to_i)
