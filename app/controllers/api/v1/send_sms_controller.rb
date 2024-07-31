@@ -7,6 +7,15 @@ class Api::V1::SendSmsController < ApplicationController
   before_action :initialize_variables, only: [:index]
 
   def index
+
+    config_file = Rails.root.join('config', 'application.yml')
+    config = YAML.load_file(config_file)
+    sms_reminder = config.dig('development', 'sms_reminder')
+
+    if sms_reminder == 'false'
+      return render json: { message: "SMS reminder turned off" }
+    end
+
     patient_details = patients_phone
     result = validatephone(patient_details[:cell_phone])
     if result.length == 13
@@ -18,7 +27,47 @@ class Api::V1::SendSmsController < ApplicationController
     render json: { message: output }
   end
 
+  def show
+
+    config_file = Rails.root.join('config', 'application.yml')
+         config = YAML.load_file(config_file)       
+      
+      begin
+
+         if config.key?('development')
+          render json: config['development']
+        else
+          render json: { error: 'Development configuration not found' }, status: :not_found
+        end
+
+      rescue Errno::ENOENT
+        render json: { error: 'Configuration file not found' }, status: :not_found
+      end
+
+  end
+
+  def update
+   
+    config_file = Rails.root.join('config', 'application.yml')
+    config = YAML.load_file(config_file)
+
+    params.each do |key, value|
+
+      if config['development'].key?(key)
+         config['development'][key] = value
+      end
+      
+    end
+
+    File.open(config_file, 'w') { |f| f.write(config.to_yaml) }
+
+    render json: config['development'], status: :ok
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   private
+
 
   def initialize_variables
     @patient = Observation.where(voided: 0, person_id: params[:person_id])
@@ -72,9 +121,9 @@ class Api::V1::SendSmsController < ApplicationController
   end
 
   def enqueue_sms(date, details)
-    begin
-      SendSmsService.perform_async(date, details)
-    rescue => e
+     begin
+       SendSmsService.perform_async(date, details)
+     rescue => e
       "Failed to queue SMS: #{e.message}"
     end
   end
