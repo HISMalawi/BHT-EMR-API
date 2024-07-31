@@ -37,6 +37,9 @@ Rails.application.routes.draw do
       get '/hts_stats' => 'hts_reports#daily_stats'
       get '/valid_provider_id', to: 'people#valid_provider_id'
       get '/next_hts_linkage_ids_batch', to: 'people#next_hts_linkage_ids_batch'
+      
+      # Routes are for immunization application
+      resources :immunization_reports, only: %i[index]
 
       # notifications for nlims any features in the future
       resources :notifications, only: %i[index update] do
@@ -414,4 +417,5 @@ Rails.application.routes.draw do
   # EIR
   get '/api/v1/eir/schedule', to: 'api/v1/vaccine_schedule#vaccine_schedule'
   get '/api/v1/eir/followup', to: 'api/v1/immunization_follow_up#missed_immunizations'
+  post '/api/v1/send_sms', to: 'api/v1/send_sms#index'
 end

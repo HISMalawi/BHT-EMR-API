@@ -86,7 +86,7 @@ module ImmunizationService
       vaccine_schedules.each do |vaccine_schedule|
         vaccine_schedule[1].each do |visit|
 
-          missed_antigens = visit[:antigens].select { |antigen| antigen[:can_administer] && antigen[:status] == "pending" }
+          missed_antigens = visit[:antigens].select { |antigen| antigen[:can_administer] && antigen[:status] == "pending" && visit[:milestone_status] == "current" }
 
           unless missed_antigens.empty?
             client_missed_visits << { visit: visit[:visit], milestone_status: visit[:milestone_status], age: visit[:age], antigens: missed_antigens }
