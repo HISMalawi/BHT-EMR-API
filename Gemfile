@@ -85,3 +85,5 @@ gem 'roo', '~> 2.8'
 gem 'sidekiq'
 
 gem 'redis'
+
+gem 'sidekiq-unique-jobs'
