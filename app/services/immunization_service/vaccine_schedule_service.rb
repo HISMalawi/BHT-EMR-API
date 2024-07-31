@@ -10,12 +10,12 @@ module VaccineScheduleService
       immunization_drugs = immunization_drugs('Over five immunizations')
       immunization_drugs = filter_female_specific_immunizations(immunization_drugs) if patient.gender.split.first.casecmp?('M')
     end
-    
+
     # For each of these get the window period and schedule
     immunization_with_window = immunization_drugs.flat_map do |immunization_drug|
       vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones').map do |milestone|
-        { 
-          milestone_name: milestone.name, 
+        {
+          milestone_name: milestone.name,
           sort_weight: milestone.sort_weight,
           drug_id: immunization_drug.drug_id,
           drug_name: immunization_drug.name,
@@ -30,11 +30,11 @@ module VaccineScheduleService
 
     return {vaccine_schedule: vaccines}
     # rescue => e
-    return {error: e.message}
+    {error: e.message}
     #end
   end
 
-  
+
   def self.make_unique(data)
     unique_data = data.each_with_object({}) do |(concept_set_id, milestone), hash|
       milestone.each do |drug|
@@ -70,7 +70,7 @@ module VaccineScheduleService
     end
     immunizations
   end
-  
+
   def self.filter_female_specific_immunizations(immunizations)
     immunizations.reject do |immunization|
       ConceptSet.where(concept_set: ConceptName
@@ -80,7 +80,7 @@ module VaccineScheduleService
   end
 
 
- 
+
   def self.update_milestone_status(vaccine_schedule)
     visit_one = vaccine_schedule.find { |visit| visit[:visit] == 1 }
     if visit_one[:antigens].any? { |antigen| antigen[:status] != 'administered' }
@@ -88,7 +88,7 @@ module VaccineScheduleService
       visit_one[:antigens].each do |antigen|
         antigen[:can_administer] = true if antigen[:status] == 'pending'
       end
-      
+
       vaccine_schedule.each do |visit|
         next if visit[:visit] == 1
 
@@ -108,7 +108,7 @@ module VaccineScheduleService
         visit[:milestone_status] = 'upcoming'
 
         next unless administered_date + next_age_days <= Date.today
-        
+
         visit[:milestone_status] = 'current'
         visit[:antigens].each do |antigen|
           antigen[:can_administer] = true
@@ -156,7 +156,8 @@ module VaccineScheduleService
             date_administered: vaccine_given&.[](:obs_datetime)&.strftime('%d/%b/%Y %H:%M:%S'),
             administered_by: vaccine_given&.[](:administered_by),
             location_administered: vaccine_given&.[](:location_administered),
-            vaccine_batch_number: vaccine_given&.[](:batch_number)
+            vaccine_batch_number: vaccine_given&.[](:batch_number),
+            order_encounter_id: vaccine_given&.[](:order_encounter_id)
           }
         end
       }
@@ -164,19 +165,20 @@ module VaccineScheduleService
   end
 
   def vaccine_given?(drug_id)
-    
+
   end
 
   def self.administered_vaccines(patient_id, drugs)
     Observation.joins(person: :names)
                .joins(order: :drug_order)
                .where(drug_order: { drug_inventory_id: drugs }, person_id: patient_id)
-               .select(:obs_datetime, :drug_inventory_id, :order_id, :location_id, 
-                       :creator, :given_name, :family_name).map do |obs|
+               .select(:obs_datetime, :drug_inventory_id, :order_id, :location_id,
+                       :creator, :given_name, :family_name, :encounter_id).map do |obs|
       {
         obs_datetime: obs.obs_datetime,
         drug_inventory_id: obs.drug_inventory_id,
         batch_number: get_batch_id(obs.order_id),
+        order_encounter_id: obs.encounter_id,
         administered_by: {
           person_id: obs.creator,
           given_name: obs.given_name,
@@ -191,7 +193,7 @@ module VaccineScheduleService
     Observation.where(concept_id: ConceptName.where(name: 'Batch Number').pluck(:concept_id), order_id:).first&.value_text
   end
 
-  
+
   def self.milestone_status(milestone, dob)
     today = Date.today
     if milestone.casecmp('At Birth').zero?
@@ -202,30 +204,38 @@ module VaccineScheduleService
       else
         'upcoming'
       end
-    elsif milestone.include?('weeks')
+    elsif milestone.include?('weeks') || milestone.include?('week')
       milestone_weeks = milestone.split.first.to_i
       age_in_weeks = (today - dob).to_i / 7
       return 'current' if milestone ==  age_in_weeks.to_i
 
       age_in_weeks > milestone_weeks ? 'passed' : 'upcoming'
-    elsif milestone.include?('months')
+    elsif milestone.include?('months') || milestone.include?('month')
       milestone_months = milestone.split.first.to_i
       age_in_months = (today.year * 12 + today.month) - (dob.year * 12 + dob.month)
       return 'current' if milestone_months == age_in_months
 
       age_in_months > milestone_months ? 'passed' : 'upcoming'
-    elsif milestone.include?('years')
+    elsif milestone.include?('years') || milestone.include?('year')
       milestone_years = milestone.split.first.to_i
       age_in_years = today.year - dob.year
       case milestone_years
       when 9
         return 'current' if age_in_years >= 9 && age_in_years <= 14
+
+        default_milstone_status(age_in_years, milestone_years)
       when 12
-        return 'current' if age_in_years > 12
+        return 'current' if age_in_years >= 12
+
+        default_milstone_status(age_in_years, milestone_years)
       when 15
         return 'current' if age_in_years >= 15 && age_in_years <= 45
+
+        default_milstone_status(age_in_years, milestone_years)
       when 18
         return 'current' if age_in_years >= 18
+
+        default_milstone_status(age_in_years, milestone_years)
       else
         return 'current' if milestone_years == age_in_years
 
@@ -234,8 +244,12 @@ module VaccineScheduleService
     end
   end
 
+  def self.default_milstone_status(age, milestone)
+    age > milestone ? 'passed' : 'upcoming'
+  end
+
   def self.can_administer_drug?(drug, dob, milestone)
-    return if drug[:window_period].blank?
+    drug[:window_period] = '100 years' if drug[:window_period].blank?
 
     if milestone == 'At birth'
       milestone_days = 7
@@ -246,21 +260,22 @@ module VaccineScheduleService
     # Handle atigens that are valid in a range of ages
     value, units = drug[:window_period].split
     case units.downcase
-    when 'weeks'
-      compare_age(age.to_i / 7, value, milestone_days / 7)
-    when 'months'
-      compare_age(age.to_i / 30, value, milestone_days / 30)
-    when 'years'
-      compare_age(age.to_i / 365, value, milestone_days / 365)
+    when 'week', 'weeks'
+      compare_age(age.to_f / 7, value, milestone_days.to_f / 7)
+    when 'month', 'months'
+      compare_age(age.to_f / 30, value, milestone_days.to_f / 30)
+    when 'year', 'years'
+      compare_age(age.to_f / 365, value, milestone_days.to_f / 365)
     end
   end
+
 
   def self.compare_age(age, window_period, milestone_days)
     if window_period.include?('-')
       start_age, end_age = window_period.split('-').map(&:to_i)
-      (age >= start_age) && (age <= end_age) && (age >= milestone_days.to_i)
+      (age >= start_age) && (age <= end_age) && (age >= milestone_days)
     else
-      (age <= window_period.to_i) && (age >= milestone_days.to_i)
+      (age <= window_period.to_f) && (age >= milestone_days)
     end
   end
 end
