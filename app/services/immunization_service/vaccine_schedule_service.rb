@@ -208,7 +208,7 @@ module ImmunizationService
       elsif milestone.include?('weeks') || milestone.include?('week')
         milestone_weeks = milestone.split.first.to_i
         age_in_weeks = (today - dob).to_i / 7
-        return 'current' if milestone ==  age_in_weeks.to_i
+        return 'current' if milestone_weeks ==  age_in_weeks.to_i
   
         age_in_weeks > milestone_weeks ? 'passed' : 'upcoming'
       elsif milestone.include?('months') || milestone.include?('month')
@@ -220,6 +220,7 @@ module ImmunizationService
       elsif milestone.include?('years') || milestone.include?('year')
         milestone_years = milestone.split.first.to_i
         age_in_years = today.year - dob.year
+
         case milestone_years
         when 9
           return 'current' if age_in_years >= 9 && age_in_years <= 14
