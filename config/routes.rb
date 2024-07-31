@@ -417,4 +417,6 @@ Rails.application.routes.draw do
   # EIR
   get '/api/v1/eir/schedule', to: 'api/v1/vaccine_schedule#vaccine_schedule'
   post '/api/v1/send_sms', to: 'api/v1/send_sms#index'
+  post '/api/v1/sms_configuration', to: 'api/v1/send_sms#update'
+  get '/api/v1/configurations', to: 'api/v1/send_sms#show'
 end
