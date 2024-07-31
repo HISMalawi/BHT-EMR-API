@@ -17,6 +17,7 @@ module ArtService
           report.total_eligible = []
           report.total_high_viral_load = []
           report.total_first_time = []
+          report.total_back_to_care = []
           report.total_cd4_done = []
           report.total_cd4_greater_than_200 = []
           report.total_cd4_less_than_200 = []
@@ -26,12 +27,22 @@ module ArtService
           report.total_urine_lam_neg = []
           report.deaths = []
           report.transfered_out = []
-          report.itt = []
           report.guardian_visits = []
           report.ma = []
           map_results
 
-          report
+          fmt_report
+        end
+
+        def fmt_report
+          fmt = []
+          report.table.keys.each do |key|
+            data = {}
+            data['indicator'] = key.to_s.humanize
+            data['count'] = report.table[key]
+            fmt << data
+          end
+          fmt
         end
 
         def map_results
@@ -41,16 +52,18 @@ module ArtService
           stage_4 = ['WHO stage 4', 'WHO stage IV adult', 'WHO stage IV peds',
                      'WHO stage IV criteria present', 'WHO stage IV adult and peds']
 
-          who_stages = [stage_3 + stage_4].map { |x| x.map { |y| concept(y).concept_id } }.flatten
+          who_stages = [stage_3 + stage_4].flatten.map { |x| concept(x).concept_id }
 
-          query = builder.ahd_lab_orders
-                         .merge(builder.who_stage)
-                         .merge(builder.ahd_classification)
-                         .merge(builder.ahd_outcomes(end_date))
-                         .merge(builder.missed_appointments(start_date, end_date))
-                         .merge(builder.guardian_visits(start_date, end_date))
+          queries = [
+            builder.ahd_lab_orders(start_date, end_date),
+            builder.ahd_classification,
+            builder.missed_appointments(start_date, end_date),
+            builder.guardian_visits(start_date, end_date),
+            builder.who_stage
+          ]
 
-          data = run(query)
+          data = builder.run(queries.reduce(&:merge))
+          rtt_patients = find_rtt
 
           data.each do |row|
             results = row['test_results']
@@ -62,6 +75,8 @@ module ArtService
             report.total_eligible << patient_id if row['age']&.to_i&.< 5
 
             report.total_eligible << patient_id if who_stages.include?(who_stage)
+
+            report.total_eligible << patient_id if rtt_patients.any? { |x| x['patient_id'] == patient_id }
 
             if labs.keys.include?('CD4 count')
               report.total_cd4_done << patient_id
@@ -96,25 +111,29 @@ module ArtService
 
             report.total_first_time << patient_id if row['classification'] == 'New Positive'
 
-            report.deaths << patient_id if outcome == 'Died'
-            report.transfered_out << patient_id if outcome == 'Transfer Out'
+            report.deaths << patient_id if outcome == 'Patient died'
+            report.transfered_out << patient_id if outcome == 'Patient transferred out'
 
             report.ma << patient_id if row['missed_appointment'] == 'Yes'
             report.guardian_visits << patient_id if row['guardian_visit'] == 'Yes'
-
+            
+            report.total_back_to_care << patient_id if rtt_patients.any? { |x| x['patient_id'] == patient_id }
+            
             report.total_eligible = report.total_eligible.uniq
-
-            # TODO: Add ITT
           end
         end
 
-        def run(sql)
-          query = ActiveRecord::Base.connection.select_all(sql.to_sql)
-          query.rows.map { |row| query.columns.zip(row).to_h }
+        def find_rtt
+          ArtService::Reports::ClinicTxRtt\
+            .new(start_date: start_date.to_date, end_date: end_date.to_date)\
+            .find_rtt_patients
         end
+        
 
         def builder
-          ArtService::Reports::Ahd::RegisterBuilder.new(start_date:, end_date:).register
+          ArtService::Reports::Ahd::RegisterBuilder\
+            .new(start_date:, end_date:)\
+            .register
         end
       end
     end

@@ -29,6 +29,11 @@ module ArtService
         end
 
         module Scopes
+          def run(sql)
+            query = ActiveRecord::Base.connection.select_all(sql.to_sql)
+            query.rows.map { |row| query.columns.zip(row).to_h }
+          end
+
           def genders
             select('person.gender AS gender')
               .merge(female_breastfeeding)
@@ -36,11 +41,9 @@ module ArtService
           end
 
           def ahd_outcomes(end_date = Date.today)
-            select("pepfar_patient_outcome(patient.patient_id, '#{end_date}') AS outcome")
+            select("pepfar_patient_outcome(patient.patient_id, #{end_date}) AS outcome")
           end
-
-          def itt; end
-
+          
           def guardian_visits(start_date, end_date)
             reception_encounter = EncounterType.find_by_name('HIV RECEPTION')
 
@@ -99,32 +102,41 @@ module ArtService
               SQL
           end
 
-          def ahd_lab_orders
+          def ahd_lab_orders(start_date, end_date)
             test_types = [
-              'HIV Viral load',
-              'CD4 count',
-              'CrAg',
-              'CSF CrAg',
-              'Urine LAM',
-              'GeneXpert',
-              'FASH'
+              'HIV Viral load', 'CD4 count', 'CrAg', 'CSF CrAg',
+              'Urine LAM', 'GeneXpert', 'FASH'
             ]
 
             test_type_ids = test_types.map { |type| concept(type).concept_id }
 
-            select('GROUP_CONCAT(DISTINCT JSON_OBJECT(COALESCE(tt.name, "N/A"), CONCAT(result.value_modifier, ",",    COALESCE(result.value_numeric, result.value_text, result.value_coded)))) AS test_results')
+            select('orders.test_results')
               .joins <<~SQL
-                LEFT JOIN orders ON orders.patient_id = encounter.patient_id
-                AND orders.voided = 0
-                LEFT JOIN obs test_type ON test_type.order_id = orders.order_id
-                AND test_type.concept_id = #{concept('Test type').concept_id}
-                AND test_type.value_coded IN (#{test_type_ids.join(', ')})
-                LEFT JOIN concept_name tt ON tt.concept_id = test_type.value_coded
-                LEFT JOIN obs tr ON tr.order_id = orders.order_id
-                AND tr.voided = 0
-                AND tr.concept_id = 7363
-                AND tr.obs_group_id = test_type.obs_id
-                LEFT JOIN obs result ON result.obs_group_id = tr.obs_id
+                LEFT JOIN (
+                    SELECT lab.patient_id,
+                            GROUP_CONCAT(
+                                    DISTINCT JSON_OBJECT(
+                                    tt.name,
+                                    CONCAT(result.value_modifier, ",",
+                                            COALESCE(result.value_numeric, result.value_text, result.value_coded)
+                                    ))) AS test_results
+                      from orders
+                              INNER JOIN encounter lab ON lab.patient_id = orders.patient_id
+                          AND lab.encounter_datetime >= #{start_date}
+                          AND lab.encounter_datetime <= #{end_date}
+                          AND lab.voided = 0
+                          AND orders.voided = 0
+                              INNER JOIN obs test_type ON test_type.encounter_id = lab.encounter_id
+                          AND test_type.concept_id = #{concept('Test type').concept_id}
+                          AND test_type.value_coded IN (#{test_type_ids.join(', ')})
+                              INNER JOIN concept_name tt ON tt.concept_id = test_type.value_coded
+                              INNER JOIN obs tr ON tr.order_id = orders.order_id
+                          AND tr.voided = 0
+                          AND tr.concept_id = #{concept('Lab test result').concept_id}
+                          AND tr.obs_group_id = test_type.obs_id
+                              INNER JOIN obs result ON result.obs_group_id = tr.obs_id
+                      GROUP BY lab.patient_id
+                ) AS orders ON orders.patient_id = patient.patient_id
               SQL
           end
 
@@ -186,11 +198,10 @@ module ArtService
             yes = concept('Yes').concept_id
 
             joins(:person)
-              .select('COALESCE(bf.person_id, "No") AS bf')
+              .select('COALESCE(bf.value_coded, "No") AS bf')
               .joins <<~SQL
                 LEFT JOIN obs bf ON bf.person_id = encounter.patient_id
                 AND bf.concept_id IN (#{breastfeeding})
-                AND person.gender = "F"
                 AND bf.value_coded = #{yes}
                 AND bf.voided = 0
               SQL
@@ -202,10 +213,9 @@ module ArtService
             yes = concept('Yes').concept_id
 
             joins(:person)
-              .select('COALESCE(preg.person_id, "No") AS preg')
+              .select('COALESCE(preg.value_coded, "No") AS preg')
               .joins <<~SQL
                 LEFT JOIN obs preg ON preg.person_id = encounter.patient_id
-                AND person.gender = "F"
                 AND preg.concept_id IN (#{pregnant})
                 AND preg.value_coded = #{yes}
                 AND preg.voided = 0

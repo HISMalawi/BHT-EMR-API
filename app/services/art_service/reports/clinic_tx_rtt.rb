@@ -12,6 +12,10 @@ module ArtService
         @occupation = kwargs[:occupation]
       end
 
+      def find_rtt_patients
+        tx_rtt
+      end
+
       def find_report
         tx_rtt.each_with_object({}) do |patient, report|
           age_group = report[patient['age_group']] || { 'M' => [], 'F' => [], 'Unknown' => [] }
