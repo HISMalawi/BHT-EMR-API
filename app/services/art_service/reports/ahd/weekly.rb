@@ -46,7 +46,7 @@ module ArtService
           query = builder.ahd_lab_orders
                          .merge(builder.who_stage)
                          .merge(builder.ahd_classification)
-                         .merge(builder.ahd_outcomes)
+                         .merge(builder.ahd_outcomes(end_date))
                          .merge(builder.missed_appointments(start_date, end_date))
                          .merge(builder.guardian_visits(start_date, end_date))
 

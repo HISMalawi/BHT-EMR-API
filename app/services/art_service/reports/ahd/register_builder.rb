@@ -35,8 +35,8 @@ module ArtService
               .merge(female_pregnant)
           end
 
-          def ahd_outcomes
-            select("pepfar_patient_outcome(patient.patient_id, '#{Date.today}') AS outcome")
+          def ahd_outcomes(end_date = Date.today)
+            select("pepfar_patient_outcome(patient.patient_id, '#{end_date}') AS outcome")
           end
 
           def itt; end
