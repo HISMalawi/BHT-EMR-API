@@ -253,7 +253,7 @@ module ImmunizationService
       drug[:window_period] = '100 years' if drug[:window_period].blank?
   
       if milestone == 'At birth'
-        milestone_days = 7
+        milestone_days = 0
       else
         milestone_days = parse_age_to_days(milestone)
       end
