@@ -22,7 +22,6 @@ class ImmunizationReportJob < ApplicationJob
 
     immunization_cache = ImmunizationCacheDatum.find_or_initialize_by(name: "missed_immunizations")
     immunization_cache.update!(value: missed_visits)
-    
   end
 
   private 
