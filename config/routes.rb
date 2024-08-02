@@ -8,6 +8,7 @@ Rails.application.routes.draw do
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
   mount ActionCable.server => '/cable'
+  mount ActionCable.server => '/api/v1/cable'
   mount Sidekiq::Web => '/sidekiq'
 
   namespace :api do
