@@ -6,7 +6,7 @@ class ProgramAppointmentService
   def self.booked_appointments(program_id, date)
     clients = ActiveRecord::Base.connection.select_all("SELECT
     i2.identifier arv_number, i.identifier, p.birthdate, p.gender, n.given_name,
-    n.family_name, obs.person_id, p.birthdate_estimated
+    n.family_name, obs.person_id, p.birthdate_estimated, a.city_village,a.state_province,a.township_division
     FROM obs
     INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
     AND e.voided = 0 AND obs.voided = 0 AND e.program_id = #{program_id}
@@ -37,6 +37,8 @@ class ProgramAppointmentService
         given_name: c['given_name'], family_name: c['family_name'],
         birthdate: c['birthdate'], gender: c['gender'], person_id: c['person_id'],
         npid: c['identifier'], birthdate_estimated: c['birthdate_estimated'],
+        city_village: c['city_village'], state_province: c['state_province'],
+        township_division: c['township_division'], 
         arv_number: c['arv_number']
       }
     end
