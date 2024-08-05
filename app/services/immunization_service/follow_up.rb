@@ -86,23 +86,30 @@ module ImmunizationService
       vaccine_schedules.each do |vaccine_schedule|
         vaccine_schedule[1].each do |visit|
 
-          missed_antigens = visit[:antigens].select { |antigen| antigen[:can_administer] && antigen[:status] == "pending" && visit[:milestone_status] == "current" }
+          missed_antigens = visit[:antigens].select { |antigen| antigen[:can_administer] && antigen[:status] == "pending" && visit[:milestone_status] == "passed" }
 
           unless missed_antigens.empty?
             client_missed_visits << { visit: visit[:visit], milestone_status: visit[:milestone_status], age: visit[:age], antigens: missed_antigens }
             update_missed_doses(missed_antigens, immunization_client.birthdate, under_five_missed_doses, over_five_missed_doses)
 
             # Calculate if the vaccine can be admnistered and its pending 
+          end
+
+          due_antigens = visit[:antigens].select { |antigen| antigen[:can_administer] && antigen[:status] == "pending" && visit[:milestone_status] == "current"}
+
+          unless due_antigens.empty?
             due_date = calculate_due_date(immunization_client.birthdate, visit[:age])
 
             if due_date == today
-              due_today << immunization_client
+              due_today << { client: immunization_client, antigens: due_antigens }
+              due_this_week << { client: immunization_client, antigens: due_antigens }
+              due_this_month << { client: immunization_client, antigens: due_antigens }
             elsif due_date >= start_of_week && due_date <= end_of_week
-              due_this_week << immunization_client
+              due_this_week << { client: immunization_client, antigens: due_antigens }
+              due_this_month << { client: immunization_client, antigens: due_antigens }
             elsif due_date >= start_of_month && due_date <= end_of_month
-              due_this_month << immunization_client
+              due_this_month << { client: immunization_client, antigens: due_antigens }
             end
-
           end
         end
       end
