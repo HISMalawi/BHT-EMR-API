@@ -1,6 +1,8 @@
 module Api
   module V1
     class AdministerVaccineController < ApplicationController
+      
+        after_action :immunization_cache_update, only: [:administer_vaccine]
         
         def administer_vaccine
           encounter_id, drug_orders, program_id = params.require(%i[encounter_id drug_orders program_id])
@@ -46,6 +48,17 @@ module Api
           DashboardStatsJob.perform_later
     
           render json: orders, status: :created
+        end
+
+        private 
+
+        def immunization_cache_update
+          # Update Immunization Data Cache
+          start_date = 1.year.ago.to_date.to_s
+          end_date = Date.today.to_s
+  
+          ImmunizationReportJob.perform_later(start_date, end_date, User.current.location_id)  
+          DashboardStatsJob.perform_later
         end
     end
   end
