@@ -102,8 +102,11 @@ module ImmunizationService
 
             if due_date == today
               due_today << { client: immunization_client, antigens: due_antigens }
+              due_this_week << { client: immunization_client, antigens: due_antigens }
+              due_this_month << { client: immunization_client, antigens: due_antigens }
             elsif due_date >= start_of_week && due_date <= end_of_week
               due_this_week << { client: immunization_client, antigens: due_antigens }
+              due_this_month << { client: immunization_client, antigens: due_antigens }
             elsif due_date >= start_of_month && due_date <= end_of_month
               due_this_month << { client: immunization_client, antigens: due_antigens }
             end
