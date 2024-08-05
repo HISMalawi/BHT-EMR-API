@@ -6,6 +6,8 @@ module Api
       class ProgramsController < ApplicationController
         # TODO: Refactor much of the logic in this controller into a service
 
+        after_action :immunization_cache_update, only: [:create]
+
         def index
           render json: PatientProgram.where(patient_id: params[:patient_id])
         end
@@ -65,6 +67,15 @@ module Api
 
         def patient_program!
           PatientProgram.find_by!(patient_id: params[:patient_id], program_id: params[:id])
+        end
+
+        def immunization_cache_update
+          # Update Immunization Data Cache
+          start_date = 1.year.ago.to_date.to_s
+          end_date = Date.today.to_s
+  
+          ImmunizationReportJob.perform_later(start_date, end_date, User.current.location_id)
+          DashboardStatsJob.perform_later  
         end
       end
     end
