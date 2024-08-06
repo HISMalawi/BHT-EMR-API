@@ -49,8 +49,8 @@ gem 'rswag-ui'
 # gem 'his_emr_api_lab', '~> 1.1.30'
 # gem 'his_emr_api_radiology', '~> 0.0.8'
 
-gem 'emr_ohsp_interface', '~> 2.2.0'
-gem 'his_emr_api_lab', '~> 2.0.0'
+gem 'emr_ohsp_interface', '~> 2.2.3'
+gem 'his_emr_api_lab', '~> 2.0.2'
 # gem 'his_emr_api_radiology', '~> 1.0.9'
 
 gem 'parallel', '~> 1.20.1'
@@ -58,14 +58,11 @@ gem 'parallel', '~> 1.20.1'
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
-  gem 'spring'
-end
-
-group :test do
   gem 'factory_bot_rails'
   gem 'rspec'
   gem 'rspec-rails'
   gem 'rswag-specs'
+  gem 'spring'
 end
 
 group :development do

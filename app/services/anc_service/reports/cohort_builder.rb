@@ -54,9 +54,6 @@ module AncService
         @m_pregnant_range = (((@m_end_date.to_time - @m_start_date.to_time).round / (3600 * 24)) + 1).days
         @c_pregnant_range = 6.months
 
-        # @monthly_patients = registrations(start_date.beginning_of_month, start_date.end_of_month)
-        # @cohort_patients = total_patients(start_date, 'cohort')
-
         # women registered in a booking cohort
         @cohort_patients = registrations(@c_start_date.to_date.beginning_of_month,
                                          @c_start_date.to_date.end_of_month)
@@ -103,15 +100,12 @@ module AncService
         @not_done_hiv_test_first_visit = @monthly_patients - @total_tested_in_first_visit
         @m_extra_art_checks = extra_art_checks('monthly', m_max_date)
         @m_on_art_in_nart = on_art_in_nart(@total_hiv_positive_first_visit, start_date)
-        @m_on_art_before  = @m_on_art_in_nart['arv_before_visit_one']
-        @on_art_before_anc_first_visit = on_art_before_anc_first_visit(start_date)
+        @on_art_before_anc_first_visit = @m_on_art_in_nart['arv_before_visit_one']
         @start_art_zero_to_twenty_seven_for_first_visit = start_art_zero_to_twenty_seven_for_first_visit(start_date)
         @start_art_plus_twenty_eight_for_first_visit = start_art_plus_twenty_eight_for_first_visit(start_date)
         @total_on_art = (@on_art_before_anc_first_visit + @start_art_zero_to_twenty_seven_for_first_visit +
           @start_art_plus_twenty_eight_for_first_visit).uniq
         @m_not_on_art = @total_hiv_positive_first_visit - @total_on_art
-
-        # raise @m_on_art_in_nart.inspect
 
         cohort_struct.monthly_patient = @monthly_patients
         cohort_struct.pregnancy_test_done = @patients_done_pregnancy_test || []
@@ -126,47 +120,20 @@ module AncService
         cohort_struct.pre_hiv_negative_first_visit = @prev_hiv_neg_first_visit
         cohort_struct.not_done_hiv_test_first_visit = @not_done_hiv_test_first_visit
         cohort_struct.total_hiv_positive_first_visit = @total_hiv_positive_first_visit
-        cohort_struct.not_on_art_first_visit = @m_not_on_art
-        cohort_struct.on_art_before_anc_first_visit = @on_art_before_anc_first_visit
-        cohort_struct.start_art_zero_to_twenty_seven_for_first_visit = @start_art_zero_to_twenty_seven_for_first_visit
-        cohort_struct.start_art_plus_twenty_eight_for_first_visit = @start_art_plus_twenty_eight_for_first_visit
+
+        first_art_start_dates = on_art_before_anc_final(cohort_struct.total_hiv_positive_first_visit)
+        cohort_struct.on_art_before_anc_first_visit = first_art_start_dates[:art_before_anc] || []
+        cohort_struct.start_art_zero_to_twenty_seven_for_first_visit = first_art_start_dates[:zero_to_twenty_seven_weeks] || []
+        cohort_struct.start_art_plus_twenty_eight_for_first_visit = first_art_start_dates[:twenty_eight_plus_weeks] || []
+        cohort_struct.not_on_art_first_visit = cohort_struct.total_hiv_positive_first_visit - first_art_start_dates&.values&.flatten || []
+
         # Indicators for the cohort block
         cohort_struct.total_women_in_cohort = @cohort_patients
-        @c_pre_hiv_pos = prev_hiv_positive_final_visit
-        @c_new_hiv_pos = new_hiv_positive_final_visit - @c_pre_hiv_pos
-        @c_total_hiv_positive = (@c_new_hiv_pos + @c_pre_hiv_pos).uniq
-
-        @c_extra_art_checks = extra_art_checks('cohort', c_max_date)
-        @c_on_art_in_nart = on_art_in_nart(@c_total_hiv_positive, @c_start_date)
-        @c_on_art_before  = (@c_on_art_in_nart['arv_before_visit_one']).uniq
-        @on_art_before_anc_final_visit = on_art_before_anc_final_visit
-        @start_art_zero_to_twenty_seven_for_final_visit = start_art_zero_to_twenty_seven_for_final_visit
-        @start_art_plus_twenty_eight_for_final_visit = start_art_plus_twenty_eight_for_final_visit
-        @c_total_on_art = (@on_art_before_anc_final_visit + @start_art_zero_to_twenty_seven_for_final_visit +
-          @start_art_plus_twenty_eight_for_final_visit).uniq
-        @c_not_on_art = @c_total_hiv_positive - @c_total_on_art
-
-        @on_cpt = @c_on_art_in_nart['on_cpt']
-        @not_on_cpt = (@c_total_hiv_positive - @on_cpt.split(',')).uniq
-
-        @nvp_given = nvp_given
-        @nvp_not_given = @c_total_hiv_positive - @nvp_given
-
-        cohort_struct.patients_with_total_of_one_visit = @anc_visits.select do |_x, y|
-                                                           y == 1
-                                                         end.collect { |x, _y| x }.uniq
-        cohort_struct.patients_with_total_of_two_visits = @anc_visits.select do |_x, y|
-                                                            y == 2
-                                                          end.collect { |x, _y| x }.uniq
-        cohort_struct.patients_with_total_of_three_visits = @anc_visits.select do |_x, y|
-                                                              y == 3
-                                                            end.collect { |x, _y| x }.uniq
-        cohort_struct.patients_with_total_of_four_visits = @anc_visits.select do |_x, y|
-                                                             y == 4
-                                                           end.collect { |x, _y| x }.uniq
-        cohort_struct.patients_with_total_of_five_plus_visits = @anc_visits.select do |_x, y|
-                                                                  y >= 5
-                                                                end.collect { |x, _y| x }.uniq
+        cohort_struct.patients_with_total_of_one_visit = patients_with_total_visits(1) { |y| y == 1 }
+        cohort_struct.patients_with_total_of_two_visits = patients_with_total_visits(2) { |y| y == 2 }
+        cohort_struct.patients_with_total_of_three_visits = patients_with_total_visits(3) { |y| y == 3 }
+        cohort_struct.patients_with_total_of_four_visits = patients_with_total_visits(4) { |y| y == 4 }
+        cohort_struct.patients_with_total_of_five_plus_visits = patients_with_total_visits(5) { |y| y >= 5 }
         cohort_struct.patients_with_pre_eclampsia = patients_with_pre_eclampsia
         cohort_struct.patients_without_pre_eclampsia = @cohort_patients - cohort_struct.patients_with_pre_eclampsia
 
@@ -180,12 +147,12 @@ module AncService
         # SP Doses given
         sp_one_dose = patients_given_one_sp_dose
         sp_two_doses = patients_given_two_sp_doses
-        sp_three_doses = patients_given_at_least_three_sp_doses
+        sp_three_doses = patients_given_three_or_sp_doses
         sp_zero_doses = (@cohort_patients - (sp_one_dose + sp_two_doses + sp_three_doses)).uniq
         cohort_struct.patients_given_zero_sp_doses = sp_zero_doses
         cohort_struct.patients_given_one_sp_dose = sp_one_dose
         cohort_struct.patients_given_two_sp_doses = sp_two_doses
-        cohort_struct.patients_given_three_or_more_sp_doses = patients_given_three_or_sp_doses
+        cohort_struct.patients_given_three_or_more_sp_doses = sp_three_doses
 
         # Fefol tablets given
         fefol_less_than_120, fefol_120_plus = patients_given_fefol_tablets
@@ -214,24 +181,155 @@ module AncService
         cohort_struct.patients_with_negative_syphilis_status = syphil_neg
         cohort_struct.patients_with_positive_syphilis_status = syphil_pos
         cohort_struct.patients_with_unknown_syphilis_status = syphil_unk
-        cohort_struct.new_hiv_negative_final_visit = c_patients_hiv_statuses[:new_negative] || []
-        cohort_struct.prev_hiv_positive_final_visit = (@on_art_before_anc_final_visit + c_patients_hiv_statuses[:prev_positive]).uniq || []
-        cohort_struct.new_hiv_positive_final_visit = (c_patients_hiv_statuses[:new_positive] - @on_art_before_anc_final_visit) || []
-        cohort_struct.pre_hiv_negative_final_visit = c_patients_hiv_statuses[:prev_negative] || []
-        cohort_struct.not_done_hiv_test_final_visit = c_patients_hiv_statuses[:not_done] || []
-        cohort_struct.c_total_hiv_positive = @c_total_hiv_positive
-        cohort_struct.not_on_art_final_visit = @c_not_on_art
-        cohort_struct.on_art_before_anc_final_visit = @on_art_before_anc_final_visit
-        cohort_struct.start_art_zero_to_twenty_seven_for_final_visit = @start_art_zero_to_twenty_seven_for_final_visit
-        cohort_struct.start_art_plus_twenty_eight_for_final_visit = @start_art_plus_twenty_eight_for_final_visit
-        cohort_struct.not_on_cpt = @not_on_cpt
-        cohort_struct.on_cpt = @on_cpt
-        cohort_struct.nvp_not_given = @nvp_not_given
-        cohort_struct.nvp_given = @nvp_given
+
+        final_statuses = c_patients_hiv_statuses
+
+        cohort_struct.new_hiv_negative_final_visit = final_statuses[:new_negative] || []
+        cohort_struct.prev_hiv_positive_final_visit = final_statuses[:prev_positive] || []
+        cohort_struct.new_hiv_positive_final_visit = final_statuses[:new_positive] || []
+        cohort_struct.pre_hiv_negative_final_visit = final_statuses[:prev_negative] || []
+        cohort_struct.not_done_hiv_test_final_visit = final_statuses[:not_done] || []
+        cohort_struct.c_total_hiv_positive = cohort_struct.new_hiv_positive_final_visit + cohort_struct.prev_hiv_positive_final_visit
+
+        on_art_final = patients_on_art_final_visit(cohort_struct.c_total_hiv_positive)
+
+        cohort_struct.not_on_art_final_visit = cohort_struct.c_total_hiv_positive - on_art_final
+        final_art_start_dates = on_art_before_anc_final(on_art_final)
+        cohort_struct.on_art_before_anc_final_visit = final_art_start_dates[:art_before_anc] || []
+        cohort_struct.start_art_zero_to_twenty_seven_for_final_visit = final_art_start_dates[:zero_to_twenty_seven_weeks] || []
+        cohort_struct.start_art_plus_twenty_eight_for_final_visit = final_art_start_dates[:twenty_eight_plus_weeks] || []
+
+        cohort_struct.on_cpt = patients_final_on_cpt(cohort_struct.c_total_hiv_positive)
+        cohort_struct.not_on_cpt = cohort_struct.c_total_hiv_positive - cohort_struct.on_cpt
+        cohort_struct.nvp_given = patients_final_given_nvp(cohort_struct.c_total_hiv_positive)
+        cohort_struct.nvp_not_given = cohort_struct.c_total_hiv_positive - cohort_struct.nvp_given
 
         cohort_struct
       end
 
+      def patients_with_total_visits(_visit_count)
+        @anc_visits.select { |_x, y| yield(y) }.collect { |x, _y| x }.uniq
+      end
+
+      def patients_final_on_cpt(positive_patients)
+        return [] unless positive_patients.present?
+
+        Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e
+              INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
+			        WHERE e.encounter_type = (?)
+			        AND o.value_drug IN (
+                 SELECT drug_id FROM drug WHERE name LIKE '%Cotrimoxazole%'
+              ) AND e.patient_id IN (#{positive_patients.join(',')}) AND
+              e.encounter_datetime <= ? GROUP BY e.patient_id", DISPENSING.id, @end_date.to_date\
+              .end_of_month.strftime('%Y-%m-%d 23:59:59')])\
+                 .map(&:patient_id)
+      end
+
+      def patients_final_given_nvp(positive_patients)
+        return [] unless positive_patients.present?
+
+        Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e
+              INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
+			        WHERE e.encounter_type = (?)
+			        AND o.value_drug IN (
+                SELECT drug_id FROM drug WHERE name LIKE '%Nevirapine%'
+                OR name LIKE '%NVP%'
+              )
+              AND e.patient_id IN (#{positive_patients.join(',')}) AND
+              e.encounter_datetime <= ?
+              GROUP BY e.patient_id", DISPENSING.id, @end_date.to_date\
+              .end_of_month.strftime('%Y-%m-%d 23:59:59')])\
+                 .map(&:patient_id)
+      end
+
+      def on_art_before_anc_final(patients_on_art)
+        return {} unless patients_on_art.present?
+
+        art_before_anc = []
+        zero_to_twenty_seven_weeks = []
+        twenty_eight_plus_weeks = []
+
+        patients = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+            e.patient_id,
+            COALESCE(max(hiv_status.obs_datetime), max(pre.value_datetime), t.date_enrolled) date_hiv_status_recorded,
+            first_visit.max_encounter date_first_visit
+            FROM encounter e
+            LEFT JOIN obs hiv_status on hiv_status.encounter_id = e.encounter_id
+              AND hiv_status.concept_id = #{HIV_STATUS.concept_id}
+              AND hiv_status.voided = 0
+            LEFT JOIN obs pre on pre.encounter_id = e.encounter_id
+              AND pre.concept_id = #{PREV_HIV_TEST_DATE.concept_id}
+              AND pre.voided = 0
+            LEFT JOIN (
+              SELECT e.patient_id, e.encounter_datetime max_encounter
+              FROM encounter e
+              INNER JOIN obs o ON e.encounter_id = o.encounter_id
+              WHERE e.voided = 0
+              AND e.encounter_type = #{CURRENT_PREGNANCY.id}
+            ) first_visit ON first_visit.patient_id = e.patient_id
+            LEFT JOIN temp_earliest_start_date t ON t.patient_id = e.patient_id
+              AND t.date_enrolled < '#{@end_date}'
+            WHERE e.patient_id IN(#{patients_on_art.join(',')})
+          GROUP BY e.patient_id
+        SQL
+
+        patients.each do |p|
+          hiv_status_date = p['date_hiv_status_recorded']&.to_date
+          first_visit_date = p['date_first_visit']&.to_date
+
+          art_before_anc << p['patient_id'] && next if hiv_status_date < first_visit_date
+
+          if hiv_status_date >= first_visit_date && \
+             hiv_status_date < first_visit_date + 27.weeks
+            zero_to_twenty_seven_weeks << p['patient_id']
+            next
+          end
+
+          if hiv_status_date >= first_visit_date + 28.weeks
+            twenty_eight_plus_weeks << p['patient_id']
+            next
+          end
+        end
+
+        {
+          art_before_anc:,
+          zero_to_twenty_seven_weeks:,
+          twenty_eight_plus_weeks:
+        }
+      end
+
+      def patients_on_art_final_visit(positive_patients)
+        return [] unless positive_patients.present?
+
+        data = ActiveRecord::Base.connection.select_all <<~SQL
+
+          SELECT person_id AS patient_id
+          FROM obs
+          WHERE person_id IN (#{positive_patients.join(',')})
+            AND concept_id = #{ON_ART.concept_id}
+            AND value_coded = #{YES.concept_id}
+            AND voided = 0
+
+          UNION
+
+          SELECT person_id AS patient_id
+          FROM obs
+          WHERE person_id IN (#{positive_patients.join(',')})
+            AND concept_id = #{PREV_HIV_TEST.concept_id}
+            AND value_coded = #{POSITIVE.concept_id}
+            AND voided = 0
+
+          UNION
+
+          SELECT patient_id
+          FROM temp_earliest_start_date
+          WHERE date_enrolled < '2024-06-30 23:59:59'
+            AND patient_id IN (#{positive_patients.join(',')})
+        SQL
+
+        data.map { |d| d['patient_id'] }
+      end
       # private
 
       # Get women registered within a specified period
@@ -239,31 +337,7 @@ module AncService
         Encounter.joins(['INNER JOIN obs ON obs.person_id = encounter.patient_id'])
                  .where(['program_id = ? AND encounter_type = ? AND obs.concept_id = ? AND
               DATE(encounter_datetime) >= ? AND DATE(encounter_datetime) <= ? AND encounter.voided = 0',
-                         PROGRAM.id, CURRENT_PREGNANCY.id, LMP.concept_id, start_dt.to_date, end_dt.to_date])
-                 .select(['MAX(value_datetime) lmp, patient_id'])
-                 .group([:patient_id]).collect(&:patient_id).uniq
-      end
-
-      def anc_visits(_date)
-        @lmp = "(SELECT (max_patient_lmp(encounter.patient_id, '#{e_date}', '#{min_date}')))"
-
-        @monthly_lmp = "(SELECT (max_patient_lmp(encounter.patient_id, '#{@today.to_date.end_of_month}', '#{@today.to_date.beginning_of_month - 10.months}')))"
-
-        lmp = "(SELECT DATE(MAX(o.value_datetime)) FROM obs o WHERE o.person_id = enc.patient_id
-                  AND o.concept_id = #{LMP_CONCEPT.concept_id} AND DATE(o.obs_datetime) <= '#{e_date}'
-                  AND DATE(o.obs_datetime) >= '#{min_date}')"
-
-        @anc_visits = Encounter.find_by_sql(["
-            SELECT #{lmp} lmp, enc.patient_id patient_id, MAX(ob.value_numeric)
-            form_id FROM encounter enc INNER JOIN obs ob ON ob.encounter_id = enc.encounter_id
-            WHERE enc.program_id = ? AND enc.patient_id IN (?) AND enc.encounter_type = ?
-            AND ob.concept_id = ? AND DATE(enc.encounter_datetime) <= ?
-            AND DATE(enc.encounter_datetime) >= #{lmp}
-            GROUP BY enc.patient_id",
-                                             PROGRAM.id, @cohort_patients,
-                                             ANC_VISIT_TYPE_ENCOUNTER.id,
-                                             ConceptName.find_by_name('Reason for visit').concept_id,
-                                             e_date]).collect { |e| [e.patient_id, e.form_id] }
+                         PROGRAM.id, CURRENT_PREGNANCY.id, LMP.concept_id, start_dt.to_date, end_dt.to_date]).collect(&:patient_id).uniq
       end
 
       def pregnancy_test_done(_date)
@@ -415,31 +489,6 @@ module AncService
         result.uniq
       end
 
-      # Returns patient's ART start date at current facility
-      def find_patient_date_enrolled(patient)
-        order = Order.joins(:encounter, :drug_order)\
-                     .where(encounter: { patient: },
-                            drug_order: { drug: Drug.arv_drugs })\
-                     .order(:start_date)\
-                     .first
-
-        order&.start_date&.to_date
-      end
-
-      # Returns patient's actual ART start date.
-      def find_patient_earliest_start_date(patient, date_enrolled = nil)
-        date_enrolled ||= find_patient_date_enrolled(patient)
-
-        patient_id = ActiveRecord::Base.connection.quote(patient.patient_id)
-        date_enrolled = ActiveRecord::Base.connection.quote(date_enrolled)
-
-        result = ActiveRecord::Base.connection.select_one(
-          "SELECT date_antiretrovirals_started(#{patient_id}, #{date_enrolled}) AS date"
-        )
-
-        result['date']&.to_date
-      end
-
       def on_art_in_nart(positive_patients, date)
         id_visit_map = []
         anc_visit = {}
@@ -467,6 +516,7 @@ module AncService
           art_patients = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT patient_id, earliest_start_date FROM temp_earliest_start_date
             WHERE gender = 'F' AND death_date IS NULL
+            AND DATE(date_enrolled) <= '#{date.to_date}'
             AND patient_id IN (#{positive_patients.join(',')})
           SQL
           art_patients.each do |patient|
@@ -500,17 +550,7 @@ module AncService
         result['arv_before_visit_one'] = b4_visit_one.blank? ? [] : b4_visit_one # .join(",")
 
         result['no_art'] = no_art.join(',')
-
         result
-      end
-
-      def on_art_before_anc_first_visit(_date)
-        ids = begin
-          @m_on_art_before
-        rescue StandardError
-          []
-        end
-        (@m_extra_art_checks + ids).uniq
       end
 
       def start_art_zero_to_twenty_seven_for_first_visit(date)
@@ -527,30 +567,6 @@ module AncService
 
           start_date = @m_on_art_in_nart[ident.to_s].to_date
           lmp = ob.value_datetime.to_date
-          # frozen_string_literal: true
-          # Monthly date ranges
-          # Cohort date ranges
-          # @monthly_patients = registrations(start_date.beginning_of_month, start_date.end_of_month)
-          # @cohort_patients = total_patients(start_date, 'cohort')
-          # women registered in a booking cohort
-          # women registered in a reporting month
-          # Indicators for monthly patients in cohort report.
-          # raise @m_on_art_in_nart.inspect
-          # Indicators for the cohort block
-          # TD given
-          # SP Doses given
-          # Fefol tablets given
-          # Albendazole
-          # Bed nets
-          # HB Tests
-          # Syphilis Tests
-          # private
-          # Get women registered within a specified period
-          # Returns patient's ART start date at current facility
-          # Returns patient's actual ART start date.
-          # rescue nil
-          # .join(",")
-          # raise ident.inspect
           if  (start_date >= lmp) && (start_date < (lmp + 28.weeks)) && !remote.include?(ob.person_id)
             remote << ob.person_id
           end
@@ -575,32 +591,7 @@ module AncService
 
           start_date = @m_on_art_in_nart[ident.to_s].to_date
           lmp = ob.value_datetime.to_date
-          # frozen_string_literal: true
-          # Monthly date ranges
-          # Cohort date ranges
-          # @monthly_patients = registrations(start_date.beginning_of_month, start_date.end_of_month)
-          # @cohort_patients = total_patients(start_date, 'cohort')
-          # women registered in a booking cohort
-          # women registered in a reporting month
-          # Indicators for monthly patients in cohort report.
-          # raise @m_on_art_in_nart.inspect
-          # Indicators for the cohort block
-          # TD given
-          # SP Doses given
-          # Fefol tablets given
-          # Albendazole
-          # Bed nets
-          # HB Tests
-          # Syphilis Tests
-          # private
-          # Get women registered within a specified period
-          # Returns patient's ART start date at current facility
-          # Returns patient's actual ART start date.
-          # rescue nil
-          # .join(",")
-          # raise ident.inspect
-          # rescue []
-          # raise ident.inspect
+
           remote << ob.person_id if start_date >= (lmp + 28.weeks) && !remote.include?(ob.person_id)
         end
 
@@ -683,6 +674,8 @@ module AncService
       end
 
       def patient_sp_doses
+        return [] unless @cohort_patients.any?
+
         @patient_sp_doses ||= ActiveRecord::Base.connection.select_all <<~SQL
           SELECT encounter.patient_id, count(encounter.encounter_id) as count
           FROM orders o
@@ -728,14 +721,6 @@ module AncService
         # the total has to match the cohort patients
         # get the rest of the cohort patients as < 120
         minus_120 = @cohort_patients - plus_120
-
-        # fefol.each do |k, v|
-        #   if v.to_i < 120
-        #     minus_120 << k
-        #   elsif v.to_i >= 120
-        #     plus_120 << k
-        #   end
-        # end
 
         [minus_120, plus_120]
       end
@@ -815,146 +800,17 @@ module AncService
                  .select(['DISTINCT patient_id']).collect(&:patient_id)
       end
 
-      def new_hiv_negative_final_visit
-        ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT p.patient_id
-          FROM patient p
-          LEFT JOIN (
-            SELECT e.patient_id, o.value_coded
-            FROM encounter e
-            LEFT JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{HIV_STATUS.concept_id}
-            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.join(',')})
-              AND e.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
-              AND (
-                SELECT COUNT(*)
-                FROM encounter e2
-                WHERE e2.encounter_type = #{LAB_RESULTS.id} AND e2.voided = 0 AND e2.program_id = #{PROGRAM.id}
-                AND e2.encounter_datetime > e.encounter_datetime AND e2.patient_id = e.patient_id AND e2.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
-              ) = 0
-          ) AS last_encounter ON last_encounter.patient_id = p.patient_id
-          LEFT JOIN (
-            SELECT e.patient_id, o.value_coded
-            FROM encounter e
-            LEFT JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{HIV_STATUS.concept_id}
-            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.join(',')})
-              AND e.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
-              AND (
-                SELECT COUNT(*)
-                FROM encounter e2
-                WHERE e2.encounter_type = #{LAB_RESULTS.id} AND e2.voided = 0 AND e2.program_id = #{PROGRAM.id}
-                AND e2.encounter_datetime > e.encounter_datetime AND e2.patient_id = e.patient_id AND e2.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
-              ) = 1
-          ) AS second_last_encounter ON second_last_encounter.patient_id = p.patient_id
-          WHERE p.patient_id IN (#{@cohort_patients.join(',')}) AND p.voided = 0
-            AND last_encounter.value_coded = #{NEGATIVE.concept_id}
-            AND second_last_encounter.value_coded = #{NEGATIVE.concept_id}
-        SQL
-      end
-
-      def new_hiv_positive_final_visit
-        querystmnt =  'SELECT e.patient_id, e.encounter_datetime as date FROM encounter e '
-        querystmnt += 'INNER JOIN obs o ON o.encounter_id = e.encounter_id AND '
-        querystmnt += 'e.voided = 0 WHERE e.encounter_type = ? AND o.concept_id = ? AND '
-        querystmnt += "(o.value_coded = ? OR o.value_text = 'Positive') AND e.patient_id IN (?) AND e.program_id = ? "
-        querystmnt += 'AND e.encounter_id = (SELECT MAX(encounter.encounter_id) FROM encounter '
-        querystmnt += 'INNER JOIN obs ON obs.encounter_id = encounter.encounter_id '
-        querystmnt += 'AND obs.concept_id = ? WHERE encounter_type = e.encounter_type '
-        querystmnt += 'AND patient_id = e.patient_id AND DATE(encounter.encounter_datetime) <= ?) '
-        querystmnt += 'AND (DATE(e.encounter_datetime) <= ?) GROUP BY e.patient_id'
-
-        select = Encounter.find_by_sql([querystmnt, LAB_RESULTS.id,
-                                        HIV_STATUS.concept_id, POSITIVE.concept_id,
-                                        @cohort_patients, PROGRAM.id, HIV_STATUS.concept_id,
-                                        ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
-                                        ((@c_start_date.to_date + @c_pregnant_range) - 1.day)]).map(&:patient_id)
-
-        select.uniq
-      end
-
-      def prev_hiv_positive_final_visit
-        querystmnt =  'SELECT e.patient_id, e.encounter_datetime as date FROM encounter e '
-        querystmnt += 'INNER JOIN obs o ON o.encounter_id = e.encounter_id AND '
-        querystmnt += 'e.voided = 0 WHERE e.encounter_type = ? AND o.concept_id = ? AND '
-        querystmnt += "(o.value_coded = ? OR o.value_text = 'Positive') AND e.patient_id IN (?) AND e.program_id = ? "
-        querystmnt += 'AND e.encounter_id = (SELECT MAX(encounter.encounter_id) FROM encounter '
-        querystmnt += 'INNER JOIN obs ON obs.encounter_id = encounter.encounter_id '
-        querystmnt += 'AND obs.concept_id = ? WHERE encounter_type = e.encounter_type '
-        querystmnt += 'AND patient_id = e.patient_id AND DATE(encounter.encounter_datetime) <= ?) '
-        querystmnt += 'AND (DATE(e.encounter_datetime) <= ?) GROUP BY e.patient_id'
-
-        select = Encounter.find_by_sql([querystmnt, LAB_RESULTS.id,
-                                        PREV_HIV_TEST.concept_id, POSITIVE.concept_id,
-                                        @cohort_patients, PROGRAM.id, PREV_HIV_TEST.concept_id,
-                                        ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
-                                        ((@c_start_date.to_date + @c_pregnant_range) - 1.day)]).map(&:patient_id)
-
-        select.uniq
-      end
-
-      def pre_hiv_negative_final_visit
-        ActiveRecord::Base.connection.select_all <<~SQL
-                SELECT#{' '}
-                e.patient_id,#{' '}
-                prev_hiv_results,#{' '}
-                first_visit.hiv_status first_hiv_status,#{' '}
-                final_test.final_status,#{' '}
-                final_test.final_tested_date
-          FROM encounter e
-          INNER JOIN (
-              SELECT fv.patient_id, pre_results.prev_hiv_results, hiv_status_obs.hiv_status, hiv_status_obs.date_tested
-              FROM encounter fv
-                  INNER JOIN obs ob ON ob.person_id = fv.patient_id
-              LEFT JOIN (
-                  SELECT hs.patient_id, MIN(o.value_coded) hiv_status, MIN(hs.encounter_datetime) date_tested
-                      FROM encounter hs
-                  INNER JOIN obs o ON o.person_id = hs.patient_id
-                      WHERE hs.encounter_type = #{LAB_RESULTS.id}
-                      AND o.concept_id = #{HIV_STATUS.id}
-                      AND hs.patient_id IN (#{@cohort_patients.join(',')})
-                        AND hs.program_id = #{PROGRAM.id}
-                      AND DATE(hs.encounter_datetime) >= #{@c_start_date}
-                  GROUP BY hs.patient_id
-              ) as hiv_status_obs ON hiv_status_obs.patient_id = fv.patient_id
-              LEFT JOIN (
-                   SELECT hs.patient_id, MIN(o.value_coded) prev_hiv_results
-                      FROM encounter hs
-                  INNER JOIN obs o ON o.encounter_id = hs.encounter_id
-                      WHERE hs.encounter_type = #{LAB_RESULTS.id}
-                        AND hs.program_id = #{PROGRAM.id}
-                      AND o.concept_id = #{HIV_STATUS.id}
-                      AND hs.patient_id IN (#{@cohort_patients.join(',')})
-                      AND DATE(hs.encounter_datetime) >= #{@c_start_date}
-                      AND DATE(hs.encounter_datetime) <= DATE('#{@c_end_date}')
-                  GROUP BY hs.patient_id
-              ) as pre_results ON pre_results.patient_id = fv.patient_id
-              WHERE DATE(fv.encounter_datetime) <= DATE('#{@c_end_date}')
-              AND ob.concept_id = #{HIV_STATUS.id}
-                AND fv.encounter_type = #{LAB_RESULTS.id}
-              AND fv.program_id = #{PROGRAM.id}
-          ) as first_visit on first_visit.patient_id = e.patient_id
-          LEFT JOIN (
-              SELECT e.patient_id, MAX(f.value_coded) final_status, MAX(e.encounter_datetime) final_tested_date
-                  FROM encounter e
-                  INNER JOIN obs f on f.encounter_id = e.encounter_id
-                  WHERE f.concept_id = #{HIV_STATUS.id}
-                    AND e.encounter_type = #{LAB_RESULTS.id}
-                  AND e.encounter_datetime <= DATE('#{@c_end_date}')
-                  AND e.patient_id IN (#{@cohort_patients.join(',')})
-                  AND DATE(e.encounter_datetime) >= DATE('#{@c_start_date}')
-                  AND e.program_id = #{PROGRAM.id}
-                  GROUP BY e.patient_id
-          ) as final_test on final_test.patient_id = e.patient_id
-              AND final_test.final_tested_date > first_visit.date_tested
-          AND DATE(e.encounter_datetime) <= DATE('#{@c_end_date}')
-          AND DATE(e.encounter_datetime) >= DATE('#{@c_start_date}')
-          AND e.program_id = #{PROGRAM.id}
-          WHERE e.patient_id IN
-          (#{@cohort_patients.join(',')})
-            group by e.patient_id
-        SQL
-      end
-
       def c_patients_hiv_statuses
+        hiv_statuses = {
+          prev_negative: [],
+          prev_positive: [],
+          new_negative: [],
+          new_positive: [],
+          not_done: []
+        }
+
+        return hiv_statuses unless @cohort_patients.any?
+
         data = ActiveRecord::Base.connection.select_all <<~SQL
                           SELECT e.patient_id, prev_hiv_results, first_visit.hiv_status first_hiv_status, first_visit.date_tested, final_test.final_status, final_test.final_tested_date
               FROM encounter e
@@ -962,13 +818,16 @@ module AncService
                   SELECT fv.patient_id, pre_results.prev_hiv_results, hiv_status_obs.hiv_status, hiv_status_obs.date_tested
                   FROM encounter fv
                       INNER JOIN obs ob ON ob.person_id = fv.patient_id
+                      AND fv.voided = 0
+                      AND ob.voided = 0
                   LEFT JOIN (
                       SELECT hs.patient_id, MIN(o.value_coded) hiv_status, MIN(hs.encounter_datetime) date_tested
                           FROM encounter hs
                       INNER JOIN obs o ON o.person_id = hs.patient_id
+                          AND hs.voided = 0
+                          AND o.voided = 0
                           WHERE hs.encounter_type = #{CURRENT_PREGNANCY.id}
                           AND o.concept_id = #{HIV_STATUS.concept_id}
-                          AND hs.patient_id IN (#{@cohort_patients.join(',')})
                             AND hs.program_id = #{PROGRAM.id}
                           AND DATE(hs.encounter_datetime) >= DATE('#{@c_start_date}')
                       GROUP BY hs.patient_id
@@ -977,10 +836,11 @@ module AncService
                        SELECT hs.patient_id, MIN(o.value_coded) prev_hiv_results
                           FROM encounter hs
                       INNER JOIN obs o ON o.encounter_id = hs.encounter_id
+                          AND hs.voided = 0
+                          AND o.voided = 0
                           WHERE hs.encounter_type = #{LAB_RESULTS.id}
                             AND hs.program_id = #{PROGRAM.id}
                           AND o.concept_id = #{PREV_HIV_TEST.concept_id}
-                          AND hs.patient_id IN (#{@cohort_patients.join(',')})
                           AND DATE(hs.encounter_datetime) >= DATE('#{@c_start_date}')
                           AND DATE(hs.encounter_datetime) <= DATE('#{@end_date}')
                       GROUP BY hs.patient_id
@@ -994,10 +854,11 @@ module AncService
                   SELECT e.patient_id, MAX(f.value_coded) final_status, MAX(e.encounter_datetime) final_tested_date
                       FROM encounter e
                       INNER JOIN obs f on f.encounter_id = e.encounter_id
+                         AND e.voided = 0
+                         AND f.voided = 0
                       WHERE f.concept_id = #{HIV_STATUS.concept_id}
                         AND e.encounter_type = #{LAB_RESULTS.id}
                       AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
-                      AND e.patient_id IN (#{@cohort_patients.join(',')})
                       AND DATE(e.encounter_datetime) >= DATE('#{@c_start_date}')
                       AND e.program_id = #{PROGRAM.id}
                       GROUP BY e.patient_id
@@ -1007,218 +868,32 @@ module AncService
               AND DATE(e.encounter_datetime) >= DATE('#{@c_start_date}')
               AND e.program_id = #{PROGRAM.id}
               WHERE e.patient_id IN (#{@cohort_patients.join(',')})
+              AND e.voided = 0
           group by e.patient_id
         SQL
-        hiv_statuses = {
-          prev_negative: [],
-          prev_positive: [],
-          new_negative: [],
-          new_positive: [],
-          not_done: []
-        }
-        data&.to_a&.each do |d|
-          hiv_statuses[:prev_positive] << d['patient_id'] if d['prev_hiv_results'] == POSITIVE.concept_id
-          next unless d['prev_hiv_results'].blank? || d['prev_hiv_results'] == NEGATIVE.concept_id
 
-          if d['first_hiv_status'] == NEGATIVE.concept_id && d['final_status'].blank?
+        data&.each do |d|
+          hiv_statuses[:prev_positive] << d['patient_id'] if d['prev_hiv_results'] == POSITIVE.concept_id
+
+          if d['first_hiv_status'] == NEGATIVE.concept_id && [nil, NOT_DONE.concept_id].include?(d['final_status'])
             hiv_statuses[:prev_negative] << d['patient_id']
+          elsif d['prev_hiv_results'] == NEGATIVE.concept_id && [nil, NOT_DONE.concept_id].include?(d['final_status'])
+            hiv_statuses[:prev_negative] << d['patient_id']
+          elsif d['prev_hiv_results'] == POSITIVE.concept_id && [nil, NOT_DONE.concept_id].include?(d['final_status'])
+            hiv_statuses[:prev_positive] << d['patient_id']
           elsif d['first_hiv_status'] == POSITIVE.concept_id && d['final_status'] == POSITIVE.concept_id
             hiv_statuses[:new_positive] << d['patient_id']
           elsif d['first_hiv_status'] == NEGATIVE.concept_id && d['final_status'] == NEGATIVE.concept_id
             hiv_statuses[:new_negative] << d['patient_id']
-          elsif d['first_hiv_status'] == POSITIVE.concept_id && d['final_status'].blank?
-            hiv_statuses[:new_positive] << d['patient_id']
+          elsif d['first_hiv_status'] == POSITIVE.concept_id && [nil, NOT_DONE.concept_id].include?(d['final_status'])
+            hiv_statuses[:prev_positive] << d['patient_id']
           elsif d['first_hiv_status'] == NEGATIVE.concept_id && d['final_status'] == POSITIVE.concept_id
             hiv_statuses[:new_positive] << d['patient_id']
           else
             hiv_statuses[:not_done] << d['patient_id']
           end
         end
-        hiv_statuses
-      end
-
-      def not_done_hiv_test_final_visit
-        ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT p.patient_id
-          FROM patient p
-          LEFT JOIN (
-            SELECT e.patient_id, o.value_coded
-            FROM encounter e
-            LEFT JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{HIV_STATUS.concept_id}
-            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.join(',')})
-              AND e.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
-              AND (
-                SELECT COUNT(*)
-                FROM encounter e2
-                WHERE e2.encounter_type = #{LAB_RESULTS.id} AND e2.voided = 0 AND e2.program_id = #{PROGRAM.id}
-                AND e2.encounter_datetime > e.encounter_datetime AND e2.patient_id = e.patient_id AND e2.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
-              ) = 0
-          ) AS last_encounter ON last_encounter.patient_id = p.patient_id
-          LEFT JOIN (
-            SELECT e.patient_id, o.value_coded
-            FROM encounter e
-            LEFT JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = #{HIV_STATUS.concept_id}
-            WHERE e.encounter_type = #{LAB_RESULTS.id} AND e.voided = 0 AND e.program_id = #{PROGRAM.id} AND e.patient_id IN (#{@cohort_patients.join(',')})
-              AND e.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
-              AND (
-                SELECT COUNT(*)
-                FROM encounter e2
-                WHERE e2.encounter_type = #{LAB_RESULTS.id} AND e2.voided = 0 AND e2.program_id = #{PROGRAM.id}
-                AND e2.encounter_datetime > e.encounter_datetime AND e2.patient_id = e.patient_id AND e2.encounter_datetime <= '#{(@c_start_date + @c_pregnant_range) - 1}'
-              ) = 1
-          ) AS second_last_encounter ON second_last_encounter.patient_id = p.patient_id
-          LEFT JOIN obs k on k.person_id = p.patient_id AND k.voided = 0 AND k.concept_id = #{ON_ART.concept_id}
-          WHERE p.patient_id IN (#{@cohort_patients.join(',')}) AND p.voided = 0
-            AND k.person_id IS NULL
-            AND (last_encounter.value_coded IS NULL OR last_encounter.value_coded = #{NOT_DONE.concept_id})
-            AND (second_last_encounter.value_coded IS NULL OR second_last_encounter.value_coded = #{NOT_DONE.concept_id})
-        SQL
-      end
-
-      # def not_on_art_final_visit(date)
-      #    return []
-      # end
-
-      def on_art_before_anc_final_visit
-        (@c_extra_art_checks + @c_on_art_before)&.uniq
-      rescue StandardError
-        []
-      end
-
-      def start_art_zero_to_twenty_seven_for_final_visit
-        remote = []
-        Observation.find_by_sql(["SELECT o.value_datetime, o.person_id FROM obs o
-            JOIN encounter ON o.encounter_id = encounter.encounter_id
-            WHERE o.concept_id = ? AND o.person_id IN (?)
-            AND DATE(o.obs_datetime) BETWEEN #{@c_lmp} AND ?", LMP.concept_id,
-                                 @c_total_hiv_positive, ((@c_start_date.to_date + @c_pregnant_range) - 1.day)])
-                   .collect do |ob|
-          ident = ob.person_id
-          # raise ident.inspect
-          next unless !ob.value_datetime.blank? && @c_on_art_in_nart[ident.to_s]
-
-          start_date = @c_on_art_in_nart[ident.to_s].to_date
-          lmp = ob.value_datetime.to_date
-          # frozen_string_literal: true
-          # Monthly date ranges
-          # Cohort date ranges
-          # @monthly_patients = registrations(start_date.beginning_of_month, start_date.end_of_month)
-          # @cohort_patients = total_patients(start_date, 'cohort')
-          # women registered in a booking cohort
-          # women registered in a reporting month
-          # Indicators for monthly patients in cohort report.
-          # raise @m_on_art_in_nart.inspect
-          # Indicators for the cohort block
-          # TD given
-          # SP Doses given
-          # Fefol tablets given
-          # Albendazole
-          # Bed nets
-          # HB Tests
-          # Syphilis Tests
-          # private
-          # Get women registered within a specified period
-          # Returns patient's ART start date at current facility
-          # Returns patient's actual ART start date.
-          # rescue nil
-          # .join(",")
-          # raise ident.inspect
-          # rescue []
-          # raise ident.inspect
-          # rescue []
-          # if ! fefol[o.patient_id].include?(o.datetime)
-          # rescue []
-          # def not_on_art_final_visit(date)
-          #    return []
-          # end
-          # raise ident.inspect
-          if  (start_date >= lmp) && (start_date < (lmp + 28.weeks)) && !remote.include?(ob.person_id)
-            remote << ob.person_id
-          end
-        end
-
-        remote = [] if remote.to_s.blank?
-
-        (remote - @c_extra_art_checks)
-      end
-
-      def start_art_plus_twenty_eight_for_final_visit
-        remote = []
-        Observation.find_by_sql(["SELECT o.value_datetime, o.person_id FROM obs o
-            JOIN encounter ON o.encounter_id = encounter.encounter_id
-            WHERE o.concept_id = ? AND o.person_id IN (?)
-            AND DATE(o.obs_datetime) BETWEEN #{@c_lmp} AND ?", LMP.concept_id,
-                                 @c_total_hiv_positive, ((@c_start_date.to_date + @c_pregnant_range) - 1.day)])
-                   .collect do |ob|
-          ident = ob.person_id
-          # raise ident.inspect
-          next unless !ob.value_datetime.blank? && @c_on_art_in_nart[ident.to_s]
-
-          start_date = @c_on_art_in_nart[ident.to_s].to_date
-          lmp = ob.value_datetime.to_date
-          # frozen_string_literal: true
-          # Monthly date ranges
-          # Cohort date ranges
-          # @monthly_patients = registrations(start_date.beginning_of_month, start_date.end_of_month)
-          # @cohort_patients = total_patients(start_date, 'cohort')
-          # women registered in a booking cohort
-          # women registered in a reporting month
-          # Indicators for monthly patients in cohort report.
-          # raise @m_on_art_in_nart.inspect
-          # Indicators for the cohort block
-          # TD given
-          # SP Doses given
-          # Fefol tablets given
-          # Albendazole
-          # Bed nets
-          # HB Tests
-          # Syphilis Tests
-          # private
-          # Get women registered within a specified period
-          # Returns patient's ART start date at current facility
-          # Returns patient's actual ART start date.
-          # rescue nil
-          # .join(",")
-          # raise ident.inspect
-          # rescue []
-          # raise ident.inspect
-          # rescue []
-          # if ! fefol[o.patient_id].include?(o.datetime)
-          # rescue []
-          # def not_on_art_final_visit(date)
-          #    return []
-          # end
-          # raise ident.inspect
-          # rescue []
-          # raise ident.inspect
-          remote << ob.person_id if start_date >= (lmp + 28.weeks) && !remote.include?(ob.person_id)
-        end
-
-        remote = [] if remote.to_s.blank?
-
-        (remote - @c_extra_art_checks)
-      end
-
-      def nvp_not_given
-        patients_given_nvp = nvp_given
-        @cohort_patients - patients_given_nvp
-      end
-
-      def nvp_given
-        nvp = Order.where(["(drug.name REGEXP ? OR drug.name REGEXP ?)
-                            AND (DATE(encounter_datetime) >= #{@c_lmp} AND DATE(encounter_datetime) <= ?)
-                            AND encounter.patient_id IN (?)", 'NVP', 'Nevirapine syrup',
-                           (@c_start_date.to_date + @c_pregnant_range), @cohort_patients])
-                   .joins([[drug_order: :drug], :encounter])
-                   .select(["encounter.patient_id, count(*) encounter_id, drug.name instructions,
-                            SUM(DATEDIFF(auto_expire_date, start_date)) orderer"])
-                   .group([:patient_id]).collect(&:patient_id)
-
-        begin
-          nvp.uniq
-        rescue StandardError
-          []
-        end
+        hiv_statuses.transform_values(&:uniq)
       end
     end
   end

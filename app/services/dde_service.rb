@@ -165,17 +165,27 @@ class DdeService
   end
 
   def find_patients_by_npid(npid)
+    remotes = []
     locals = patient_service.find_patients_by_npid(npid).limit(PATIENT_SEARCH_RESULTS_LIMIT)
-    remotes = find_remote_patients_by_npid(npid)
-
+    begin
+      remotes = find_remote_patients_by_npid(npid)
+    rescue StandardError => e 
+      Rails.logger.info "Caught an exception : #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+    end
     package_patients(locals, remotes, auto_push_singular_local: true)
   end
 
   def find_patients_by_name_and_gender(given_name, family_name, gender)
+    remotes = []
     locals = patient_service.find_patients_by_name_and_gender(given_name, nil, family_name,
                                                               gender).limit(PATIENT_SEARCH_RESULTS_LIMIT)
-    remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
-
+    begin
+      remotes = find_remote_patients_by_name_and_gender(given_name, family_name, gender)
+    rescue StandardError => e
+      Rails.logger.info "Caught an exception : #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+    end
     package_patients(locals, remotes)
   end
 
@@ -351,9 +361,9 @@ class DdeService
                                                     remote_patient['doc_id']
                                                   end)
     if unresolved_patients.empty?
-      return { locals: patients[:locals], remotes: patients[:remotes].collect do |patient|
-                                                     localise_remote_patient(patient)
-                                                   end }
+      return { locals: patients[:locals],
+               remotes: patients[:remotes].collect { |patient| localise_remote_patient(patient) }
+             }
     end
 
     additional_patients = resolve_patients(local_patients: unresolved_patients, remote_patients: patients[:remotes])
@@ -417,7 +427,6 @@ class DdeService
     else
       resolved_patients = local_patients
     end
-
     { locals: resolved_patients, remotes: remote_patients }
   end
 

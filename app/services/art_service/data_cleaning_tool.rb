@@ -18,7 +18,8 @@ module ArtService
       'MISSING DEMOGRAPHICS' => 'incomplete_demographics',
       'MISSING VL RESULTS' => 'missing_vl_results',
       'DIFFERENT PREGNANCY VALUE ON SAME DATE' => 'different_pregnancy_value_on_same_date',
-      'MISSING ART START DATE' => 'missing_start_date'
+      'MISSING ART START DATE' => 'missing_start_date',
+      'MULTIPLE OPEN STATES' => 'multiple_open_states'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -466,7 +467,7 @@ module ArtService
       data = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
           p.person_id, given_name, family_name, gender, birthdate,
-          i.identifier arv_number
+          i.identifier arv_number, obs.obs_datetime visit_date
         FROM person p
         INNER JOIN obs ON obs.person_id = p.person_id AND (p.gender != 'F' AND p.gender != 'Female')
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
@@ -487,7 +488,7 @@ module ArtService
       client = []
 
       (data || []).each do |person|
-        client << {
+        record = {
           arv_number: person['arv_number'],
           given_name: person['given_name'],
           family_name: person['family_name'],
@@ -495,6 +496,10 @@ module ArtService
           birthdate: person['birthdate'],
           patient_id: person['person_id']
         }
+
+        record['visit_date'] = person['visit_date'].to_date.strftime('%d-%b-%Y') if person['visit_date'].present?
+
+        client << record
       end
 
       client
@@ -597,6 +602,24 @@ module ArtService
           AND obs1.value_coded <> obs2.value_coded
           AND obs1.obs_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
         GROUP BY person.person_id
+      SQL
+    end
+
+    def multiple_open_states
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT p.person_id patient_id, n.given_name,n.family_name, p.gender,p.birthdate,a.identifier arv_number, i.identifier national_id,
+        ps.start_date, GROUP_CONCAT(DISTINCT(cn.name)) states, COUNT(DISTINCT(ps.state)) state_count
+        FROM patient_state ps
+        INNER JOIN patient_program pp ON pp.patient_program_id = ps.patient_program_id AND pp.voided = 0 AND pp.program_id = 1 -- HIV Program
+        INNER JOIN person p ON p.person_id = pp.patient_id AND p.voided = 0
+        INNER JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+        INNER JOIN program_workflow_state pws ON pws.program_workflow_state_id = ps.state AND pws.retired = 0
+        INNER JOIN concept_name cn ON cn.concept_id = pws.concept_id AND cn.voided = 0 AND cn.concept_name_type = 'FULLY_SPECIFIED'
+        LEFT JOIN patient_identifier a ON a.patient_id = p.person_id AND a.voided = 0 AND a.identifier_type = #{indetifier_type}
+        LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.voided = 0 AND i.identifier_type = 3
+        WHERE ps.voided = 0 AND ps.start_date BETWEEN '#{@start_date}' AND '#{@end_date}' AND (ps.end_date IS NULL OR ps.end_date > '#{@end_date}')
+        AND p.person_id NOT IN(#{external_clients})
+        GROUP BY p.person_id, ps.start_date HAVING state_count > 1;
       SQL
     end
 

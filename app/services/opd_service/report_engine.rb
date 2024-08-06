@@ -13,7 +13,7 @@ module OpdService
       'TRIAGE_COVID' => OpdService::Reports::TriageCovid,
       'TRIAGE_REGISTRATION' => OpdService::Reports::TriageRegistration,
       'ATTENDANCE' => OpdService::Reports::Attendance,
-      'DRUG' => OpdService::Reports::Drug
+      'DRUG' => OpdService::Reports::DrugReport
     }.freeze
 
     def initialize; end
@@ -61,7 +61,7 @@ module OpdService
       stats
     end
 
-    def with_nids
+    def with_nids(start_date, end_date)
       type = PatientIdentifierType.find_by_name 'Malawi National ID'
 
       data = Person.where('identifier_type = ? AND identifier != ? AND identifier != ? AND identifier != ?', type.id,
@@ -69,6 +69,7 @@ module OpdService
                    .joins('INNER JOIN patient_identifier i ON i.patient_id = person.person_id
         RIGHT JOIN person_address a ON a.person_id = person.person_id
         RIGHT JOIN person_name n ON n.person_id = person.person_id')\
+                   .where(n: { date_created: start_date..end_date })
                    .select('person.*, a.state_province district, i.identifier nid,
         a.township_division ta, a.city_village village,
         n.given_name, n.family_name').order('n.date_created DESC')
@@ -121,12 +122,12 @@ module OpdService
         address = "#{district}, #{ta}, #{village}"
         if stats[concept.name].blank?
           stats[concept.name] = {}
-          stats[concept.name][address] = 0
+          stats[concept.name][address] = []
         elsif stats[concept.name][address].blank?
-          stats[concept.name][address] = 0
+          stats[concept.name][address] = []
         end
 
-        stats[concept.name][address] += 1
+        stats[concept.name][address] << record['person_id']
       end
 
       stats
@@ -533,15 +534,14 @@ module OpdService
       monthsRes = {}
       ili_id = ConceptName.find_by_name 'ILI'
       respiratory_id = ConceptName.find_by_name 'Respiratory'
-      data = Observation.where("obs_datetime BETWEEN ? AND ? AND obs.value_text IN(?,?) OR
-      obs.value_coded IN (#{ili_id.concept_id},#{respiratory_id.concept_id})", (@date - 11.month).beginning_of_month, @date,
-                               'Respiratory', 'ILI').group('name', 'months')\
-                        .pluck("
+      data = Observation.where(Arel.sql("obs_datetime BETWEEN '#{(@date - 11.month).beginning_of_month}' AND '#{@date}' AND obs.value_text IN('Respiratory', 'ILI') OR
+      obs.value_coded IN (#{ili_id.concept_id},#{respiratory_id.concept_id})")).group('name', 'months')\
+                        .pluck(Arel.sql("
         coalesce(obs.value_text, (select name from concept_name where concept_id = obs.value_coded limit 1)) name,
         DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01') as obs_date,
         OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}') as months,
         COUNT(OPD_syndromic_statistics(DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01'),'#{@date}')) as obs_count
-      ")\
+      "))\
                         .group_by(&:shift)
 
       respiratory_data = {}

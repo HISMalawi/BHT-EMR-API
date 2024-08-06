@@ -28,7 +28,7 @@ module CxcaService
       'REASON FOR NOT SCREENING REPORT' => CxcaService::Reports::Clinic::ReasonForNotScreeningReport
     }.freeze
 
-    def reports(start_date, end_date, name)
+    def reports(start_date, end_date, name, **kwargs)
       name = name.upcase
       case name
       when 'CC ALL QUESTIONS'
@@ -46,7 +46,7 @@ module CxcaService
         REPORT_NAMES[name].new(start_date:,
                                end_date:).treatment_resport
       else
-        REPORT_NAMES[name].new(start_date:, end_date:).data
+        REPORT_NAMES[name].new(start_date:, end_date:, **kwargs).data
       end
     end
 

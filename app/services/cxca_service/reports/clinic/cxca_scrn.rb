@@ -4,7 +4,7 @@ module CxcaService
   module Reports
     module Clinic
       class CxcaScrn
-        attr_reader :start_date, :end_date, :report
+        attr_reader :start_date, :end_date, :report, :screening_method
 
         include Utils
 
@@ -22,9 +22,10 @@ module CxcaService
           suspected: ['suspect cancer']
         }.freeze
 
-        def initialize(start_date:, end_date:)
+        def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
           @end_date = end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S')
+          @screening_method = kwargs[:screening_method].downcase
           @report = {}
         end
 
@@ -50,7 +51,9 @@ module CxcaService
               row[name] = {}
               CxCa_TX_OUTCOMES.each do |(outcome, outcomes)|
                 row[name][outcome] = screened.select do |s|
-                                       s['treatment']&.strip&.downcase&.in?(outcomes)
+                                       if @screening_method == 'all' || s['treatment']&.strip&.downcase&.include?(@screening_method)
+                                         s['treatment']&.strip&.downcase&.in?(outcomes)
+                                       end
                                      end.map { |t| t['person_id'] }.uniq
               end
             end

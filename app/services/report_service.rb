@@ -60,8 +60,8 @@ class ReportService
     engine(@program).diagnosis_by_address(start_date, end_date)
   end
 
-  def with_nids
-    engine(@program).with_nids
+  def with_nids(start_date, end_date)
+    engine(@program).with_nids(start_date, end_date)
   end
 
   def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init, **kwargs)
@@ -181,8 +181,8 @@ class ReportService
     engine(@program).external_consultation_clients(start_date, end_date, **kwargs)
   end
 
-  def cxca_reports(start_date, end_date, report_name)
-    engine(@program).reports(start_date.to_date, end_date.to_date, report_name)
+  def cxca_reports(start_date, end_date, report_name, **kwargs)
+    engine(@program).reports(start_date.to_date, end_date.to_date, report_name, **kwargs)
   end
 
   def radiology_reports(start_date, end_date, report_name)

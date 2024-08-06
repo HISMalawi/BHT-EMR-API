@@ -18,7 +18,7 @@ module CxcaService
 
         TREATMENTS = %i[thermocoagulation cryotherapy leep].freeze
 
-        def initialize(start_date:, end_date:)
+        def initialize(start_date:, end_date:, **_kwargs)
           @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
           @end_date = end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S')
           @report = {}
@@ -126,9 +126,15 @@ module CxcaService
                 AND screening_results_name.voided = 0
               SQL
               .group('person.person_id')
-              .select("disaggregated_age_group(person.birthdate, DATE('#{@end_date.to_date}')) AS age_group, person.person_id, reason_name.name AS reason_for_visit, max(treatment.value_text) AS treatment, result_name.name AS via_result, screening_results_name.name as screening_results, tx_option_name.name AS tx_option")
+              .select("disaggregated_age_group(person.birthdate,
+                       DATE('#{@end_date.to_date}')) AS age_group,
+                       person.person_id, reason_name.name AS reason_for_visit,
+                       max(treatment.value_text) AS treatment,
+                       result_name.name AS via_result,
+                       screening_results_name.name as screening_results,
+                      tx_option_name.name AS tx_option")
               .to_sql
-          ).to_hash
+          ).to_a
         end
       end
     end

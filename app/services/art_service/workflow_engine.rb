@@ -97,7 +97,11 @@ module ArtService
       SYMPTOM_SCREENING => %i[patient_is_alive? patient_not_on_fast_track?
                               patient_has_not_completed_fast_track_visit?
                               patient_not_coming_for_drug_refill?],
+      SYMPTOM_SCREENING => %i[patient_is_alive? patient_not_on_fast_track?
+                              patient_has_not_completed_fast_track_visit?
+                              patient_not_coming_for_drug_refill?],
       HIV_STAGING => %i[patient_is_alive?
+                        patient_not_already_staged_or_has_symptoms_screening?
                         patient_not_already_staged_or_has_symptoms_screening?
                         patient_has_not_completed_fast_track_visit?
                         patient_not_coming_for_drug_refill?],

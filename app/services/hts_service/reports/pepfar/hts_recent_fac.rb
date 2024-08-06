@@ -85,7 +85,7 @@ module HtsService
                   .select("disaggregated_age_group(person.birthdate, '#{@end_date.to_date}') as age_group, person.person_id, person.gender, person.birthdate, location.value_text as access_point, recency.value_coded as recency")
                   .group('person.person_id')
                   .to_sql
-          Person.connection.select_all(query).to_hash
+          Person.connection.select_all(query)
         end
       end
     end

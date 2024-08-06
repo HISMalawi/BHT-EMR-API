@@ -46,7 +46,7 @@ module LaboratoryService
                    person.birthdate,
                    patient_identifier.identifier AS arv_number,
                    disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
-                   reason_for_test.name AS reason_for_test,
+                   reason_for_test_obs.value_coded AS reason_for_test,
                    GROUP_CONCAT(DISTINCT test_concepts.name SEPARATOR ',') AS tests
             FROM orders
             INNER JOIN order_type
