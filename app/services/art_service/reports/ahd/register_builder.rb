@@ -40,10 +40,35 @@ module ArtService
               .merge(female_pregnant)
           end
 
-          def ahd_outcomes(end_date = Date.today)
+          def ahd_outcomes(end_date)
             select("pepfar_patient_outcome(patient.patient_id, #{end_date}) AS outcome")
           end
-          
+
+          def outcome_date(start_date)
+            select('latest_outcome.outcome_date AS outcome_date')
+              .joins <<~SQL
+                INNER JOIN (
+                  SELECT patient_program.patient_id,
+                        MAX(patient_state.start_date) AS outcome_date
+                  FROM patient_state
+                  INNER JOIN patient_program
+                    ON patient_program.patient_program_id = patient_state.patient_program_id
+                    AND patient_program.voided = 0
+                  INNER JOIN program
+                    ON program.program_id = patient_program.program_id
+                    AND program.name = 'HIV Program'
+                    AND program.retired = 0
+                  WHERE patient_state.voided = 0
+                    AND patient_state.start_date < DATE(#{start_date}) + INTERVAL 1 DAY
+                  GROUP BY patient_program.patient_id
+                ) AS latest_outcome ON latest_outcome.patient_id = encounter.patient_id
+              SQL
+          end
+
+          def age_group(end_date)
+            select("disaggregated_age_group(person.birthdate, DATE(#{end_date})) AS age_group")
+          end
+
           def guardian_visits(start_date, end_date)
             reception_encounter = EncounterType.find_by_name('HIV RECEPTION')
 
@@ -105,7 +130,8 @@ module ArtService
           def ahd_lab_orders(start_date, end_date)
             test_types = [
               'HIV Viral load', 'CD4 count', 'CrAg', 'CSF CrAg',
-              'Urine LAM', 'GeneXpert', 'FASH'
+              'Urine LAM', 'GeneXpert', 'FASH', 'Culture & Sensitivity',
+              'TB Microscopic Exam'
             ]
 
             test_type_ids = test_types.map { |type| concept(type).concept_id }
@@ -173,6 +199,78 @@ module ArtService
                 LEFT JOIN temp_cohort_members current ON current.patient_id = encounter.patient_id
                 AND current.date_enrolled <= encounter.encounter_datetime
               SQL
+          end
+
+          def started_cpt
+            cpt_concept = concept('Cotrimoxazole').concept_id
+
+            select("IF (on_cpt.patient_id IS NULL, 'No', 'Yes') AS started_cpt")
+              .joins <<~SQL
+                LEFT JOIN (
+                  SELECT ods.patient_id
+                  FROM orders ods
+                  INNER JOIN drug_order dos ON ods.order_id = dos.order_id#{' '}
+                    AND ods.voided = 0#{' '}
+                    AND dos.quantity > 0#{' '}
+                    AND ods.concept_id = #{cpt_concept}
+                ) AS on_cpt ON on_cpt.patient_id = patient.patient_id
+              SQL
+          end
+
+          def started_tpt
+            select("IF (on_tpt.patient_id IS NULL, 'No', 'Yes') AS started_tpt")
+              .joins <<~SQL
+                LEFT JOIN (
+                  SELECT oo.patient_id#{' '}
+                  FROM orders oo
+                  INNER JOIN drug_order do ON do.order_id = oo.order_id
+                    AND do.quantity > 0
+                    AND oo.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
+                    AND oo.voided = 0
+                  INNER JOIN concept_name AS tpt_drug_concepts
+                    ON tpt_drug_concepts.concept_id = oo.concept_id
+                    AND tpt_drug_concepts.name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')
+                    AND tpt_drug_concepts.voided = 0
+                  INNER JOIN encounter tr
+                    ON tr.encounter_id = oo.encounter_id
+                    AND tr.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment' LIMIT 1)
+                    AND tr.voided = 0
+                ) AS on_tpt ON on_tpt.patient_id = patient.patient_id
+              SQL
+          end
+
+          def patients_on_tb_treatment(patient_ids)
+            on_tb_treatment = concept('TB Treatment').concept_id
+            tb_status = concept('TB Status').concept_id
+            no = concept('No').concept_id
+            on_tb_treatment_concept_ids = ConceptName.where(name: 'RX').collect(&:concept_id)
+
+            ActiveRecord::Base.connection.execute <<~SQL
+              SELECT o.person_id patient_id
+              FROM (
+                SELECT person_id, MAX(obs_datetime) AS obs_datetime
+                FROM obs o
+                JOIN encounter e ON o.encounter_id = e.encounter_id
+                WHERE o.person_id IN (#{patient_ids.join(', ')})
+                  AND o.voided = 0
+                  AND o.concept_id = #{tb_status}
+                  AND o.value_coded IN (#{on_tb_treatment_concept_ids.join(', ')})
+              ) tb_status_max
+              JOIN obs o ON o.obs_datetime = tb_status_max.obs_datetime
+              JOIN encounter e ON o.encounter_id = e.encounter_id
+              WHERE o.person_id = tb_status_max.person_id
+                AND o.concept_id = #{tb_status}
+                AND NOT EXISTS (
+                  SELECT 1
+                  FROM obs o2
+                  WHERE o2.person_id = tb_status_max.person_id
+                    AND o2.concept_id = #{on_tb_treatment}
+                    AND o2.value_coded = #{no}
+                    AND o2.obs_datetime >= tb_status_max.obs_datetime
+                )
+              ORDER BY o.obs_datetime DESC
+              LIMIT 1#{'            '}
+            SQL
           end
 
           def ahd_symptoms

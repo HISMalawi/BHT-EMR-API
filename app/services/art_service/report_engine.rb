@@ -53,7 +53,8 @@ module ArtService
       'STOCK_CARD' => ArtService::Reports::Clinic::StockCardReport,
       'HYPERTENSION_REPORT' => ArtService::Reports::Clinic::HypertensionReport,
       'TX_NEW' => ArtService::Reports::Pepfar::TxNew,
-      'AHD_MONTHLY' => ArtService::Reports::Ahd::Register,
+      'AHD_MONTHLY' => ArtService::Reports::Ahd::Monthly,
+      'AHD_MONTHLY_DISAGGREGATED' => ArtService::Reports::Ahd::MonthlyDisaggregated,
       'AHD_WEEKLY' => ArtService::Reports::Ahd::Weekly
     }.freeze
 
