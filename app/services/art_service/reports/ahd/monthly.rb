@@ -101,13 +101,17 @@ module ArtService
         def build_outcomes(patient_id, outcome)
           indicator = 'treatment_given'
           build_indicators(indicator, %w[discharged transfered_out ltfu died missing])
+          outcome = outcome.downcase
+
           mapping = {
             'patient transferred out' => 'transfered_out',
             'patient died' => 'died',
             'defaulted' => 'ltfu',
             'discharged' => 'discharged'
           }
-          report[indicator][mapping[outcome]] << patient_id if mapping[outcome.downcase].present?
+
+          report[indicator][mapping[outcome]] << patient_id\
+            if mapping[outcome].present? && outcome.in?(mapping.keys)
         end
 
         def build_all_test_reports(patient_id, tests)
@@ -186,6 +190,7 @@ module ArtService
           }
           indicator = 'symptom_screening'
           build_indicators(indicator, symptom_map.keys)
+          symptoms = symptoms.split(',')
 
           symptom_map.each do |key, concept|
             report[indicator][key] << patient_id if concept.in?(symptoms)
