@@ -14,6 +14,7 @@ module Api
           render json: service.find_batch_by_batch_number(params[:id])
         end
 
+
         # POST /pharmacy/batches
         #
         # Request structure:
@@ -32,10 +33,18 @@ module Api
         #     ]
         #   }
         #
+
+
         def create
-          batch_params = params['_json']
+          batch_params = params['_json']          
+          user_program = User.current.programs { |x| x["name"] == "IMMUNIZATION PROGRAM" }
+          if user_program.present?
+            location_id = User.current.location_id
+            batch_params.each { |param| param["location_id"] = location_id }
+          end           
           render json: service.create_batches(batch_params), status: :created
         end
+        
 
         def update
           params[:batch_number] = params[:id]
