@@ -9,7 +9,7 @@ class Api::V1::ImmunizationReportController < ApplicationController
                 status: :unprocessable_entity
         end
 
-        DashboardStatsJob.perform_later
+        DashboardStatsJob.perform_later(User.current.location_id)
        
     end
 end
