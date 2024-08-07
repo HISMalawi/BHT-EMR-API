@@ -2,8 +2,6 @@
 class ImmunizationReportJob < ApplicationJob
   queue_as :default
 
-  sidekiq_options unique: :until_executed
-
   def perform(start_date, end_date, location_id)
     dashboard_stats = dashboard_service(start_date, end_date, location_id)
     dashboard_stats = dashboard_stats.data
