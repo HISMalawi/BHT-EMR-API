@@ -8,11 +8,11 @@ module DispensationService
       concept_id = concept('AMOUNT DISPENSED').concept_id
 
       if date
-        Observation.where(person_id: patient_id, concept_id: concept_id)
+        Observation.where(person_id: patient_id, concept_id:)
                    .where('DATE(obs_datetime) = DATE(?)', date)
                    .order(date_created: :desc)
       else
-        Observation.where(person_id: patient_id, concept_id: concept_id)
+        Observation.where(person_id: patient_id, concept_id:)
                    .order(date_created: :desc)
       end
     end
@@ -24,7 +24,7 @@ module DispensationService
           quantity = dispensation[:quantity]
           date = TimeUtils.retro_timestamp(dispensation[:date]&.to_time || Time.now)
           drug_order = DrugOrder.find(order_id)
-          obs = dispense_drug(program, drug_order, quantity, date: date, provider: provider)
+          obs = dispense_drug(program, drug_order, quantity, date:, provider:)
 
           unless obs.errors.empty?
             raise InvalidParameterErrors.new("Failed to dispense order ##{order_id}")\
@@ -43,20 +43,18 @@ module DispensationService
     def dispense_drug(program, drug_order, quantity, date: nil, provider: nil)
       date ||= Time.now
       patient = drug_order.order.patient
-      encounter = current_encounter(program, patient, date: date, create: true, provider: provider)
+      encounter = current_encounter(program, patient, date:, create: true, provider:)
       patient_type = Observation.where("concept_id = ? AND DATE(obs_datetime) <= ?
         AND person_id = ?", concept('Type of patient').concept_id,
-        date.to_date, patient.patient_id).order("obs_datetime DESC").first
+                                       date.to_date, patient.patient_id).order('obs_datetime DESC').first
 
-      if patient_type.blank?
-        patient_type = 'New patient'
-      else
-        if patient_type.value_coded == concept("New patient").concept_id
-          patient_type = 'New patient'
-        else
-          patient_type = 'External'
-        end
-      end
+      patient_type = if patient_type.blank?
+                       'New patient'
+                     elsif patient_type.value_coded == concept('New patient').concept_id
+                       'New patient'
+                     else
+                       'External'
+                     end
 
       ActiveRecord::Base.transaction do
         update_quantity_dispensed(drug_order, quantity)
@@ -67,7 +65,7 @@ module DispensationService
         # Let's avoid surprises, clients must explicitly trigger the state change.
         # Besides this service is open to different clients, some (actually most)
         # are not even interested in the HIV Program... So...
-        if drug_order.drug.arv? && patient_type == "New patient"
+        if drug_order.drug.arv? && patient_type == 'New patient'
           ProgramEngineLoader.load(program, 'PatientStateEngine')
                              &.new(patient, date)
                              &.on_drug_dispensation(drug_order, quantity)
@@ -80,7 +78,8 @@ module DispensationService
           encounter_id: encounter.encounter_id,
           value_drug: drug_order.drug_inventory_id,
           value_numeric: quantity,
-          obs_datetime: date
+          obs_datetime: date, 
+          location_id: User.current.location_id
         )
 
         observation
@@ -144,7 +143,7 @@ module DispensationService
         patient_id: patient.patient_id,
         location_id: Location.current.location_id,
         encounter_datetime: date,
-        program: program,
+        program:,
         provider: provider || User.current.person
       )
     end
@@ -155,7 +154,7 @@ module DispensationService
 
       encounter_type = EncounterType.find_by(name: 'DISPENSING').encounter_type_id
       Encounter.where(program_id: program.id,
-                      encounter_type: encounter_type,
+                      encounter_type:,
                       patient_id: patient.id,
                       encounter_datetime: date...(date + 1.day))
                .order(date_created: :desc)

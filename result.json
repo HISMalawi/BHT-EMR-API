@@ -1,0 +1,2692 @@
+[
+  {
+    "specimen": "Plasma",
+    "testTypes": [
+      {
+        "testType": "HIV viral load",
+        "indicators": [
+          {
+            "name": "HIV viral load",
+            "concept_id": 856
+          }
+        ]
+      },
+      {
+        "testType": "AFB sputum smear",
+        "indicators": [
+          {
+            "name": "ZN",
+            "concept_id": 10105
+          }
+        ]
+      },
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Cell count",
+        "indicators": [
+          {
+            "name": "White blood cells",
+            "concept_id": 678
+          },
+          {
+            "name": "Red blood cells",
+            "concept_id": 679
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Sputum",
+    "testTypes": [
+      {
+        "testType": "Differential",
+        "indicators": [
+          {
+            "name": "Lymphocytes",
+            "concept_id": 1021
+          },
+          {
+            "name": "Polymorphs",
+            "concept_id": 10103
+          },
+          {
+            "name": "Diff remarks",
+            "concept_id": 10104
+          }
+        ]
+      },
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "TB Microscopic Exam",
+        "indicators": [
+          {
+            "name": "Tuberculosis program",
+            "concept_id": 1648
+          }
+        ]
+      },
+      {
+        "testType": "GeneXpert",
+        "indicators": [
+          {
+            "name": "MTB",
+            "concept_id": 10098
+          },
+          {
+            "name": "RIF Resistance",
+            "concept_id": 10099
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "TB Tests",
+        "indicators": [
+          {
+            "name": "HIV status",
+            "concept_id": 3753
+          },
+          {
+            "name": "Macro exam",
+            "concept_id": 10106
+          },
+          {
+            "name": "Smear microscopy result",
+            "concept_id": 10107
+          },
+          {
+            "name": "Gene Xpert MTB",
+            "concept_id": 10108
+          },
+          {
+            "name": "Gene Xpert RIF Resistance",
+            "concept_id": 10109
+          },
+          {
+            "name": "Reason For Testing",
+            "concept_id": 10110
+          },
+          {
+            "name": "Indication for GeneXpert Test",
+            "concept_id": 10111
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Pulmonary effusion",
+    "testTypes": [
+      {
+        "testType": "Differential",
+        "indicators": [
+          {
+            "name": "Lymphocytes",
+            "concept_id": 1021
+          },
+          {
+            "name": "Polymorphs",
+            "concept_id": 10103
+          },
+          {
+            "name": "Diff remarks",
+            "concept_id": 10104
+          }
+        ]
+      },
+      {
+        "testType": "AFB sputum smear",
+        "indicators": [
+          {
+            "name": "ZN",
+            "concept_id": 10105
+          }
+        ]
+      },
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Cell count",
+        "indicators": [
+          {
+            "name": "White blood cells",
+            "concept_id": 678
+          },
+          {
+            "name": "Red blood cells",
+            "concept_id": 679
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "TB Tests",
+        "indicators": [
+          {
+            "name": "HIV status",
+            "concept_id": 3753
+          },
+          {
+            "name": "Macro exam",
+            "concept_id": 10106
+          },
+          {
+            "name": "Smear microscopy result",
+            "concept_id": 10107
+          },
+          {
+            "name": "Gene Xpert MTB",
+            "concept_id": 10108
+          },
+          {
+            "name": "Gene Xpert RIF Resistance",
+            "concept_id": 10109
+          },
+          {
+            "name": "Reason For Testing",
+            "concept_id": 10110
+          },
+          {
+            "name": "Indication for GeneXpert Test",
+            "concept_id": 10111
+          }
+        ]
+      },
+      {
+        "testType": "ESBL Test",
+        "indicators": [
+          {
+            "name": "Cefotaxime",
+            "concept_id": 6824
+          },
+          {
+            "name": "ESBL",
+            "concept_id": 10206
+          },
+          {
+            "name": "Cefotaxime + Clavulanate",
+            "concept_id": 10207
+          },
+          {
+            "name": "Ceftazidime",
+            "concept_id": 10208
+          },
+          {
+            "name": "Ceftazidime + Clavulanate",
+            "concept_id": 10209
+          },
+          {
+            "name": "Cefepime",
+            "concept_id": 10210
+          },
+          {
+            "name": "Cefepime + clavulanate",
+            "concept_id": 10211
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Urine",
+    "testTypes": [
+      {
+        "testType": "Urine microscopy",
+        "indicators": [
+          {
+            "name": "Urinalysis",
+            "concept_id": 302
+          },
+          {
+            "name": "Epithelial cells",
+            "concept_id": 666
+          },
+          {
+            "name": "White blood cells",
+            "concept_id": 678
+          },
+          {
+            "name": "Red blood cells",
+            "concept_id": 679
+          },
+          {
+            "name": "Yeast cells",
+            "concept_id": 686
+          },
+          {
+            "name": "Casts",
+            "concept_id": 10113
+          },
+          {
+            "name": "Crystals",
+            "concept_id": 10114
+          },
+          {
+            "name": "Parasites",
+            "concept_id": 10115
+          }
+        ]
+      },
+      {
+        "testType": "B-HCG",
+        "indicators": [
+          {
+            "name": "B-HCG",
+            "concept_id": 2473
+          }
+        ]
+      },
+      {
+        "testType": "Urine dipstick",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Urine chemistries",
+        "indicators": [
+          {
+            "name": "Urinalysis",
+            "concept_id": 302
+          },
+          {
+            "name": "Total bilirubin",
+            "concept_id": 655
+          },
+          {
+            "name": "Serum glucose",
+            "concept_id": 887
+          },
+          {
+            "name": "Protein",
+            "concept_id": 7340
+          },
+          {
+            "name": "Blood",
+            "concept_id": 8612
+          },
+          {
+            "name": "Urobilinogen",
+            "concept_id": 9615
+          },
+          {
+            "name": "Specific Gravity",
+            "concept_id": 9623
+          },
+          {
+            "name": "pH",
+            "concept_id": 10116
+          },
+          {
+            "name": "Nitrate",
+            "concept_id": 10117
+          },
+          {
+            "name": "Ketones",
+            "concept_id": 10118
+          },
+          {
+            "name": "Leucocytes",
+            "concept_id": 10119
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "ESBL Test",
+        "indicators": [
+          {
+            "name": "Cefotaxime",
+            "concept_id": 6824
+          },
+          {
+            "name": "ESBL",
+            "concept_id": 10206
+          },
+          {
+            "name": "Cefotaxime + Clavulanate",
+            "concept_id": 10207
+          },
+          {
+            "name": "Ceftazidime",
+            "concept_id": 10208
+          },
+          {
+            "name": "Ceftazidime + Clavulanate",
+            "concept_id": 10209
+          },
+          {
+            "name": "Cefepime",
+            "concept_id": 10210
+          },
+          {
+            "name": "Cefepime + clavulanate",
+            "concept_id": 10211
+          }
+        ]
+      },
+      {
+        "testType": "Urine Lam",
+        "indicators": [
+          {
+            "name": "Lam",
+            "concept_id": 10542
+          }
+        ]
+      },
+      {
+        "testType": "Urine Macroscopy",
+        "indicators": [
+          {
+            "name": "Appearance",
+            "concept_id": 7330
+          },
+          {
+            "name": "Colour",
+            "concept_id": 10112
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Cerebrospinal fluid",
+    "testTypes": [
+      {
+        "testType": "Differential",
+        "indicators": [
+          {
+            "name": "Lymphocytes",
+            "concept_id": 1021
+          },
+          {
+            "name": "Polymorphs",
+            "concept_id": 10103
+          },
+          {
+            "name": "Diff remarks",
+            "concept_id": 10104
+          }
+        ]
+      },
+      {
+        "testType": "AFB sputum smear",
+        "indicators": [
+          {
+            "name": "ZN",
+            "concept_id": 10105
+          }
+        ]
+      },
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "India ink",
+        "indicators": [
+          {
+            "name": "India ink",
+            "concept_id": 7336
+          }
+        ]
+      },
+      {
+        "testType": "Cell count",
+        "indicators": [
+          {
+            "name": "White blood cells",
+            "concept_id": 678
+          },
+          {
+            "name": "Red blood cells",
+            "concept_id": 679
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "TB Tests",
+        "indicators": [
+          {
+            "name": "HIV status",
+            "concept_id": 3753
+          },
+          {
+            "name": "Macro exam",
+            "concept_id": 10106
+          },
+          {
+            "name": "Smear microscopy result",
+            "concept_id": 10107
+          },
+          {
+            "name": "Gene Xpert MTB",
+            "concept_id": 10108
+          },
+          {
+            "name": "Gene Xpert RIF Resistance",
+            "concept_id": 10109
+          },
+          {
+            "name": "Reason For Testing",
+            "concept_id": 10110
+          },
+          {
+            "name": "Indication for GeneXpert Test",
+            "concept_id": 10111
+          }
+        ]
+      },
+      {
+        "testType": "ESBL Test",
+        "indicators": [
+          {
+            "name": "Cefotaxime",
+            "concept_id": 6824
+          },
+          {
+            "name": "ESBL",
+            "concept_id": 10206
+          },
+          {
+            "name": "Cefotaxime + Clavulanate",
+            "concept_id": 10207
+          },
+          {
+            "name": "Ceftazidime",
+            "concept_id": 10208
+          },
+          {
+            "name": "Ceftazidime + Clavulanate",
+            "concept_id": 10209
+          },
+          {
+            "name": "Cefepime",
+            "concept_id": 10210
+          },
+          {
+            "name": "Cefepime + clavulanate",
+            "concept_id": 10211
+          }
+        ]
+      },
+      {
+        "testType": "CrAg",
+        "indicators": [
+          {
+            "name": "CrAg",
+            "concept_id": 10048
+          }
+        ]
+      },
+      {
+        "testType": "CSF CrAg",
+        "indicators": [
+
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Peritoneal fluid",
+    "testTypes": [
+      {
+        "testType": "Differential",
+        "indicators": [
+          {
+            "name": "Lymphocytes",
+            "concept_id": 1021
+          },
+          {
+            "name": "Polymorphs",
+            "concept_id": 10103
+          },
+          {
+            "name": "Diff remarks",
+            "concept_id": 10104
+          }
+        ]
+      },
+      {
+        "testType": "AFB sputum smear",
+        "indicators": [
+          {
+            "name": "ZN",
+            "concept_id": 10105
+          }
+        ]
+      },
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Cell count",
+        "indicators": [
+          {
+            "name": "White blood cells",
+            "concept_id": 678
+          },
+          {
+            "name": "Red blood cells",
+            "concept_id": 679
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "TB Tests",
+        "indicators": [
+          {
+            "name": "HIV status",
+            "concept_id": 3753
+          },
+          {
+            "name": "Macro exam",
+            "concept_id": 10106
+          },
+          {
+            "name": "Smear microscopy result",
+            "concept_id": 10107
+          },
+          {
+            "name": "Gene Xpert MTB",
+            "concept_id": 10108
+          },
+          {
+            "name": "Gene Xpert RIF Resistance",
+            "concept_id": 10109
+          },
+          {
+            "name": "Reason For Testing",
+            "concept_id": 10110
+          },
+          {
+            "name": "Indication for GeneXpert Test",
+            "concept_id": 10111
+          }
+        ]
+      },
+      {
+        "testType": "ESBL Test",
+        "indicators": [
+          {
+            "name": "Cefotaxime",
+            "concept_id": 6824
+          },
+          {
+            "name": "ESBL",
+            "concept_id": 10206
+          },
+          {
+            "name": "Cefotaxime + Clavulanate",
+            "concept_id": 10207
+          },
+          {
+            "name": "Ceftazidime",
+            "concept_id": 10208
+          },
+          {
+            "name": "Ceftazidime + Clavulanate",
+            "concept_id": 10209
+          },
+          {
+            "name": "Cefepime",
+            "concept_id": 10210
+          },
+          {
+            "name": "Cefepime + clavulanate",
+            "concept_id": 10211
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Other",
+    "testTypes": [
+      {
+        "testType": "AFB sputum smear",
+        "indicators": [
+          {
+            "name": "ZN",
+            "concept_id": 10105
+          }
+        ]
+      },
+      {
+        "testType": "Biopsy",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Cell count",
+        "indicators": [
+          {
+            "name": "White blood cells",
+            "concept_id": 678
+          },
+          {
+            "name": "Red blood cells",
+            "concept_id": 679
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Blood",
+    "testTypes": [
+      {
+        "testType": "Measles",
+        "indicators": [
+          {
+            "name": "Measles IgM ELISA-Behring enzygnost",
+            "concept_id": 10135
+          }
+        ]
+      },
+      {
+        "testType": "Vdrl",
+        "indicators": [
+          {
+            "name": "Vdrl",
+            "concept_id": 299
+          },
+          {
+            "name": "Treponema pallidum hemagglutination assay",
+            "concept_id": 1031
+          },
+          {
+            "name": "Rapid plasmin reagent",
+            "concept_id": 1478
+          }
+        ]
+      },
+      {
+        "testType": "Serum glutamic-oxaloacetic transaminase",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Serum glutamic-pyruvic transaminase",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Serum creatinine",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "HIV viral load",
+        "indicators": [
+          {
+            "name": "HIV viral load",
+            "concept_id": 856
+          }
+        ]
+      },
+      {
+        "testType": "Blood urea nitrogen",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Serum glucose",
+        "indicators": [
+          {
+            "name": "Serum glucose",
+            "concept_id": 887
+          }
+        ]
+      },
+      {
+        "testType": "Liver function tests",
+        "indicators": [
+          {
+            "name": "ALT/GPT",
+            "concept_id": 10143
+          },
+          {
+            "name": "AST/GOT",
+            "concept_id": 10144
+          },
+          {
+            "name": "Alkaline Phosphate(ALP)",
+            "concept_id": 10145
+          },
+          {
+            "name": "GGT/r-GT",
+            "concept_id": 10146
+          },
+          {
+            "name": "Bilirubin Direct(BID)",
+            "concept_id": 10147
+          },
+          {
+            "name": "Bilirubin Total(BIT))",
+            "concept_id": 10148
+          },
+          {
+            "name": "Albumin(ALB)",
+            "concept_id": 10149
+          },
+          {
+            "name": "Total Protein(PRO)",
+            "concept_id": 10150
+          }
+        ]
+      },
+      {
+        "testType": "Creatine kinase",
+        "indicators": [
+          {
+            "name": "Creatine kinase",
+            "concept_id": 1011
+          }
+        ]
+      },
+      {
+        "testType": "ESR",
+        "indicators": [
+          {
+            "name": "ESR",
+            "concept_id": 1477
+          }
+        ]
+      },
+      {
+        "testType": "Uric acid",
+        "indicators": [
+          {
+            "name": "Urinalysis",
+            "concept_id": 302
+          }
+        ]
+      },
+      {
+        "testType": "Serum calcium",
+        "indicators": [
+          {
+            "name": "Ca",
+            "concept_id": 10203
+          }
+        ]
+      },
+      {
+        "testType": "Istat chem8 plus construct",
+        "indicators": [
+          {
+            "name": "Serum sodium",
+            "concept_id": 1132
+          },
+          {
+            "name": "Serum potassium",
+            "concept_id": 1133
+          },
+          {
+            "name": "Serum Chloride",
+            "concept_id": 1134
+          }
+        ]
+      },
+      {
+        "testType": "International normalized ratio and prothrombin time lab result",
+        "indicators": [
+          {
+            "name": "International normalized ratio and prothrombin time lab result",
+            "concept_id": 3374
+          }
+        ]
+      },
+      {
+        "testType": "CD4 count",
+        "indicators": [
+          {
+            "name": "CD8 count",
+            "concept_id": 853
+          },
+          {
+            "name": "CD3 count",
+            "concept_id": 1028
+          },
+          {
+            "name": "CD4 count",
+            "concept_id": 5497
+          },
+          {
+            "name": "Lymphocyte count",
+            "concept_id": 7557
+          },
+          {
+            "name": "CD4 %",
+            "concept_id": 10137
+          }
+        ]
+      },
+      {
+        "testType": "HbA1c",
+        "indicators": [
+          {
+            "name": "HbA1c",
+            "concept_id": 6422
+          }
+        ]
+      },
+      {
+        "testType": "Sickling test",
+        "indicators": [
+          {
+            "name": "Sickling Screen",
+            "concept_id": 10190
+          }
+        ]
+      },
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Rubella",
+        "indicators": [
+          {
+            "name": "Rubella IgM ELISA-Behring enzynost",
+            "concept_id": 10136
+          }
+        ]
+      },
+      {
+        "testType": "Minerals",
+        "indicators": [
+          {
+            "name": "Calcium (CA)",
+            "concept_id": 10216
+          },
+          {
+            "name": "Phosphorus (PHOS)",
+            "concept_id": 10217
+          },
+          {
+            "name": "Magnesium (MGXB)",
+            "concept_id": 10218
+          }
+        ]
+      },
+      {
+        "testType": "Enzymes",
+        "indicators": [
+          {
+            "name": "a-AMYLASE-H",
+            "concept_id": 10177
+          },
+          {
+            "name": "ALT-H",
+            "concept_id": 10178
+          },
+          {
+            "name": "AST-H",
+            "concept_id": 10179
+          },
+          {
+            "name": "ALP-H",
+            "concept_id": 10180
+          },
+          {
+            "name": "TP-H",
+            "concept_id": 10181
+          },
+          {
+            "name": "TC-H",
+            "concept_id": 10182
+          },
+          {
+            "name": "UREA-H",
+            "concept_id": 10183
+          },
+          {
+            "name": "GLU-O-H",
+            "concept_id": 10184
+          },
+          {
+            "name": "TBIL-DSA-H",
+            "concept_id": 10185
+          },
+          {
+            "name": "DBIL-DSA-H",
+            "concept_id": 10186
+          },
+          {
+            "name": "UA-H",
+            "concept_id": 10187
+          },
+          {
+            "name": "TG-H",
+            "concept_id": 10188
+          },
+          {
+            "name": "ALB-H",
+            "concept_id": 10189
+          }
+        ]
+      },
+      {
+        "testType": "Phosphorus",
+        "indicators": [
+          {
+            "name": "P",
+            "concept_id": 10204
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "ESBL Test",
+        "indicators": [
+          {
+            "name": "Cefotaxime",
+            "concept_id": 6824
+          },
+          {
+            "name": "ESBL",
+            "concept_id": 10206
+          },
+          {
+            "name": "Cefotaxime + Clavulanate",
+            "concept_id": 10207
+          },
+          {
+            "name": "Ceftazidime",
+            "concept_id": 10208
+          },
+          {
+            "name": "Ceftazidime + Clavulanate",
+            "concept_id": 10209
+          },
+          {
+            "name": "Cefepime",
+            "concept_id": 10210
+          },
+          {
+            "name": "Cefepime + clavulanate",
+            "concept_id": 10211
+          }
+        ]
+      },
+      {
+        "testType": "Malaria Screening",
+        "indicators": [
+          {
+            "name": "Malaria film",
+            "concept_id": 6665
+          },
+          {
+            "name": "Malaria Species",
+            "concept_id": 10123
+          },
+          {
+            "name": "MRDT",
+            "concept_id": 10124
+          }
+        ]
+      },
+      {
+        "testType": "Blood Parasites Screen",
+        "indicators": [
+          {
+            "name": "Malaria film",
+            "concept_id": 6665
+          }
+        ]
+      },
+      {
+        "testType": "Hepatitis B Test",
+        "indicators": [
+          {
+            "name": "Hepatitis B",
+            "concept_id": 27
+          }
+        ]
+      },
+      {
+        "testType": "Hepatitis C Test",
+        "indicators": [
+          {
+            "name": "Hepatitis C",
+            "concept_id": 28
+          }
+        ]
+      },
+      {
+        "testType": "Rheumatoid Factor Test",
+        "indicators": [
+          {
+            "name": "Rheumatoid factor",
+            "concept_id": 6838
+          }
+        ]
+      },
+      {
+        "testType": "Cryptococcus Antigen Test",
+        "indicators": [
+          {
+            "name": "CrAg",
+            "concept_id": 10048
+          }
+        ]
+      },
+      {
+        "testType": "Anti Streptolysis O",
+        "indicators": [
+          {
+            "name": "ASO",
+            "concept_id": 6835
+          }
+        ]
+      },
+      {
+        "testType": "C-reactive protein",
+        "indicators": [
+          {
+            "name": "CRP",
+            "concept_id": 10134
+          }
+        ]
+      },
+      {
+        "testType": "ABO Blood Grouping",
+        "indicators": [
+          {
+            "name": "Grouping",
+            "concept_id": 10138
+          }
+        ]
+      },
+      {
+        "testType": "Cross-match",
+        "indicators": [
+          {
+            "name": "Expiry date",
+            "concept_id": 9479
+          },
+          {
+            "name": "volume",
+            "concept_id": 10129
+          },
+          {
+            "name": "Pack No.",
+            "concept_id": 10139
+          },
+          {
+            "name": "Pack ABO Group",
+            "concept_id": 10140
+          },
+          {
+            "name": "Product Type",
+            "concept_id": 10141
+          },
+          {
+            "name": "Cross-match Method",
+            "concept_id": 10142
+          }
+        ]
+      },
+      {
+        "testType": "Transfusion Outcome",
+        "indicators": [
+          {
+            "name": "Outcome",
+            "concept_id": 6538
+          }
+        ]
+      },
+      {
+        "testType": "Renal Function Test",
+        "indicators": [
+          {
+            "name": "Serum creatinine",
+            "concept_id": 790
+          },
+          {
+            "name": "Blood urea nitrogen",
+            "concept_id": 857
+          }
+        ]
+      },
+      {
+        "testType": "Lipogram",
+        "indicators": [
+          {
+            "name": "Triglycerides(TG)",
+            "concept_id": 10151
+          },
+          {
+            "name": "Cholestero l(CHOL)",
+            "concept_id": 10152
+          },
+          {
+            "name": "HDL Direct (HDL-C)",
+            "concept_id": 10153
+          },
+          {
+            "name": "LDL Direct (LDL-C)",
+            "concept_id": 10154
+          }
+        ]
+      },
+      {
+        "testType": "FBC",
+        "indicators": [
+          {
+            "name": "Hemoglobin",
+            "concept_id": 21
+          },
+          {
+            "name": "White blood cells",
+            "concept_id": 678
+          },
+          {
+            "name": "Red blood cells",
+            "concept_id": 679
+          },
+          {
+            "name": "Mean corpuscular volume",
+            "concept_id": 851
+          },
+          {
+            "name": "Mean cell hemoglobin concentration",
+            "concept_id": 1017
+          },
+          {
+            "name": "Mean corpuscular hemoglobin",
+            "concept_id": 1018
+          },
+          {
+            "name": "Hydrochlorothiazide",
+            "concept_id": 1243
+          },
+          {
+            "name": "MPV",
+            "concept_id": 9118
+          },
+          {
+            "name": "PLT",
+            "concept_id": 10155
+          },
+          {
+            "name": "RDW-SD",
+            "concept_id": 10156
+          },
+          {
+            "name": "RDW-CV",
+            "concept_id": 10157
+          },
+          {
+            "name": "PDW",
+            "concept_id": 10158
+          },
+          {
+            "name": "PCT",
+            "concept_id": 10159
+          },
+          {
+            "name": "NEUT%",
+            "concept_id": 10160
+          },
+          {
+            "name": "LYMPH%",
+            "concept_id": 10161
+          },
+          {
+            "name": "MONO%",
+            "concept_id": 10162
+          },
+          {
+            "name": "EO%",
+            "concept_id": 10163
+          },
+          {
+            "name": "BASO%",
+            "concept_id": 10164
+          },
+          {
+            "name": "NEUT#",
+            "concept_id": 10165
+          },
+          {
+            "name": "LYMPH#",
+            "concept_id": 10166
+          },
+          {
+            "name": "MONO#",
+            "concept_id": 10167
+          },
+          {
+            "name": "EO#",
+            "concept_id": 10168
+          },
+          {
+            "name": "BASO#",
+            "concept_id": 10169
+          },
+          {
+            "name": "Mid#",
+            "concept_id": 10170
+          },
+          {
+            "name": "Gran#",
+            "concept_id": 10171
+          },
+          {
+            "name": "Mid%",
+            "concept_id": 10172
+          },
+          {
+            "name": "Gran%",
+            "concept_id": 10173
+          },
+          {
+            "name": "EOS%",
+            "concept_id": 10174
+          },
+          {
+            "name": "P-LCC",
+            "concept_id": 10175
+          },
+          {
+            "name": "P-LCR",
+            "concept_id": 10176
+          }
+        ]
+      },
+      {
+        "testType": "APTT",
+        "indicators": [
+          {
+            "name": "APTT",
+            "concept_id": 10063
+          }
+        ]
+      },
+      {
+        "testType": "Manual Differential & Cell Morphology",
+        "indicators": [
+          {
+            "name": "Lymphocytes",
+            "concept_id": 1021
+          },
+          {
+            "name": "Neutrophils",
+            "concept_id": 1022
+          },
+          {
+            "name": "Monocytes",
+            "concept_id": 1023
+          },
+          {
+            "name": "Eosinophils",
+            "concept_id": 1024
+          },
+          {
+            "name": "Basophils",
+            "concept_id": 1025
+          },
+          {
+            "name": "Other",
+            "concept_id": 6408
+          },
+          {
+            "name": "Nucleated Red Cells",
+            "concept_id": 10191
+          },
+          {
+            "name": "Promyelocytes",
+            "concept_id": 10192
+          },
+          {
+            "name": "Myelocytes",
+            "concept_id": 10193
+          },
+          {
+            "name": "Metamyelocytes",
+            "concept_id": 10194
+          },
+          {
+            "name": "Band/Staff Forms",
+            "concept_id": 10195
+          },
+          {
+            "name": "Blasts",
+            "concept_id": 10196
+          },
+          {
+            "name": "RBC Comments",
+            "concept_id": 10197
+          },
+          {
+            "name": "WBC Comments",
+            "concept_id": 10198
+          },
+          {
+            "name": "Platelet Comments",
+            "concept_id": 10199
+          },
+          {
+            "name": "Interpretative Comments",
+            "concept_id": 10200
+          },
+          {
+            "name": "Attempted/ Differential Diagnosis",
+            "concept_id": 10201
+          },
+          {
+            "name": "Further Tests",
+            "concept_id": 10202
+          }
+        ]
+      },
+      {
+        "testType": "Pancreatic Function Test",
+        "indicators": [
+          {
+            "name": "Serum lipase",
+            "concept_id": 1013
+          },
+          {
+            "name": "Serum amylase",
+            "concept_id": 3054
+          }
+        ]
+      },
+      {
+        "testType": "Direct Coombs Test",
+        "indicators": [
+          {
+            "name": "Direct Coombs Test",
+            "concept_id": 10066
+          }
+        ]
+      },
+      {
+        "testType": "Magnesium",
+        "indicators": [
+          {
+            "name": "Mg",
+            "concept_id": 10205
+          }
+        ]
+      },
+      {
+        "testType": "APTT Ratio",
+        "indicators": [
+          {
+            "name": "APTT Ratio",
+            "concept_id": 10068
+          }
+        ]
+      },
+      {
+        "testType": "Fibronogen",
+        "indicators": [
+          {
+            "name": "Fibronogen",
+            "concept_id": 10069
+          }
+        ]
+      },
+      {
+        "testType": "50:50 Normal Plasma",
+        "indicators": [
+          {
+            "name": "50:50 Normal Plasma",
+            "concept_id": 10070
+          }
+        ]
+      },
+      {
+        "testType": "50:50 Mix FVIII Deficient",
+        "indicators": [
+          {
+            "name": "50:50 Mix FVIII Deficient",
+            "concept_id": 10071
+          }
+        ]
+      },
+      {
+        "testType": "50:50 Mix F-IX Deficient",
+        "indicators": [
+          {
+            "name": "50:50 Mix F-IX Deficient",
+            "concept_id": 10072
+          }
+        ]
+      },
+      {
+        "testType": "Factor VIII Assay",
+        "indicators": [
+          {
+            "name": "Factor VIII Assay",
+            "concept_id": 10073
+          }
+        ]
+      },
+      {
+        "testType": "Factor IX Assay",
+        "indicators": [
+          {
+            "name": "Factor IX Assay",
+            "concept_id": 10074
+          }
+        ]
+      },
+      {
+        "testType": "TT",
+        "indicators": [
+          {
+            "name": "TT",
+            "concept_id": 10075
+          }
+        ]
+      },
+      {
+        "testType": "Coagulation Assay",
+        "indicators": [
+          {
+            "name": "International normalized ratio and prothrombin time lab result",
+            "concept_id": 3374
+          },
+          {
+            "name": "APTT",
+            "concept_id": 10063
+          },
+          {
+            "name": "APTT Ratio",
+            "concept_id": 10068
+          },
+          {
+            "name": "Fibronogen",
+            "concept_id": 10069
+          },
+          {
+            "name": "50:50 Mix FVIII Deficient",
+            "concept_id": 10071
+          },
+          {
+            "name": "50:50 Mix F-IX Deficient",
+            "concept_id": 10072
+          },
+          {
+            "name": "Factor VIII Assay",
+            "concept_id": 10073
+          },
+          {
+            "name": "Factor IX Assay",
+            "concept_id": 10074
+          },
+          {
+            "name": "TT",
+            "concept_id": 10075
+          },
+          {
+            "name": "50:50 Mix Normal Plasma",
+            "concept_id": 10212
+          }
+        ]
+      },
+      {
+        "testType": "Cardiac Function Tests",
+        "indicators": [
+          {
+            "name": "Creatine Kinase MB(CKMB)",
+            "concept_id": 10213
+          },
+          {
+            "name": "Creatine Kinase(CKN)",
+            "concept_id": 10214
+          },
+          {
+            "name": "Lactatedehydrogenase(LDH)",
+            "concept_id": 10215
+          }
+        ]
+      },
+      {
+        "testType": "BioMarkers",
+        "indicators": [
+          {
+            "name": "C-reactive Protein (CRP)",
+            "concept_id": 10219
+          },
+          {
+            "name": "Rheumatoid Factor (RF)",
+            "concept_id": 10220
+          },
+          {
+            "name": "Antistreptolysin O (ASO)",
+            "concept_id": 10221
+          }
+        ]
+      },
+      {
+        "testType": "Iron Studies",
+        "indicators": [
+          {
+            "name": "Iron",
+            "concept_id": 10222
+          },
+          {
+            "name": "UIBC",
+            "concept_id": 10223
+          }
+        ]
+      },
+      {
+        "testType": "Microalbumin",
+        "indicators": [
+          {
+            "name": "MAL",
+            "concept_id": 10224
+          }
+        ]
+      },
+      {
+        "testType": "Microprotein",
+        "indicators": [
+          {
+            "name": "MPR",
+            "concept_id": 10225
+          }
+        ]
+      },
+      {
+        "testType": "Von Willebrand Factor",
+        "indicators": [
+          {
+            "name": "Von Willebrand (Antigen)",
+            "concept_id": 10226
+          },
+          {
+            "name": "Von Willebrand (Activity)",
+            "concept_id": 10227
+          }
+        ]
+      },
+      {
+        "testType": "Urine Lam",
+        "indicators": [
+          {
+            "name": "Lam",
+            "concept_id": 10542
+          }
+        ]
+      },
+      {
+        "testType": "FBS",
+        "indicators": [
+          {
+            "name": "FBS",
+            "concept_id": 10231
+          }
+        ]
+      },
+      {
+        "testType": "D/Coombs",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "creat",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Widal",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "AAFB (3rd)",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Urine micro",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "AAFB (1st)",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "ASOT",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Blood C/S",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Cryptococcal Ag",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "I/Ink",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Prot& Sugar",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "C_S",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "hep",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Cryptococcal Antigen",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Resistance",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Sickle",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "Protein and Sugar",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "White cell count",
+        "indicators": [
+
+        ]
+      },
+      {
+        "testType": "RBS",
+        "indicators": [
+          {
+            "name": "RBS",
+            "concept_id": 10617
+          }
+        ]
+      },
+      {
+        "testType": "Serum Crag",
+        "indicators": [
+
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Pus",
+    "testTypes": [
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "TB Tests",
+        "indicators": [
+          {
+            "name": "HIV status",
+            "concept_id": 3753
+          },
+          {
+            "name": "Macro exam",
+            "concept_id": 10106
+          },
+          {
+            "name": "Smear microscopy result",
+            "concept_id": 10107
+          },
+          {
+            "name": "Gene Xpert MTB",
+            "concept_id": 10108
+          },
+          {
+            "name": "Gene Xpert RIF Resistance",
+            "concept_id": 10109
+          },
+          {
+            "name": "Reason For Testing",
+            "concept_id": 10110
+          },
+          {
+            "name": "Indication for GeneXpert Test",
+            "concept_id": 10111
+          }
+        ]
+      },
+      {
+        "testType": "ESBL Test",
+        "indicators": [
+          {
+            "name": "Cefotaxime",
+            "concept_id": 6824
+          },
+          {
+            "name": "ESBL",
+            "concept_id": 10206
+          },
+          {
+            "name": "Cefotaxime + Clavulanate",
+            "concept_id": 10207
+          },
+          {
+            "name": "Ceftazidime",
+            "concept_id": 10208
+          },
+          {
+            "name": "Ceftazidime + Clavulanate",
+            "concept_id": 10209
+          },
+          {
+            "name": "Cefepime",
+            "concept_id": 10210
+          },
+          {
+            "name": "Cefepime + clavulanate",
+            "concept_id": 10211
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Ascitic Fluid",
+    "testTypes": [
+      {
+        "testType": "Differential",
+        "indicators": [
+          {
+            "name": "Lymphocytes",
+            "concept_id": 1021
+          },
+          {
+            "name": "Polymorphs",
+            "concept_id": 10103
+          },
+          {
+            "name": "Diff remarks",
+            "concept_id": 10104
+          }
+        ]
+      },
+      {
+        "testType": "AFB sputum smear",
+        "indicators": [
+          {
+            "name": "ZN",
+            "concept_id": 10105
+          }
+        ]
+      },
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Cell count",
+        "indicators": [
+          {
+            "name": "White blood cells",
+            "concept_id": 678
+          },
+          {
+            "name": "Red blood cells",
+            "concept_id": 679
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "TB Tests",
+        "indicators": [
+          {
+            "name": "HIV status",
+            "concept_id": 3753
+          },
+          {
+            "name": "Macro exam",
+            "concept_id": 10106
+          },
+          {
+            "name": "Smear microscopy result",
+            "concept_id": 10107
+          },
+          {
+            "name": "Gene Xpert MTB",
+            "concept_id": 10108
+          },
+          {
+            "name": "Gene Xpert RIF Resistance",
+            "concept_id": 10109
+          },
+          {
+            "name": "Reason For Testing",
+            "concept_id": 10110
+          },
+          {
+            "name": "Indication for GeneXpert Test",
+            "concept_id": 10111
+          }
+        ]
+      },
+      {
+        "testType": "ESBL Test",
+        "indicators": [
+          {
+            "name": "Cefotaxime",
+            "concept_id": 6824
+          },
+          {
+            "name": "ESBL",
+            "concept_id": 10206
+          },
+          {
+            "name": "Cefotaxime + Clavulanate",
+            "concept_id": 10207
+          },
+          {
+            "name": "Ceftazidime",
+            "concept_id": 10208
+          },
+          {
+            "name": "Ceftazidime + Clavulanate",
+            "concept_id": 10209
+          },
+          {
+            "name": "Cefepime",
+            "concept_id": 10210
+          },
+          {
+            "name": "Cefepime + clavulanate",
+            "concept_id": 10211
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Pericardial Fluid",
+    "testTypes": [
+      {
+        "testType": "Differential",
+        "indicators": [
+          {
+            "name": "Lymphocytes",
+            "concept_id": 1021
+          },
+          {
+            "name": "Polymorphs",
+            "concept_id": 10103
+          },
+          {
+            "name": "Diff remarks",
+            "concept_id": 10104
+          }
+        ]
+      },
+      {
+        "testType": "AFB sputum smear",
+        "indicators": [
+          {
+            "name": "ZN",
+            "concept_id": 10105
+          }
+        ]
+      },
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Cell count",
+        "indicators": [
+          {
+            "name": "White blood cells",
+            "concept_id": 678
+          },
+          {
+            "name": "Red blood cells",
+            "concept_id": 679
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "TB Tests",
+        "indicators": [
+          {
+            "name": "HIV status",
+            "concept_id": 3753
+          },
+          {
+            "name": "Macro exam",
+            "concept_id": 10106
+          },
+          {
+            "name": "Smear microscopy result",
+            "concept_id": 10107
+          },
+          {
+            "name": "Gene Xpert MTB",
+            "concept_id": 10108
+          },
+          {
+            "name": "Gene Xpert RIF Resistance",
+            "concept_id": 10109
+          },
+          {
+            "name": "Reason For Testing",
+            "concept_id": 10110
+          },
+          {
+            "name": "Indication for GeneXpert Test",
+            "concept_id": 10111
+          }
+        ]
+      },
+      {
+        "testType": "ESBL Test",
+        "indicators": [
+          {
+            "name": "Cefotaxime",
+            "concept_id": 6824
+          },
+          {
+            "name": "ESBL",
+            "concept_id": 10206
+          },
+          {
+            "name": "Cefotaxime + Clavulanate",
+            "concept_id": 10207
+          },
+          {
+            "name": "Ceftazidime",
+            "concept_id": 10208
+          },
+          {
+            "name": "Ceftazidime + Clavulanate",
+            "concept_id": 10209
+          },
+          {
+            "name": "Cefepime",
+            "concept_id": 10210
+          },
+          {
+            "name": "Cefepime + clavulanate",
+            "concept_id": 10211
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "HVS",
+    "testTypes": [
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "ESBL Test",
+        "indicators": [
+          {
+            "name": "Cefotaxime",
+            "concept_id": 6824
+          },
+          {
+            "name": "ESBL",
+            "concept_id": 10206
+          },
+          {
+            "name": "Cefotaxime + Clavulanate",
+            "concept_id": 10207
+          },
+          {
+            "name": "Ceftazidime",
+            "concept_id": 10208
+          },
+          {
+            "name": "Ceftazidime + Clavulanate",
+            "concept_id": 10209
+          },
+          {
+            "name": "Cefepime",
+            "concept_id": 10210
+          },
+          {
+            "name": "Cefepime + clavulanate",
+            "concept_id": 10211
+          }
+        ]
+      },
+      {
+        "testType": "Wet prep",
+        "indicators": [
+          {
+            "name": "Wet prep",
+            "concept_id": 10087
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "HVS analysis",
+        "indicators": [
+          {
+            "name": "Epithelial cells",
+            "concept_id": 666
+          },
+          {
+            "name": "White blood cells",
+            "concept_id": 678
+          },
+          {
+            "name": "Macroscopy",
+            "concept_id": 10120
+          },
+          {
+            "name": "Parasites/Bacteria",
+            "concept_id": 10132
+          },
+          {
+            "name": "Spermatozoa",
+            "concept_id": 10133
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Swabs",
+    "testTypes": [
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "ESBL Test",
+        "indicators": [
+          {
+            "name": "Cefotaxime",
+            "concept_id": 6824
+          },
+          {
+            "name": "ESBL",
+            "concept_id": 10206
+          },
+          {
+            "name": "Cefotaxime + Clavulanate",
+            "concept_id": 10207
+          },
+          {
+            "name": "Ceftazidime",
+            "concept_id": 10208
+          },
+          {
+            "name": "Ceftazidime + Clavulanate",
+            "concept_id": 10209
+          },
+          {
+            "name": "Cefepime",
+            "concept_id": 10210
+          },
+          {
+            "name": "Cefepime + clavulanate",
+            "concept_id": 10211
+          }
+        ]
+      },
+      {
+        "testType": "Wet prep",
+        "indicators": [
+          {
+            "name": "Wet prep",
+            "concept_id": 10087
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Stool",
+    "testTypes": [
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "Stool Analysis",
+        "indicators": [
+          {
+            "name": "Macroscopy",
+            "concept_id": 10120
+          },
+          {
+            "name": "Consistency",
+            "concept_id": 10121
+          },
+          {
+            "name": "Microscopy",
+            "concept_id": 10122
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "Swab",
+    "testTypes": [
+      {
+        "testType": "Gram stain",
+        "indicators": [
+          {
+            "name": "Gram",
+            "concept_id": 10100
+          },
+          {
+            "name": "Clue cells",
+            "concept_id": 10101
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Culture & Sensitivity",
+        "indicators": [
+          {
+            "name": "Culture",
+            "concept_id": 3492
+          }
+        ]
+      },
+      {
+        "testType": "ESBL Test",
+        "indicators": [
+          {
+            "name": "Cefotaxime",
+            "concept_id": 6824
+          },
+          {
+            "name": "ESBL",
+            "concept_id": 10206
+          },
+          {
+            "name": "Cefotaxime + Clavulanate",
+            "concept_id": 10207
+          },
+          {
+            "name": "Ceftazidime",
+            "concept_id": 10208
+          },
+          {
+            "name": "Ceftazidime + Clavulanate",
+            "concept_id": 10209
+          },
+          {
+            "name": "Cefepime",
+            "concept_id": 10210
+          },
+          {
+            "name": "Cefepime + clavulanate",
+            "concept_id": 10211
+          }
+        ]
+      },
+      {
+        "testType": "Wet prep",
+        "indicators": [
+          {
+            "name": "Wet prep",
+            "concept_id": 10087
+          },
+          {
+            "name": "Other organism seen",
+            "concept_id": 10102
+          }
+        ]
+      },
+      {
+        "testType": "Semen Analysis",
+        "indicators": [
+          {
+            "name": "Appearance",
+            "concept_id": 7330
+          },
+          {
+            "name": "pH",
+            "concept_id": 10116
+          },
+          {
+            "name": "Progressive motility",
+            "concept_id": 10125
+          },
+          {
+            "name": "Non-progressive motility",
+            "concept_id": 10126
+          },
+          {
+            "name": "Immotility",
+            "concept_id": 10127
+          },
+          {
+            "name": "Liquifaction time",
+            "concept_id": 10128
+          },
+          {
+            "name": "volume",
+            "concept_id": 10129
+          },
+          {
+            "name": "Sperm count",
+            "concept_id": 10130
+          },
+          {
+            "name": "Sperm morphology",
+            "concept_id": 10131
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "DBS (Free drop to DBS card)",
+    "testTypes": [
+      {
+        "testType": "HIV viral load",
+        "indicators": [
+          {
+            "name": "HIV viral load",
+            "concept_id": 856
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "specimen": "DBS (Using capillary tube)",
+    "testTypes": [
+      {
+        "testType": "HIV viral load",
+        "indicators": [
+          {
+            "name": "HIV viral load",
+            "concept_id": 856
+          }
+        ]
+      }
+    ]
+  }
+]

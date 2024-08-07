@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     ##
     # Pulls patient's whose most recent viral load result in selected reporting period

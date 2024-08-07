@@ -20,7 +20,7 @@ def concept_name(concept_id)
 end
 
 def arv_number(patient_id)
-  PatientIdentifier.where(patient_id: patient_id,
+  PatientIdentifier.where(patient_id:,
                           identifier_type: PatientIdentifierType.find_by_name('ARV NUMBER').id)&.first&.identifier
 end
 
@@ -37,7 +37,7 @@ def valid_prescription(duplicate_record)
 end
 
 def regimen_engine
-  @regimen_engine ||= ARTService::RegimenEngine.new(program: Program.find_by_name('HIV PROGRAM').id)
+  @regimen_engine ||= ArtService::RegimenEngine.new(program: Program.find_by_name('HIV PROGRAM').id)
 end
 
 def process

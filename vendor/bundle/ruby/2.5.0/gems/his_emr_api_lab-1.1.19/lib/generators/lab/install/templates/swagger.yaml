@@ -1,0 +1,714 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+paths:
+  "/api/v1/lab/orders":
+    post:
+      summary: Create order
+      tags:
+      - Orders
+      description: |
+        Create a lab order for a test.
+
+        Broadly a lab order consists of a test type and a number of specimens.
+        To each specimen is assigned a tracking number which can be used
+        to query the status and results of the specimen.
+      parameters: []
+      security:
+      - api_key: []
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    patient_id:
+                      type: integer
+                    encounter_id:
+                      type: integer
+                    order_date:
+                      type: string
+                      format: datetime
+                    accession_number:
+                      type: string
+                    specimen:
+                      type: object
+                      properties:
+                        concept_id:
+                          type: integer
+                        name:
+                          type: string
+                      required:
+                      - concept_id
+                      - name
+                    requesting_clinician:
+                      type: string
+                      nullable: true
+                    target_lab:
+                      type: string
+                    reason_for_test:
+                      type: object
+                      properties:
+                        concept_id:
+                          type: integer
+                        name:
+                          type: string
+                      required:
+                      - concept_id
+                      - name
+                    tests:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          concept_id:
+                            type: integer
+                          name:
+                            type: string
+                          result:
+                            type: object
+                            nullable: true
+                            properties:
+                              id:
+                                type: integer
+                              value:
+                                type: string
+                                nullable: true
+                              date:
+                                type: string
+                                format: datetime
+                                nullable: true
+                            required:
+                            - id
+                            - value
+                            - date
+                        required:
+                        - id
+                        - concept_id
+                        - name
+                  required:
+                  - id
+                  - specimen
+                  - reason_for_test
+                  - accession_number
+                  - patient_id
+                  - order_date
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orders:
+                  type: array
+                  items:
+                    properties:
+                      encounter_id:
+                        type: integer
+                      specimen:
+                        type: object
+                        properties:
+                          concept_id:
+                            type: integer
+                            description: Specimen type concept ID (see GET /lab/test_types)
+                      tests:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            concept_id:
+                              type: integer
+                              description: Test type concept ID (see GET /lab/test_types)
+                      requesting_clinician:
+                        type: string
+                        description: Fullname of the clinician requesting the test
+                          (defaults to orderer)
+                      target_lab:
+                        type: string
+                      reason_for_test_id:
+                        type: string
+                        description: One of routine, targeted, or confirmatory
+                    required:
+                    - encounter_id
+                    - tests
+                    - target_lab
+                    - reason_for_test_id
+    get:
+      summary: Retrieve lab orders
+      tags:
+      - Orders
+      description: Search/retrieve for lab orders.
+      security:
+      - api_key: []
+      parameters:
+      - name: patient_id
+        in: query
+        required: false
+        description: Filter orders using patient_id
+        schema:
+          type: integer
+      - name: accession_number
+        in: query
+        required: false
+        description: Filter orders using sample accession number
+        schema:
+          type: integer
+      - name: date
+        in: query
+        required: false
+        description: Select results falling on a specific date
+        schema:
+          type: date
+      - name: status
+        in: query
+        required: false
+        description: 'Filter by sample status: ordered, drawn'
+        schema:
+          type: string
+      - name: end_date
+        in: query
+        required: false
+        description: Select all results before this date
+        schema:
+          type: date
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    patient_id:
+                      type: integer
+                    encounter_id:
+                      type: integer
+                    order_date:
+                      type: string
+                      format: datetime
+                    accession_number:
+                      type: string
+                    specimen:
+                      type: object
+                      properties:
+                        concept_id:
+                          type: integer
+                        name:
+                          type: string
+                      required:
+                      - concept_id
+                      - name
+                    requesting_clinician:
+                      type: string
+                      nullable: true
+                    target_lab:
+                      type: string
+                    reason_for_test:
+                      type: object
+                      properties:
+                        concept_id:
+                          type: integer
+                        name:
+                          type: string
+                      required:
+                      - concept_id
+                      - name
+                    tests:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          concept_id:
+                            type: integer
+                          name:
+                            type: string
+                          result:
+                            type: object
+                            nullable: true
+                            properties:
+                              id:
+                                type: integer
+                              value:
+                                type: string
+                                nullable: true
+                              date:
+                                type: string
+                                format: datetime
+                                nullable: true
+                            required:
+                            - id
+                            - value
+                            - date
+                        required:
+                        - id
+                        - concept_id
+                        - name
+                  required:
+                  - id
+                  - specimen
+                  - reason_for_test
+                  - accession_number
+                  - patient_id
+                  - order_date
+  "/api/v1/lab/orders/{order_id}":
+    put:
+      summary: Update order
+      tags:
+      - Orders
+      description: Update an existing order
+      security:
+      - api_key: []
+      parameters:
+      - name: order_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    patient_id:
+                      type: integer
+                    encounter_id:
+                      type: integer
+                    order_date:
+                      type: string
+                      format: datetime
+                    accession_number:
+                      type: string
+                    specimen:
+                      type: object
+                      properties:
+                        concept_id:
+                          type: integer
+                        name:
+                          type: string
+                      required:
+                      - concept_id
+                      - name
+                    requesting_clinician:
+                      type: string
+                      nullable: true
+                    target_lab:
+                      type: string
+                    reason_for_test:
+                      type: object
+                      properties:
+                        concept_id:
+                          type: integer
+                        name:
+                          type: string
+                      required:
+                      - concept_id
+                      - name
+                    tests:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          concept_id:
+                            type: integer
+                          name:
+                            type: string
+                          result:
+                            type: object
+                            nullable: true
+                            properties:
+                              id:
+                                type: integer
+                              value:
+                                type: string
+                                nullable: true
+                              date:
+                                type: string
+                                format: datetime
+                                nullable: true
+                            required:
+                            - id
+                            - value
+                            - date
+                        required:
+                        - id
+                        - concept_id
+                        - name
+                  required:
+                  - id
+                  - specimen
+                  - reason_for_test
+                  - accession_number
+                  - patient_id
+                  - order_date
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                specimen:
+                  type: object
+                  properties:
+                    concept_id:
+                      type: integer
+                  required:
+                  - concept_id
+    delete:
+      summary: Void lab order
+      tags:
+      - Orders
+      description: |
+        Void a lab order and all it's associated records
+
+        This action voids an order, all it's linked tests and results.
+      security:
+      - api_key: []
+      parameters:
+      - name: order_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: reason
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content
+  "/api/v1/lab/reasons_for_test":
+    get:
+      summary: Reasons for test
+      description: Retrieve default reasons for test concept set
+      tags:
+      - Concepts
+      security:
+      - api_key: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    concept_id:
+                      type: integer
+                    name:
+                      type: string
+                      example: Routine
+                  required:
+                  - concept_id
+                  - name
+  "/api/v1/lab/tests/{test_id}/results":
+    post:
+      summary: Add results to order
+      tags:
+      - Results
+      description: Attach results to specimens on order
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      security:
+      - api_key: []
+      responses:
+        '201':
+          description: Created
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                encounter_id:
+                  type: integer
+                provider_id:
+                  type: integer
+                date:
+                  type: string
+                measures:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      indicator:
+                        type: object
+                        properties:
+                          concept_id:
+                            type: integer
+                            description: Concept ID of a test result indicator for
+                              this test (see GET /test_result_indicators)
+                          required:
+                          - concept_id
+                      value:
+                        type: string
+                        example: LDL
+                      value_modifier:
+                        type: string
+                        example: "="
+                      value_type:
+                        type: string
+                        enum:
+                        - text
+                        - boolean
+                        - numeric
+                        - coded
+                        description: Determines under what column the value is to
+                          be saved under in the obs table (defaults to text)
+                        example: text
+                    required:
+                    - indicator
+                    - value
+              required:
+              - measures
+  "/api/v1/lab/specimen_types":
+    get:
+      summary: Specimen types
+      tags:
+      - Concepts
+      description: Retrieve all specimen types
+      security:
+      - api_key: []
+      parameters:
+      - name: test_type
+        in: query
+        required: false
+        description: Select specimen types having this test type only
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    concept_id:
+                      type: integer
+                    name:
+                      type: string
+                required:
+                - concept_id
+                - name
+  "/api/v1/lab/test_result_indicators":
+    get:
+      summary: Test Result Indicators
+      tags:
+      - Concepts
+      description: Retrieve all result indicators for a given test
+      security:
+      - api_key: []
+      parameters:
+      - name: test_type_id
+        in: query
+        required: true
+        description: Concept ID for the desired test
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    concept_id:
+                      type: integer
+                    name:
+                      type: string
+                  required:
+                  - concept_id
+                  - name
+  "/api/v1/lab/test_types":
+    get:
+      summary: Test types
+      tags:
+      - Concepts
+      description: Retrieve all test types
+      security:
+      - api_key: []
+      parameters:
+      - name: specimen_type
+        in: query
+        required: false
+        description: Select test types having this specimen type only
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    concept_id:
+                      type: integer
+                    name:
+                      type: string
+                required:
+                - concept_id
+                - name
+  "/api/v1/lab/tests":
+    get:
+      summary: Search for tests
+      tags:
+      - Tests
+      description: 'Search for tests by accession number, date and other parameters.
+
+        '
+      parameters:
+      - name: accession_number
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: test_type_id
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: specimen_type_id
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: patient_id
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: order_date
+        in: query
+        required: false
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Okay
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    concept_id:
+                      type: integer
+                    name:
+                      type: string
+                    order:
+                      order_id:
+                        type: string
+                      accession_number:
+                        type: string
+    post:
+      summary: Add tests to an existing order
+      tags:
+      - Tests
+      description: |
+        Add tests to an existing order.
+
+        An order can be created without specifying tests.
+        This endpoint allows one to add tests to that order.
+      parameters: []
+      security:
+      - api_key: []
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    concept_id:
+                      type: integer
+                    name:
+                      type: string
+                    order:
+                      order_id:
+                        type: string
+                      accession_number:
+                        type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order_id:
+                  type: integer
+                tests:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      concept_id:
+                        type: integer
+                        description: Test type concept ID
+                    required:
+                    - concept_id
+              required:
+              - order_id
+              - tests
+servers:
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000
+components:
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      in: header
+    bearer:
+      type: bearer
+      name: Authorization
+      in: header

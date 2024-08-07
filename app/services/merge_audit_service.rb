@@ -6,7 +6,7 @@ class MergeAuditService
   def create_merge_audit(primary_patient, secondary_patient, merge_type)
     recent_merge_id = MergeAudit.where(primary_id: secondary_patient).last&.id
     merge_audit = MergeAudit.create({ primary_id: primary_patient, secondary_id: secondary_patient,
-                                      creator: User.current.id, merge_type: merge_type,
+                                      creator: User.current.id, merge_type:,
                                       secondary_previous_merge_id: recent_merge_id })
     raise "Could not create audit trail due to #{merge_audit.errors.as_json}" unless merge_audit.errors.empty?
   end

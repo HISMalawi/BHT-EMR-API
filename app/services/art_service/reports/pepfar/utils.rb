@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     module Pepfar
       ##
       # Common utilities for Pepfar reports
       module Utils
         ##
-        # An array of all groups as required by PEPFAR.
+        # An array of all groups as required by Pepfar.
         def pepfar_age_groups
           @pepfar_age_groups ||= [
             'Unknown',
@@ -50,13 +50,13 @@ module ARTService
         end
 
         ##
-        # Returns the preferred PEPFAR identifier type.
+        # Returns the preferred Pepfar identifier type.
         #
         # In some clinics like Lighthouse Filing numbers are used exclusively and in other
         # sites, ARV Numbers are used.
         def pepfar_patient_identifier_type
           name = GlobalPropertyService.use_filing_numbers? ? 'Filing number' : 'ARV Number'
-          PatientIdentifierType.where(name: name).select(:patient_identifier_type_id)
+          PatientIdentifierType.where(name:).select(:patient_identifier_type_id)
         end
 
         FULL_6H_COURSE_PILLS = 146
@@ -79,17 +79,6 @@ module ARTService
             days_on_medication.days >= FULL_3HP_COURSE_DAYS
           else
             patient['total_days_on_medication'].to_i >= FULL_6H_COURSE_PILLS
-          end
-        end
-
-        def patient_has_totally_completed_tpt?(patient, tpt)
-          if tpt == '3HP'
-            init_date = patient['tpt_initiation_date'].to_date
-            end_date = patient['auto_expire_date'].to_date
-            days_on_medication = (end_date - init_date).to_i
-            days_on_medication >= 80
-          else
-            patient['total_days_on_medication'].to_i >= 176
           end
         end
 
@@ -124,6 +113,25 @@ module ARTService
         end
         # rubocop:enable Metrics/MethodLength
         # rubocop:enable Metrics/AbcSize
+
+        def rifapentine_concept
+          @rifapentine_concept ||= ConceptName.find_by!(name: 'Rifapentine')
+        end
+
+        def isoniazid_rifapentine_concept
+          @isoniazid_rifapentine_concept ||= ConceptName.find_by!(name: 'Isoniazid/Rifapentine')
+        end
+
+        def patient_on_3hp?(patient)
+          drug_concepts = patient['drug_concepts'].split(',').collect(&:to_i)
+          (drug_concepts & [rifapentine_concept.concept_id, isoniazid_rifapentine_concept&.concept_id]).any?
+        end
+
+        def patient_on_tb_treatment?(patient_id)
+          Observation.where(person_id: patient_id, concept_id: ConceptName.find_by_name('TB status').concept_id,
+                            value_coded: ConceptName.find_by_name('Confirmed TB on treatment').concept_id)
+                     .where("obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY").exists?
+        end
       end
     end
   end

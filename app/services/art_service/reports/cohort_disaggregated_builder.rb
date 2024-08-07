@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     class CohortDisaggregatedBuilder < CohortBuilder
       def build(_cohort_struct, start_date, end_date)
@@ -42,8 +42,10 @@ module ARTService
 
         #     No TB
         #     total_registered - (current_episode - tb_within_the_last_two_years)
-        cohort_struct.no_tb = no_tb(cohort_struct.total_registered, cohort_struct.tb_within_the_last_two_years, cohort_struct.current_episode_of_tb)
-        cohort_struct.cum_no_tb = cum_no_tb(cohort_struct.cum_total_registered, cohort_struct.cum_tb_within_the_last_two_years, cohort_struct.cum_current_episode_of_tb)
+        cohort_struct.no_tb = no_tb(cohort_struct.total_registered, cohort_struct.tb_within_the_last_two_years,
+                                    cohort_struct.current_episode_of_tb)
+        cohort_struct.cum_no_tb = cum_no_tb(cohort_struct.cum_total_registered,
+                                            cohort_struct.cum_tb_within_the_last_two_years, cohort_struct.cum_current_episode_of_tb)
 
         #  Total Alive and On ART
         #  Unique PatientProgram entries at the current location for those patients with at least one state
@@ -56,14 +58,16 @@ module ARTService
         # Unique PatientProgram entries at the current location for those patients with at least one state ON ARVs
         # and earliest start date of the 'ON ARVs' state within the quarter
         # and having a REASON FOR ELIGIBILITY observation with an answer as PATIENT PREGNANT
-        cohort_struct.total_pregnant_women = total_pregnant_women(cohort_struct.total_alive_and_on_art, cum_start_date, end_date)
+        cohort_struct.total_pregnant_women = total_pregnant_women(cohort_struct.total_alive_and_on_art, cum_start_date,
+                                                                  end_date)
 
         #  Breastfeeding mothers
         #
         #  Unique PatientProgram entries at the current location for those patients with at least one state
         #  ON ARVs and earliest start date of the 'ON ARVs' state within the quarter
         #  and having a REASON FOR ELIGIBILITY observation with an answer as BREASTFEEDING
-        cohort_struct.total_breastfeeding_women = total_breastfeeding_women(cohort_struct.total_alive_and_on_art, cum_start_date, end_date)
+        cohort_struct.total_breastfeeding_women = total_breastfeeding_women(cohort_struct.total_alive_and_on_art,
+                                                                            cum_start_date, end_date)
 
         # Non-pregnant females (all ages)
 
@@ -119,13 +123,16 @@ module ARTService
       def get_data(cohort, start_date, end_date, gender, age_group)
         @cohort = cohort
 
-        if gender == 'Male' || gender == 'Female'
-          if age_group == '50+ years'
-            yrs_months = 'year'; age_to = 1000; age_from = 50
-          elsif /years/i.match?(age_group)
+        if %w[Male Female].include?(gender)
+          case age_group
+          when '50+ years'
+            yrs_months = 'year'
+            age_to = 1000
+            age_from = 50
+          when /years/i
             age_from, age_to = age_group.sub(' years', '').split('-')
             yrs_months = 'year'
-          elsif /months/i.match?(age_group)
+          when /months/i
             age_from, age_to = age_group.sub(' months', '').split('-')
             yrs_months = 'month'
           end
@@ -144,7 +151,9 @@ module ARTService
         end
 
         if gender == 'M'
-          age_from = 0; age_to = 1000; yrs_months = 'year'
+          age_from = 0
+          age_to = 1000
+          yrs_months = 'year'
           started_on_art = get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date)
           alive_on_art = get_alive_on_art(yrs_months, age_from, age_to, gender, @cohort_cum_start_date, end_date)
           started_on_ipt = get_started_on_ipt(yrs_months, age_from, age_to, gender, @cohort_cum_start_date, end_date)
@@ -175,13 +184,20 @@ module ARTService
       end
 
       def get_fnp(start_date, end_date)
-        age_from = 0; age_to = 1000; yrs_months = 'year'; gender = 'F'
+        age_from = 0
+        age_to = 1000
+        yrs_months = 'year'
+        gender = 'F'
 
-        females_pregnant = []; cum_females_pregnant = []
-        breast_feeding_women = []; cum_breast_feeding_women = []
+        females_pregnant = []
+        cum_females_pregnant = []
+        breast_feeding_women = []
+        cum_breast_feeding_women = []
 
-        started_on_art = []; alive_on_art = []
-        started_on_ipt = []; screened_for_tb = []
+        started_on_art = []
+        alive_on_art = []
+        started_on_ipt = []
+        screened_for_tb = []
 
         ###############################################################
         (@cohort.total_breastfeeding_women || []).each do |p|
@@ -220,7 +236,7 @@ module ARTService
         end
 
         cum_females_pregnant = (cum_females_pregnant + females_pregnant)&.uniq || []
-        cum_breast_feeding_women = cum_breast_feeding_women + breast_feeding_women
+        cum_breast_feeding_women += breast_feeding_women
         #####################################################################
 
         (get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |fnp|
@@ -244,7 +260,8 @@ module ARTService
           started_on_ipt << { patient_id: fnp['patient_id'].to_i }
         end
 
-        (get_screened_for_tb(yrs_months, age_from, age_to, gender, @cohort_cum_start_date, end_date) || []).each do |fnp|
+        (get_screened_for_tb(yrs_months, age_from, age_to, gender, @cohort_cum_start_date,
+                             end_date) || []).each do |fnp|
           next if cum_females_pregnant.include?(fnp['patient_id'].to_i)
           next if cum_breast_feeding_women.include?(fnp['patient_id'].to_i)
 
@@ -291,7 +308,7 @@ module ARTService
 
       def get_started_on_ipt(yrs_months, age_from, age_to, gender, _start_date, end_date)
         data = ActiveRecord::Base.connection.select_all(
-        "SELECT patient_id FROM temp_earliest_start_date
+          "SELECT patient_id FROM temp_earliest_start_date
          WHERE gender = '#{gender}' AND earliest_start_date <= '#{end_date.to_date}'
          AND timestampdiff(#{yrs_months}, birthdate, DATE('#{end_date.to_date}'))
          BETWEEN #{age_from} AND #{age_to}"
@@ -346,7 +363,10 @@ module ARTService
       end
 
       def get_fp(start_date, end_date)
-        age_from = 0; age_to = 1000; yrs_months = 'year'; gender = 'F'
+        age_from = 0
+        age_to = 1000
+        yrs_months = 'year'
+        gender = 'F'
         cum_pregnant_women = @cohort.total_pregnant_women
 
         return [[], [], [], []] if cum_pregnant_women.blank?
@@ -365,8 +385,10 @@ module ARTService
           end
         end
 
-        started_on_art = []; alive_on_art = []
-        started_on_ipt = []; screened_for_tb = []
+        started_on_art = []
+        alive_on_art = []
+        started_on_ipt = []
+        screened_for_tb = []
 
         (get_started_on_art(yrs_months, age_from, age_to, gender, start_date, end_date) || []).each do |p|
           next unless pregnant_women_patient_ids.include?(p['patient_id'].to_i)
@@ -397,15 +419,20 @@ module ARTService
       end
 
       def get_fbf(start_date, end_date)
-        age_from = 0; age_to = 1000; yrs_months = 'year'; gender = 'F'
+        age_from = 0
+        age_to = 1000
+        yrs_months = 'year'
+        gender = 'F'
         cum_breastfeeding_mothers = @cohort.total_breastfeeding_women
 
         return [[], [], [], []] if cum_breastfeeding_mothers.blank?
 
         fbf_women_patient_ids = []
 
-        started_on_art = []; alive_on_art = []
-        started_on_ipt = []; screened_for_tb = []
+        started_on_art = []
+        alive_on_art = []
+        started_on_ipt = []
+        screened_for_tb = []
 
         #########################################################################
         cum_pregnant_women = @cohort.total_pregnant_women
@@ -456,7 +483,8 @@ module ARTService
           started_on_ipt << { patient_id: fbf['patient_id'].to_i }
         end
 
-        (get_screened_for_tb(yrs_months, age_from, age_to, gender, @cohort_cum_start_date, end_date) || []).each do |fbf|
+        (get_screened_for_tb(yrs_months, age_from, age_to, gender, @cohort_cum_start_date,
+                             end_date) || []).each do |fbf|
           next unless fbf_women_patient_ids.include?(fbf['patient_id'].to_i)
 
           screened_for_tb << { patient_id: fbf['patient_id'].to_i }

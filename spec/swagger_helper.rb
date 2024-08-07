@@ -31,6 +31,265 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+          aetc_total_registered_report: {
+            type: :object,
+            properties: {
+              patient_id: { type: :integer, example: 1 },
+              given_name: { type: :string, example: 'John' },
+              family_name: { type: :string, example: 'Doe' },
+              birthdate: { type: :string, format: 'date-time', example: '1990-01-01' },
+              gender: { type: :string, example: 'M' },
+              address: { type: :string, example: 'Limbe' },
+              ta: { type: :string, example: 'Limbe' },
+              registration_date: { type: :string, format: 'date-time', example: '2020-01-01' },
+              age_in_months: { type: :integer, example: 1 }
+            }
+          },
+          aetc_referral_report: {
+            type: :object,
+            properties: {
+              location: { type: :string, example: 'Limbe' },
+              patients: { type: :array, items: { type: :integer } }
+            }
+          },
+          aetc_dissag_diagnosis: {
+            type: :object,
+            properties: {
+              diagnosis: { type: :string, example: 'Malaria' },
+              '< 6 months': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } },
+              '6 months to < 5': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } },
+              '5 to 14': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } },
+              '> 14': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } },
+              'total_by_gender': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } }
+            }
+          },
+          aetc_dissag_diagnosis: {
+            type: :object,
+            properties: {
+              diagnosis: { type: :string, example: 'Malaria' },
+              '< 6 months': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } },
+              '6 months to < 5': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } },
+              '5 to 14': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } },
+              '> 14': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } },
+              'total_by_gender': { type: :object, properties: {
+                M: { type: :array, items: { type: :integer } },
+                F: { type: :array, items: { type: :integer } },
+                UNKNOWN: { type: :array, items: { type: :integer } }
+              } }
+            }
+          },
+          aetc_specific_diagnosis: {
+            type: :object,
+            properties: {
+              address: { type: :string, example: 'Limbe' },
+              patient_ids: { type: :array, items: { type: :integer } }
+            }
+          },
+          aetc_diagnosis: {
+            type: :object,
+            properties: {
+              diagnosis: { type: :string, example: 'Malaria' },
+              data: { type: :array, items: { type: :integer } }
+            }
+          },
+          aetc_dashboard: {
+            type: :object,
+            properties: {
+              name: { type: :string, example: 'Social History' },
+              me: { type: :integer, example: 1 },
+              facility: { type: :integer, example: 1 },
+              total: { type: :integer, example: 2 }
+            }
+          },
+          spine_dashboard: {
+            type: :object,
+            properties: {
+              rows: {
+                type: :array,
+                items: {
+                  type: :object,
+                  properties: {
+                    encounter: { type: :string },
+                    female: { type: :integer },
+                    male: { type: :integer },
+                    me: { type: :integer },
+                    facility: { type: :integer }
+                  }
+                }
+              },
+              patient_summary_stats: {
+                type: :object,
+                properties: {
+                  top: {
+                    type: :object,
+                    properties: {
+                      registered_today: { type: :integer },
+                      returning_today: { type: :integer },
+                      referred_today: { type: :integer }
+                    }
+                  },
+                  down: {
+                    type: :object,
+                    properties: {
+                      registered: {
+                        type: :object,
+                        properties: {
+                          registered: { "$ref": '#/components/schemas/spine_stat_data' },
+                          returning: { "$ref": '#/components/schemas/spine_stat_data' },
+                          referred: { "$ref": '#/components/schemas/spine_stat_data' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          spine_stat_data: {
+            type: :object,
+            properties: {
+              '1': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '2': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '3': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '4': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '5': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '6': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '7': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '8': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '9': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '10': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '11': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '12': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              },
+              '13': {
+                type: :object,
+                properties: {
+                  start_date: { type: :string, format: 'date-time' },
+                  end_date: { type: :string, format: 'date-time' },
+                  count: { type: :integer }
+                }
+              }
+            }
+          },
           hypertension_report: {
             type: :object,
             properties: {
@@ -203,6 +462,48 @@ RSpec.configure do |config|
                 current_quantity: { type: :integer },
                 variance_reason: { type: :string }
               }
+            }
+          },
+          tpt_status: {
+            type: :object,
+            properties: {
+              tpt: { type: :string, example: 'INH 300 / RFP 300 (3HP)' },
+              completed: { type: :boolean, example: false },
+              tb_treatment: { type: :boolean, example: false },
+              tpt_init_date: { type: :string, format: 'date-time', example: '2023-01-01' },
+              tpt_complete_date: { type: :string, format: 'date-time', example: '2023-01-01' },
+              tpt_end_date: { type: :string, format: 'date-time', example: '2023-01-01' },
+              eligible: { type: :object, properties: {
+                '3HP': { type: :boolean, example: false },
+                '6H': { type: :boolean, example: false }
+              } }
+            }
+          },
+          tx_rtt: {
+            type: :object,
+            properties: {
+              age_group: { type: :string },
+              gender: { type: :string },
+              cd4_less_than_200: { type: :array, items: { type: :integer } },
+              cd4_greater_than_or_equal_to_200: { type: :array, items: { type: :integer } },
+              unknown_cd4_count: { type: :array, items: { type: :integer } },
+              not_eligible_for_cd4: { type: :array, items: { type: :integer } },
+              returned_less_than_3_months: { type: :array, items: { type: :integer } },
+              returned_greater_than_3_months_and_less_than_6_months: { type: :array, items: { type: :integer } },
+              returned_greater_than_or_equal_to_6_months: { type: :array, items: { type: :integer } }
+            }
+          },
+          different_pregnancy_value_on_same_date: {
+            type: :object,
+            properties: {
+              patient_id: { type: :integer },
+              given_name: { type: :string },
+              family_name: { type: :string },
+              visit_date: { type: :string, format: 'date-time' },
+              gender: { type: :string },
+              birthdate: { type: :string, format: 'date-time' },
+              arv_number: { type: :string },
+              national_id: { type: :string }
             }
           }
         }

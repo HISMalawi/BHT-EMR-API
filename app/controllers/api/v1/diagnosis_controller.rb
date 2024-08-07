@@ -1,15 +1,21 @@
-class Api::V1::DiagnosisController < ApplicationController
-  before_action :authenticate
+# frozen_string_literal: true
 
-  def index
-    filters = params.permit(%i[id name])
+module Api
+  module V1
+    class DiagnosisController < ApplicationController
+      before_action :authenticate
 
-    render json: paginate(service.find_diagnosis(filters))
-  end
+      def index
+        filters = params.permit(%i[id name])
 
-  private
+        render json: paginate(service.find_diagnosis(filters))
+      end
 
-  def service
-    DiagnosisService.new
+      private
+
+      def service
+        DiagnosisService.new
+      end
+    end
   end
 end

@@ -1,9 +1,9 @@
+# rubocop:disable Layout/LineLength, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ClassLength, Style/Documentation
 # frozen_string_literal: true
 
 require 'htn_workflow'
-require 'set'
 
-module ARTService
+module ArtService
   class WorkflowEngine
     include ModelUtils
 
@@ -49,6 +49,8 @@ module ARTService
     HIV_CLINIC_REGISTRATION = 'HIV CLINIC REGISTRATION'
     HIV_RECEPTION = 'HIV RECEPTION'
     VITALS = 'VITALS'
+    SYMPTOM_SCREENING = 'SYMPTOM SCREENING'
+    AHD_SCREENING = 'AHD SCREENING'
     HIV_STAGING = 'HIV STAGING'
     HIV_CLINIC_CONSULTATION = 'HIV CLINIC CONSULTATION'
     ART_ADHERENCE = 'ART ADHERENCE'
@@ -63,8 +65,10 @@ module ARTService
       INITIAL_STATE => HIV_CLINIC_REGISTRATION,
       HIV_CLINIC_REGISTRATION => HIV_RECEPTION,
       HIV_RECEPTION => VITALS,
-      VITALS => HIV_STAGING,
-      HIV_STAGING => HIV_CLINIC_CONSULTATION,
+      VITALS => SYMPTOM_SCREENING,
+      SYMPTOM_SCREENING => HIV_STAGING,
+      HIV_STAGING => AHD_SCREENING,
+      AHD_SCREENING => HIV_CLINIC_CONSULTATION,
       HIV_CLINIC_CONSULTATION => ART_ADHERENCE,
       ART_ADHERENCE => HIV_CLINIC_CONSULTATION_CLINICIAN,
       HIV_CLINIC_CONSULTATION_CLINICIAN => TREATMENT,
@@ -84,10 +88,17 @@ module ARTService
                    patient_not_on_fast_track?
                    patient_has_not_completed_fast_track_visit?
                    patient_does_not_have_height_and_weight?],
+      SYMPTOM_SCREENING => %i[patient_is_alive? patient_not_on_fast_track?
+                              patient_has_not_completed_fast_track_visit?
+                              patient_not_coming_for_drug_refill?],
       HIV_STAGING => %i[patient_is_alive?
-                        patient_not_already_staged?
+                        patient_not_already_staged_or_has_symptoms_screening?
                         patient_has_not_completed_fast_track_visit?
                         patient_not_coming_for_drug_refill?],
+      AHD_SCREENING => %i[continue_ahd_screening_accepted?
+                          patient_is_alive? patient_not_on_fast_track?
+                          patient_not_coming_for_drug_refill?
+                          patient_has_not_completed_fast_track_visit?],
       HIV_CLINIC_CONSULTATION => %i[patient_not_on_fast_track? patient_is_alive?
                                     patient_has_not_completed_fast_track_visit?],
       ART_ADHERENCE => %i[patient_received_art? patient_is_alive?
@@ -136,6 +147,10 @@ module ARTService
           TREATMENT
         when /Vitals/i
           VITALS
+        when /Symptom screening/i
+          SYMPTOM_SCREENING
+        when /AHD screening/i
+          AHD_SCREENING
         else
           Rails.logger.warn "Invalid ART activity in user properties: #{activity}"
         end
@@ -158,7 +173,7 @@ module ARTService
       # of the actual vitals.
       return false if type.name == VITALS
 
-      Encounter.where(type: type, patient: @patient, program: @program)\
+      Encounter.where(type:, patient: @patient, program: @program)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
     end
@@ -282,6 +297,38 @@ module ARTService
       ).exists?
     end
 
+    def continue_ahd_screening_accepted?
+      encounter_type = EncounterType.find_by(name: HIV_STAGING)
+      continue_to_ahd_question = Observation.joins(:encounter)\
+                                            .where(concept: concept('Continue with AHD'))
+                                            .where(person: @patient.person)
+                                            .where(encounter: { program_id: @program.program_id, encounter_type: })\
+                                            .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                                            .order(obs_datetime: :desc)\
+                                            .first
+      return false if continue_to_ahd_question.blank?
+
+      continue_to_ahd_question&.value_coded == concept('Yes').concept_id
+    end
+
+    def patient_not_already_staged_or_has_symptoms_screening?
+      return true if patient_not_already_staged?
+      return true if patient_has_symptoms_screening?
+
+      false
+    end
+
+    def patient_has_symptoms_screening?
+      encounter_type = EncounterType.find_by(name: SYMPTOM_SCREENING)
+      Observation.joins(:encounter)\
+                 .where(person: @patient.person)
+                 .where(encounter: { program_id: @program.program_id, encounter_type: })\
+                 .where('concept_id in (SELECT value_coded from obs WHERE concept_id = ?)', concept('AHD Symptom').concept_id)
+                 .where(value_coded: concept('Yes'))
+                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+                 .present?
+    end
+
     # Checks if patient has not undergone staging before
     def patient_not_already_staged?
       encounter_type = EncounterType.find_by(name: 'HIV Staging')
@@ -365,21 +412,21 @@ module ARTService
 
     def patient_has_no_weight_today?
       concept_id = ConceptName.find_by_name('Weight').concept_id
-      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
+      !Observation.where(concept_id:, person_id: @patient.id)\
                   .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                   .exists?
     end
 
     def patient_has_no_height?
       concept_id = ConceptName.find_by_name('Height (cm)').concept_id
-      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
+      !Observation.where(concept_id:, person_id: @patient.id)\
                   .where('obs_datetime < ?', TimeUtils.day_bounds(@date)[1])\
                   .exists?
     end
 
     def patient_has_no_height_today?
       concept_id = ConceptName.find_by_name('Height (cm)').concept_id
-      !Observation.where(concept_id: concept_id, person_id: @patient.id)\
+      !Observation.where(concept_id:, person_id: @patient.id)\
                   .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                   .exists?
     end
@@ -393,7 +440,7 @@ module ARTService
       Observation.joins(:encounter)\
                  .where(person: @patient.person,
                         encounter: { program_id: @program.program_id },
-                        obs: { concept: concept('Medication orders'),  # last observation for a consultation encounter
+                        obs: { concept: concept('Medication orders'), # last observation for a consultation encounter
                                creator: [User.joins(:roles).where(role: { role: 'Clinician' }).pluck(:user_id)].flatten }).where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                  .exists?
     end
@@ -444,3 +491,5 @@ module ARTService
     end
   end
 end
+
+# rubocop:enable Layout/LineLength, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ClassLength, Style/Documentation

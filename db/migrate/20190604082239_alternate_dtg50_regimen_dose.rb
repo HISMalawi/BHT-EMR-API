@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 class AlternateDtg50RegimenDose < ActiveRecord::Migration[5.2]
   def up
     # DTG drug inventory id is 982
-    dose_id = MohRegimenDose.find_by(am: 1.0, pm: 0.0).dose_id
+    dose_id = MohRegimenDose.find_by(am: 1.0, pm: 0.0)&.dose_id
     regimens = MohRegimenIngredient.where(drug_inventory_id: 982, min_weight: 30)
 
     regimens.each do |regimen|
-      regimen.dose_id = dose_id
+      regimen.dose_id = dose_id if dose_id.present?
       regimen.save
     end
   end

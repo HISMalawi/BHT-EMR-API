@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+
+# This module contains utility methods for retrieving models
 module ModelUtils
   # Retrieve concept by its name
   #
@@ -9,11 +11,20 @@ module ModelUtils
   end
 
   def concept_name(name)
-    ConceptName.find_by(name: name)
+    ConceptName.find_by(name:)
   end
 
   def concept_name_to_id(name)
+    return nil if name.blank?
+
     concept_name(name)&.concept_id
+  end
+
+  def concept_id_to_name(id)
+    return nil if id.blank?
+
+    concept = Concept.find_by_concept_id(id)
+    concept&.fullname
   end
 
   def program(name)
@@ -21,7 +32,7 @@ module ModelUtils
   end
 
   def encounter_type(name)
-    EncounterType.find_by name: name
+    EncounterType.find_by name:
   end
 
   def global_property(name)
@@ -30,7 +41,7 @@ module ModelUtils
 
   def user_property(name, user_id: nil)
     user_id ||= User.current.user_id
-    UserProperty.find_by(user_id: user_id, property: name)
+    UserProperty.find_by(user_id:, property: name)
   end
 
   def order_type(name)

@@ -4,13 +4,15 @@ class WorkflowService
   # A factory for workflow engines.
   ENGINES = {
     # Table mapping program concept name to engine
-    'HIV PROGRAM' => ARTService::WorkflowEngine,
-    'OPD PROGRAM' => OPDService::WorkflowEngine,
-    'TB PROGRAM' => TBService::WorkflowEngine,
-    'ANC PROGRAM' => ANCService::WorkflowEngine,
-    'VMMC PROGRAM' => VMMCService::WorkflowEngine,
-    'CXCA PROGRAM' => CXCAService::WorkflowEngine,
-    'HTC PROGRAM' => HTSService::WorkflowEngine
+    'HIV PROGRAM' => ArtService::WorkflowEngine,
+    'OPD PROGRAM' => OpdService::WorkflowEngine,
+    'TB PROGRAM' => TbService::WorkflowEngine,
+    'ANC PROGRAM' => AncService::WorkflowEngine,
+    'VMMC PROGRAM' => VmmcService::WorkflowEngine,
+    'CXCA PROGRAM' => CxcaService::WorkflowEngine,
+    'HTC PROGRAM' => HtsService::WorkflowEngine,
+    'AETC PROGRAM' => AetcService::WorkflowEngine,
+    'SPINE PROGRAM' => SpineService::WorkflowEngine
   }.freeze
 
   def initialize(program_id:, patient_id:, date: nil)
@@ -33,6 +35,6 @@ class WorkflowService
     engine_clazz = ENGINES[engine_name]
     raise NotFoundError, "'#{engine_name}' engine not found" unless engine_clazz
 
-    engine_clazz.new program: program, patient: patient, date: date
+    engine_clazz.new program:, patient:, date:
   end
 end

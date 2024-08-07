@@ -1,11 +1,14 @@
+# frozen_string_literal: true
+
 class AppointmentService
   ENGINES = {
-    'HIV PROGRAM' => ARTService::AppointmentEngine,
-    'TB PROGRAM' => TBService::AppointmentEngine,
-    'ANC PROGRAM' => ANCService::AppointmentEngine,
-    'VMMC PROGRAM' => VMMCService::AppointmentEngine,
-    'CXCA PROGRAM' => CXCAService::AppointmentEngine,
-    'HTC PROGRAM' => HTSService::AppointmentEngine
+    'HIV PROGRAM' => ArtService::AppointmentEngine,
+    'TB PROGRAM' => TbService::AppointmentEngine,
+    'ANC PROGRAM' => AncService::AppointmentEngine,
+    'VMMC PROGRAM' => VmmcService::AppointmentEngine,
+    'CXCA PROGRAM' => CxcaService::AppointmentEngine,
+    'HTC PROGRAM' => HtsService::AppointmentEngine,
+    'NCD PROGRAM' => NcdService::AppointmentEngine,
   }.freeze
 
   def initialize(program_id:, patient_id:, retro_date:)
@@ -38,6 +41,6 @@ class AppointmentService
     engine_clazz = ENGINES[engine_name]
     raise NotFoundError, "'#{engine_name}' engine not found" unless engine_clazz
 
-    engine_clazz.new program: program, patient: patient, retro_date: date
+    engine_clazz.new program:, patient:, retro_date: date
   end
 end

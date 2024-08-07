@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ARTService
+module ArtService
   module Reports
     # This class generates the LIMS results report (results delivered electronically)
     class LimsResults
@@ -41,7 +41,7 @@ module ARTService
           LEFT JOIN concept_name reason_test ON reason_test.concept_id = reason.value_coded AND reason_test.voided = 0
           LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = e.patient_id
           WHERE DATE(o.start_date) BETWEEN '#{start_date}' AND '#{end_date}' AND o.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
-          GROUP BY o.order_id
+          AND cn.name ="HIV viral load" GROUP BY o.order_id
         SQL
       end
 

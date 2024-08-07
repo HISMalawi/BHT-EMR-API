@@ -2,7 +2,7 @@
 
 require 'set'
 
-module CXCAService
+module CxcaService
   class WorkflowEngine
     include ModelUtils
 
@@ -54,7 +54,7 @@ module CXCAService
       CXCA_TEST => %i[show_cxca_test?],
       CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results? offer_cxca_screening?],
       CANCER_TREATMENT => %i[show_cancer_treatment? offer_cxca_screening?],
-      APPOINTMENT => %i[show_appointment? offer_cxca_screening?]
+      APPOINTMENT => %i[show_appointment? offer_cxca_screening? patient_has_not_been_referred?]
     }.freeze
 =begin
     STATE_CONDITIONS = {
@@ -74,7 +74,7 @@ module CXCAService
     # NOTE: By `relevant` above we mean encounters that matter in deciding
     # what encounter the patient should go for in this present time.
     def encounter_exists?(type)
-      Encounter.where(type: type, patient: @patient)\
+      Encounter.where(type: type, patient: @patient, program: @program)\
                .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
                .exists?
     end
@@ -88,6 +88,25 @@ module CXCAService
     end
 
     private
+
+    def patient_has_not_been_referred?
+      encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
+      tx_option = ConceptName.find_by_name('Directly observed treatment option').concept_id
+      tx_referral = ConceptName.find_by_name('Referral').concept_id
+
+      ob = Observation.joins(:encounter)
+        .where(
+          encounter: {
+            encounter_type: encounter_type,
+          },
+          obs: {
+            concept_id: tx_option,
+            value_coded: tx_referral,
+            person_id: @patient.patient_id
+          },
+        ).where("encounter_datetime BETWEEN ? AND ?", *TimeUtils.day_bounds(@date))
+        ob.blank?
+    end
 
     def show_cxca_test?
       return false unless results_available?

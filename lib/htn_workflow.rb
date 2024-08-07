@@ -18,105 +18,91 @@ class HtnWorkflow
   def check_htn_workflow(patient, task, date)
     return task unless htn_client?(patient, date)
 
-    if !task.name.match(/VITALS/i) && !task.name.match(/TREATMENT/i) && !(task.encounter_type_id == nil)
-      return task
-    end
+    return task if !task.name.match(/VITALS/i) && !task.name.match(/TREATMENT/i) && !task.encounter_type_id.nil?
 
     # This function is for managing interaction with HTN
     referred_to_clinician = (Observation.where(["person_id = ? AND voided = 0
                             AND concept_id = ? AND obs_datetime BETWEEN ? AND ?",
-                                                patient.patient_id, ConceptName.find_by_name("REFER PATIENT TO CLINICIAN").concept_id,
+                                                patient.patient_id, ConceptName.find_by_name('REFER PATIENT TO CLINICIAN').concept_id,
                                                 date.strftime('%Y-%m-%d 00:00:00'),
-                                                date.strftime('%Y-%m-%d 23:59:59')
-                                              ]).last&.answer_string&.downcase&.strip || nil) == "yes"
+                                                date.strftime('%Y-%m-%d 23:59:59')]).last&.answer_string&.downcase&.strip || nil) == 'yes'
 
-    referred_to_anc = (Observation.where(["person_id = ? AND voided = 0 AND concept_id = ? AND obs_datetime BETWEEN ? AND ?",
-                                          patient.patient_id, ConceptName.find_by_name("REFER TO ANC").concept_id,
+    referred_to_anc = (Observation.where(['person_id = ? AND voided = 0 AND concept_id = ? AND obs_datetime BETWEEN ? AND ?',
+                                          patient.patient_id, ConceptName.find_by_name('REFER TO ANC').concept_id,
                                           date.strftime('%Y-%m-%d 00:00:00'),
-                                          date.strftime('%Y-%m-%d 23:59:59')
-                                        ]).last&.answer_string&.downcase&.strip || nil) == "yes"
+                                          date.strftime('%Y-%m-%d 23:59:59')]).last&.answer_string&.downcase&.strip || nil) == 'yes'
 
     todays_encounters = patient.encounters.where('DATE(encounter_datetime) = ?', date)
-    sbp_threshold = global_property("htn.systolic.threshold")&.property_value&.to_i || 0
-    dbp_threshold = global_property("htn.diastolic.threshold")&.property_value&.to_i || 0
+    sbp_threshold = global_property('htn.systolic.threshold')&.property_value&.to_i || 0
+    dbp_threshold = global_property('htn.diastolic.threshold')&.property_value&.to_i || 0
     if task.present? && task.name.present?
-      #patients eligible for HTN will have their vitals taken with HTN module
+      # patients eligible for HTN will have their vitals taken with HTN module
       if task.name.match(/VITALS/i)
-        return "htn_vitals"
-      elsif task.name.match(/TREATMENT/i) || task.encounter_type_id == nil
-        #Alert and BP mgmt for patients on HTN or with two high BP readings
+        return 'htn_vitals'
+      elsif task.name.match(/TREATMENT/i) || task.encounter_type_id.nil?
+        # Alert and BP mgmt for patients on HTN or with two high BP readings
         bp = current_bp(patient, date)
-        bp_management_done = todays_encounters.map {|e| e.name}.include?("HYPERTENSION MANAGEMENT")
-        medical_history = todays_encounters.map {|e| e.name}.include?("MEDICAL HISTORY")
+        bp_management_done = todays_encounters.map(&:name).include?('HYPERTENSION MANAGEMENT')
+        medical_history = todays_encounters.map(&:name).include?('MEDICAL HISTORY')
 
-        #>>>>>>>>>>>>>>>>>BP INITIAL VISIT ENCOUNTER>>>>>>>>>>>>>>>>>>>>
-        treatment_status_concept_id = Concept.find_by_name("TREATMENT STATUS").id
+        # >>>>>>>>>>>>>>>>>BP INITIAL VISIT ENCOUNTER>>>>>>>>>>>>>>>>>>>>
+        treatment_status_concept_id = Concept.find_by_name('TREATMENT STATUS').id
         bp_drugs_started = Observation.where(["person_id =? AND concept_id =? AND
-              value_text REGEXP ?", patient.id, treatment_status_concept_id, "BP Drugs started"]).last
-        transfer_obs = Observation.where(["person_id =? AND concept_id =?",
-                                          patient.id, Concept.find_by_name('TRANSFERRED').id]
-        ).last
+              value_text REGEXP ?", patient.id, treatment_status_concept_id, 'BP Drugs started']).last
+        transfer_obs = Observation.where(['person_id =? AND concept_id =?',
+                                          patient.id, Concept.find_by_name('TRANSFERRED').id]).last
 
-        unless bp_drugs_started.blank?
-          if ((!bp[0].blank? && bp[0] <= sbp_threshold) && (!bp[1].blank? && bp[1] <= dbp_threshold)) #Normal BP
-            return "bp_management"
-          end if transfer_obs.blank?
+        if !bp_drugs_started.blank? && transfer_obs.blank? && ((!bp[0].blank? && bp[0] <= sbp_threshold) && (!bp[1].blank? && bp[1] <= dbp_threshold)) # Normal BP
+          return 'bp_management'
         end
 
-        #>>>>>>>>>>>>>>>>>END>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        # >>>>>>>>>>>>>>>>>END>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-        #Check if latest BP was high for alert
+        # Check if latest BP was high for alert
         todays_observations = Observation.where(concept: Concept.find_by_name('SBP'),
                                                 person: patient.person)\
                                          .where('DATE(obs_datetime) = DATE(?)', date)\
                                          .count
         if !bp.blank? && todays_observations == 1
           if !bp_management_done && !medical_history && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank? && bp[1] > dbp_threshold))
-            return "bp_alert"
+            return 'bp_alert'
           elsif !bp_management_done && medical_history && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank? && bp[1] > dbp_threshold))
-            if (referred_to_clinician && (current_user_roles.include?('Clinician') || current_user_roles.include?('Doctor')))
-              return "bp_management"
+            if referred_to_clinician && (current_user_roles.include?('Clinician') || current_user_roles.include?('Doctor'))
+              return 'bp_management'
             elsif !referred_to_clinician
-              return "bp_management"
+              return 'bp_management'
             else
-              return "patient_dashboard"
+              return 'patient_dashboard'
             end
           end
         end
-        if !bp.blank? && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank? && bp[1] > dbp_threshold)) && !bp_management_done
-          unless referred_to_anc
-            if (referred_to_clinician && (current_user_roles.include?('Clinician') || current_user_roles.include?('Doctor')))
-              return "bp_management"
-            elsif !referred_to_clinician
-              return "bp_management"
-            else
-              return "patient_dashboard"
-            end
+        if !bp.blank? && ((!bp[0].blank? && bp[0] > sbp_threshold) || (!bp[1].blank? && bp[1] > dbp_threshold)) && !bp_management_done && !referred_to_anc
+          if referred_to_clinician && (current_user_roles.include?('Clinician') || current_user_roles.include?('Doctor'))
+            return 'bp_management'
+          elsif !referred_to_clinician
+            return 'bp_management'
+          else
+            return 'patient_dashboard'
           end
         end
 
-        if !bp.blank? && !bp_management_done && patient.programs.map {|x| x.name}.include?("HYPERTENSION PROGRAM")
+        if !bp.blank? && !bp_management_done && patient.programs.map(&:name).include?('HYPERTENSION PROGRAM')
 
-          plan = Observation.where(["person_id = ? AND concept_id = ? AND obs_datetime <= ?", patient.id,
-                                    Concept.find_by_name('Plan').id, date.strftime('%Y-%m-%d 23:59:59')]
-          ).order("obs_datetime DESC").last
+          plan = Observation.where(['person_id = ? AND concept_id = ? AND obs_datetime <= ?', patient.id,
+                                    Concept.find_by_name('Plan').id, date.strftime('%Y-%m-%d 23:59:59')]).order('obs_datetime DESC').last
 
-          unless (plan.blank? || plan.value_text.match(/ANNUAL/i)) && !referred_to_anc
-            return "bp_management"
-          end
+          return 'bp_management' unless (plan.blank? || plan.value_text.match(/ANNUAL/i)) && !referred_to_anc
         end
 
-        #If BP was not high, check if patient is on BP treatment. This check may be redudant
-        unless referred_to_anc
-          if is_patient_on_htn_treatment?(patient, date) && !bp_management_done
+        # If BP was not high, check if patient is on BP treatment. This check may be redudant
+        if !referred_to_anc && (is_patient_on_htn_treatment?(patient, date) && !bp_management_done)
 
-            if (referred_to_clinician && (current_user_roles.include?('Clinician') || current_user_roles.include?('Doctor')))
-              return "bp_management"
-            elsif !referred_to_clinician
-              return "bp_management"
-            else
-              return "patient_dashboard"
-            end
+          if referred_to_clinician && (current_user_roles.include?('Clinician') || current_user_roles.include?('Doctor'))
+            return 'bp_management'
+          elsif !referred_to_clinician
+            return 'bp_management'
+          else
+            return 'patient_dashboard'
           end
         end
       end
@@ -126,38 +112,54 @@ class HtnWorkflow
   end
 
   def current_bp(patient, date = Date.today)
-    encounter_id = patient.encounters.where("encounter_type = ? AND DATE(encounter_datetime) = ?",
-      EncounterType.find_by_name("VITALS").id, date.to_date).last.id rescue nil
+    encounter_id = begin
+      patient.encounters.where('encounter_type = ? AND DATE(encounter_datetime) = ?',
+                               EncounterType.find_by_name('VITALS').id, date.to_date).last.id
+    rescue StandardError
+      nil
+    end
 
-    ans = [(Observation.where("encounter_id = ? AND concept_id = ?", encounter_id,
-          ConceptName.find_by_name("SYSTOLIC BLOOD PRESSURE").concept_id).last.answer_string.to_i rescue nil),
-      (Observation.where("encounter_id = ? AND concept_id = ?", encounter_id,
-          ConceptName.find_by_name("DIASTOLIC BLOOD PRESSURE").concept_id).last.answer_string.to_i rescue nil)
-    ]
-    ans = ans.reject(&:blank?)
+    ans = [begin
+      Observation.where('encounter_id = ? AND concept_id = ?', encounter_id,
+                        ConceptName.find_by_name('SYSTOLIC BLOOD PRESSURE').concept_id).last.answer_string.to_i
+    rescue StandardError
+      nil
+    end,
+           begin
+             Observation.where('encounter_id = ? AND concept_id = ?', encounter_id,
+                               ConceptName.find_by_name('DIASTOLIC BLOOD PRESSURE').concept_id).last.answer_string.to_i
+           rescue StandardError
+             nil
+           end]
+    ans.reject(&:blank?)
   end
 
   def current_user_roles
-    user_roles = UserRole.where(["user_id = ?", User.current.id]).collect{|r|r.role}
-    RoleRole.where(["child_role IN (?)", user_roles]).collect{|r|user_roles << r.parent_role}
-    return user_roles.uniq
+    user_roles = UserRole.where(['user_id = ?', User.current.id]).collect(&:role)
+    RoleRole.where(['child_role IN (?)', user_roles]).collect { |r| user_roles << r.parent_role }
+    user_roles.uniq
   end
 
   def is_patient_on_htn_treatment?(patient, date)
-    if patient.programs.map{|x| x.name}.include?("HYPERTENSION PROGRAM")
-      htn_program_id = Program.find_by_name("HYPERTENSION PROGRAM").id
-      program = PatientProgram.where(["patient_id = ? AND program_id = ? AND date_enrolled <= ?",
-          patient.id,htn_program_id, date]).last
+    if patient.programs.map(&:name).include?('HYPERTENSION PROGRAM')
+      htn_program_id = Program.find_by_name('HYPERTENSION PROGRAM').id
+      program = PatientProgram.where(['patient_id = ? AND program_id = ? AND date_enrolled <= ?',
+                                      patient.id, htn_program_id, date]).last
       unless program.blank?
-        state = PatientState.where(["patient_program_id = ? AND start_date <= ? ", program.id, date]
-        ).last rescue nil
-        current_state = ConceptName.find_by_concept_id(state.program_workflow_state.concept_id).name rescue ""
-        if current_state.upcase == "ON TREATMENT"
-          return true
+        state = begin
+          PatientState.where(['patient_program_id = ? AND start_date <= ? ', program.id, date]).last
+        rescue StandardError
+          nil
         end
+        current_state = begin
+          ConceptName.find_by_concept_id(state.program_workflow_state.concept_id).name
+        rescue StandardError
+          ''
+        end
+        return true if current_state.upcase == 'ON TREATMENT'
       end
     end
-    return false
+    false
   end
 
   def htn_client?(patient, date)

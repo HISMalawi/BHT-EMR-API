@@ -7,11 +7,11 @@ class EncounterService
     date ||= Date.today
     type = EncounterType.find_by(name: encounter_type_name)
 
-    query = Encounter.where(type: type, patient_id: patient_id)\
+    query = Encounter.where(type:, patient_id:)\
                      .where('encounter_datetime BETWEEN ? AND ?',
-                      start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-                      date.to_date.strftime('%Y-%m-%d 23:59:59'))
-    query = query.where(program_id: program_id) if program_id
+                            start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+                            date.to_date.strftime('%Y-%m-%d 23:59:59'))
+    query = query.where(program_id:) if program_id
     query.order(encounter_datetime: :desc).first
   end
 
@@ -19,23 +19,26 @@ class EncounterService
     encounter_datetime ||= Time.now
     provider ||= User.current.person
 
-    encounter = find_encounter(type: type, patient: patient, provider: provider,
-                               encounter_datetime: encounter_datetime, program: program)
-    PatientProgramService.new.create(patient: patient, program: Program.find_by(name: 'Laboratory program'), date_enrolled: encounter_datetime) if type.id == EncounterType.find_by(name: 'LAB ORDERS')&.id
+    encounter = find_encounter(type:, patient:, provider:,
+                               encounter_datetime:, program:)
+    if type.id == EncounterType.find_by(name: 'LAB ORDERS')&.id
+      PatientProgramService.new.create(patient:, program: Program.find_by(name: 'Laboratory program'),
+                                       date_enrolled: encounter_datetime)
+    end
     return encounter if encounter
 
     Encounter.create(
-      type: type, patient: patient, provider: provider,
-      encounter_datetime: encounter_datetime, program: program,
-      location_id: Location.current.id
+      type:, patient:, provider:,
+      encounter_datetime:, program:,
+      location_id: User.current.location_id
     )
   end
 
-  def update(encounter, patient: nil, type: nil, encounter_datetime: nil,
-             provider: nil, program:)
+  def update(encounter, program:, patient: nil, type: nil, encounter_datetime: nil,
+             provider: nil)
     updates = {
-      patient: patient, type: type, provider: provider,
-      program: program, encounter_datetime: encounter_datetime
+      patient:, type:, provider:,
+      program:, encounter_datetime:
     }
     updates = updates.keep_if { |_, v| !v.nil? }
 
@@ -44,7 +47,7 @@ class EncounterService
   end
 
   def find_encounter(type:, patient:, encounter_datetime:, provider:, program:)
-    Encounter.where(type: type, patient: patient, program: program)\
+    Encounter.where(type:, patient:, program:)\
              .where('encounter_datetime BETWEEN ? AND ?',
                     *TimeUtils.day_bounds(encounter_datetime))\
              .order(encounter_datetime: :desc)

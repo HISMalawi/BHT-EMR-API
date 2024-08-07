@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddIndexToDrugOrder < ActiveRecord::Migration[5.2]
   def change
     return if ActiveRecord::Base.connection.index_exists?(:drug_order, %i[drug_inventory_id quantity])

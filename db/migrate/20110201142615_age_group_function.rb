@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 class AgeGroupFunction < ActiveRecord::Migration[5.2]
   def self.up
-    ActiveRecord::Base.connection.execute("DROP FUNCTION IF EXISTS age_group;")
+    ActiveRecord::Base.connection.execute('DROP FUNCTION IF EXISTS age_group;')
 
     ActiveRecord::Base.connection.execute("
-		CREATE FUNCTION age_group(birthdate varchar(10),visit_date varchar(10),date_created varchar(10),est int) RETURNS VARCHAR(25) 
+		CREATE FUNCTION age_group(birthdate varchar(10),visit_date varchar(10),date_created varchar(10),est int) RETURNS VARCHAR(25)
 		DETERMINISTIC
 		BEGIN
 			DECLARE avg VARCHAR(25);
@@ -32,7 +34,6 @@ class AgeGroupFunction < ActiveRecord::Migration[5.2]
   end
 
   def self.down
-    ActiveRecord::Base.connection.execute("DROP FUNCTION IF EXISTS age_group;")
+    ActiveRecord::Base.connection.execute('DROP FUNCTION IF EXISTS age_group;')
   end
-
 end

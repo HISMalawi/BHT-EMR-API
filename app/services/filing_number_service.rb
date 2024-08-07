@@ -42,15 +42,18 @@ class FilingNumberService
     prefix = filing_number_prefixes[0][0..4] if type.match?(/(Filing)/i)
     prefix = filing_number_prefixes[1][0..4] if type.match?(/Archived/i)
 
+    available_identifier = find_lost_active_filing_number unless type.match?(/Archived/i)
+    return available_identifier if available_identifier.present?
+
     last_identifier = PatientIdentifier.where(type: filing_number_type)\
                                        .order(identifier: :desc)\
                                        .first\
                                        &.identifier
 
-    next_id = last_identifier.blank? ? 1 : last_identifier[5..-1].to_i + 1
+    next_id = last_identifier.blank? ? 1 : last_identifier[5..].to_i + 1
 
     # HACK: Ensure we are not exceeding filing number limits
-    return find_lost_active_filing_number if type.match?(/^Filing.*/i) && next_id > filing_number_limit
+    # return find_lost_active_filing_number if type.match?(/^Filing.*/i) && next_id > filing_number_limit
 
     if next_id > PHYSICAL_FILING_NUMBER_LIMIT
       raise "At physical filing number limit: #{next_id} > #{PHYSICAL_FILING_NUMBER_LIMIT}"
@@ -72,7 +75,8 @@ class FilingNumberService
       WHERE identifier_type = #{ActiveRecord::Base.connection.quote(filing_number_type)}
         AND identifier LIKE #{ActiveRecord::Base.connection.quote("#{prefix}%")}
         AND voided = 1
-        AND identifier < #{ActiveRecord::Base.connection.quote(prefix + filing_number_limit.to_s)}
+        AND identifier < #{ActiveRecord::Base.connection.quote(prefix + filing_number_limit.to_s)}\
+        AND LENGTH(identifier) = #{(prefix + filing_number_limit.to_s).size}
         AND identifier NOT IN (
           SELECT identifier
           FROM patient_identifier
@@ -110,18 +114,18 @@ class FilingNumberService
       active_filing_number_identifier_type = patient_identifier_type('Filing Number')
       dormant_filing_number_identifier_type = patient_identifier_type('Archived filing number')
 
-      return nil if filing_number[5..-1].to_i > filing_number_limit
+      return nil if filing_number[5..].to_i > filing_number_limit
 
       # Void current dormant filing number
       existing_dormant_filing_numbers = PatientIdentifier.where(
-        patient: patient, type: dormant_filing_number_identifier_type
+        patient:, type: dormant_filing_number_identifier_type
       )
 
       existing_dormant_filing_numbers.each do |identifier|
         identifier.void("Given active filing number: #{filing_number}")
       end
 
-      PatientIdentifier.create patient: patient,
+      PatientIdentifier.create patient:,
                                type: active_filing_number_identifier_type,
                                identifier: filing_number,
                                location_id: Location.current.location_id
@@ -364,7 +368,7 @@ class FilingNumberService
         WHERE voided = 0
           AND concept_id IN (#{antiretroviral_drug_concepts.join(',')})
         GROUP BY o.patient_id
-      ) co ON co.patient_id = p.patient_id AND co.auto_expire_date <= DATE(#{ActiveRecord::Base.connection.quote(date)}) - INTERVAL 80 DAY
+      ) co ON co.patient_id = p.patient_id AND co.auto_expire_date <= DATE(#{ActiveRecord::Base.connection.quote(date)}) - INTERVAL 60 DAY
       WHERE p.voided = 0
         AND NOT EXISTS (SELECT 1 FROM (#{temp_patient_with_adverse_outcomes}) tpa WHERE tpa.patient_id = p.patient_id)
       ORDER BY co.auto_expire_date ASC

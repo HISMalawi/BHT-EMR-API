@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+require 'yaml'
+
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
@@ -27,6 +30,29 @@ Rails.application.configure do
     config.cache_store = :null_store
   end
 
+  yml_file_path = Rails.root.join('config', 'development_settings.yml')
+
+  # Default content for the YAML file if it doesn't exist
+  default_content = {
+    'host1' => '',
+  }
+
+  # Check if the YAML file exists
+  unless File.exist?(yml_file_path)
+    # If it doesn't exist, create the file with default content
+    File.open(yml_file_path, 'w') do |file|
+      file.write(default_content.to_yaml)
+    end
+  end
+
+  # Load the YAML file
+  settings = YAML.load_file(yml_file_path)
+
+  # Use the settings from the YAML file in Rails configuration
+  host1 = settings['host1']
+
+  config.hosts << host1
+
   # Store uploaded files on the local file system (see config/storage.yml for options)
   config.active_storage.service = :local
 
@@ -43,7 +69,6 @@ Rails.application.configure do
 
   # Highlight code that triggered database queries in logs.
   config.active_record.verbose_query_logs = true
-
 
   # Raises error for missing translations
   # config.action_view.raise_on_missing_translations = true

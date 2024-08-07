@@ -29,29 +29,31 @@ module HtsService
         HIV_NEGATIVE = 'Negative'
         HIV_EXPOSED_INFANT = 'Exposed infant'
         HIV_INVALID_OR_INCONCLUSIVE = 'Invalid or inconclusive'
+        LOCATION_WHERE_TEST_TOOK_PLACE = 'Location where test took place'
 
         INDICATORS = [
-          { name: 'test_location', concept_id: concept("Location where test took place").concept_id, value: 'value_text', join: 'LEFT' },
-          { name: 'p_status', concept_id: concept(PREGNANCY_STATUS).concept_id, join: 'LEFT' },
-          { name: 'last_tested', concept_id: concept(LAST_TESTED).concept_id, join: 'LEFT' },
+          { name: 'test_location', concept: LOCATION_WHERE_TEST_TOOK_PLACE,
+            value: 'value_text', join: 'LEFT' },
+          { name: 'p_status', concept: PREGNANCY_STATUS, join: 'LEFT' },
+          { name: 'last_tested', concept: LAST_TESTED, join: 'LEFT' },
           {
             name: 'partner_present',
-            concept_id: concept(PARTNER_PRESENT).concept_id,
+            concept: PARTNER_PRESENT,
             value: 'value_text',
             join: 'LEFT'
           },
           {
             name: %w[test_one test_two test_three],
-            concept_id: [concept(TEST_ONE).concept_id, concept(TEST_TWO).concept_id, concept(TEST_THREE).concept_id],
+            concept: [TEST_ONE, TEST_TWO, TEST_THREE],
             join: 'LEFT'
           },
-          { name: 'result_given', concept_id: concept(HIV_GROUP).concept_id, join: 'LEFT' }
+          { name: 'result_given', concept: HIV_GROUP, join: 'LEFT' }
         ].freeze
 
         def initialize(quarter:, year:)
           set_dates(quarter, year)
           @report = {}
-          @regular_clients = ->(data) {
+          @regular_clients = lambda { |data|
             data.where.not(
               prev_test: {
                 value_coded: concept('Self').concept_id
@@ -81,9 +83,9 @@ module HtsService
           model = query
 
           INDICATORS.each do |param|
-            model = ObsValueScope.call(model: model, **param)
+            model = ObsValueScope.call(**param.merge(model:))
           end
-          @query_data = connection.select_all(model.group('person.person_id')).to_hash
+          @query_data = connection.select_all(model.group('person.person_id'))
           access_type_and_age_group
           last_tested
           partner_present
@@ -139,14 +141,14 @@ module HtsService
         def result_given_to_client
           data = @query_data
           array = {
-                    new_exp_infant: filter_hash(data, 'result_given', concept(NEW_EXPOSED_INFANT).concept_id),
-                    new_inconclusive: filter_hash(data, 'result_given', concept(NEW_INCONCLUSIVE).concept_id),
-                    confirmat_inc: filter_hash(data, 'result_given', concept(CONFIRMATORY_INCONCLUSIVE).concept_id),
-                    total_confpos: filter_hash(data, 'result_given', concept(CONFIRMATORY_POSITIVE).concept_id),
-                    new_negative: filter_hash(data, 'result_given', concept(NEW_NEGATIVE).concept_id),
-                    non_disag: filter_hash(data, 'result_given', concept(NEW_POSITIVE).concept_id),
-                    tot_newpos: filter_hash(data, 'result_given', concept(NEW_POSITIVE).concept_id),
-                  }.merge!(filter_gender(filter_hash(data, 'result_given', concept(NEW_NEGATIVE).concept_id)))
+            new_exp_infant: filter_hash(data, 'result_given', concept(NEW_EXPOSED_INFANT).concept_id),
+            new_inconclusive: filter_hash(data, 'result_given', concept(NEW_INCONCLUSIVE).concept_id),
+            confirmat_inc: filter_hash(data, 'result_given', concept(CONFIRMATORY_INCONCLUSIVE).concept_id),
+            total_confpos: filter_hash(data, 'result_given', concept(CONFIRMATORY_POSITIVE).concept_id),
+            new_negative: filter_hash(data, 'result_given', concept(NEW_NEGATIVE).concept_id),
+            non_disag: filter_hash(data, 'result_given', concept(NEW_POSITIVE).concept_id),
+            tot_newpos: filter_hash(data, 'result_given', concept(NEW_POSITIVE).concept_id)
+          }.merge!(filter_gender(filter_hash(data, 'result_given', concept(NEW_NEGATIVE).concept_id)))
           array[:total_chec] = array.values.flatten
           report.merge!({ result_given_to_client: array })
         end
@@ -161,7 +163,11 @@ module HtsService
                             one_and_two_neg: filter_hash(data, %w[test_one test_two], concept(HIV_NEGATIVE).concept_id),
                             one_and_two_pos: filter_hash(data, %w[test_one test_two], concept('Positive').concept_id),
                             one_and_two_disc: data.select do |q|
-                              q['test_one'] ='Positive' && q['test_two'] == concept(HIV_NEGATIVE).concept_id && q['test_three'] ='Positive' || q['test_one'] ='Positive' && q['test_two'] ='Positive' && q['test_three'] == concept(HIV_NEGATIVE).concept_id
+                              q['test_one'] =
+                                'Positive' && q['test_two'] == concept(HIV_NEGATIVE).concept_id && q['test_three'] =
+                                                                                                     'Positive' || q['test_one'] =
+                                                                                                                     'Positive' && q['test_two'] =
+                                                                                                                                     'Positive' && q['test_three'] == concept(HIV_NEGATIVE).concept_id
                             end
                           }
                         })
@@ -170,11 +176,11 @@ module HtsService
         def partner_present
           data = @query_data
           partner_present = {
-                            present: filter_hash(data, 'partner_present', 'Yes'),
-                            not_present: filter_hash(data, 'partner_present', 'No'),
-                         }
+            present: filter_hash(data, 'partner_present', 'Yes'),
+            not_present: filter_hash(data, 'partner_present', 'No')
+          }
           partner_present[:total_chec] = partner_present.values.flatten
-          report.merge!({partner_present: partner_present})
+          report.merge!({ partner_present: })
         end
 
         def last_tested
@@ -184,16 +190,19 @@ module HtsService
             last_negative: filter_hash(data, 'last_tested', concept(HIV_NEGATIVE).concept_id),
             last_positive: filter_hash(data, 'last_tested', concept('Positive').concept_id),
             last_exposed_infant: filter_hash(data, 'last_tested', concept(HIV_EXPOSED_INFANT).concept_id),
-            inconclusive: filter_hash(data, 'last_tested', concept(HIV_INVALID_OR_INCONCLUSIVE).concept_id),
+            inconclusive: filter_hash(data, 'last_tested', concept(HIV_INVALID_OR_INCONCLUSIVE).concept_id)
           }
           last_test[:total_chec] = last_test.values.flatten
-          report.merge!({last_test: last_test})
+          report.merge!({ last_test: })
         end
 
         def access_type_and_age_group
           data = @query_data
           access_type_hash = {
-            pitc: data.select { |q| ['ANC first visit', 'Inpatient', 'STI', 'PMTCT FUP', 'Peadiatric', 'VMMC', 'Malnutrition', 'TB', 'OPD', 'Other PITC'].include?(q['test_location']) },
+            pitc: data.select do |q|
+                    ['ANC first visit', 'Inpatient', 'STI', 'PMTCT FUP', 'Peadiatric', 'VMMC', 'Malnutrition', 'TB', 'OPD',
+                     'Other PITC'].include?(q['test_location'])
+                  end,
             frs: filter_hash(data, 'test_location', 'Index'),
             other: data.select { |q| %w[VCT Mobile Other].include?(q['test_location']) }
           }
@@ -209,16 +218,18 @@ module HtsService
 
           sex_hash = {
             m: filter_hash(data, 'gender', 'M'),
-            fnp: data.select { |q| [concept(NOT_PREGNANT).concept_id, concept(BREASTFEEDING).concept_id].include?(q['p_status']) },
+            fnp: data.select do |q|
+                   [concept(NOT_PREGNANT).concept_id, concept(BREASTFEEDING).concept_id].include?(q['p_status'])
+                 end,
             fp: filter_hash(data, 'status', concept(PREGNANT_WOMAN).concept_id)
           }
           sex_hash[:total_chec] = sex_hash.values.flatten
 
           report.merge!({
-            access_type: access_type_hash,
-            age_group: age_group_hash,
-            sex: sex_hash
-          })
+                          access_type: access_type_hash,
+                          age_group: age_group_hash,
+                          sex: sex_hash
+                        })
         end
 
         def filter_hash(data, key, value)

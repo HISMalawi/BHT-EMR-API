@@ -2,6 +2,8 @@
 
 class AddCohortReportType < ActiveRecord::Migration[5.2]
   def up
+    return if ReportType.find_by_name('Cohort').present?
+
     ReportType.create(name: 'Cohort', creator: User.first&.user_id)
   end
 

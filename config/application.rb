@@ -1,15 +1,17 @@
+# frozen_string_literal: true
+
 require_relative 'boot'
 
-require "rails"
+require 'rails'
 # Pick the frameworks you want:
-require "active_model/railtie"
-require "active_job/railtie"
-require "active_record/railtie"
-require "active_storage/engine"
-require "action_controller/railtie"
-require "action_mailer/railtie"
-require "action_view/railtie"
-require "action_cable/engine"
+require 'active_model/railtie'
+require 'active_job/railtie'
+require 'active_record/railtie'
+require 'active_storage/engine'
+require 'action_controller/railtie'
+require 'action_mailer/railtie'
+require 'action_view/railtie'
+require 'action_cable/engine'
 # require "sprockets/railtie"
 # require "rails/test_unit/railtie"
 
@@ -20,7 +22,7 @@ Bundler.require(*Rails.groups)
 module BHTEmrApi
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 5.2
+    config.load_defaults 6.1
     config.eager_load_paths << Rails.root.join('lib')
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers
@@ -36,5 +38,20 @@ module BHTEmrApi
     config.time_zone = 'Africa/Blantyre' # Your local time zone
     config.active_record.default_timezone = :local
     config.active_record.time_zone_aware_attributes = false
+
+    #Action Cable
+    config.action_cable.mount_path = '/cable'
+    config.action_cable.disable_request_forgery_protection = true
+
+    # This also configures session_options for use below
+    config.session_store :cookie_store, key: '_interslice_session'
+
+    # Required for all session management (regardless of session_store)
+    config.middleware.use ActionDispatch::Cookies
+
+    config.middleware.use config.session_store, config.session_options
+
+    # Use Sidekiq for Active Job
+    config.active_job.queue_adapter = :sidekiq
   end
 end

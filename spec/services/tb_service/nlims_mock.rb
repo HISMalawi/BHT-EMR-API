@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class NLims
+class Nlims
   def self.instance
     new
   end

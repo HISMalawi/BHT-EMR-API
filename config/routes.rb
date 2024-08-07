@@ -1,9 +1,15 @@
+# frozen_string_literal: true
+require 'sidekiq/web'
+
 Rails.application.routes.draw do
   mount Lab::Engine => '/'
-  mount Radiology::Engine => '/'
+  # mount Radiology::Engine => '/'
   mount EmrOhspInterface::Engine => '/'
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
+  mount ActionCable.server => '/cable'
+  mount ActionCable.server => '/api/v1/cable'
+  mount Sidekiq::Web => '/sidekiq'
 
   namespace :api do
     namespace :v1 do
@@ -24,14 +30,17 @@ Rails.application.routes.draw do
       resources :users do
         post '/activate', to: 'users#activate'
         post '/deactivate', to: 'users#deactivate'
+        put '/update_username', to: 'users#update_username'
+
       end
-      
+
       resources :hts_reports, only: %i[index]
       get '/hts_stats' => 'hts_reports#daily_stats'
       get '/valid_provider_id', to: 'people#valid_provider_id'
       get '/next_hts_linkage_ids_batch', to: 'people#next_hts_linkage_ids_batch'
-
-
+      
+      # Routes are for immunization application
+      resources :immunization_reports, only: %i[index]
 
       # notifications for nlims any features in the future
       resources :notifications, only: %i[index update] do
@@ -104,6 +113,10 @@ Rails.application.routes.draw do
         get('/label', to: redirect do |params, _request|
           "/api/v1/labels/location?location_id=#{params[:location_id]}"
         end)
+
+        collection do
+          get :current_facility
+        end
       end
 
       resources :regions, only: %i[index] do
@@ -148,7 +161,9 @@ Rails.application.routes.draw do
         get 'booked_appointments' => 'program_appointments#booked_appointments'
         get 'scheduled_appointments' => 'program_appointments#scheduled_appointments'
         get 'next_available_arv_number' => 'program_patients#find_next_available_arv_number'
+        get 'next_available_ncd_number' => 'program_patients#find_next_available_ncd_number'
         get 'lookup_arv_number/:arv_number' => 'program_patients#lookup_arv_number'
+        get 'lookup_ncd_number/:arv_number' => 'program_patients#lookup_ncd_number'
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
         get 'custom_tb_ingredients' => 'program_regimens#custom_tb_ingredients'
@@ -290,9 +305,12 @@ Rails.application.routes.draw do
 
       post '/reports/encounters' => 'encounters#count'
 
-      #drugs_cms routes
-      get '/drug_cms/search', to: "drug_cms#search"
+      # drugs_cms routes
+      get '/drug_cms/search', to: 'drug_cms#search'
       resources :drug_cms, only: %i[index]
+
+      post '/immunization/administer_vaccine', to: 'administer_vaccine#administer_vaccine'
+      get '/immunization/stats', to: 'immunization_report#stats'
     end
   end
 
@@ -316,7 +334,6 @@ Rails.application.routes.draw do
   post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
   post '/api/v1/patient_art_vl_dates' => 'api/v1/reports#patient_art_vl_dates'
 
-
   # SQA controller
   post '/api/v1/duplicate_identifier' => 'api/v1/cleaning#duplicate_identifier'
   post '/api/v1/erroneous_identifier' => 'api/v1/cleaning#erroneous_identifier'
@@ -327,13 +344,12 @@ Rails.application.routes.draw do
   get '/api/v1/incomplete_visits' => 'api/v1/cleaning#incompleteVisits'
   get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
   get '/api/v1/anc_data_cleaning_tools' => 'api/v1/cleaning#anc_tools'
+  get '/api/v1/its_data_cleaning_tools' => 'api/v1/cleaning#its_tools'
 
   # OPD reports
   get '/api/v1/registration' => 'api/v1/reports#registration'
   get '/api/v1/diagnosis_by_address' => 'api/v1/reports#diagnosis_by_address'
   get '/api/v1/with_nids' => 'api/v1/reports#with_nids'
-  get '/api/v1/drugs_given_without_prescription' => 'api/v1/reports#drugs_given_without_prescription'
-  get '/api/v1/drugs_given_with_prescription' => 'api/v1/reports#drugs_given_with_prescription'
   get '/api/v1/dispensation' => 'api/v1/reports#dispensation'
 
   get '/api/v1/cohort_report_raw_data' => 'api/v1/reports#cohort_report_raw_data'
@@ -398,4 +414,11 @@ Rails.application.routes.draw do
   get '/api/v1/next_appointment', to: 'api/v1/appointments#next_appointment'
 
   post 'api/v1/sync_to_ait', to: 'api/v1/patients#sync_to_ait'
+
+  # EIR
+  get '/api/v1/eir/schedule', to: 'api/v1/vaccine_schedule#vaccine_schedule'
+  get '/api/v1/eir/followup', to: 'api/v1/immunization_follow_up#missed_immunizations'
+  post '/api/v1/send_sms', to: 'api/v1/send_sms#index'
+  post '/api/v1/sms_configuration', to: 'api/v1/send_sms#update'
+  get '/api/v1/configurations', to: 'api/v1/send_sms#show'
 end

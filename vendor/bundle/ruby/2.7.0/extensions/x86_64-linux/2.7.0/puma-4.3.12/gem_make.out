@@ -1,0 +1,37 @@
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/2.7.0/gems/puma-4.3.12/ext/puma_http11
+/usr/share/rvm/rubies/ruby-2.7.2/bin/ruby -I /usr/share/rvm/rubies/ruby-2.7.2/lib/ruby/2.7.0 -r ./siteconf20230331-28721-6j0b9z.rb extconf.rb
+checking for BIO_read() in -lcrypto... yes
+checking for SSL_CTX_new() in -lssl... yes
+checking for openssl/bio.h... yes
+checking for DTLS_method() in openssl/ssl.h... yes
+checking for TLS_server_method() in openssl/ssl.h... yes
+checking for SSL_CTX_set_min_proto_version in openssl/ssl.h... yes
+checking for Random.bytes... yes
+creating Makefile
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/2.7.0/gems/puma-4.3.12/ext/puma_http11
+make "DESTDIR=" clean
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/2.7.0/gems/puma-4.3.12/ext/puma_http11
+make "DESTDIR="
+compiling http11_parser.c
+compiling io_buffer.c
+compiling mini_ssl.c
+mini_ssl.c: In function ‘engine_init_server’:
+mini_ssl.c:166:7: warning: unused variable ‘min’ [-Wunused-variable]
+  166 |   int min, ssl_options;
+      |       ^~~
+mini_ssl.c: In function ‘raise_error’:
+mini_ssl.c:334:6: warning: function might be candidate for attribute ‘noreturn’ [-Wsuggest-attribute=noreturn]
+  334 | void raise_error(SSL* ssl, int result) {
+      |      ^~~~~~~~~~~
+mini_ssl.c: At top level:
+cc1: warning: unrecognized command line option ‘-Wno-self-assign’
+cc1: warning: unrecognized command line option ‘-Wno-parentheses-equality’
+cc1: warning: unrecognized command line option ‘-Wno-constant-logical-operand’
+compiling puma_http11.c
+linking shared-object puma/puma_http11.so
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/2.7.0/gems/puma-4.3.12/ext/puma_http11
+make "DESTDIR=" install
+/usr/bin/install -m 0755 puma_http11.so ./.gem.20230331-28721-cahzdn/puma

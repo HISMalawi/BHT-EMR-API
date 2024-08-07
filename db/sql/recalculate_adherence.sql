@@ -4,6 +4,7 @@ DELIMITER $$
 DROP FUNCTION IF EXISTS recalculate_adherence $$
 CREATE FUNCTION recalculate_adherence(start_date VARCHAR(10)) RETURNS VARCHAR(5)
 
+DETERMINISTIC
 BEGIN
 
   DECLARE done INT DEFAULT FALSE;

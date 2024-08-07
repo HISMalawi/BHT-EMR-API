@@ -2,16 +2,19 @@
 
 class ReportService
   ENGINES = {
-    'HIV PROGRAM' => ARTService::ReportEngine,
-    'ANC PROGRAM' => ANCService::ReportEngine,
-    'OPD PROGRAM' => OPDService::ReportEngine,
-    'VMMC PROGRAM' => VMMCService::ReportEngine,
-    'TB PROGRAM' => TBService::ReportEngine,
+    'HIV PROGRAM' => ArtService::ReportEngine,
+    'ANC PROGRAM' => AncService::ReportEngine,
+    'OPD PROGRAM' => OpdService::ReportEngine,
+    'VMMC PROGRAM' => VmmcService::ReportEngine,
+    'TB PROGRAM' => TbService::ReportEngine,
     'LABORATORY ORDERS' => LaboratoryService::ReportEngine,
-    'CXCA PROGRAM' => CXCAService::ReportEngine,
+    'CXCA PROGRAM' => CxcaService::ReportEngine,
     'RADIOLOGY PROGRAM' => RadiologyService::ReportEngine,
     'PATIENT REGISTRATION PROGRAM' => PatientRegistrationService::ReportEngine,
-    'HTC PROGRAM' => HtsService::ReportEngine
+    'HTC PROGRAM' => HtsService::ReportEngine,
+    'AETC PROGRAM' => AetcService::ReportEngine,
+    'SPINE PROGRAM' => SpineService::ReportEngine,
+    'IMMUNIZATION PROGRAM' => ImmunizationService::ReportEngine
   }.freeze
   LOGGER = Rails.logger
 
@@ -34,7 +37,7 @@ class ReportService
     return report if report
 
     LOGGER.debug("#{name} report not found... Queueing one...")
-    queue_report(name: name, type: type, start_date: start_date, end_date: end_date, **kwargs)
+    queue_report(name:, type:, start_date:, end_date:, **kwargs)
     nil
   end
 
@@ -64,14 +67,6 @@ class ReportService
 
   def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init, **kwargs)
     engine(@program).cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init, **kwargs)
-  end
-
-  def drugs_given_without_prescription(start_date, end_date)
-    engine(@program).drugs_given_without_prescription(start_date, end_date)
-  end
-
-  def drugs_given_with_prescription(start_date, end_date)
-    engine(@program).drugs_given_with_prescription(start_date, end_date)
   end
 
   def dispensation(start_date, end_date)
@@ -230,8 +225,8 @@ class ReportService
   end
 
   def find_report(type, name, start_date, end_date, **kwargs)
-    engine(@program).find_report(type: type, name: name,
-                                 start_date: start_date, end_date: end_date,
+    engine(@program).find_report(type:, name:,
+                                 start_date:, end_date:,
                                  **kwargs)
   end
 

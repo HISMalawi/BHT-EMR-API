@@ -1,0 +1,24 @@
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/strscan-3.0.6/ext/strscan
+/usr/share/rvm/rubies/ruby-2.5.3/bin/ruby -I /usr/share/rvm/rubies/ruby-2.5.3/lib/ruby/site_ruby/2.5.0 -r ./siteconf20230413-176046-1ojihu3.rb extconf.rb
+checking for onig_region_memsize() in ruby.h... yes
+creating Makefile
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/strscan-3.0.6/ext/strscan
+make "DESTDIR=" clean
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/strscan-3.0.6/ext/strscan
+make "DESTDIR="
+compiling strscan.c
+strscan.c: In function ‘strscan_named_captures’:
+strscan.c:1502:5: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+ 1502 |     named_captures_data data;
+      |     ^~~~~~~~~~~~~~~~~~~
+strscan.c: At top level:
+cc1: warning: unrecognized command line option ‘-Wno-self-assign’
+cc1: warning: unrecognized command line option ‘-Wno-constant-logical-operand’
+cc1: warning: unrecognized command line option ‘-Wno-parentheses-equality’
+linking shared-object strscan.so
+
+current directory: /var/www/BHT-EMR-API/vendor/bundle/ruby/2.5.0/gems/strscan-3.0.6/ext/strscan
+make "DESTDIR=" install
+/usr/bin/install -m 0755 strscan.so ./.gem.20230413-176046-1axryt8

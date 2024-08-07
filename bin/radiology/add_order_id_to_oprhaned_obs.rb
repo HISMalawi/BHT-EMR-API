@@ -25,7 +25,7 @@ def all_orders
 end
 
 def process_orphaned_obs(order)
-  return unless Observation.where(order: order).empty?
+  return unless Observation.where(order:).empty?
 
   obs = order.encounter.observations.where('obs_datetime <= ? AND order_id IS NULL', order.date_created)
   obs.each do |ob|

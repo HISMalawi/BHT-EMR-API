@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Village < RetirableRecord
   self.table_name  = 'village'
   self.primary_key = 'village_id'

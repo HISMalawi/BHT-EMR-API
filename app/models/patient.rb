@@ -42,7 +42,7 @@ class Patient < VoidableRecord
           methods: %i[type]
         }
       },
-      methods: %i[merge_history tpt_status art_start_date]
+      methods: %i[merge_history art_start_date]
     ))
   end
 
@@ -57,11 +57,23 @@ class Patient < VoidableRecord
     length = id.length
     case length
     when 13
-      id[0..4] + "-" + id[5..8] + "-" + id[9..-1] rescue id
+      begin
+        "#{id[0..4]}-#{id[5..8]}-#{id[9..]}"
+      rescue StandardError
+        id
+      end
     when 9
-      id[0..2] + "-" + id[3..6] + "-" + id[7..-1] rescue id
+      begin
+        "#{id[0..2]}-#{id[3..6]}-#{id[7..]}"
+      rescue StandardError
+        id
+      end
     when 6
-      id[0..2] + "-" + id[3..-1] rescue id
+      begin
+        "#{id[0..2]}-#{id[3..]}"
+      rescue StandardError
+        id
+      end
     else
       id
     end
@@ -71,8 +83,12 @@ class Patient < VoidableRecord
     return nil if person.birthdate.nil?
 
     # This code which better accounts for leap years
-    patient_age = (today.year - person.birthdate.year) + ((today.month -
-          person.birthdate.month) + ((today.day - person.birthdate.day) < 0 ? -1 : 0) < 0 ? -1 : 0)
+    patient_age = (today.year - person.birthdate.year) + (if ((today.month -
+          person.birthdate.month) + ((today.day - person.birthdate.day).negative? ? -1 : 0)).negative?
+                                                            -1
+                                                          else
+                                                            0
+                                                          end)
 
     # If the birthdate was estimated this year, we round up the age, that way if
     # it is March and the patient says they are 25, they stay 25 (not become 24)
@@ -95,7 +111,7 @@ class Patient < VoidableRecord
   end
 
   def weight(today: Date.today)
-    obs = Observation.where(person: person, concept: concept('Weight'))\
+    obs = Observation.where(person:, concept: concept('Weight'))\
                      .where('DATE(obs_datetime) <= DATE(?)', today)\
                      .order(obs_datetime: :desc)\
                      .limit(1)\
@@ -121,7 +137,7 @@ class Patient < VoidableRecord
     type = PatientIdentifierType.find_by_name(type_name)
     return nil unless type
 
-    PatientIdentifier.where(patient: self, type: type)\
+    PatientIdentifier.where(patient: self, type:)\
                      .order(:date_created)\
                      .last
   end
@@ -143,9 +159,26 @@ class Patient < VoidableRecord
     result['art_start_date'] || nil
   end
 
+  def last_arv_drug_expire_date
+    result = ActiveRecord::Base.connection.select_one <<~SQL
+          SELECT orders.auto_expire_date
+      from orders
+      inner join encounter on orders.encounter_id = encounter.encounter_id
+       and encounter.voided = 0
+      where orders.patient_id = #{id}
+      and encounter.program_id = #{Program.find_by_name('HIV PROGRAM').id}
+      and orders.voided = 0
+      and orders.concept_id in (#{Drug.arv_drugs.map(&:concept_id).join(',')})
+      order by orders.auto_expire_date desc
+      limit 1
+    SQL
+result['auto_expire_date']&.to_date || nil if result.present?
+  end
+
   def tpt_status
     return { tpt: nil, completed: false, tb_treatment: false, tpt_init_date: nil, tpt_complete_date: nil } if id.blank?
-    
-    ARTService::Reports::Pepfar::TbPrev3.new(start_date: Date.today - 6.months, end_date: Date.today).patient_tpt_status(id)
+
+    ArtService::Reports::Pepfar::TptStatus.new(start_date: Date.today - 6.months, end_date: Date.today,
+                                               patient_id: id).find_report
   end
 end

@@ -22,7 +22,7 @@ module DrugOrderService
         encounter_query = Encounter.all
 
         encounter_query = encounter_query.where('encounter_datetime BETWEEN ? AND ?', date, date + 1.day) if date
-        encounter_query = encounter_query.where(program_id: program_id) if program_id
+        encounter_query = encounter_query.where(program_id:) if program_id
 
         query = query.merge(Order.joins(:encounter).merge(encounter_query))
       end
@@ -59,12 +59,12 @@ module DrugOrderService
         saved_drug_orders = []
 
         drug_orders.each_with_index do |drug_order, i|
-          order = create_order encounter: encounter, create_params: drug_order,
-                               order_type: order_type
+          order = create_order(encounter:, create_params: drug_order,
+                               order_type:)
 
           raise_model_error(order, "Unable to create order #{i}") unless order.errors.empty?
 
-          drug_order = create_drug_order order: order, create_params: drug_order
+          drug_order = create_drug_order order:, create_params: drug_order
           raise_model_error(drug_order, "Unable to create drug order #{i}") unless drug_order.errors.empty?
 
           saved_drug_orders << drug_order
@@ -125,7 +125,7 @@ module DrugOrderService
         encounter_id: encounter.encounter_id,
         patient_id: encounter.patient_id,
         orderer: User.current.user_id,
-        start_date: start_date,
+        start_date:,
         auto_expire_date: drug_runout_date,
         obs_id: create_params[:obs_id],
         instructions: create_params[:instructions]
@@ -133,13 +133,30 @@ module DrugOrderService
 
       # Store user specified drug run out date separately as it is overriden
       # based on the drugs that actually get dispensed.
+
+      if  encounter.type.name = 'IMMUNIZATION RECORD'
+        Observation.create!(concept_id: ConceptName.find_by_name!('Batch Number').concept_id,
+              encounter:,
+              person_id: encounter.patient_id,
+              order:,
+              obs_datetime: start_date,
+              value_datetime: drug_runout_date,
+              value_text: create_params[:batch_number],
+              comments: 'Batch Number of for drug ordered',
+              location_id: User.current.location_id
+        )
+      end
+
+
       Observation.create!(concept_id: ConceptName.find_by_name!('Drug end date').concept_id,
-                          encounter: encounter,
+                          encounter:,
                           person_id: encounter.patient_id,
-                          order: order,
+                          order:,
                           obs_datetime: start_date,
                           value_datetime: drug_runout_date,
-                          comments: 'User specified drug run out date during drug prescription')
+                          comments: 'User specified drug run out date during drug prescription',
+                          location_id: User.current.location_id
+                          )
 
       order
     end

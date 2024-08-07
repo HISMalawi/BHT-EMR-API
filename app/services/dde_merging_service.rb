@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# An extension to the DDEService that provides merging functionality
+# An extension to the DdeService that provides merging functionality
 # for local patients and remote patients
-class DDEMergingService
+class DdeMergingService
   include ModelUtils
 
   attr_accessor :parent
@@ -137,7 +137,7 @@ class DDEMergingService
   def search_by_doc_id(doc_id)
     return nil if doc_id.blank?
 
-    response, status = dde_client.post('search_by_doc_id', doc_id: doc_id)
+    response, status = dde_client.post('search_by_doc_id', doc_id:)
     return nil unless status == 200
 
     response
@@ -178,7 +178,7 @@ class DDEMergingService
     identifier = PatientIdentifier.create(identifier: value,
                                           type: patient_identifier_type(type_name),
                                           location_id: Location.current.id,
-                                          patient: patient)
+                                          patient:)
     return patient.reload && identifier if identifier.errors.empty?
 
     raise "Could not save DDE identifier: #{type_name} due to #{identifier.errors.as_json}"
@@ -383,7 +383,8 @@ class DDEMergingService
 
     Rails.logger.debug("Merging patient states: #{primary_patient_program.patient_id} <= #{secondary_patient_states[0].patient_program.patient_id}")
     secondary_patient_states.each do |state|
-      check = PatientState.find_by('patient_program_id = ? AND state = ? AND DATE(start_date) = ?', primary_patient_program.id, state.state, state.start_date.strftime('%Y-%m-%d'))
+      check = PatientState.find_by('patient_program_id = ? AND state = ? AND DATE(start_date) = ?',
+                                   primary_patient_program.id, state.state, state.start_date.strftime('%Y-%m-%d'))
       next unless check.blank?
 
       primary_state_hash = state.attributes
@@ -395,7 +396,6 @@ class DDEMergingService
       raise "Could not merge patient states: #{patient_state.errors.as_json}" unless patient_state.errors.empty?
     end
   end
-
 
   # method to update drug orders with the new order id
   # def manage_drug_order(order_map)
@@ -430,7 +430,7 @@ class DDEMergingService
     Observation.where(person_id: secondary_patient.id).each do |obs|
       check = Observation.find_by("person_id = #{primary_patient.id} AND concept_id = #{obs.concept_id} AND
         DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}') #{unless obs.value_coded.blank?
-                                                                                  "AND value_coded IS NOT NULL"
+                                                                                  'AND value_coded IS NOT NULL'
                                                                                 end} #{unless obs.obs_group_id.blank?
                                                                                          'AND obs_group_id IS NOT NULL'
                                                                                        end} #{unless obs.order_id.blank?
@@ -545,15 +545,19 @@ class DDEMergingService
                                                                                              end} #{unless encounter.form_id.blank?
                                                                                                       'form_id,'
                                                                                                     end} uuid, creator, date_created, voided #{unless encounter.changed_by.blank?
-                                                                                                      ', changed_by'
-                                                                                                    end} #{unless encounter.date_changed.blank?
-                                                                                                      ', date_changed'
-                                                                                                    end})
+                                                                                                                                                 ', changed_by'
+                                                                                                                                               end} #{unless encounter.date_changed.blank?
+                                                                                                                                                        ', date_changed'
+                                                                                                                                                      end})
         VALUES (#{encounter.encounter_type}, #{primary_patient.id}, '#{encounter.encounter_datetime.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.provider_id}, #{unless encounter.location_id.blank?
                                                                                                                                                                    "#{encounter.location_id},"
                                                                                                                                                                  end} #{unless encounter.form_id.blank?
                                                                                                                                                                           "#{encounter.form_id},"
-                                                                                                                                                                        end} uuid(), #{User.current.id}, '#{encounter.date_created.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.voided} #{",{encounter.changed_by}" unless encounter.changed_by.blank?} #{",#{encounter.date_changed.strftime('%Y-%m-%d %H:%M:%S')}" unless encounter.date_changed.blank?})
+                                                                                                                                                                        end} uuid(), #{User.current.id}, '#{encounter.date_created.strftime('%Y-%m-%d %H:%M:%S')}', #{encounter.voided} #{unless encounter.changed_by.blank?
+                                                                                                                                                                                                                                                                                            ',{encounter.changed_by}'
+                                                                                                                                                                                                                                                                                          end} #{unless encounter.date_changed.blank?
+                                                                                                                                                                                                                                                                                                   ",#{encounter.date_changed.strftime('%Y-%m-%d %H:%M:%S')}"
+                                                                                                                                                                                                                                                                                                 end})
       SQL
     end
     row_id = ActiveRecord::Base.connection.select_one('SELECT LAST_INSERT_ID() AS id')['id']
@@ -600,7 +604,7 @@ class DDEMergingService
   end
 
   def reassign_remote_patient_npid(patient_doc_id)
-    response, status = dde_client.post('reassign_npid', { doc_id: patient_doc_id })
+    response, status = dde_client.post('reassign_npid', doc_id: patient_doc_id)
 
     raise "Failed to reassign remote patient npid: DDE Response => #{status} - #{response}" unless status == 200
 

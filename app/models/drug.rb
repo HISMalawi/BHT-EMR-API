@@ -32,7 +32,7 @@ class Drug < ActiveRecord::Base
   end
 
   def arv?
-    Drug.arv_drugs.where(drug_id: drug_id).exists?
+    Drug.arv_drugs.where(drug_id:).exists?
   end
 
   def tb_drug?
@@ -42,22 +42,21 @@ class Drug < ActiveRecord::Base
   def self.tb_drugs
     tb_drugs_concept = ConceptName.find_by(name: 'TUBERCULOSIS DRUGS').concept_id
     concepts = ConceptSet.where('concept_set = ?', tb_drugs_concept).map(&:concept_id)
-    concepts_placeholders = '(' + (['?'] * concepts.size).join(', ') + ')'
+    concepts_placeholders = "(#{(['?'] * concepts.size).join(', ')})"
     Drug.where("concept_id in #{concepts_placeholders}", *concepts)
   end
 
   def self.first_line_tb_drugs
     first_line_concept = ConceptName.find_by(name: 'First-line tuberculosis drugs').concept_id
     concepts = ConceptSet.where('concept_set = ?', first_line_concept).map(&:concept_id)
-    concepts_placeholders = '(' + (['?'] * concepts.size).join(', ') + ')'
+    concepts_placeholders = "(#{(['?'] * concepts.size).join(', ')})"
     Drug.where("concept_id in #{concepts_placeholders}", *concepts)
   end
 
   def self.second_line_tb_drugs
     second_line_concept = ConceptName.find_by(name: 'Second line TB drugs').concept_id
     concepts = ConceptSet.where('concept_set = ?', second_line_concept).map(&:concept_id)
-    concepts_placeholders = '(' + (['?'] * concepts.size).join(', ') + ')'
+    concepts_placeholders = "(#{(['?'] * concepts.size).join(', ')})"
     Drug.where("concept_id in #{concepts_placeholders}", *concepts)
   end
-
 end

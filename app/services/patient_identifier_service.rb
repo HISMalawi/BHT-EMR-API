@@ -25,7 +25,7 @@ module PatientIdentifierService
 
     def create(params)
       validate_identifier(params)
-      void_existing_identifier(params[:patient_id], params[:identifier_type])
+      void_existing_identifier(params)
       create_new_identifier(params)
     end
 
@@ -39,7 +39,7 @@ module PatientIdentifierService
 
     def identifier_already_assigned_today?(identifier:)
       today = Time.now.beginning_of_day
-      PatientIdentifier.where(identifier: identifier).where('date_created >= ?', today).exists?
+      PatientIdentifier.where(identifier:).where('date_created >= ?', today).exists?
     end
 
     def fetch_multiple_identifiers_data(identifier_type_id)
@@ -66,7 +66,8 @@ module PatientIdentifierService
         gender: row['gender'],
         birthdate: row['birthdate'],
         latest_identifier: row['latest_identifier'],
-        identifiers: PatientIdentifier.where(identifier: row['mutliple_identifiers'].split(','), patient_id: row['patient_id'])
+        identifiers: PatientIdentifier.where(identifier: row['mutliple_identifiers'].split(','),
+                                             patient_id: row['patient_id'])
       }
     end
 
@@ -77,8 +78,10 @@ module PatientIdentifierService
       raise InvalidParameterError, 'Identifier already assigned to another patient'
     end
 
-    def void_existing_identifier(patient_id, identifier_type)
-      identifier = PatientIdentifier.find_by(patient_id: patient_id, identifier_type: identifier_type)
+    def void_existing_identifier(params)
+      patient_id = params[:patient_id]
+      identifier_type = params[:identifier_type]
+      identifier = PatientIdentifier.find_by(patient_id:, identifier_type:)
       identifier&.void("Updated to #{params[:identifier]} by #{User.current.username}")
     end
 
@@ -90,7 +93,7 @@ module PatientIdentifierService
     end
 
     def validate_identifier_assignment(identifier)
-      return unless identifier_already_assigned_today?(identifier: identifier)
+      return unless identifier_already_assigned_today?(identifier:)
 
       raise InvalidParameterError, 'Identifier already assigned to another patient'
     end
@@ -117,18 +120,19 @@ module PatientIdentifierService
 
       archive_identifier = FilingNumberService.new.find_available_filing_number(dormant_identifier)
       create_patient_identifier(secondary_patient_id, archive_identifier, dormant_identifier)
-
+      create_patient_identifier(primary_patient_id, identifier, active_identifier)
       {
         active_number: identifier,
-        primary_patient_id: primary_patient_id,
-        secondary_patient_id: secondary_patient_id,
+        primary_patient_id:,
+        secondary_patient_id:,
         dormant_number: archive_identifier
       }
     end
 
     def create_patient_identifier(patient_id, identifier, identifier_type_name)
       itype = PatientIdentifierType.find_by(name: identifier_type_name)
-      PatientIdentifier.create(patient_id: patient_id, identifier_type: itype.id, identifier: identifier, location_id: Location.current.id)
+      PatientIdentifier.create(patient_id:, identifier_type: itype.id, identifier:,
+                               location_id: Location.current.id)
     end
   end
 end
