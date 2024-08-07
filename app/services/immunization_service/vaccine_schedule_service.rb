@@ -5,15 +5,16 @@ module ImmunizationService
       # Get Vaccine Schedule
       # begin
       # Immunization Drugs
-      if age_in_years(patient.birthdate) < 5
-        immunization_drugs = immunization_drugs('Under five immunizations')
+      immunizations = immunization_drugs
+
+      if patient.gender.split.first.casecmp?('M')
+        immunizations = filter_female_specific_immunizations(immunizations)
       else
-        immunization_drugs = immunization_drugs('Over five immunizations')
-        immunization_drugs = filter_female_specific_immunizations(immunization_drugs) if patient.gender.split.first.casecmp?('M')
+        immunizations
       end
   
       # For each of these get the window period and schedule
-      immunization_with_window = immunization_drugs.flat_map do |immunization_drug|
+      immunization_with_window = immunizations.flat_map do |immunization_drug|
         vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones').map do |milestone|
           {
             milestone_name: milestone.name,
@@ -55,21 +56,11 @@ module ImmunizationService
       age
     end
   
-    def self.immunization_drugs(category)
-      if category == 'Under five immunizations'
-        immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
-                                  .where(concept_set: ConceptName.where(name: category).pluck(:concept_id))
-                                  .group('concept.concept_id, drug.name, drug.drug_id')
-                                  .select('concept.concept_id, drug.name as name, drug.drug_id as drug_id')
-      elsif category == 'Over five immunizations'
-        immunizations = ConceptSet.joins(concept: %i[concept_names drugs])
-                                  .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
-                                  .where.not(concept_id: ConceptSet.where(concept_set: ConceptName.where(name: 'Under five immunizations')
-                                  .pluck(:concept_id)).pluck(:concept_id))
-                                  .group('concept.concept_id, drug.name, drug.drug_id')
-                                  .select('concept.concept_id, drug.name as name, drug.drug_id drug_id')
-      end
-      immunizations
+    def self.immunization_drugs
+        ConceptSet.joins(concept: %i[concept_names drugs])
+                  .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
+                  .group('concept.concept_id, drug.name, drug.drug_id')
+                  .select('concept.concept_id, drug.name as name, drug.drug_id drug_id')
     end
   
     def self.filter_female_specific_immunizations(immunizations)
@@ -158,7 +149,7 @@ module ImmunizationService
               administered_by: vaccine_given&.[](:administered_by),
               location_administered: vaccine_given&.[](:location_administered),
               vaccine_batch_number: vaccine_given&.[](:batch_number),
-              order_encounter_id: vaccine_given&.[](:order_encounter_id)
+              order_id: vaccine_given&.[](:order_id)
             }
           end
         }
@@ -174,12 +165,12 @@ module ImmunizationService
                  .joins(order: :drug_order)
                  .where(drug_order: { drug_inventory_id: drugs }, person_id: patient_id)
                  .select(:obs_datetime, :drug_inventory_id, :order_id, :location_id,
-                         :creator, :given_name, :family_name, :encounter_id).map do |obs|
+                         :creator, :given_name, :family_name).map do |obs|
         {
           obs_datetime: obs.obs_datetime,
           drug_inventory_id: obs.drug_inventory_id,
           batch_number: get_batch_id(obs.order_id),
-          order_encounter_id: obs.encounter_id,
+          order_id: obs.order_id,
           administered_by: {
             person_id: obs.creator,
             given_name: obs.given_name,

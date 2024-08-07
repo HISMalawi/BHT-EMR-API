@@ -18,7 +18,9 @@ module ImmunizationService
       start_of_month = Date.new(today.year, today.month, 1)
       end_of_month = Date.new(today.year, today.month, -1)
 
-      due_today,  due_this_week,  due_this_month = [], [], []
+      due_today_clients,  due_this_week_clients,  due_this_month_clients = [], [], []
+      due_today_antigens, due_this_week_antigens, due_this_month_antigens = [], [], [] 
+
       under_five_missed_visits, over_five_missed_visits, under_five_count, over_five_count = [], [], 0, 0
       under_five_missed_doses, over_five_missed_doses = [], []
 
@@ -27,7 +29,8 @@ module ImmunizationService
         client_missed_visits, vaccine_schedules = [], ImmunizationService::VaccineScheduleService.vaccine_schedule(find_patient(patient_id))
 
         process_vaccine_schedules(vaccine_schedules, client_missed_visits, under_five_missed_doses,
-                                  over_five_missed_doses, due_today, due_this_week, due_this_month,
+                                  over_five_missed_doses, due_today_clients, due_this_week_clients, due_this_month_clients,
+                                  due_today_antigens, due_this_week_antigens, due_this_month_antigens,
                                   today, start_of_week, end_of_week, start_of_month, end_of_month, immunization_client)
 
         if client_missed_visits.any?
@@ -48,12 +51,15 @@ module ImmunizationService
         over_five_count: over_five_count,
         under_five_missed_doses: under_five_missed_doses,
         over_five_missed_doses: over_five_missed_doses,
-        due_today_count: due_today.count,
-        due_this_week_count: due_this_week.count,
-        due_this_month_count: due_this_month.count,
-        due_today: due_today,
-        due_this_week: due_this_week,
-        due_this_month: due_this_month
+        due_today_count: due_today_clients.count,
+        due_this_week_count: due_this_week_clients.count,
+        due_this_month_count: due_this_month_clients.count,
+        due_today_clients: due_today_clients,
+        due_this_week_clients: due_this_week_clients,
+        due_this_month_clients: due_this_month_clients,
+        due_today_antigens: aggregate_antigens(due_today_antigens),
+        due_this_week_antigens: aggregate_antigens(due_this_week_antigens),
+        due_this_month_antigens: aggregate_antigens(due_this_month_antigens)
       }
     end
 
@@ -80,8 +86,9 @@ module ImmunizationService
 
     # Process vaccine schedules and determine missed doses
     def process_vaccine_schedules(vaccine_schedules, client_missed_visits, under_five_missed_doses,
-       over_five_missed_doses, due_today, due_this_week, due_this_month, today, start_of_week,
-       end_of_week, start_of_month, end_of_month, immunization_client)
+      over_five_missed_doses, due_today_clients, due_this_week_clients, due_this_month_clients,
+      due_today_antigens, due_this_week_antigens, due_this_month_antigens,
+      today, start_of_week, end_of_week, start_of_month, end_of_month, immunization_client)
 
       vaccine_schedules.each do |vaccine_schedule|
         vaccine_schedule[1].each do |visit|
@@ -101,14 +108,31 @@ module ImmunizationService
             due_date = calculate_due_date(immunization_client.birthdate, visit[:age])
 
             if due_date == today
-              due_today << { client: immunization_client, antigens: due_antigens }
-              due_this_week << { client: immunization_client, antigens: due_antigens }
-              due_this_month << { client: immunization_client, antigens: due_antigens }
+              # Appending due today clients
+              due_today_clients <<  immunization_client
+              due_this_week_clients << immunization_client
+              due_this_month_clients << immunization_client
+
+              # Appending due today antigens
+              due_today_antigens.concat(due_antigens)
+              due_this_week_antigens.concat(due_antigens)
+              due_this_month_antigens.concat(due_antigens)
             elsif due_date >= start_of_week && due_date <= end_of_week
-              due_this_week << { client: immunization_client, antigens: due_antigens }
-              due_this_month << { client: immunization_client, antigens: due_antigens }
+              
+              # Appending due this week clients
+              due_this_week_clients << immunization_client
+              due_this_month_clients << immunization_client
+
+              # Appending due this week antigens
+              due_this_week_antigens.concat(due_antigens)
+              due_this_month_antigens.concat(due_antigens)
             elsif due_date >= start_of_month && due_date <= end_of_month
-              due_this_month << { client: immunization_client, antigens: due_antigens }
+              
+              # Appending due this month clients
+              due_this_month_clients << immunization_client
+
+              # Appending due this month antigens            
+              due_this_month_antigens.concat(due_antigens)
             end
           end
         end
@@ -170,6 +194,17 @@ module ImmunizationService
       else
         birthdate
       end
+    end
+
+    def aggregate_antigens(antigens)
+      antigen_count = Hash.new {  |hash, key| hash[key] = { drug_name: key, due_count: 0 }}
+
+      antigens.each do |antigen|
+        antigen_count[antigen[:drug_id]][:due_count] += 1
+        antigen_count[antigen[:drug_id]][:drug_name] = antigen[:drug_name]
+      end
+
+      antigen_count.values
     end
   end
 end
