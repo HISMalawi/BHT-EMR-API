@@ -44,12 +44,17 @@ module Api
       end
 
       def destroy
-        drug = Drug.find(params[:id])
-        if drug.destroy
-          render status: :no_content
-        else
-          render json: { errors: drug.errors }, status: :internal_server_error
+        params = destroy_params
+        order = Order.find(params[:id])
+
+        ActiveRecord::Base.transaction do
+          order.void(params[:reason])
+          Observation.where(order_id: order.id).each { |obs| obs.void(params[:reason])}
         end
+        render json: order, status: :no_content
+
+      rescue ActiveRecord::RecordNotFound
+        render json: { errors: "Order ##{params[:id]} not found" }, status: :not_found
       end
 
       def radiology_order
@@ -68,6 +73,11 @@ module Api
 
       def radiology_params
         params.permit(:encounter_id, :concept_id, :instructions, :start_date, :orderer, :accession_number, :provider)
+      end
+
+      def destroy_params
+        params.require(%i[id reason])
+        params.permit(%i[id reason])
       end
     end
   end
