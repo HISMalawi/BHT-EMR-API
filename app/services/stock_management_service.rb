@@ -128,6 +128,7 @@ class StockManagementService
     PharmacyBatchItem.find(id)
   end
 
+
   def find_batch_items(filters = {})
     query = PharmacyBatchItem
     unless filters.empty?
@@ -143,6 +144,9 @@ class StockManagementService
       query = query.where(pack_size: filters[:pack_size]) if filters.key?(:pack_size)
       unless filters[:batch_number].nil?
         query = query.where("pharmacy_batches.batch_number = '#{filters[:batch_number]}'")
+      end
+      unless filters[:location_id].nil?
+        query = query.where("pharmacy_batches.location_id = '#{filters[:location_id]}'")
       end
     end
     query = query.joins("LEFT JOIN pharmacy_obs ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id AND pharmacy_obs.transaction_reason = 'Drug dispensed'")
