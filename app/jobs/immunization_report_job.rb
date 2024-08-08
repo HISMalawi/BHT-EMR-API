@@ -2,8 +2,6 @@
 class ImmunizationReportJob < ApplicationJob
   queue_as :default
 
-  sidekiq_options unique: :until_executed
-
   def perform(start_date, end_date, location_id)
     dashboard_stats = dashboard_service(start_date, end_date, location_id)
     dashboard_stats = dashboard_stats.data
@@ -16,16 +14,13 @@ class ImmunizationReportJob < ApplicationJob
     dashboard_stats[:due_this_week_count] = missed_visits[:due_this_week_count]
     dashboard_stats[:due_this_month_count] = missed_visits[:due_this_month_count]
 
-    immunization_cache = ImmunizationCacheDatum.find_or_initialize_by(name: "dashboard_stats")
-    immunization_cache.update!(value: dashboard_stats)
+    update_cache("dashboard_stats", location_id, dashboard_stats)
+    update_cache("missed_immunizations", location_id, missed_visits)
 
-
-    immunization_cache = ImmunizationCacheDatum.find_or_initialize_by(name: "missed_immunizations")
-    immunization_cache.update!(value: missed_visits)
   end
 
   private 
-
+  
   def dashboard_service(start_date, end_date, location_id)
     ImmunizationService::Reports::Stats::ImmunizationDashboard.new(start_date: start_date,
                                                                    end_date: end_date, 
@@ -34,6 +29,17 @@ class ImmunizationReportJob < ApplicationJob
 
   def followup_service
     ImmunizationService::FollowUp.new
+  end
+
+  def update_cache(name, location_id, value)
+    cache_id = ImmunizationCacheDatum.where(name: name, location_id: location_id ).pick(:id)
+    
+    if cache_id.blank?
+      ImmunizationCacheDatum.create(name: name, location_id: location_id, value:  value)
+    else
+      ImmunizationCacheDatum.where(id: cache_id).update_all(value: value)
+    end
+
   end
 
 
