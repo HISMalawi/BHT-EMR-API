@@ -22,27 +22,23 @@ module TbService
         def format_report(indicator:, report_data:, **kwargs)
           end_date = kwargs[:end_date]
           data = report_format(indicator:)
+          data[:cases] = report_data&.map(&:id)
+
           report_data&.each do |patient|
-            process_patient(patient, data, end_date)
+            data[patient_outcome(patient, end_date)] << patient['patient_id']
           end
           data
         end
 
-        def process_patient(patient, data, end_date)
-          data[:cases] << patient.id
-          return data[:cured] << patient.id if patient.outcome(program('TB Program'), end_date)&.name == 'Patient cured'
-          if patient.outcome(program('TB Program'), end_date)&.name == 'Treatment complete'
-            return data[:complete] << patient.id
-          end
-          if patient.outcome(program('TB Program'), end_date)&.name == 'Regimen failure'
-            return data[:failed] << patient.id
-          end
-          return data[:died] << patient.id if patient.outcome(program('TB Program'), end_date)&.name == 'Patient died'
-          if patient.outcome(program('TB Program'), end_date)&.name == 'Lost to follow up'
-            return data[:lost] << patient.id
-          end
+        def patient_outcome(patient, end_date)
+          outcome = patient.outcome(program('TB Program'), end_date)&.name
+          return :cured if outcome == 'Patient cured'
+          return :complete if outcome == 'Treatment complete'
+          return :failed if outcome == 'Regimen failure'
+          return :died if outcome == 'Patient died'
+          return :lost if outcome == 'Lost to follow up'
 
-          data[:ne] << patient.id if patient.outcome(program('TB Program'), end_date)&.name == 'ne'
+          :ne
         end
 
         def new_pulmonary_clinically_diagnosed(start_date, end_date)
