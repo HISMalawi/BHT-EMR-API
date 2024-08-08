@@ -63,7 +63,7 @@ class PatientStateService
   # Returns the patient's state on this given date
   def find_patient_state_impl(patient_program, date)
     PatientState.where(patient_program:)\
-                .where('start_date <= ?', date)\
+                .where('start_date <= ? AND end_date IS NULL', date)\
                 .last
   end
 end

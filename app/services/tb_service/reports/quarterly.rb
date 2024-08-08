@@ -15,7 +15,9 @@ module TbService
             failed: [],
             died: [],
             lost: [],
-            ne: []
+            ne: [],
+            unknown: [],
+            in_treatment: []
           }
         end
 
@@ -37,8 +39,10 @@ module TbService
           return :failed if outcome == 'Regimen failure'
           return :died if outcome == 'Patient died'
           return :lost if outcome == 'Lost to follow up'
+          return :in_treatment if outcome == 'Currently in treatment'
+          return :ne if outcome == 'ne'
 
-          :ne
+          :unknown
         end
 
         def new_pulmonary_clinically_diagnosed(start_date, end_date)
