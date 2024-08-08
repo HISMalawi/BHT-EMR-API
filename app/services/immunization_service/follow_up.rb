@@ -196,6 +196,7 @@ module ImmunizationService
       end
     end
 
+    # Counts the antigens due
     def aggregate_antigens(antigens)
       antigen_count = Hash.new {  |hash, key| hash[key] = { drug_name: key, due_count: 0 }}
 

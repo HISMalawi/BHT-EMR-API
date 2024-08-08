@@ -86,4 +86,4 @@ gem 'sidekiq'
 
 gem 'redis'
 
-gem 'sidekiq-unique-jobs'
+gem 'activejob-uniqueness'
