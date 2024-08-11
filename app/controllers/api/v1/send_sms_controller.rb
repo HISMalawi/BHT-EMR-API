@@ -1,62 +1,41 @@
-require './app/services/immunization_service/send_sms_service'
 require "uri"
 require "json"
 require "net/http"
 
 class Api::V1::SendSmsController < ApplicationController
-  before_action :initialize_variables, only: [:index]
+  before_action :initialize_variables, only: [:index, :fetch_phone]
 
   def index
+    return render json: { message: "SMS reminder turned off" } if sms_reminder_off?
 
-    config_file = Rails.root.join('config', 'application.yml')
-    config = YAML.load_file(config_file)
-    sms_reminder = config.dig('development', 'sms_reminder')
-
-    if sms_reminder == 'false'
-      return render json: { message: "SMS reminder turned off" }
-    end
-
-    patient_details = patients_phone
-    result = validatephone(patient_details[:cell_phone])
-    if result.length == 13
-      patient_details[:cell_phone] = result
-      output = enqueue_sms(params[:appointment_date], patient_details)
-    else
-      output = result
-    end
+    output = process_sms_request
     render json: { message: output }
   end
 
+  def fetch_phone
+    phone_number = validated_phone_number
+    render json: { message: phone_number }
+  end
+
   def show
-
     config_file = Rails.root.join('config', 'application.yml')
-         config = YAML.load_file(config_file)       
+    config = YAML.load_file(config_file)       
       
-      begin
-
-         if config.key?('development')
-          render json: config['development']
-        else
-          render json: { error: 'Development configuration not found' }, status: :not_found
-        end
-
-      rescue Errno::ENOENT
-        render json: { error: 'Configuration file not found' }, status: :not_found
-      end
-
+    if config.key?('development')
+      render json: config['development']
+    else
+      render json: { error: 'Development configuration not found' }, status: :not_found
+    end
+  rescue Errno::ENOENT
+    render json: { error: 'Configuration file not found' }, status: :not_found
   end
 
   def update
-   
     config_file = Rails.root.join('config', 'application.yml')
     config = YAML.load_file(config_file)
 
     params.each do |key, value|
-
-      if config['development'].key?(key)
-         config['development'][key] = value
-      end
-      
+      config['development'][key] = value if config['development'].key?(key)
     end
 
     File.open(config_file, 'w') { |f| f.write(config.to_yaml) }
@@ -67,7 +46,6 @@ class Api::V1::SendSmsController < ApplicationController
   end
 
   private
-
 
   def initialize_variables
     @patient = Observation.where(voided: 0, person_id: params[:person_id])
@@ -98,11 +76,7 @@ class Api::V1::SendSmsController < ApplicationController
       patient_details[:demographics] = patient
       age_in_days = (Date.today - patient[:dob]).to_i
 
-      if age_in_days < 5840 # 18 years below get guardian phone
-        patient_details[:cell_phone] = guardian_phone
-      else
-        patient_details[:cell_phone] = patient[:person_phone] 
-      end
+      patient_details[:cell_phone] = age_in_days < 5840 ? guardian_phone : patient[:person_phone]
     end
 
     patient_details
@@ -110,7 +84,7 @@ class Api::V1::SendSmsController < ApplicationController
 
   def guardian_phone
     filters = params.permit %i[person_b relationship]
-    relationships = service.find_relationships filters
+    relationships = service.find_relationships(filters)
     relationships[0].relation.try(:person_attributes)
                     .try(:find_by, person_attribute_type_id: PersonAttributeType.find_by_name('Cell Phone Number').id)
                     .try(:value)
@@ -121,20 +95,36 @@ class Api::V1::SendSmsController < ApplicationController
   end
 
   def enqueue_sms(date, details)
-     begin
-       SendSmsService.perform_async(date, details)
-     rescue => e
-      "Failed to queue SMS: #{e.message}"
-    end
+    ImmunizationService::SendSmsService.perform_async(date, details)
+  rescue => e
+    "Failed to queue SMS: #{e.message}"
   end
 
   def validatephone(phone)
-    phone_pattern = /\A\+\d{12}\z/
     phone = "+265" + phone[1..] if phone.present? && phone.starts_with?('0')
-    return phone if phone_pattern.match?(phone)
+    phone_pattern = /\A\+\d{12}\z/
+    phone_pattern.match?(phone) ? phone : "Invalid phone number"
+  end
 
-    unless phone.blank? || phone_pattern.match?(phone)
-      return "Invalid phone number"
+  def validated_phone_number
+    patient_details = patients_phone
+    validatephone(patient_details[:cell_phone])
+  end
+
+  def sms_reminder_off?
+    config_file = Rails.root.join('config', 'application.yml')
+    config = YAML.load_file(config_file)
+    config.dig('development', 'sms_reminder') == 'false'
+  end
+
+  def process_sms_request
+    phone_number = validated_phone_number
+    if phone_number.length == 13
+      patient_details = patients_phone
+      patient_details[:cell_phone] = phone_number
+      enqueue_sms(params[:appointment_date], patient_details)
+    else
+      phone_number
     end
   end
 end
