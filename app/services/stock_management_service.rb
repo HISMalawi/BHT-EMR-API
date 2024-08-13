@@ -97,9 +97,8 @@ class StockManagementService
         barcode = barcode.blank? ? nil : barcode
         if item
           # Update existing item if already in batch
-          item.delivered_quantity += quantity
-          item.current_quantity += quantity
-          item.unit_doses += unit_doses
+          item.delivered_quantity += quantity * unit_doses
+          item.current_quantity += quantity * unit_doses
           item.product_code = product_code
           item.barcode = barcode
           item.save
@@ -387,16 +386,17 @@ class StockManagementService
 
   def create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code, barcode,unit_doses,manufacture,dosage_form)
     quantity = quantity.to_f
+    unit_doses = unit_doses.to_f
 
     PharmacyBatchItem.create(
       batch:,
       drug_id: drug_id.to_i,
-      unit_doses: unit_doses.to_f,
+      unit_doses: unit_doses,
       manufacture:,
       dosage_form:,
       pack_size:,
-      delivered_quantity: quantity,
-      current_quantity: quantity,
+      delivered_quantity: quantity*unit_doses,
+      current_quantity: quantity*unit_doses,
       delivery_date:,
       expiry_date:,
       product_code:,
