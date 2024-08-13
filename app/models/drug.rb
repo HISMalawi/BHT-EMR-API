@@ -4,6 +4,8 @@ class Drug < ActiveRecord::Base
   self.table_name = :drug
   self.primary_key = :drug_id
 
+  default_scope { where(retired: 0) }
+
   belongs_to :concept
   belongs_to :form, foreign_key: 'dosage_form', class_name: 'Concept'
 
