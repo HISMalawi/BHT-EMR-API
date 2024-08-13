@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'utils/remappable_hash'
-require 'zebra_printer/init'
+require "utils/remappable_hash"
+require "zebra_printer/init"
 
 module Api
   module V1
@@ -20,7 +20,7 @@ module Api
         tag = params[:tag]
 
         locations = paginate(Location.order(:name))
-        locations = locations.where('name like ?', "%#{name}%") unless name.blank?
+        locations = locations.where("name like ?", "%#{name}%") unless name.blank?
         locations = filter_locations_by_tag locations, tag if tag
 
         render json: locations
@@ -46,7 +46,7 @@ module Api
         location = Location.create(
           name:,
           creator: User.current_user.id,
-          date_created: Time.now
+          date_created: Time.now,
         )
 
         if location.errors
@@ -59,19 +59,15 @@ module Api
       def print_label
         location = location_to_print
 
-        return render json: 'location_id or location_name required', status: :bad_request unless location
+        return render json: "location_id or location_name required", status: :bad_request unless location
 
-        commands = service.print_location_label(location)
-        send_data(commands, type: 'application/label; charset=utf-8',
-                            stream: false,
-                            filename: "#{params[:id]}#{rand(10_000)}.lbl",
-                            disposition: 'inline')
+        render json: service.print_location_label(location)
       end
 
       private
 
       def filter_locations_by_tag(locations, tag)
-        location_tag_id = LocationTag.where('name like ?', "%#{tag}%")[0].id
+        location_tag_id = LocationTag.where("name like ?", "%#{tag}%")[0].id
         location_tag_maps = LocationTagMap.where(location_tag_id:)
         locations.joins(:tag_maps).merge(location_tag_maps)
       end

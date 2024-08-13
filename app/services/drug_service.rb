@@ -19,11 +19,17 @@ class DrugService
     end
 
     save_drug_barcode(drug, quantity)
-    label.print(1)
+
+    {
+      name: drug.name,
+      quantity: quantity,
+      barcode: drug_barcode.to_s,
+      zpl: label.print(1),
+    }
   end
 
   def stock_levels(classification)
-    classification == 'peads' ? stock_levels_graph_paeds : stock_levels_graph_adults
+    classification == "peads" ? stock_levels_graph_paeds : stock_levels_graph_adults
   end
 
   def find_drugs(filters)
@@ -32,14 +38,14 @@ class DrugService
 
     if filters.include?(:concept_set)
       concept_set = filters.delete(:concept_set)
-      query = query.joins('INNER JOIN concept_set ON drug.concept_id = concept_set.concept_id')
-                   .joins('INNER JOIN concept_name ON concept_set.concept_set = concept_name.concept_id')
-                   .where('concept_name.name LIKE ?', concept_set)
+      query = query.joins("INNER JOIN concept_set ON drug.concept_id = concept_set.concept_id")
+                   .joins("INNER JOIN concept_name ON concept_set.concept_set = concept_name.concept_id")
+                   .where("concept_name.name LIKE ?", concept_set)
     end
 
     if filters.include?(:name)
       name = filters.delete(:name)
-      query = query.where('drug.name LIKE ?', "#{name}%")
+      query = query.where("drug.name LIKE ?", "#{name}%")
     end
 
     query = query.where(filters) unless filters.empty?
@@ -47,11 +53,11 @@ class DrugService
   end
 
   def find_drug_list(filters)
-    query = Drug.find_all_by_concept_set('OPD Medication')
+    query = Drug.find_all_by_concept_set("OPD Medication")
 
     if filters.include?(:name)
       name = filters.delete(:name)
-      query = query.where('name LIKE ?', "#{name}%")
+      query = query.where("name LIKE ?", "#{name}%")
     end
 
     query = query.where(filters) unless filters.empty?
@@ -70,7 +76,7 @@ class DrugService
 
   def stock_levels_graph_paeds
     paeds_drug_ids = [733, 968, 732, 736, 30, 74, 979, 963, 24]
-    paediatric_drugs = DrugCms.where(['drug_inventory_id IN (?)', paeds_drug_ids])
+    paediatric_drugs = DrugCms.where(["drug_inventory_id IN (?)", paeds_drug_ids])
     paediatric_drugs.each do |drug_cms|
       drug = Drug.find(drug_cms.drug_inventory_id)
       drug_pack_size = drug_cms.pack_size # Pharmacy.pack_size(drug.id)
@@ -83,10 +89,10 @@ class DrugService
 
       expected = stock_level.round
       month_of_stock = begin
-        (expected / consumption_rate)
-      rescue StandardError
-        0
-      end
+          (expected / consumption_rate)
+        rescue StandardError
+          0
+        end
       stocked_out = (disp_rate.to_i != 0 && month_of_stock.to_f.round(3) == 0.00)
 
       active = disp_rate.to_i.zero? && stock_level.to_i != 0 ? false : true
@@ -100,20 +106,19 @@ class DrugService
           date_diff_in_months = 0
           # raise stock_expiry_date.inspect
         end
-
       end
 
       date_diff_in_months = 0 if disp_rate.to_i.zero?
       month_of_stock -= date_diff_in_months
 
       @list[drug_cms_name] = {
-        'month_of_stock' => month_of_stock,
-        'stock_level' => stock_level,
-        'drug' => drug.id,
-        'consumption_rate' => disp_rate.round(2),
-        'stocked_out' => stocked_out,
-        'expiry_stock' => date_diff_in_months,
-        'active' => active
+        "month_of_stock" => month_of_stock,
+        "stock_level" => stock_level,
+        "drug" => drug.id,
+        "consumption_rate" => disp_rate.round(2),
+        "stocked_out" => stocked_out,
+        "expiry_stock" => date_diff_in_months,
+        "active" => active,
       }
     end
     @list = @list.sort_by { |k, _v| k }

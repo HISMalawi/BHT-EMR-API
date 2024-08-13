@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../nlims'
+require_relative "../nlims"
 
 module TbService
   class LabTestsEngine
@@ -35,9 +35,7 @@ module TbService
     end
 
     def results(accession_number)
-      LabParameter.joins(:lab_sample)\
-                  .where('Lab_Sample.AccessionNum = ?', accession_number)\
-                  .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
+      LabParameter.joins(:lab_sample).where("Lab_Sample.AccessionNum = ?", accession_number).order(Arel.sql("DATE(Lab_Sample.TimeStamp) DESC"))
     end
 
     # Create test with lims
@@ -51,21 +49,21 @@ module TbService
         lims_order = nlims.order_tb_test(patient:,
                                          user: User.current,
                                          date:,
-                                         reason: test['reason'],
-                                         test_type: [test['test_type']],
-                                         sample_type: test['sample_type'],
-                                         sample_status: test['sample_status'],
-                                         target_lab: test['target_lab'],
-                                         recommended_examination: test['recommended_examination'],
-                                         treatment_history: test['treatment_history'],
-                                         sample_date: test['sample_date'],
-                                         sending_facility: test['sending_facility'],
+                                         reason: test["reason"],
+                                         test_type: [test["test_type"]],
+                                         sample_type: test["sample_type"],
+                                         sample_status: test["sample_status"],
+                                         target_lab: test["target_lab"],
+                                         recommended_examination: test["recommended_examination"],
+                                         treatment_history: test["treatment_history"],
+                                         sample_date: test["sample_date"],
+                                         sending_facility: test["sending_facility"],
                                          **kwargs)
-        accession_number = lims_order['tracking_number']
+        accession_number = lims_order["tracking_number"]
 
         # creation happening here
         local_order = create_local_order(patient, encounter, date, accession_number)
-        save_reason_for_test(encounter, local_order, test['reason'])
+        save_reason_for_test(encounter, local_order, test["reason"])
 
         { order: local_order, lims_order: }
       end
@@ -89,31 +87,31 @@ module TbService
     def find_orders_by_accession_number(accession_number)
       order = nlims.patient_orders(accession_number)
       begin
-        result = nlims.patient_results(accession_number)['results']
+        result = nlims.patient_results(accession_number)["results"]
       rescue StandardError => e
-        raise e unless e.message.include?('results not available')
+        raise e unless e.message.include?("results not available")
 
         result = {}
       end
 
       [{
-        sample_type: order['other']['sample_type'],
-        date_ordered: order['other']['date_created'],
-        order_location: order['other']['order_location'],
-        specimen_status: order['other']['specimen_status'],
+        sample_type: order["other"]["sample_type"],
+        date_ordered: order["other"]["date_created"],
+        order_location: order["other"]["order_location"],
+        specimen_status: order["other"]["specimen_status"],
         accession_number:,
-        tests: order['tests'].collect do |k, v|
+        tests: order["tests"].collect do |k, v|
           test_values = result[k]&.collect do |indicator, value|
             { indicator:, value: }
           end || []
 
           { test_type: k, test_status: v, test_values: }
-        end
+        end,
       }]
     end
 
     def generate_lab_order_summary(order_info)
-      identifier_type = PatientIdentifierType.find_by(name: 'National id').id
+      identifier_type = PatientIdentifierType.find_by(name: "National id").id
       identifier = PatientIdentifier.find_by(patient_id: order_info[:patient_id],
                                              identifier_type:).identifier
 
@@ -121,21 +119,21 @@ module TbService
       logger.info "NATIONAL ID: #{identifier}"
 
       label = ZebraPrinter::Lib::StandardLabel.new
-      label.draw_text('Lab Order Summary', 28, 9, 0, 1, 1, 2, false)
+      label.draw_text("Lab Order Summary", 28, 9, 0, 1, 1, 2, false)
       label.draw_line(25, 35, 115, 1, 0)
       label.draw_line(180, 140, 600, 1, 0)
 
-      label.draw_text('Order Date', 28, 56, 0, 2, 1, 1, false)
-      label.draw_text('NPID', 28, 86, 0, 2, 1, 1, false)
+      label.draw_text("Order Date", 28, 56, 0, 2, 1, 1, false)
+      label.draw_text("NPID", 28, 86, 0, 2, 1, 1, false)
 
-      label.draw_text('Lab Tests', 28, 111, 0, 1, 1, 2, false)
-      label.draw_text('Item', 190, 120, 0, 2, 1, 1, false)
-      label.draw_text('Test Type', 28, 146, 0, 2, 1, 1, false)
-      label.draw_text('Specimen', 28, 176, 0, 2, 1, 1, false)
-      label.draw_text('Examination', 28, 206, 0, 2, 1, 1, false)
-      label.draw_text('Target Lab', 28, 236, 0, 2, 1, 1, false)
-      label.draw_text('Reason', 28, 266, 0, 2, 1, 1, false)
-      label.draw_text('Previous TB', 28, 296, 0, 2, 1, 1, false)
+      label.draw_text("Lab Tests", 28, 111, 0, 1, 1, 2, false)
+      label.draw_text("Item", 190, 120, 0, 2, 1, 1, false)
+      label.draw_text("Test Type", 28, 146, 0, 2, 1, 1, false)
+      label.draw_text("Specimen", 28, 176, 0, 2, 1, 1, false)
+      label.draw_text("Examination", 28, 206, 0, 2, 1, 1, false)
+      label.draw_text("Target Lab", 28, 236, 0, 2, 1, 1, false)
+      label.draw_text("Reason", 28, 266, 0, 2, 1, 1, false)
+      label.draw_text("Previous TB", 28, 296, 0, 2, 1, 1, false)
 
       label.draw_line(260, 50, 170, 1, 0)
       label.draw_line(260, 50, 1, 60, 0)
@@ -164,7 +162,17 @@ module TbService
       label.draw_text(order_info[:reason_for_examination], 188, 266, 0, 2, 1, 1, false)
       label.draw_text(order_info[:previous_tb_patient], 188, 296, 0, 2, 1, 1, false)
 
-      label.print(1)
+      {
+        zpl: label.print(1),
+        identifier:,
+        date: order_info[:date],
+        test_type: order_info[:test_type],
+        specimen_type: order_info[:specimen_type],
+        recommended_examination: order_info[:recommended_examination],
+        target_lab: order_info[:target_lab],
+        reason_for_examination: order_info[:reason_for_examination],
+        previous_tb_patient: order_info[:previous_tb_patient],
+      }
     end
 
     private
@@ -173,8 +181,8 @@ module TbService
     def create_local_order(patient, encounter, date, accession_number)
       Order.create patient:,
                    encounter:,
-                   concept: concept('Laboratory tests ordered'),
-                   order_type: order_type('Lab'),
+                   concept: concept("Laboratory tests ordered"),
+                   order_type: order_type("Lab"),
                    orderer: User.current.user_id,
                    start_date: date,
                    accession_number:,
@@ -185,17 +193,17 @@ module TbService
       Observation.create(
         order:,
         encounter:,
-        concept: concept('Reason for test'),
+        concept: concept("Reason for test"),
         obs_datetime: encounter.encounter_datetime,
         person: encounter.patient.person,
-        value_text: reason
+        value_text: reason,
       )
     end
 
     def next_id(seed_id)
-      site_id = global_property('moh_site_id').property_value
-      local_id = Order.where(order_type: order_type('Lab')).count + 1
-      format '%<site_id>s%<seed_id>s%<local_id>d', site_id:,
+      site_id = global_property("moh_site_id").property_value
+      local_id = Order.where(order_type: order_type("Lab")).count + 1
+      format "%<site_id>s%<seed_id>s%<local_id>d", site_id:,
                                                    seed_id:,
                                                    local_id:
     end
@@ -207,15 +215,15 @@ module TbService
       match = test_value.match TESTVALUE_SPLIT_REGEX
       raise InvalidParameterError, "Invalid test value: #{test_value}" unless match
 
-      [match[:mod] || '=', translate_test_value(match[:value])]
+      [match[:mod] || "=", translate_test_value(match[:value])]
     end
 
     def translate_test_value(value)
       case value.upcase
-      when 'POSITIVE'
-        '1.0'
-      when 'NEGATIVE'
-        '-1.0'
+      when "POSITIVE"
+        "1.0"
+      when "NEGATIVE"
+        "-1.0"
       else
         value
       end
@@ -224,8 +232,8 @@ module TbService
     # Local Order
     def local_orders(patient)
       Order.where patient:,
-                  order_type: order_type('Lab'),
-                  concept: concept('Laboratory tests ordered')
+                  order_type: order_type("Lab"),
+                  concept: concept("Laboratory tests ordered")
     end
 
     # Dont't forget to put this back in order

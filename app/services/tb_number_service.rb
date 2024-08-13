@@ -5,8 +5,8 @@ include ModelUtils
 class TbNumberService
   class DuplicateIdentifierError < StandardError; end
 
-  NORMAL_TYPE = 'District TB Number'
-  IPT_TYPE = 'District IPT Number'
+  NORMAL_TYPE = "District TB Number"
+  IPT_TYPE = "District IPT Number"
 
   def self.assign_tb_number(patient_id, date, number)
     identifier = generate_tb_number(patient_id, date, number)
@@ -17,15 +17,13 @@ class TbNumberService
       type: number_type(patient_id:),
       patient_id:,
       location_id: Location.current.location_id,
-      date_created: date
+      date_created: date,
     )
   end
 
   def self.get_patient_tb_number(patient_id:)
     PatientIdentifier.where(type: patient_identifier_type(NORMAL_TYPE),
-                            patient_id:)\
-                     .or(PatientIdentifier.where(type: patient_identifier_type(IPT_TYPE), patient_id:))\
-                     .order(date_created: :desc)
+                            patient_id:).or(PatientIdentifier.where(type: patient_identifier_type(IPT_TYPE), patient_id:)).order(date_created: :desc)
                      .first
   end
 
@@ -43,19 +41,25 @@ class TbNumberService
     label.draw_text(identifier_name, 40, 60, 0, 2, 2, 2, false)
     label.draw_text(patient_identifier.identifier, 40, 120, 0, 2, 2, 2, false)
     label.draw_barcode(50, 180, 0, 1, 5, 15, 120, false, patient_identifier.identifier)
-    label.print(1)
+
+    {
+      name: name,
+      identifier: patient_identifier.identifier,
+      identifier_name: identifier_name,
+      zpl: label.print(1),
+      barcode: patient_identifier.identifier,
+    }
   end
 
   def self.generate_tb_number(patient_id, date, number)
     is_ipt_patient = ipt_eligible?(patient_id:)
-    category = is_ipt_patient ? 'IPT' : 'TB'
+    category = is_ipt_patient ? "IPT" : "TB"
 
     "#{facility_code}/#{category}/#{number}/#{date.year}"
   end
 
   def self.number_exists?(number:)
-    PatientIdentifier.where(identifier: number)\
-                     .exists?
+    PatientIdentifier.where(identifier: number).exists?
   end
 
   def self.ipt_eligible?(patient_id:)
@@ -68,10 +72,10 @@ class TbNumberService
   end
 
   def self.regimen_engine
-    TbService::RegimenEngine.new(program: program('TB Program'))
+    TbService::RegimenEngine.new(program: program("TB Program"))
   end
 
   def self.facility_code
-    global_property('tb_site_prefix')&.property_value
+    global_property("tb_site_prefix")&.property_value
   end
 end
