@@ -82,6 +82,9 @@ class StockManagementService
         quantity = fetch_parameter(item, :quantity)
         barcode = fetch_parameter(item, :barcode)
         product_code = fetch_parameter(item, :product_code)
+        unit_doses = fetch_parameter(item, :unit_doses)
+        manufacture = fetch_parameter(item, :manufacture)
+        dosage_form = fetch_parameter(item, :dosage_form)
         pack_size = item[:pack_size]
 
         delivery_date = fetch_parameter_as_date(item, :delivery_date, Date.today)
@@ -96,12 +99,13 @@ class StockManagementService
           # Update existing item if already in batch
           item.delivered_quantity += quantity
           item.current_quantity += quantity
+          item.unit_doses += unit_doses
           item.product_code = product_code
           item.barcode = barcode
           item.save
         else
           item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code,
-                                   barcode)
+                                   barcode,unit_doses,manufacture,dosage_form)
           validate_activerecord_object(item)
         end
 
@@ -163,6 +167,10 @@ class StockManagementService
                    END AS dispensed_quantity,
                    pharmacy_batches.batch_number
                  SQL
+    
+      unless filters[:drug_name].nil?
+        query = query.where('drug.name like ?', "#{filters[:drug_name]}%" )
+      end
     query.order(Arel.sql('pharmacy_batch_items.date_created DESC, pharmacy_batch_items.expiry_date ASC'))
   end
 
@@ -377,12 +385,15 @@ class StockManagementService
     PharmacyBatch.create(batch_number:, location_id:)
   end
 
-  def create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code, barcode)
+  def create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code, barcode,unit_doses,manufacture,dosage_form)
     quantity = quantity.to_f
 
     PharmacyBatchItem.create(
       batch:,
       drug_id: drug_id.to_i,
+      unit_doses: unit_doses.to_f,
+      manufacture:,
+      dosage_form:,
       pack_size:,
       delivered_quantity: quantity,
       current_quantity: quantity,
