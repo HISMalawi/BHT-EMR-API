@@ -52,7 +52,7 @@ module ArtService
       end
       starting_index = 25
       start_line = 160
-
+      drugs = []
       visit_extras(visit).each do |key, values|
         data = values&.last
 
@@ -74,6 +74,8 @@ module ArtService
         next if starting_index.zero?
 
         label.draw_text(data.to_s, starting_index, starting_line, 0, 2, 1, 1, bold)
+
+        drugs << data
       end
 
       {
@@ -89,6 +91,7 @@ module ArtService
           outcome: visit.outcome,
           outcome_date: visit.outcome_date,
           next_appointment_date: visit.next_appointment.blank? ? "N/A" : visit.next_appointment.strftime("%d/%b/%Y"),
+          drugs: drugs
         },
       }
     end
