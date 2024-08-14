@@ -98,7 +98,7 @@ class ProgramAppointmentService
     clients_formatted
   end
 
-  def self.booked_patient_appointments(program_id, patient_id)
+  def self.booked_patient_appointment(program_id, patient_id)
     person = Person.find(patient_id)
     obs = Observation .joins("INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id").where(person: person, encounter: { program_id: program_id}, voided:0, concept: concept('Appointment date'))\
                                                                                                  .order(obs_datetime: :desc)\

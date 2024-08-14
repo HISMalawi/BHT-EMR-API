@@ -17,11 +17,11 @@ module Api
         render json: service.scheduled_appointments(program_id, date)
       end
 
-      def booked_patient_appointments
+      def booked_patient_appointment
         program_id = params[:program_id]
         patient_id = params[:patient_id]
 
-        render json: service.booked_patient_appointments(program_id, patient_id)
+        render json: service.booked_patient_appointment(program_id, patient_id)
       end
 
       private
