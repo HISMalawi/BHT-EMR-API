@@ -57,13 +57,13 @@ module ImmunizationService
     end
 
     def next_appointment_date
-        obs = Observation .joins("INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id").where(person: @patient, encounter: { program_id: @program.program_id}, voided:0, concept: concept('Appointment date'))\
-                                                                                                     .order(obs_datetime: :desc)\
-                                                                                                     .first\
-                                                                                                     &.value_datetime
-        {
-          next_appointment_date: obs
-        }
+      obs = Observation.joins('INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id')
+                       .where(person: @patient,
+                              encounter: { program_id: @program.program_id },
+                              voided: 0, concept: concept('Appointment date')).order(obs_datetime: :desc).first&.value_datetime
+      {
+        next_appointment_date: obs
+      }
     end
 
     def make_appointment_date(patient, date)
