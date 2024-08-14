@@ -305,6 +305,7 @@ module Api
 
         {
           zpl: label.print(1),
+          barcode: national_id,
           data: json.merge({ qr: json.values.join("~") }),
         }
       end
@@ -351,9 +352,11 @@ module Api
 
         {
           zpl: label.print(num),
-          number:,
-          file_type:,
-          version_number:,
+          data: {
+            number:,
+            file_type:,
+            version_number:,
+          },
         }
       end
 
