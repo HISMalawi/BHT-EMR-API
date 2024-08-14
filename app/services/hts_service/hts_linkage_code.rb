@@ -26,10 +26,12 @@ module HtsService
       label.draw_barcode(40, 100, 0, 1, 5, 15, 120, false, hts_linkage_code)
 
       {
-        name: name,
-        hts_linkage_code: hts_linkage_code,
+        data: {
+          name: name,
+          hts_linkage_code: hts_linkage_code,
+          barcode: hts_linkage_code,
+        },
         zpl: label.print(1),
-        barcode: hts_linkage_code,
       }
     end
   end

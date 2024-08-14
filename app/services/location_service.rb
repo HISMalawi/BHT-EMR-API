@@ -13,8 +13,8 @@ class LocationService
 
     {
       zpl: label.print(1),
-      barcode: location.location_id.to_s,
       data: {
+        barcode: location.location_id.to_s,
         location_id: location.location_id,
         location_name: location.name,
       },

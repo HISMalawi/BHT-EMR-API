@@ -43,11 +43,13 @@ class TbNumberService
     label.draw_barcode(50, 180, 0, 1, 5, 15, 120, false, patient_identifier.identifier)
 
     {
-      name: name,
-      identifier: patient_identifier.identifier,
-      identifier_name: identifier_name,
+      data: {
+        name:,
+        identifier: patient_identifier.identifier,
+        identifier_name: identifier_name,
+        barcode: patient_identifier.identifier,
+      },
       zpl: label.print(1),
-      barcode: patient_identifier.identifier,
     }
   end
 

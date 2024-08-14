@@ -301,11 +301,11 @@ module Api
           birthdate: person.birthdate,
           sex: sex,
           address: person.addresses.first.to_s.strip[0..24].humanize,
+          barcode: national_id,
         }
 
         {
           zpl: label.print(1),
-          barcode: national_id,
           data: json.merge({ qr: json.values.join("~") }),
         }
       end

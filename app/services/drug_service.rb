@@ -24,8 +24,8 @@ class DrugService
       data: {
         name: drug.name,
         quantity: quantity,
+        barcode: drug_barcode.to_s,
       },
-      barcode: drug_barcode.to_s,
       zpl: label.print(1),
     }
   end
