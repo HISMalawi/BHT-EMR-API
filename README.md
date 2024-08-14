@@ -417,3 +417,7 @@ See the following for more:
   * In the documentation click on SMS under endpoints section to get sms_gateway_url
   * Still in the documentation click on Account under endpoints section to get sms_api_key
   * Finally go to config/application.yml and add the sms_api_key and sms_gateway_url
+
+# Setting up Immunization data midnight refresh
+  * Copy config/schedule.yml.example config/schedule.yml
+  * When you run everything it wiil setup a sidekiq cron to run a midnight refresh to set all the data to the current status for all sites
