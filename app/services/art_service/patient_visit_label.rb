@@ -82,6 +82,10 @@ module ArtService
         zpl: label.print(2),
         data: {
           seen_by: seen_by(patient, date),
+          height: visit.height,
+          weight: visit.weight,
+          bmi: visit.bmi,
+          viral_load: visit.viral_load_result,
           date: date.strftime("%d/%b/%Y"),
           arv_number: arv_number,
           patient_details: "#{patient.person.name} (#{patient.gender})",
@@ -91,7 +95,7 @@ module ArtService
           outcome: visit.outcome,
           outcome_date: visit.outcome_date,
           next_appointment_date: visit.next_appointment.blank? ? "N/A" : visit.next_appointment.strftime("%d/%b/%Y"),
-          drugs: drugs
+          drugs: drugs,
         },
       }
     end
