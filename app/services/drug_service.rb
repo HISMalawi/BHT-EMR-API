@@ -21,8 +21,10 @@ class DrugService
     save_drug_barcode(drug, quantity)
 
     {
-      name: drug.name,
-      quantity: quantity,
+      data: {
+        name: drug.name,
+        quantity: quantity,
+      },
       barcode: drug_barcode.to_s,
       zpl: label.print(1),
     }
