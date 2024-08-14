@@ -14,17 +14,18 @@ class ImmunizationReportJob < ApplicationJob
     dashboard_stats[:due_this_week_count] = missed_visits[:due_this_week_count]
     dashboard_stats[:due_this_month_count] = missed_visits[:due_this_month_count]
 
-    update_cache("dashboard_stats", location_id, dashboard_stats)
-    update_cache("missed_immunizations", location_id, missed_visits)
-
+    update_cache('dashboard_stats', location_id, dashboard_stats)
+    update_cache('missed_immunizations', location_id, missed_visits)
+    
+    ActionCable.server.broadcast("immunization_report_channel_#{location_id}", dashboard_stats)
   end
 
   private 
   
   def dashboard_service(start_date, end_date, location_id)
-    ImmunizationService::Reports::Stats::ImmunizationDashboard.new(start_date: start_date,
-                                                                   end_date: end_date, 
-                                                                   location_id: location_id)
+    ImmunizationService::Reports::Stats::ImmunizationDashboard.new(start_date:,
+                                                                   end_date:,
+                                                                   location_id:)
   end
 
   def followup_service
@@ -32,15 +33,12 @@ class ImmunizationReportJob < ApplicationJob
   end
 
   def update_cache(name, location_id, value)
-    cache_id = ImmunizationCacheDatum.where(name: name, location_id: location_id ).pick(:id)
-    
+    cache_id = ImmunizationCacheDatum.where(name:, location_id:).pick(:id)
+
     if cache_id.blank?
-      ImmunizationCacheDatum.create(name: name, location_id: location_id, value:  value)
+      ImmunizationCacheDatum.create(name:, location_id:, value:)
     else
-      ImmunizationCacheDatum.where(id: cache_id).update_all(value: value)
+      ImmunizationCacheDatum.where(id: cache_id).update_all(value:)
     end
-
   end
-
-
 end
