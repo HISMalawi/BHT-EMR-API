@@ -79,7 +79,6 @@ class OpdService::VisitLabel
       },
       treatments: [],
       procedures: [],
-      hiv_status: [],
       lab_orders: [],
       diagnoses: [],
       transfer_out: nil,
@@ -128,7 +127,7 @@ class OpdService::VisitLabel
           hiv_status << "HIV Status - " + observation.answer_string.to_s rescue ""
         end
         label.draw_multi_text("#{hiv_status}", :font_reverse => false)
-        json_data[:hiv_status] << hiv_status
+        json_data[:hiv_status] = hiv_status
       elsif encounter.name.upcase.include?("LAB ORDERS")
         lab_orders = []
         encounter.observations.each do |observation|
