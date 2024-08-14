@@ -77,17 +77,17 @@ module ArtService
       label.font_vertical_multiplier = 1
 
       # Patient personal data
-      label.draw_multi_text("#{transfer_out_info[:health_center]} transfer out label", font_reverse: true)
-      label.draw_multi_text("To #{transfer_out_info[:destination]}", font_reverse: false) unless destination.blank?
-      label.draw_multi_text("ARV number: #{transfer_out_info[:arv_number]}", font_reverse: true)
-      label.draw_multi_text("Name: #{transfer_out_info[:name]}\nAge: #{transfer_out_info[:age]}", font_reverse: false)
+      label.draw_multi_text("#{Location.current_health_center.name} transfer out label", font_reverse: true)
+      label.draw_multi_text("To #{destination}", font_reverse: false) unless destination.blank?
+      label.draw_multi_text("ARV number: #{patient.identifier("ARV Number")&.identifier}", font_reverse: true)
+      label.draw_multi_text("Name: #{patient.name}\nAge: #{patient.age}", font_reverse: false)
 
       # Diagnosis information
       label.draw_multi_text("Stage defining conditions:", font_reverse: true)
-      label.draw_multi_text("Reason for starting: #{transfer_out_info[:reason_for_starting]}", font_reverse: false)
-      label.draw_multi_text("ART start date: #{transfer_out_info[:art_start_date]}", font_reverse: false)
+      label.draw_multi_text("Reason for starting: #{who_stage}", font_reverse: false)
+      label.draw_multi_text("ART start date: #{art_start_date}", font_reverse: false)
       label.draw_multi_text("Other diagnosis:", font_reverse: true)
-      label.draw_multi_text(transfer_out_info[:staging_conditions], font_reverse: false)
+      label.draw_multi_text(staging_conditions.to_s, font_reverse: false)
 
       # Initial Height/Weight and CD4 count
       label.draw_multi_text("Initial Height/Weight", font_reverse: true)
@@ -103,20 +103,22 @@ module ArtService
 
       {
         zpl: label.print(1),
-        health_center: Location.current_health_center.name,
-        destination: destination,
-        arv_number: patient.identifier("ARV Number")&.identifier,
-        name: "#{patient.name} (#{patient.gender.first})",
-        age: patient.age,
-        reason_for_starting: who_stage,
-        art_start_date: art_start_date,
-        staging_conditions: staging_conditions,
-        initial_height: transfer_out_note.initial_height,
-        initial_weight: transfer_out_note.initial_weight,
-        first_cd4_count: transfer_out_note.cd4_count,
-        first_cd4_count_date: transfer_out_note.cd4_count_date&.strftime("%d/%b/%Y"),
-        current_art_drugs: reg,
-        transfer_out_date: transfer_out_date,
+        data: {
+          health_center: Location.current_health_center.name,
+          destination: destination,
+          arv_number: patient.identifier("ARV Number")&.identifier,
+          name: "#{patient.name} (#{patient.gender.first})",
+          age: patient.age,
+          reason_for_starting: who_stage,
+          art_start_date: art_start_date,
+          staging_conditions: staging_conditions,
+          initial_height: transfer_out_note.initial_height,
+          initial_weight: transfer_out_note.initial_weight,
+          first_cd4_count: transfer_out_note.cd4_count,
+          first_cd4_count_date: transfer_out_note.cd4_count_date&.strftime("%d/%b/%Y"),
+          current_art_drugs: reg,
+          transfer_out_date: transfer_out_date,
+        },
       }
     end
 
