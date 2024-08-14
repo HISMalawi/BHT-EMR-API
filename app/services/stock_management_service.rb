@@ -156,19 +156,22 @@ class StockManagementService
     end
     query = query.joins("LEFT JOIN pharmacy_obs ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id AND pharmacy_obs.transaction_reason = 'Drug dispensed'")
                  .joins('LEFT JOIN pharmacy_batch_item_reallocations ON pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id')
+                 .joins('LEFT JOIN pharmacy_batch_vvms ON pharmacy_batch_items.id = pharmacy_batch_vvms.batch_item_id')
                  .joins('INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id')
                  .joins('INNER JOIN pharmacy_batches ON pharmacy_batches.id = pharmacy_batch_items.pharmacy_batch_id')
                  .group('drug.drug_id, pharmacy_batches.batch_number')
                  .select <<~SQL
                    pharmacy_batch_items.*,
                    pharmacy_batch_item_reallocations.quantity	as doses_wasted,
+                   pharmacy_batch_vvms.vvm	as vvm_stage,
                    CASE
                      WHEN pharmacy_obs.quantity IS NULL
                      THEN 0
                    ELSE
                      ABS(SUM(pharmacy_obs.quantity))
                    END AS dispensed_quantity,
-                   pharmacy_batches.batch_number
+                   pharmacy_batches.batch_number,
+                   COUNT(*) OVER() AS total_count
                  SQL
     
       unless filters[:drug_name].nil?
