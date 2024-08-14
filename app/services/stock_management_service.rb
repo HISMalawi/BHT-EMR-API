@@ -83,6 +83,7 @@ class StockManagementService
         barcode = fetch_parameter(item, :barcode)
         product_code = fetch_parameter(item, :product_code)
         unit_doses = fetch_parameter(item, :unit_doses)
+        vvm_stage = fetch_parameter(item, :vvm_stage)
         manufacture = fetch_parameter(item, :manufacture)
         dosage_form = fetch_parameter(item, :dosage_form)
         pack_size = item[:pack_size]
@@ -105,6 +106,7 @@ class StockManagementService
         else
           item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code,
                                    barcode,unit_doses,manufacture,dosage_form)
+          create_vvm(item[:id], vvm_stage)
           validate_activerecord_object(item)
         end
 
@@ -280,7 +282,12 @@ class StockManagementService
                                            creator: User.current.id)
     end
   end
-
+  def create_vvm(batch_item_id, vvm)
+    ActiveRecord::Base.transaction do
+      item = PharmacyBatchItem.find(batch_item_id) 
+      PharmacyBatchVvm.create(item:, vvm:) 
+    end
+  end
   def update_batch_item!(batch_item, quantity)
     if quantity.negative? && batch_item.current_quantity < quantity.abs
       raise InvalidParameterError, <<~ERROR
