@@ -1,0 +1,5 @@
+immunization_stats_midnight_refresh:
+  cron: "0 0 * * *"
+  class: "ImmunizationMidnightRefreshJob"
+  queue: "default"
+  description: "Refreshes the immunization stats at midnight"
