@@ -13,6 +13,24 @@ class Api::V1::ImmunizationReportController < ApplicationController
               
     end
 
+    def vaccines_administered
+        start_date = params[:start_date]
+        end_date = params[:end_date]
+      
+        missing_params = []
+        missing_params << "start_date" if start_date.blank?
+        missing_params << "end_date" if end_date.blank?
+      
+        if missing_params.empty?
+            vaccines_administered_service = ImmunizationService::Reports::General::VaccinesAdministered.new(start_date:, end_date:)
+            data = vaccines_administered_service.data()
+    
+            render json: { success: true, data: data }
+        else
+          render json: { success: false, error: "Missing parameters: #{missing_params.join(', ')}" }, status: :bad_request
+        end
+    end
+
     def months_picker
         render json: months_generator()
     end
