@@ -7,7 +7,7 @@ module Api
         # GET /pharmacy/items[?drug_id=]
         def index
           user_program = User.current.programs.detect { |x| x["name"] == "IMMUNIZATION PROGRAM" }
-          permitted_params = params.permit(:drug_id, :current_quantity, :start_date, :end_date, :batch_number, :drug_name)
+          permitted_params = params.permit(:drug_id, :current_quantity, :start_date, :end_date, :batch_number)
           
           if user_program.present?
             permitted_params = permitted_params.merge("location_id" => User.current.location_id)
@@ -23,8 +23,8 @@ module Api
         end
 
         def update
-          permitted_params = params.permit(%i[current_quantity delivered_quantity pack_size expiry_date delivery_date, unit_doses,vvm_stage,manufacture,
-                                             dosage_form, reason])
+          permitted_params = params.permit(%i[current_quantity delivered_quantity pack_size expiry_date delivery_date
+                                              reason])
           raise InvalidParameterError, 'reason is required' if permitted_params[:reason].blank?
 
           item = service.edit_batch_item(params[:id], permitted_params)
