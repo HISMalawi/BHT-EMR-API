@@ -193,15 +193,7 @@ class PersonService
 
   # Search for people by matching using MySQL glob.
   def glob_person_search(given_name, middle_name, family_name, gender)
-    people = Person.all
-    people = people.where('gender like ?', "#{gender}%") unless gender.blank?
-
-    if given_name || family_name
-      filters = { given_name: gender, middle_name:, family_name: }
-      names = NameSearchService.search_full_person_name(filters, use_soundex: true)
-      people = people.joins(:names).merge(names)
-    end
-
-    people
+    filters = { given_name:, middle_name:, family_name:, gender: }
+    NameSearchService.search_full_person_name(filters, use_soundex: true)
   end
 end

@@ -58,7 +58,6 @@ module NameSearchService
 
     def search_full_person_name(filters, use_soundex: true, paginator: nil)
       raw_query = search_full_raw_person_name(**filters)
-      raw_query = raw_query.order(Arel.sql('given_name, family_name'))
       raw_results = paginator ? paginator.call(raw_query) : raw_query
 
       if raw_results.exists?
@@ -76,33 +75,34 @@ module NameSearchService
       unless given_name.blank?
         full_soundex = given_name.soundex
         partial_soundex = given_name[0..2].soundex
-        name_codes = name_codes.where("given_name_code LIKE ? OR given_name_code LIKE ?", "#{full_soundex}%", "#{partial_soundex}%")
+        name_codes = name_codes.where('given_name_code LIKE ? OR given_name_code LIKE ?', "#{full_soundex}%", "#{partial_soundex}%")
       end
 
       unless family_name.blank?
         full_soundex = family_name.soundex
         partial_soundex = family_name[0..2].soundex
-        name_codes = name_codes.where("family_name_code LIKE ? OR family_name_code LIKE ?", "#{full_soundex}%", "#{partial_soundex}%")
+        name_codes = name_codes.where('family_name_code LIKE ? OR family_name_code LIKE ?', "#{full_soundex}%", "#{partial_soundex}%")
       end
 
       unless middle_name.blank?
         full_soundex = middle_name.soundex
         partial_soundex = middle_name[0..2].soundex
-        name_codes = name_codes.where("middle_name_code LIKE ? OR middle_name_code LIKE ?", "#{full_soundex}%", "#{partial_soundex}%")
+        name_codes = name_codes.where('middle_name_code LIKE ? OR middle_name_code LIKE ?', "#{full_soundex}%", "#{partial_soundex}%")
       end
 
       PersonName.joins(:person_name_code).merge(name_codes)
       
     end
 
-    def search_full_raw_person_name(given_name: nil, family_name: nil, middle_name: nil)
-      person_names = PersonName.all
-
-      person_names = person_names.where('given_name LIKE ?', "#{given_name}%") unless given_name.blank?
-      person_names = person_names.where('family_name LIKE ?', "#{family_name}%") unless family_name.blank?
-      person_names = person_names.where('middle_name LIKE ?', "#{middle_name}%") unless middle_name.blank?
-
-      person_names
+    def search_full_raw_person_name(given_name: nil, family_name: nil, middle_name: nil, gender: nil)
+      PersonName.joins([person: {patient: :encounters}]).where(
+        '(given_name LIKE ? OR given_name IS NULL) AND
+         (family_name LIKE ? OR family_name IS NULL) AND
+         (middle_name LIKE ? OR middle_name IS NULL) AND
+         (gender LIKE ? OR gender IS NULL)',
+        "#{given_name}%", "#{family_name}%", "#{middle_name}%", "#{gender}%"
+      ).order(Arel.sql("CASE WHEN encounter.location_id = #{User.current.location_id} THEN 0 ELSE 1 END,
+                        given_name, family_name"))
     end
   end
 end
