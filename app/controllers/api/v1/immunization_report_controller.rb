@@ -28,7 +28,7 @@ class Api::V1::ImmunizationReportController < ApplicationController
 
         while count < 13
           curr_date -= 1.month
-          months[curr_date.strftime('%Y%m')] = [
+          months[curr_date.strftime('%Y/%m')] = [
             curr_date.strftime('%B-%Y'),
             "#{curr_date.beginning_of_month} to #{curr_date.end_of_month}"
           ]
