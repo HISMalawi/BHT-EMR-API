@@ -312,6 +312,8 @@ Rails.application.routes.draw do
 
       post '/immunization/administer_vaccine', to: 'administer_vaccine#administer_vaccine'
       get '/immunization/stats', to: 'immunization_report#stats'
+      get '/immunization/months_picker', to: 'immunization_report#months_picker'
+      get '/immunization/weeks_picker', to: 'immunization_report#weeks_picker'
     end
   end
 
