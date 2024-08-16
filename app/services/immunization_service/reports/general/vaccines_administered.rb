@@ -46,14 +46,32 @@ module ImmunizationService
             
             age = calculate_age(birthdate, order_date)
             
+            relevant_data = {
+              order_id: order.order_id,
+              patient_id: order.patient_id,
+              drug_name: order.name,
+              drug_inventory_id: order.drug_inventory_id,
+              start_date: order.start_date,
+              age_at_order: age,
+              gender: order.gender,
+              changed_by: order.changed_by,
+              birthdate: order.birthdate,
+              birthdate_estimated: order.birthdate_estimated,
+              date_created: order.date_created,
+              creator: order.creator
+            }
+            
             if age < 1
-              less_than_one_year << order
+              less_than_one_year << relevant_data
             else
-              greater_than_one_year << order
+              greater_than_one_year << relevant_data
             end
           end
           
-          [{less_than_one_year: less_than_one_year}, {greater_than_one_year: greater_than_one_year}]
+          {
+            less_than_one_year: less_than_one_year,
+            greater_than_one_year: greater_than_one_year
+          }
         end
 
         def vaccine_encounter
