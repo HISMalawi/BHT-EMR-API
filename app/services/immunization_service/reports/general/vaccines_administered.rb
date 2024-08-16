@@ -25,7 +25,7 @@ module ImmunizationService
   
         def generate(start_date, end_date)
           base_query = Order.joins(:encounter, drug_order: :drug)
-                            .merge(treatment_encounter)
+                            .merge(vaccine_encounter)
                             .select('orders.*, drug_order.*, drug.*')
         
           base_query.where(start_date: start_date..end_date)
@@ -33,9 +33,10 @@ module ImmunizationService
                     .or(base_query.where('orders.start_date < ? AND orders.auto_expire_date > ?', start_date, end_date))
         end
 
-        def treatment_encounter
+        def vaccine_encounter
+          program = Program.find_by name: "IMMUNIZATION PROGRAM"
           Encounter.where(encounter_type: EncounterType.find_by_name('IMMUNIZATION RECORD'),
-                          program_id: 33)
+                          program_id: program.program_id)
         end
       end
     end
