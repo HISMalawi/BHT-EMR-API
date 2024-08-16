@@ -22,6 +22,15 @@ class Api::V1::ImmunizationReportController < ApplicationController
         render json: data 
     end
 
+    def drugs
+        drugs = ConceptSet.joins(concept: %i[concept_names drugs])
+                          .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
+                          .group('concept.concept_id, drug.name, drug.drug_id')
+                          .select('concept.concept_id, drug.name as name, drug.drug_id drug_id')
+        
+        render json: drugs
+    end
+
     def months_picker
         render json: months_generator()
     end
