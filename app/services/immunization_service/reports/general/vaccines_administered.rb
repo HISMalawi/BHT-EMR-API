@@ -24,12 +24,13 @@ module ImmunizationService
         end
   
         def generate(start_date, end_date)
-          base_query = Order.joins(:encounter,)
+          base_query = Order.joins(:encounter, drug_order: :drug)
                             .merge(treatment_encounter)
+                            .select('orders.*, drug_order.*, drug.*')
+        
           base_query.where(start_date: start_date..end_date)
                     .or(base_query.where(auto_expire_date: start_date..end_date))
-                    .or(base_query.where('start_date < ? AND auto_expire_date > ?', start_date, end_date))
-                    
+                    .or(base_query.where('orders.start_date < ? AND orders.auto_expire_date > ?', start_date, end_date))
         end
 
         def treatment_encounter
