@@ -22,7 +22,7 @@ class Api::V1::ImmunizationReportController < ApplicationController
         missing_params << "end_date" if end_date.blank?
       
         if missing_params.empty?
-            vaccines_administered_service = ImmunizationService::Reports::General::VaccinesAdministered.new(start_date:, end_date:)
+            vaccines_administered_service = ImmunizationService::Reports::General::VaccinesAdministered.new(start_date:, end_date:,)
             data = vaccines_administered_service.data()
     
             render json: { success: true, data: data }
