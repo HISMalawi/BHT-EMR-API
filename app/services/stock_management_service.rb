@@ -168,7 +168,12 @@ class StockManagementService
                      WHEN pharmacy_obs.quantity IS NULL
                      THEN 0
                    ELSE
-                     ABS(SUM(pharmacy_obs.quantity))
+                    ABS(SUM(pharmacy_obs.quantity))- (
+                      SELECT SUM(quantity)
+                      FROM pharmacy_obs
+                      WHERE transaction_reason LIKE "%Reversing voided drug dispensation%"
+                      AND batch_item_id = pharmacy_batch_items.id
+                    )
                    END AS dispensed_quantity,
                    pharmacy_batches.batch_number,
                    COUNT(*) OVER() AS total_count
