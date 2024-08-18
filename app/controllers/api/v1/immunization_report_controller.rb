@@ -15,8 +15,9 @@ class Api::V1::ImmunizationReportController < ApplicationController
 
     def vaccines_administered
         start_date, end_date = params.require(%i[end_date start_date])
+        location_id = User.current.location_id
       
-        vaccines_administered_service = ImmunizationService::Reports::General::VaccinesAdministered.new(start_date:, end_date:,)
+        vaccines_administered_service = ImmunizationService::Reports::General::VaccinesAdministered.new(start_date:, end_date:, location_id:)
         data = vaccines_administered_service.data()
     
         render json: data 

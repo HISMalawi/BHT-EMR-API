@@ -8,9 +8,10 @@ module ImmunizationService
         attr_reader :start_date, :end_date, :age_group
         require 'date'
 
-        def initialize(start_date: nil, end_date: nil, **kwargs)
+        def initialize(start_date: nil, end_date: nil, location_id: nil, **kwargs)
           @start_date = start_date ? Date.parse(start_date).beginning_of_day : Date.today.beginning_of_day
           @end_date = end_date ? Date.parse(end_date).end_of_day : Date.today.end_of_day
+          @location_id = location_id
           @age_group = kwargs[:age_group] ? JSON.parse(kwargs[:age_group]) : ['all']
         end
 
@@ -29,9 +30,12 @@ module ImmunizationService
         end
         
         def generate(start_date, end_date)
-          base_query = Order.joins(:encounter, patient: :person, drug_order: :drug)
+          base_query = Order.joins(:encounter)
+                            .joins("LEFT JOIN obs ON obs.encounter_id = encounter.encounter_id")
+                            .joins(patient: :person, drug_order: :drug)
                             .merge(vaccine_encounter)
-                            .select('orders.*, drug_order.*, drug.*', 'person.*')
+                            .where("obs.location_id = ?", @location_id)
+                            .select('orders.*, drug_order.*, drug.*', 'person.*', 'obs.*')
           
           orders = base_query.where(start_date: start_date..end_date)
                              .or(base_query.where(auto_expire_date: start_date..end_date))
