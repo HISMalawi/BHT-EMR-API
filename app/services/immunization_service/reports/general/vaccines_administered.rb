@@ -24,9 +24,16 @@ module ImmunizationService
         def find_report
           generate(@start_date, @end_date)
         end
-
+        
         def calculate_age(birthdate, reference_date)
+          return nil if birthdate.nil? || reference_date.nil?
+          
+          birthdate = Date.parse(birthdate) if birthdate.is_a?(String)
+          reference_date = Date.parse(reference_date) if reference_date.is_a?(String)
+          
           reference_date.year - birthdate.year - ((reference_date.month > birthdate.month || (reference_date.month == birthdate.month && reference_date.day >= birthdate.day)) ? 0 : 1)
+        rescue Date::Error
+          nil
         end
         
         def generate(start_date, end_date)
@@ -35,21 +42,22 @@ module ImmunizationService
                             .joins(patient: :person, drug_order: :drug)
                             .merge(vaccine_encounter)
                             .where("obs.location_id = ?", @location_id)
+                            .where("obs.concept_id = ?", ConceptName.find_by_name('Batch Number').concept_id)
                             .select('orders.*, drug_order.*, drug.*', 'person.*', 'obs.*')
-          
+        
           orders = base_query.where(start_date: start_date..end_date)
                              .or(base_query.where(auto_expire_date: start_date..end_date))
                              .or(base_query.where('orders.start_date < ? AND orders.auto_expire_date > ?', start_date, end_date))
-          
+        
           less_than_one_year = []
           greater_than_one_year = []
-          
+        
           orders.each do |order|
-            birthdate = order.birthdate.is_a?(String) ? Date.parse(order.birthdate) : order.birthdate
-            order_date = order.start_date.is_a?(String) ? Date.parse(order.start_date) : order.start_date
-            
+            birthdate = order.birthdate
+            order_date = order.start_date
+        
             age = calculate_age(birthdate, order_date)
-            
+        
             relevant_data = {
               order_id: order.order_id,
               patient_id: order.patient_id,
@@ -64,14 +72,17 @@ module ImmunizationService
               date_created: order.date_created,
               creator: order.creator
             }
-            
-            if age < 1
+        
+            if age.nil?
+              # Handle cases where age couldn't be calculated
+              puts "Warning: Could not calculate age for order #{order.order_id}"
+            elsif age < 1
               less_than_one_year << relevant_data
             else
               greater_than_one_year << relevant_data
             end
           end
-          
+        
           {
             less_than_one_year: less_than_one_year,
             greater_than_one_year: greater_than_one_year
