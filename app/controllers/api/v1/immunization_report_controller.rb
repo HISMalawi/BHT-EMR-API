@@ -1,7 +1,7 @@
 class Api::V1::ImmunizationReportController < ApplicationController
+  before_action :report_params , only: [:stats, :vaccines_administered]
 
   def stats
-    report_params(%i[end_date start_date])
     DashboardStatsJob.perform_later(User.current.location_id)
   end
 
