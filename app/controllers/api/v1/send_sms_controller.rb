@@ -41,7 +41,7 @@ class Api::V1::SendSmsController < ApplicationController
         if key_value_match && params.key?(key_value_match[1])
           key = key_value_match[1]
           value = params[key]
-          indent = line[/^\s*/]  # Preserve the indentation
+          indent = line[/^\s*/]
           line = "#{indent}#{key}: #{value}\n"
         end
   
