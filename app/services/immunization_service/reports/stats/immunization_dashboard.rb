@@ -38,7 +38,7 @@ module ImmunizationService
           def fetch_immunizations
             base_query
               .where(
-                encounter_type: { name: 'IMMUNIZATION RECORD' },
+                encounter_type: { name: 'TREATMENT' },
                 concept_name: { name: 'Batch Number' },
                 obs: { obs_datetime: @start_date..@end_date }
               )
