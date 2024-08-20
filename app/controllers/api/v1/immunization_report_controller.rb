@@ -16,8 +16,9 @@ class Api::V1::ImmunizationReportController < ApplicationController
     def vaccines_administered
         # Ensure required parameters are present
         # get_report_range_params
-        start_date = params.require(:start_date)
-        end_date = params.require(:end_date)
+        report_params = params.permit(%i[start_date end_date ])
+        start_date = report_params.require(:start_date)
+        end_date = report_params.require(:end_date)
         
         # Get the current location id
         location_id = User.current.location_id
@@ -32,10 +33,6 @@ class Api::V1::ImmunizationReportController < ApplicationController
         data = vaccines_administered_service.data()
         
         render json: data
-    end
-
-    def get_report_range_params     
-        params.permit(%i[ start_date end_date ])
     end
 
     def drugs
