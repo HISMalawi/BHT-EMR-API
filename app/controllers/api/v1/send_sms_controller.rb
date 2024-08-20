@@ -7,7 +7,6 @@ class Api::V1::SendSmsController < ApplicationController
 
   def index
     return render json: { message: "SMS reminder turned off" } if sms_reminder_off?
-
     output = process_sms_request
     render json: { message: output }
   end
@@ -19,12 +18,13 @@ class Api::V1::SendSmsController < ApplicationController
 
   def show
     config_file = Rails.root.join('config', 'application.yml')
-    config = YAML.load_file(config_file)       
-      
-    if config.key?('development')
-      render json: config['development']
+    config = YAML.load_file(config_file) 
+    enviroment = active_enviroment
+
+    if config.key?(enviroment)
+      render json: config[enviroment]
     else
-      render json: { error: 'Development configuration not found' }, status: :not_found
+      render json: { error: "#{enviroment} configuration not found" }, status: :not_found
     end
   rescue Errno::ENOENT
     render json: { error: 'Configuration file not found' }, status: :not_found
@@ -32,18 +32,32 @@ class Api::V1::SendSmsController < ApplicationController
 
   def update
     config_file = Rails.root.join('config', 'application.yml')
-    config = YAML.load_file(config_file)
-
-    params.each do |key, value|
-      config['development'][key] = value if config['development'].key?(key)
+    temp_file = Rails.root.join('config', 'application_temp.yml')
+  
+    File.open(temp_file, 'w') do |file|
+      File.foreach(config_file) do |line|
+        key_value_match = line.match(/^\s*(\w+):\s*(.*)$/)
+  
+        if key_value_match && params.key?(key_value_match[1])
+          key = key_value_match[1]
+          value = params[key]
+          indent = line[/^\s*/]  # Preserve the indentation
+          line = "#{indent}#{key}: #{value}\n"
+        end
+  
+        file.write(line)
+      end
     end
-
-    File.open(config_file, 'w') { |f| f.write(config.to_yaml) }
-
-    render json: config['development'], status: :ok
+  
+    File.rename(temp_file, config_file)
+  
+    config = YAML.load_file(config_file)
+    enviroment = active_enviroment
+    render json: config[enviroment], status: :ok
   rescue StandardError => e
     render json: { error: e.message }, status: :unprocessable_entity
   end
+  
 
   private
 
@@ -67,6 +81,21 @@ class Api::V1::SendSmsController < ApplicationController
                               person_phone: patient.phone
                             }
                           end
+  end
+
+  def active_enviroment
+
+    environment = Rails.env
+    case environment
+
+    when "development"
+      return 'development'
+    when "production"
+      return 'production'
+    when "test"
+      return 'test'
+    end
+
   end
 
   def patients_phone
@@ -114,7 +143,8 @@ class Api::V1::SendSmsController < ApplicationController
   def sms_reminder_off?
     config_file = Rails.root.join('config', 'application.yml')
     config = YAML.load_file(config_file)
-    config.dig('development', 'sms_reminder') == 'false'
+    enviroment = active_enviroment
+    config.dig(enviroment, 'sms_reminder') == 'false'
   end
 
   def process_sms_request
