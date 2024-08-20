@@ -19,12 +19,12 @@ class Api::V1::SendSmsController < ApplicationController
   def show
     config_file = Rails.root.join('config', 'application.yml')
     config = YAML.load_file(config_file) 
-    enviroment = active_enviroment
+    environment = Rails.env
 
-    if config.key?(enviroment)
-      render json: config[enviroment]
+    if config.key?(environment)
+      render json: config[environment]
     else
-      render json: { error: "#{enviroment} configuration not found" }, status: :not_found
+      render json: { error: "#{environment} configuration not found" }, status: :not_found
     end
   rescue Errno::ENOENT
     render json: { error: 'Configuration file not found' }, status: :not_found
@@ -52,8 +52,8 @@ class Api::V1::SendSmsController < ApplicationController
     File.rename(temp_file, config_file)
   
     config = YAML.load_file(config_file)
-    enviroment = active_enviroment
-    render json: config[enviroment], status: :ok
+    environment = Rails.env
+    render json: config[environment], status: :ok
   rescue StandardError => e
     render json: { error: e.message }, status: :unprocessable_entity
   end
@@ -83,20 +83,6 @@ class Api::V1::SendSmsController < ApplicationController
                           end
   end
 
-  def active_enviroment
-
-    environment = Rails.env
-    case environment
-
-    when "development"
-      return 'development'
-    when "production"
-      return 'production'
-    when "test"
-      return 'test'
-    end
-
-  end
 
   def patients_phone
     patient_details = { demographics: {}, cell_phone: 0 }
@@ -143,8 +129,8 @@ class Api::V1::SendSmsController < ApplicationController
   def sms_reminder_off?
     config_file = Rails.root.join('config', 'application.yml')
     config = YAML.load_file(config_file)
-    enviroment = active_enviroment
-    config.dig(enviroment, 'sms_reminder') == 'false'
+    environment = Rails.env
+    config.dig(environment, 'sms_reminder') == 'false'
   end
 
   def process_sms_request
