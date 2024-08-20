@@ -5,12 +5,25 @@ class Api::V1::ImmunizationReportController < ApplicationController
     DashboardStatsJob.perform_later(User.current.location_id)
   end
 
+  def drugs
+    drugs = ConceptSet.joins(concept: %i[concept_names drugs])
+                      .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
+                      .group('concept.concept_id, drug.name, drug.drug_id')
+                      .select('concept.concept_id, drug.name as name, drug.drug_id drug_id')
+    
+    render json: drugs
+  end
+
   def vaccines_administered
     start_date = report_params[:start_date]
     end_date = report_params[:end_date]
 
+    # Get the current location id
+    location_id = User.current.location_id
+
     vaccines_administered_service = ImmunizationService::Reports::General::VaccinesAdministered.new(start_date:,
-                                                                                                    end_date:)
+                                                                                                    end_date:,
+                                                                                                    location_id:)
     data = vaccines_administered_service.data
 
     render json: data
