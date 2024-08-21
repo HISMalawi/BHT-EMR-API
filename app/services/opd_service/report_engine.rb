@@ -24,11 +24,11 @@ module OpdService
     end
 
     def mahis_dashboard(date:)
-      report_engine('MAHIS_DASHBOARD').new(date: date).stats
+      REPORTS['MAHIS_DASHBOARD'].new(date:).stats
     end
 
     def mahis_dashboard_indicators(date:, **kwargs)
-      report_engine('MAHIS_DASHBOARD').new(date: date).indicators(**kwargs)
+      REPORTS['MAHIS_DASHBOARD'].new(date:).indicators(**kwargs)
     end
 
     # Retrieves the next encounter for bound patient

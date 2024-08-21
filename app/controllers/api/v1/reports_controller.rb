@@ -26,14 +26,14 @@ module Api
       end
 
       def mahis_dashboard
-        date = params[date] || Date.today
+        date = params[:date]&.to_date || Date.today
         stats = service.mahis_dashboard(date:)
 
         render json: stats
       end
 
       def mahis_dashboard_indicators
-        date = params[date] || Date.today
+        date = params[:date]&.to_date || Date.today
         options = params[options]&.split(',') || []
         stats = service.mahis_dashboard_indicators(date:, options:)
 

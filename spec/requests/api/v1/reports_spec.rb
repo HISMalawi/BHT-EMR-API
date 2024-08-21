@@ -45,6 +45,50 @@ RSpec.describe 'api/v1/reports', type: :request do
     end
   end
 
+  path '/api/v1/mahis_dashboard' do
+    get('mahis_dashboard report') do
+      tags TAG
+      description TAG_DESCRIPTION
+      consumes 'application/json'
+      produces 'application/json'
+      parameter name: :date, in: :query, type: :string, format: :date, example: '2022-10-1', required: true,
+      parameter name: :program_id, in: :query, type: :integer, example: 1, required: true,
+      security [api_key: []]
+      response(200, 'successful') do
+        schema type: :object, properties: {
+          total: { type: :integer },
+          awaiting_vitals: { type: :integer },
+          awaiting_consultation: { type: :integer },
+          awaiting_dispensation: { type: :integer }
+        }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/mahis_dashboard_indicators' do
+    get('mahis_dashboard_indicators report') do
+      tags TAG
+      description TAG_DESCRIPTION
+      consumes 'application/json'
+      produces 'application/json'
+      parameter name: :date, in: :query, type: :string, format: :date, example: '2022-12-25', required: true
+      parameter name: :program_id, in: :query, type: :integer, example: 1, required: true,
+      parameter name: :options, in: :query, type: :string, example: 'REGISTRATION,VITALS,CONSULTATION', required: false,
+      security [api_key: []]
+      response(200, 'successful') do
+        schema type: :array, items: {
+          type: :object, properties: {
+            name: { type: :string },
+            status: { type: :string },
+            waiting_time: { type: :string }
+          }
+        }
+        run_test!
+      end
+    end
+  end
+
   path '/api/v1/latest_regimen_dispensed' do
     get 'latest_regimen_dispensed report' do
       tags TAG
