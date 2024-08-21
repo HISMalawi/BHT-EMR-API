@@ -207,7 +207,12 @@ class StockManagementService
       end
     end
   end
-
+  def update_batch_number(batch_number, batch_id)
+    ActiveRecord::Base.transaction do
+      item = PharmacyBatch.find(batch_id)
+      item.update(batch_number: batch_number)
+    end
+  end
   def process_edit_batch_item(batch_item_id, params, verif_id: nil)
     item = PharmacyBatchItem.find(batch_item_id)
     reason = params.delete(:reason)
@@ -230,7 +235,6 @@ class StockManagementService
                                                                stock_verification_id: verif_id)
       end
     end
-
     unless item.update(params)
       error = InvalidParameterError.new('Failed to update batch item')
       error.model_errors = item.errors
