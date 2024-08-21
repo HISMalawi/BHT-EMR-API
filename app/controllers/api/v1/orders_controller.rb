@@ -6,7 +6,6 @@ module Api
   module V1
     class OrdersController < ApplicationController
       before_action :authenticate, except: %i[print_radiology_order]
-      after_action :refresh_dashboard, only: %i[destroy]
 
       def index; end
 
@@ -79,10 +78,6 @@ module Api
       def destroy_params
         params.require(%i[id reason])
         params.permit(%i[id reason])
-      end
-
-      def refresh_dashboard
-        ImmunizationReportJob.perform_later(1.year.ago.to_date.to_s, Date.today.to_s, User.current.location_id)
       end
     end
   end
