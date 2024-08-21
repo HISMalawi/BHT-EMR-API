@@ -6,7 +6,8 @@ require 'user_service'
 class ApplicationController < ActionController::API
   before_action :check_location
   before_action :authenticate
-
+  after_action :refresh_dashboard, if: :refresh_dashboard_needed?
+      
   protected
 
   include RequireParams
@@ -82,4 +83,27 @@ class ApplicationController < ActionController::API
 
     [inexact_filters[0].join(' AND ')] + inexact_filters[1]
   end
+
+  private 
+
+  def refresh_dashboard
+    ImmunizationReportJob.perform_later(1.year.ago.to_date.to_s, Date.today.to_s, User.current.location_id)
+  end
+
+  def refresh_dashboard_needed?
+    patient_programs_create_action? || administer_vaccine_action? || encounters_destroy_action?
+  end
+
+  def patient_programs_create_action?
+    controller_name == 'patient_programs' && action_name == 'create'
+  end
+
+  def administer_vaccine_action?
+    controller_name == 'administer_vaccine' && action_name == 'administer_vaccine'
+  end
+
+  def encounters_destroy_action?
+    controller_name == 'encounters' && action_name == 'destroy'
+  end
+
 end
