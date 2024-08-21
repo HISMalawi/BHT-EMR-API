@@ -149,7 +149,7 @@ module ImmunizationService
               administered_by: vaccine_given&.[](:administered_by),
               location_administered: vaccine_given&.[](:location_administered),
               vaccine_batch_number: vaccine_given&.[](:batch_number),
-              order_id: vaccine_given&.[](:order_id)
+              encounter_id: vaccine_given&.[](:encounter_id)
             }
           end
         }
@@ -165,12 +165,12 @@ module ImmunizationService
                  .joins(order: :drug_order)
                  .where(drug_order: { drug_inventory_id: drugs }, person_id: patient_id)
                  .select(:obs_datetime, :drug_inventory_id, :order_id, :location_id,
-                         :creator, :given_name, :family_name).map do |obs|
+                         :creator, :given_name, :family_name, :encounter_id).map do |obs|
         {
           obs_datetime: obs.obs_datetime,
           drug_inventory_id: obs.drug_inventory_id,
           batch_number: get_batch_id(obs.order_id),
-          order_id: obs.order_id,
+          encounter_id: obs.encounter_id,
           administered_by: {
             person_id: obs.creator,
             given_name: obs.given_name,
