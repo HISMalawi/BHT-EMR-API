@@ -5,7 +5,7 @@ module Api
         after_action :immunization_cache_update, only: [:administer_vaccine]
 
         def administer_vaccine
-          drug_orders, program_id = params.require(%i[ encounter_id drug_orders program_id])
+          encounter_id, drug_orders, program_id = params.require(%i[ encounter_id drug_orders program_id])
 
           program = Program.find(program_id)
 
@@ -23,11 +23,13 @@ module Api
 
           drug_orders.each do |drug_order|
             #Verify if batch number exists in pharmacy batches
-            unless PharmacyBatch.find_by(batch_number: drug_order["batch_number"]).present? || drug_order["batch_number"] == "unknown"
+            unless PharmacyBatch.find_by(batch_number: drug_order["batch_number"]).present? || drug_order["batch_number"] == "Unknown"
               return render json: { errors: "Batch number #{drug_order["batch_number"]} does not exist and its not even set to unknown"},
                         status: :bad_request
             end
           end
+
+          debugger
         
 
           orders = DrugOrderService.create_drug_orders(encounter: , drug_orders:)
