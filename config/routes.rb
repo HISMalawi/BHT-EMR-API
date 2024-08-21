@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'sidekiq/web'
 require 'sidekiq/cron/web'
 
@@ -32,14 +33,13 @@ Rails.application.routes.draw do
         post '/activate', to: 'users#activate'
         post '/deactivate', to: 'users#deactivate'
         put '/update_username', to: 'users#update_username'
-
       end
 
       resources :hts_reports, only: %i[index]
       get '/hts_stats' => 'hts_reports#daily_stats'
       get '/valid_provider_id', to: 'people#valid_provider_id'
       get '/next_hts_linkage_ids_batch', to: 'people#next_hts_linkage_ids_batch'
-      
+
       # Routes are for immunization application
       resources :immunization_reports, only: %i[index]
 
@@ -331,6 +331,8 @@ Rails.application.routes.draw do
   get '/api/v1/cervical_cancer_screening' => 'api/v1/cervical_cancer_screening#show'
 
   get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
+  get '/api/v1/mahis_dashboard' => 'api/v1/reports#mahis_dashboard'
+  get '/api/v1/mahis_dashboard_indicators' => 'api/v1/reports#mahis_dashboard_indicators'
   get '/api/v1/dashboard_stats_for_syndromic_statistics' => 'api/v1/reports#syndromic_statistics'
   post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
   post '/api/v1/patient_art_vl_dates' => 'api/v1/reports#patient_art_vl_dates'
