@@ -213,6 +213,28 @@ class StockManagementService
       item.update(batch_number: batch_number)
     end
   end
+  def update_dispose_item(quantity, batch_item_id)
+    ActiveRecord::Base.transaction do
+      reallocation_item = PharmacyBatchItemReallocation.where(batch_item_id:batch_item_id)
+      reallocation_item.update(quantity: quantity.to_f)
+      pharmacy_item = Pharmacy.where(pharmacy_encounter_type: 3, batch_item_id:batch_item_id)
+      pharmacy_item.update(quantity: -quantity.to_f)
+    end
+  end
+  def update_dispose_item(quantity, batch_item_id)
+    ActiveRecord::Base.transaction do
+      reallocation_item = PharmacyBatchItemReallocation.where(batch_item_id:batch_item_id)
+      reallocation_item.update(quantity: quantity.to_f)
+      pharmacy_item = Pharmacy.where(pharmacy_encounter_type: 3, batch_item_id:batch_item_id)
+      pharmacy_item.update(quantity: -quantity.to_f)
+    end
+  end
+  def update_vvm_stage(vvm, batch_item_id)
+    ActiveRecord::Base.transaction do
+      item = PharmacyBatchVvm.where(batch_item_id:batch_item_id)
+      item.update(vvm: vvm)
+    end
+  end
   def process_edit_batch_item(batch_item_id, params, verif_id: nil)
     item = PharmacyBatchItem.find(batch_item_id)
     reason = params.delete(:reason)
@@ -301,16 +323,9 @@ class StockManagementService
     end
   end
   def update_batch_item!(batch_item, quantity)
-    if quantity.negative? && batch_item.current_quantity < quantity.abs
-      raise InvalidParameterError, <<~ERROR
-        Debit amount (#{quantity.abs}) exceeds current quantity (#{batch_item.current_quantity}) on item ##{batch_item.id}
-      ERROR
-    end
-
     batch_item.with_lock do
       batch_item.current_quantity += quantity.to_f
       batch_item.save
-      validate_activerecord_object(batch_item)
     end
 
     batch_item
