@@ -19,6 +19,13 @@ Rails.application.routes.draw do
         url
       end
 
+      get  '/mdr/regimen/create', to: 'mdr#new_regimen'
+      get  '/mdr/regimen/custom/options', to: 'mdr#custom_regimen_options'
+      get  '/mdr/regimen/types', to: 'mdr#regimen_types'
+      post '/mdr/regimen/create', to: 'mdr#create_custom_regimen'
+      get  '/mdr/regimen/status', to: 'mdr#active_regimen'
+      get  '/mdr/regimen/phase/next', to: 'mdr#next_phase'
+
       # Routes down here ... Best we move everything above into own modules
       resources :internal_sections, only: %i[index show create update destroy]
       resources :data_cleaning_supervisions, only: %i[index show create update destroy]
@@ -72,6 +79,7 @@ Rails.application.routes.draw do
                        request.params
         end)
         get '/tpt_status' => 'patients#tpt_status'
+        get '/most_recent_lab_order', to: 'patients#most_recent_lab_order'
         get '/drugs_received', to: 'patients#drugs_received'
         get '/last_drugs_received', to: 'patients#last_drugs_received'
         get '/drugs_orders_by_program', to: 'patients#drugs_orders_by_program'
@@ -88,6 +96,10 @@ Rails.application.routes.draw do
         post '/npid', to: 'patients#assign_npid'
         post '/remaining_bp_drugs', to: 'patients#remaining_bp_drugs'
         post '/update_or_create_htn_state', to: 'patients#update_or_create_htn_state'
+        get '/visits/after_last_outcome', to: 'patients#visits_after_last_outcome'
+        get '/tb_negative_minor', to: 'patients#tb_negative_minor'
+        get 'assign_national_id', to: 'patients#assign_national_identifier'
+        get 'update_national_id', to: 'patients#update_national_identifier'
         resources :patient_programs, path: :programs, controller: 'patients/programs'
       end
 
@@ -157,6 +169,7 @@ Rails.application.routes.draw do
         get 'regimen_starter_packs' => 'program_regimens#find_starter_pack'
         get 'custom_regimen_ingredients' => 'program_regimens#custom_regimen_ingredients'
         get 'custom_tb_ingredients' => 'program_regimens#custom_tb_ingredients'
+        get 'tb_regimen_group' => 'program_regimens#get_tb_regimen_group'
         get 'defaulter_list' => 'program_patients#defaulter_list'
         get '/barcodes/:barcode_name', to: 'program_barcodes#print_barcode'
         post 'void_arv_number/:arv_number' => 'program_patients#void_arv_number'
@@ -200,6 +213,7 @@ Rails.application.routes.draw do
         get '/lab_tests/orders_without_results' => 'lab_test_orders#orders_without_results'
         get '/lab_tests/measures' => 'lab_test_types#measures'
         get '/labs/:resource', to: 'lab#dispatch_request'
+        get '/patient_state', to: 'patient_states#patient_state'
         resources :program_reports, path: 'reports'
       end
 
@@ -303,6 +317,7 @@ Rails.application.routes.draw do
   end
 
   root to: 'static#index'
+  post '/api/v1/concept/find_by_ids', to: 'api/v1/concepts#find_names_by_ids'
   get '/api/v1/archiving_candidates' => 'api/v1/patients#find_archiving_candidates'
   get '/api/v1/_health' => 'healthcheck#index'
   post '/api/v1/auth/login' => 'api/v1/users#login'
@@ -333,6 +348,7 @@ Rails.application.routes.draw do
   get '/api/v1/art_data_cleaning_tools' => 'api/v1/cleaning#art_tools'
   get '/api/v1/anc_data_cleaning_tools' => 'api/v1/cleaning#anc_tools'
   get '/api/v1/its_data_cleaning_tools' => 'api/v1/cleaning#its_tools'
+  get '/api/v1/tb_data_cleaning_tools' => 'api/v1/cleaning#tb_tools'
 
   # OPD reports
   get '/api/v1/registration' => 'api/v1/reports#registration'
@@ -371,6 +387,7 @@ Rails.application.routes.draw do
   get '/api/v1/disaggregated_regimen_distribution', to: 'api/v1/reports#disaggregated_regimen_distribution'
   post '/api/v1/tx_mmd_client_level_data', to: 'api/v1/reports#tx_mmd_client_level_data'
   get '/api/v1/clients', to: 'api/v1/people#list'
+  get '/api/v1/tb_clients', to: 'api/v1/people#tb_list'
   get '/api/v1/tb_prev', to: 'api/v1/reports#tb_prev'
   get '/api/v1/moh_tpt', to: 'api/v1/reports#moh_tpt'
   get '/api/v1/tpt_prescription_count' => 'api/v1/patients#tpt_prescription_count'

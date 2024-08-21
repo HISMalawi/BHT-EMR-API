@@ -2,6 +2,7 @@
 
 include TimeUtils
 
+module TbService
 module TbQueries
   class EncountersQuery
     def initialize
@@ -17,4 +18,5 @@ module TbQueries
                       encounter_datetime: start_time..end_time)
     end
   end
+end
 end

@@ -99,6 +99,23 @@ module Api
         render json: clients
       end
 
+      def tb_list
+        clients = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT p.person_id, 
+                 CONCAT(pn.given_name, ' ', pn.family_name) AS name,
+                 p.gender, TIMESTAMPDIFF(YEAR, p.birthdate, CURDATE()) AS age,
+                 a.identifier 
+          FROM person p
+          INNER JOIN person_name pn ON pn.person_id = p.person_id
+          LEFT JOIN patient_identifier a ON a.patient_id = p.person_id
+          AND a.identifier_type IN (7, 11) AND a.voided = 0
+          WHERE p.person_id IN(#{params[:person_ids]})
+          GROUP BY p.person_id ORDER BY a.date_created DESC;
+        SQL
+
+        render json: clients
+      end
+
       private
 
       PERSON_ATTRIBUTES = %i[
