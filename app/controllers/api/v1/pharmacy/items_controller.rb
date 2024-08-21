@@ -23,12 +23,15 @@ module Api
         end
 
         def update
-          permitted_params = params.permit(%i[current_quantity delivered_quantity pack_size expiry_date delivery_date, unit_doses,vvm_stage,manufacture,
-                                             dosage_form, reason])
+          permitted_params = params.permit(%i[current_quantity delivered_quantity pack_size expiry_date delivery_date unit_doses vvm_stage manufacture
+                                             dosage_form drug_id reason])
           raise InvalidParameterError, 'reason is required' if permitted_params[:reason].blank?
 
-          item = service.edit_batch_item(params[:id], permitted_params)
+          if params[:batch_number].present? && params[:pharmacy_batch_id].present?
+              service.update_batch_number(params[:batch_number], params[:pharmacy_batch_id])
+          end
 
+          item = service.edit_batch_item(params[:id], permitted_params)
           if item.errors.empty?
             render json: item
           else
