@@ -91,7 +91,7 @@ module ImmunizationService
 
         def vaccine_encounter
           program = Program.find_by name: "IMMUNIZATION PROGRAM"
-          Encounter.where(encounter_type: EncounterType.find_by_name('IMMUNIZATION RECORD'),
+          Encounter.where(encounter_type: EncounterType.find_by_name('TREATMENT'),
                           program_id: program.program_id)
         end
       end
