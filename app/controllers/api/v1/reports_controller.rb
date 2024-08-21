@@ -34,7 +34,7 @@ module Api
 
       def mahis_dashboard_indicators
         date = params[:date]&.to_date || Date.today
-        options = params[options]&.split(',') || []
+        options = params[:options]&.split(',') || []
         stats = service.mahis_dashboard_indicators(date:, options:)
 
         render json: stats
