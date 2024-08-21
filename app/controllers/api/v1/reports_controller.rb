@@ -25,6 +25,21 @@ module Api
         end
       end
 
+      def mahis_dashboard
+        date = params[date] || Date.today
+        stats = service.mahis_dashboard(date:)
+
+        render json: stats
+      end
+
+      def mahis_dashboard_indicators
+        date = params[date] || Date.today
+        options = params[options]&.split(',') || []
+        stats = service.mahis_dashboard_indicators(date:, options:)
+
+        render json: stats
+      end
+
       def with_nids
         stats = service.with_nids
         render json: stats

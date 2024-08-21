@@ -11,7 +11,7 @@ module OpdService
         @end_date = ActiveRecord::Base.connection.quote(date.strftime('%Y-%m-%d 23:59:59'))
       end
 
-      def dashboard_stats
+      def stats
         data = daily_data
         {
           total: data.count,
@@ -21,19 +21,7 @@ module OpdService
         }
       end
 
-      def all_clients
-        data = daily_data
-        data.map do |d|
-          {
-            name: d['patient_name'],
-            status: ENCOUNTEMAP[d['encounter_type'].to_sym],
-            waiting_time: TimeUtils.smart_time_difference(start_time: d['encounter_datetime'].to_s,
-                                                          end_time: Time.now.to_s)
-          }
-        end
-      end
-
-      def awaiting_clients(options = [])
+      def indicators(options:)
         data = daily_data(options)
         data.map do |d|
           {
