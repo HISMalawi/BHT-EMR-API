@@ -43,6 +43,7 @@ module ImmunizationService
                             .merge(vaccine_encounter)
                             .where("obs.location_id = ?", @location_id)
                             .where("obs.concept_id = ?", ConceptName.find_by_name('Batch Number').concept_id)
+                            .where("obs.voided = ?", 0)
                             .select('orders.*, drug_order.*, drug.*', 'person.*', 'obs.*')
         
           orders = base_query.where(start_date: start_date..end_date)
