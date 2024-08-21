@@ -133,6 +133,38 @@ module Api
         end
       end
 
+      def assign_national_identifier
+        patient_id = params[:patient_id]
+        date = params[:date] || Date.today
+        number = params[:number]
+
+        begin
+          number = TbNumberService.assign_national_id(patient_id, date, number)
+          render json: number, status: :created
+        rescue TbNumberService::DuplicateIdentifierError
+          render status: :conflict
+        end
+      end
+
+      def update_national_identifier
+        patient_id = params[:patient_id]
+        date = params[:date] || Date.today
+        number = params[:number]
+
+        begin
+          number = TbNumberService.update_national_id(patient_id, date, number)
+          render json: number, status: :created
+        rescue TbNumberService::DuplicateIdentifierError
+          render status: :conflict
+        end
+      end
+
+      def most_recent_lab_order
+        patient_id, program_id, date = params.require(%i[patient_id program_id date])
+        render json: service.most_recent_lab_order(patient_id:,
+                                                   program_id:, date:)
+      end
+
       def tpt_status
         patient_id = params.require(:patient_id)
         date = params[:date]&.to_date || Date.today
@@ -141,11 +173,12 @@ module Api
 
       def assign_tb_number
         patient_id = params[:patient_id]
-        date = params[:date]&.to_date || Date.today
+        date = params[:date] || Date.today
         number = params[:number]
+        type = params[:id_type]
 
         begin
-          number = TbNumberService.assign_tb_number(patient_id, date, number)
+          number = TbNumberService.assign_tb_number(patient_id, date, number, type)
           render json: number, status: :created
         rescue TbNumberService::DuplicateIdentifierError
           render status: :conflict
@@ -282,6 +315,23 @@ module Api
                .distinct.order(patient_id: :asc).first.id
       end
 
+      def visits_after_last_outcome
+        program_id = params[:program]
+        date = params[:date]
+
+        render json: service.find_patient_visits_dates_since_last_outcome(patient.patient_id, program_id, date)
+      end
+
+      def tb_negative_minor
+        patient_id = params.require %i[patient_id]
+        response = tb_patient_engine.tb_negative_minor(patient_id)
+        if response
+          render json: response, status: :ok
+        else
+          render status: :no_content
+        end
+      end
+
       private
 
       def patient
@@ -363,6 +413,11 @@ module Api
 
       def person_service
         PersonService.new
+      end
+
+      def tb_patient_engine
+        program = Program.find_by(name: 'TB PROGRAM')
+        TbService::PatientsEngine.new program:
       end
 
       def ait_intergration_service(patient_id)

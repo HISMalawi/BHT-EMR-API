@@ -5,41 +5,24 @@ module TbService
   class PatientVisit
     include ModelUtils
 
+    delegate :get, to: :patient_observation
+
     attr_reader :patient, :date
 
     def initialize(patient, date)
       @patient = patient
       @date = date
+      @vital_stats = TbService::PatientVitalStats.new(@patient)
+      @visit_drugs = TbService::PatientDrugs.new(@patient, @date)
     end
 
-    def guardian_present?
-      @guardian_present ||= Observation.where(concept: concept('Guardian Present'),
-                                              person: patient.person,
-                                              value_coded: concept('Yes').concept_id)\
-                                       .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
-                                       .exists?
-    end
-
-    def patient_present?
-      @patient_present ||= Observation.where(concept: concept('Patient Present'),
-                                             person: patient.person,
-                                             value_coded: concept('Yes').concept_id)\
-                                      .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
-                                      .exists?
-    end
-
-    def outcome
-      return @outcome if @outcome
-
-      outcome = ActiveRecord::Base.connection.select_one(
-        "SELECT patient_outcome(#{patient.id}, DATE('#{date.to_date}')) as outcome"
-      )['outcome']
-
-      @outcome = outcome.casecmp?('UNKNOWN') ? 'Unk' : outcome
-    end
-
-    def outcome_date
-      date
+    def patient_outcome
+      begin
+        state = patient_state_service.find_patient_state(get_program, @patient, @date)
+        state.nil? ? blank_outcome : state
+      rescue
+        blank_outcome
+      end
     end
 
     def next_appointment
@@ -69,138 +52,52 @@ module TbService
     end
 
     def height
-      obs = Observation.where(concept: concept('Height (cm)'), person: patient.person)\
-                       .order(obs_datetime: :desc)\
-                       .first
-
-      obs&.value_numeric || obs&.value_text || 0
+      @vital_stats.height
     end
 
     def weight
-      obs = Observation.where(concept: concept('Weight'), person: patient.person)\
-                       .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
-                       .last
-
-      obs&.value_numeric || obs&.value_text || 0
+      @vital_stats.weight
     end
 
     def bmi
-      obs = Observation.where(concept: concept('BMI'), person_id: patient.patient_id)\
-                       .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
-                       .first
-
-      obs&.value_numeric || obs&.value_text || 0
+      @vital_stats.bmi
     end
 
     def adherence
-      return @adherence if @adherence
-
-      observations = Observation.where(concept: concept('What was the patients adherence for this drug order'),
-                                       person: patient.person)\
-                                .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
-
-      @adherence = observations.collect do |observation|
-        [observation&.order&.drug_order&.drug&.name || '', observation.value_numeric]
-      end
+      @visit_drugs.adherence
     end
 
     def pills_brought
-      return @pills_brought if @pills_brought
-
-      observations = Observation.where(concept: concept('Amount of drug brought to clinic'),
-                                       person: patient.person)\
-                                .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
-
-      @pills_brought = observations.collect do |observation|
-        drug = observation&.order&.drug_order&.drug
-        next unless drug
-
-        [format_drug_name(drug), observation.value_numeric]
-      end
+      @visit_drugs.pills_brought
     end
 
     def pills_dispensed
-      return @pills_dispensed if @pills_dispensed
-
-      observations = Observation.where(concept: concept('Amount dispensed'),
-                                       person: patient.person)\
-                                .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
-
-      @pills_dispensed = observations.each_with_object({}) do |observation, pills_dispensed|
-        drug = observation&.order&.drug_order&.drug
-        next unless drug
-
-        drug_name = format_drug_name(drug)
-        pills_dispensed[drug_name] ||= 0
-        pills_dispensed[drug_name] += observation.value_numeric
-      end
-
-      @pills_dispensed = @pills_dispensed.collect { |k, v| [k, v] }
+      @visit_drugs.pills_dispensed
     end
-
-    def visit_by
-      if patient_present? && guardian_present?
-        'BOTH'
-      elsif patient_present?
-        'Patient'
-      elsif guardian_present?
-        'Guardian'
-      else
-        'Unk'
-      end
-    end
-
-    def side_effects
-      return @side_effects if @side_effects
-
-      parent_obs = Observation.where(concept: concept('Malawi ART side effects'), person: patient.person)\
-                              .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
-                              .order(obs_datetime: :desc)
-                              .first
-      return [] unless parent_obs
-
-      @side_effects = parent_obs.children\
-                                .where(value_coded: concept('Yes'))\
-                                .collect { |side_effect| side_effect.concept.fullname }
-                                .compact
-    end
-
-    def viral_load_result
-      lab_tests_engine.find_orders_by_patient(patient).each do |order|
-        order.tests.each do |test|
-          next unless test[:test_type].match?(/viral load/i)
-
-          values = test[:test_values].collect do |test_value|
-            next if test_value[:indicator].match?(/result_date/i)
-
-            test_value[:value]
-          end
-
-          values.join(', ')
-        end
-      end
-    rescue StandardError => e
-      Rails.logger.error "Failed to retrieve viral load result from LIMS: #{e}"
-      'N/A'
-    end
-
-    def cpt; end
 
     private
 
-    def calculate_bmi(weight, height)
-      return 'N/A' if weight.zero? || height.zero?
-
-      (weight / (height * height) * 10_000).round(1)
+    def patient_state_service
+      PatientStateService.new
     end
 
-    def format_drug_name(drug)
-      match = drug.name.match(/^(.+)\s*\(.*$/)
-      name = match.nil? ? drug.name : match[1]
+    def patient_observation
+      TbService::PatientObservation
+    end
 
-      name = 'CPT' if name.match?('Cotrimoxazole')
-      name = 'INH' if name.match?('INH')
-      name
+    def get_program
+      ipt? ? program('IPT Program') : program('TB Program')
+    end
+
+    def ipt?
+      PatientProgram.joins(:patient_states)\
+                    .where(patient_program: { patient_id: @patient,
+                                              program_id: program('IPT Program') },
+                           patient_state: { end_date: nil })\
+                    .exists?
+    end
+
+    def blank_outcome
+      OpenStruct.new(name: 'Unknown', date_created: nil, start_date: nil)
     end
   end
-end

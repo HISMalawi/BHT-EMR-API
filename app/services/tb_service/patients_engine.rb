@@ -84,10 +84,52 @@ module TbService
       TbService::PatientVisitLabel.new patient, date
     end
 
+    def transfer_out_label(patient, date)
+      TbService::PatientTransferOutLabel.new patient, date
+    end
+
+    def medication_side_effects(patient, date)
+      service = TbService::PatientSideEffect.new(patient, date)
+      service.side_effects
+    end
+
+    def tb_negative_minor(patient)
+      status_concept = concept('TB status').concept_id
+      positive_concept = concept('Negative').concept_id
+      positive_status = Observation.where(
+        person_id: patient, concept_id: status_concept
+      ).order(obs_datetime: :desc).first
+
+      begin
+        return positive_status\
+        if (positive_status.value_coded == positive_concept) && patient_is_under_five?(patient)
+      rescue StandardError
+        nil
+      end
+    end
+
+    def current_program (patient)
+      patient.patient_programs.where(program_id: @program)\
+                              .order(date_enrolled: :asc)\
+                              .first
+    end
+
+    def saved_encounters(patient, date)
+      Encounter.where(program_id: @program, patient_id: patient)\
+               .where('DATE(encounter_datetime) = ?', date)\
+               .collect(&:name).uniq
+    end
+
     private
 
     def patient_summary(patient, date)
       TbService::PatientSummary.new patient, date
     end
+
+    def patient_is_under_five?(patient)
+      person = Person.find_by(person_id: patient)
+      ((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor < 5
+    end
+
   end
 end

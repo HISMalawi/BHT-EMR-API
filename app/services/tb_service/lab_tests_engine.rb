@@ -32,6 +32,13 @@ module TbService
 
     def panels(test_type)
       nlims.specimen_types(test_type)
+    rescue StandardError
+      # TODO: Remove this once the LIMS is fixed
+      # TODO: add specimen type from concept sets
+      # ConceptName.where(
+      #   'concept_id in (?)', ConceptSet.where(concept_set: concept('TB Specimen Types')).map(&:concept_id)
+      # ).map(&:name)
+      %w[Sputum Spit Urine Blood]
     end
 
     def results(accession_number)
@@ -68,6 +75,10 @@ module TbService
         save_reason_for_test(encounter, local_order, test['reason'])
 
         { order: local_order, lims_order: }
+      rescue StandardError
+        create_local_order(patient, encounter, date, nil)
+        save_reason_for_test(encounter, local_order, test['reason'])
+        { order: local_order, lims_order: nil }
       end
     end
 
@@ -117,16 +128,21 @@ module TbService
       identifier = PatientIdentifier.find_by(patient_id: order_info[:patient_id],
                                              identifier_type:).identifier
 
-      logger = Rails.logger
-      logger.info "NATIONAL ID: #{identifier}"
+      village = PersonAddress.find_by(person_id: order_info[:patient_id]).city_village
+
+      name = PersonName.select(:given_name, :family_name).where(person_id: order_info[:patient_id]).first
 
       label = ZebraPrinter::Lib::StandardLabel.new
       label.draw_text('Lab Order Summary', 28, 9, 0, 1, 1, 2, false)
       label.draw_line(25, 35, 115, 1, 0)
       label.draw_line(180, 140, 600, 1, 0)
 
-      label.draw_text('Order Date', 28, 56, 0, 2, 1, 1, false)
-      label.draw_text('NPID', 28, 86, 0, 2, 1, 1, false)
+      label.draw_text('Order Date:', 250, 13, 0, 2, 1, 1, false)
+
+      label.draw_text('Patient Name:', 28, 56, 0, 2, 1, 1, false)
+      label.draw_text('NPID:', 28, 86, 0, 2, 1, 1, false)
+
+      label.draw_text('Village:', 450, 86, 0, 2, 1, 1, false)
 
       label.draw_text('Lab Tests', 28, 111, 0, 1, 1, 2, false)
       label.draw_text('Item', 190, 120, 0, 2, 1, 1, false)
@@ -137,26 +153,20 @@ module TbService
       label.draw_text('Reason', 28, 266, 0, 2, 1, 1, false)
       label.draw_text('Previous TB', 28, 296, 0, 2, 1, 1, false)
 
-      label.draw_line(260, 50, 170, 1, 0)
-      label.draw_line(260, 50, 1, 60, 0)
-      label.draw_line(180, 286, 600, 1, 0)
-      label.draw_line(430, 50, 1, 60, 0) # NPID
-
       label.draw_line(180, 140, 1, 145, 0)
       label.draw_line(780, 140, 1, 145, 0) # Item end Close line
-
-      # Order Data and NPID
-      label.draw_line(260, 80, 170, 1, 0)
-      label.draw_line(260, 110, 170, 1, 0)
-      label.draw_line(260, 140, 170, 1, 0)
 
       label.draw_line(180, 170, 600, 1, 0)
       label.draw_line(180, 200, 600, 1, 0)
       label.draw_line(180, 230, 600, 1, 0)
       label.draw_line(180, 260, 600, 1, 0)
 
-      label.draw_text(order_info[:date], 270, 56, 0, 2, 1, 1, false)
-      label.draw_text(identifier, 270, 86, 0, 2, 1, 1, false)
+      date = order_info[:date].to_date.strftime('%Y-%m-%d')
+
+      label.draw_text(date, 385, 13, 0, 2, 1, 1, false)
+      label.draw_text("#{name.given_name} #{name.family_name}", 190, 56, 0, 2, 1, 1, false)
+      label.draw_text(identifier, 190, 86, 0, 2, 1, 1, false)
+      label.draw_text(village, 550, 86, 0, 2, 1, 1, false)
       label.draw_text((order_info[:test_type]), 188, 146, 0, 2, 1, 1, false)
       label.draw_text(order_info[:specimen_type], 188, 176, 0, 2, 1, 1, false)
       label.draw_text(order_info[:recommended_examination], 188, 206, 0, 2, 1, 1, false)

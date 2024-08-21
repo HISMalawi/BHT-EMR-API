@@ -8,7 +8,7 @@ module CxcaService
 
         include Utils
 
-        CxCa_PROGRAM = program 'CxCa program'
+        CxCa_PROGRAM = 'CxCa program'
 
         TX_GROUPS = {
           first_time_screened: ['initial screening', 'referral'],
@@ -73,7 +73,7 @@ module CxcaService
             INNER JOIN (
               SELECT e.patient_id, DATE(MAX(e.encounter_datetime)) AS last_visit_date
               FROM encounter e
-              WHERE e.program_id = #{CxCa_PROGRAM.id}
+              WHERE e.program_id = #{program(CxCa_PROGRAM).id}
                 AND e.encounter_datetime >= '#{@start_date}'
                 AND e.encounter_datetime <= '#{@end_date}'
                 AND e.voided = 0
