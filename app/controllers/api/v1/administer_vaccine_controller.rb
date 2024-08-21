@@ -29,9 +29,6 @@ module Api
             end
           end
 
-          debugger
-        
-
           orders = DrugOrderService.create_drug_orders(encounter: , drug_orders:)
 
           program = Program.find(program_id)
