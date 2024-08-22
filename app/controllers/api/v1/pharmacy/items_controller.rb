@@ -32,7 +32,7 @@ module Api
           end
 
           if params[:id].present? && params[:doses_wasted].present?
-              service.update_dispose_item(params[:doses_wasted], params[:id])
+              service.update_dispose_item(params[:doses_wasted], params[:id], params[:date], params[:reallocation_code], params[:waste_reason])
           end
 
           if params[:id].present? && params[:vvm_stage].present?
