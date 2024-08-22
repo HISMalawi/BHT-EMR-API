@@ -58,7 +58,7 @@ module Api
 
       def service
         program_id = params.require(:program_id)
-        TbService::RegimenEngine.new(program: Program.find(program_id))
+        RegimenService.new(program_id:)
       end
     end
   end
