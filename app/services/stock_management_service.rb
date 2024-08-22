@@ -213,26 +213,27 @@ class StockManagementService
       item.update(batch_number: batch_number)
     end
   end
-  def update_dispose_item(quantity, batch_item_id)
+  def update_dispose_item(quantity, batch_item_id, date, reallocation_code, reason)
     ActiveRecord::Base.transaction do
-      reallocation_item = PharmacyBatchItemReallocation.where(batch_item_id:batch_item_id)
-      reallocation_item.update(quantity: quantity.to_f)
-      pharmacy_item = Pharmacy.where(pharmacy_encounter_type: 3, batch_item_id:batch_item_id)
-      pharmacy_item.update(quantity: -quantity.to_f)
-    end
-  end
-  def update_dispose_item(quantity, batch_item_id)
-    ActiveRecord::Base.transaction do
-      reallocation_item = PharmacyBatchItemReallocation.where(batch_item_id:batch_item_id)
-      reallocation_item.update(quantity: quantity.to_f)
-      pharmacy_item = Pharmacy.where(pharmacy_encounter_type: 3, batch_item_id:batch_item_id)
-      pharmacy_item.update(quantity: -quantity.to_f)
+      reallocation_item = PharmacyBatchItemReallocation.find_by(batch_item_id: batch_item_id)
+      if reallocation_item
+        reallocation_item.update(quantity: quantity.to_f)
+        pharmacy_item = Pharmacy.find_by(pharmacy_encounter_type: 3, batch_item_id: batch_item_id)
+        pharmacy_item.update(quantity: -quantity.to_f) if pharmacy_item
+      else
+        date = date.to_date
+        dispose_item(reallocation_code, batch_item_id, quantity, date, reason)
+      end
     end
   end
   def update_vvm_stage(vvm, batch_item_id)
     ActiveRecord::Base.transaction do
-      item = PharmacyBatchVvm.where(batch_item_id:batch_item_id)
-      item.update(vvm: vvm)
+      item = PharmacyBatchVvm.find_by(batch_item_id: batch_item_id)
+      if item
+        item.update(vvm: vvm)
+      else
+        create_vvm(batch_item_id, vvm)
+      end
     end
   end
   def process_edit_batch_item(batch_item_id, params, verif_id: nil)
