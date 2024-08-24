@@ -8,7 +8,7 @@ class ProgramAppointmentService
 
     clients = ActiveRecord::Base.connection.select_all("SELECT
     i2.identifier arv_number, i.identifier, p.birthdate, p.gender, n.given_name,
-    n.family_name, obs.person_id, p.birthdate_estimated, a.city_village,a.state_province,a.township_division
+    n.family_name, obs.person_id, obs.encounter_id, p.birthdate_estimated, a.city_village,a.state_province,a.township_division
     FROM obs
     INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
     AND e.voided = 0 AND obs.voided = 0 AND e.program_id = #{program_id}
@@ -26,7 +26,7 @@ class ProgramAppointmentService
     AND '#{date.strftime('%Y-%m-%d 23:59:59')}'
     GROUP BY i.identifier, p.birthdate, p.gender,
     n.given_name, n.family_name,
-    obs.person_id, p.birthdate_estimated;")
+    obs.person_id, p.birthdate_estimated, obs.encounter_id;")
 
     clients_formatted = []
     already_counted = []
@@ -42,7 +42,8 @@ class ProgramAppointmentService
         npid: c['identifier'], birthdate_estimated: c['birthdate_estimated'],
         city_village: c['city_village'], state_province: c['state_province'],
         township_division: c['township_division'], 
-        arv_number: c['arv_number']
+        arv_number: c['arv_number'],
+        encounter_id: c['encounter_id'],
       }
     end
 
