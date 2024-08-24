@@ -82,10 +82,7 @@ class StockManagementService
         quantity = fetch_parameter(item, :quantity)
         barcode = fetch_parameter(item, :barcode)
         product_code = fetch_parameter(item, :product_code)
-        unit_doses = fetch_parameter(item, :unit_doses)
-        vvm_stage = fetch_parameter(item, :vvm_stage)
         manufacture = fetch_parameter(item, :manufacture)
-        dosage_form = fetch_parameter(item, :dosage_form)
         pack_size = item[:pack_size]
 
         delivery_date = fetch_parameter_as_date(item, :delivery_date, Date.today)
@@ -98,15 +95,14 @@ class StockManagementService
         barcode = barcode.blank? ? nil : barcode
         if item
           # Update existing item if already in batch
-          item.delivered_quantity += quantity * unit_doses
-          item.current_quantity += quantity * unit_doses
+          item.delivered_quantity += quantity
+          item.current_quantity += quantity
           item.product_code = product_code
           item.barcode = barcode
           item.save
         else
           item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code,
-                                   barcode,unit_doses,manufacture,dosage_form)
-          create_vvm(item[:id], vvm_stage)
+                                   barcode,manufacture)
           validate_activerecord_object(item)
         end
 
@@ -156,24 +152,23 @@ class StockManagementService
     end
     query = query.joins("LEFT JOIN pharmacy_obs ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id AND pharmacy_obs.transaction_reason = 'Drug dispensed'")
                  .joins('LEFT JOIN pharmacy_batch_item_reallocations ON pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id')
-                 .joins('LEFT JOIN pharmacy_batch_vvms ON pharmacy_batch_items.id = pharmacy_batch_vvms.batch_item_id')
                  .joins('INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id')
                  .joins('INNER JOIN pharmacy_batches ON pharmacy_batches.id = pharmacy_batch_items.pharmacy_batch_id')
                  .group('drug.drug_id, pharmacy_batches.batch_number')
                  .select <<~SQL
                    pharmacy_batch_items.*,
                    pharmacy_batch_item_reallocations.quantity	as doses_wasted,
-                   pharmacy_batch_vvms.vvm	as vvm_stage,
                    CASE
                      WHEN pharmacy_obs.quantity IS NULL
                      THEN 0
                    ELSE
-                    ABS(SUM(pharmacy_obs.quantity))- (
-                      SELECT SUM(quantity)
-                      FROM pharmacy_obs
-                      WHERE transaction_reason LIKE "%Reversing voided drug dispensation%"
-                      AND batch_item_id = pharmacy_batch_items.id
-                    )
+                    ABS(SUM(pharmacy_obs.quantity)) - 
+                      COALESCE((
+                          SELECT SUM(quantity)
+                          FROM pharmacy_obs
+                          WHERE transaction_reason LIKE "%Reversing voided drug dispensation%"
+                          AND batch_item_id = pharmacy_batch_items.id
+                      ), 0)
                    END AS dispensed_quantity,
                    pharmacy_batches.batch_number,
                    COUNT(*) OVER() AS total_count
@@ -223,16 +218,6 @@ class StockManagementService
       else
         date = date.to_date
         dispose_item(reallocation_code, batch_item_id, quantity, date, reason)
-      end
-    end
-  end
-  def update_vvm_stage(vvm, batch_item_id)
-    ActiveRecord::Base.transaction do
-      item = PharmacyBatchVvm.find_by(batch_item_id: batch_item_id)
-      if item
-        item.update(vvm: vvm)
-      else
-        create_vvm(batch_item_id, vvm)
       end
     end
   end
@@ -315,12 +300,6 @@ class StockManagementService
                                            reallocation_type: STOCK_ITEM_DISPOSAL,
                                            date_created: Time.now, date_changed: Time.now,
                                            creator: User.current.id)
-    end
-  end
-  def create_vvm(batch_item_id, vvm)
-    ActiveRecord::Base.transaction do
-      item = PharmacyBatchItem.find(batch_item_id) 
-      PharmacyBatchVvm.create(item:, vvm:) 
     end
   end
   def update_batch_item!(batch_item, quantity)
@@ -421,19 +400,16 @@ class StockManagementService
     PharmacyBatch.create(batch_number:, location_id:)
   end
 
-  def create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code, barcode,unit_doses,manufacture,dosage_form)
+  def create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code, barcode,manufacture)
     quantity = quantity.to_f
-    unit_doses = unit_doses.to_f
 
     PharmacyBatchItem.create(
       batch:,
       drug_id: drug_id.to_i,
-      unit_doses: unit_doses,
       manufacture:,
-      dosage_form:,
       pack_size:,
-      delivered_quantity: quantity*unit_doses,
-      current_quantity: quantity*unit_doses,
+      delivered_quantity: quantity,
+      current_quantity: quantity,
       delivery_date:,
       expiry_date:,
       product_code:,
