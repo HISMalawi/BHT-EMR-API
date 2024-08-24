@@ -23,8 +23,8 @@ module Api
         end
 
         def update
-          permitted_params = params.permit(%i[current_quantity delivered_quantity pack_size expiry_date delivery_date unit_doses manufacture
-                                             dosage_form drug_id reason])
+          permitted_params = params.permit(%i[current_quantity delivered_quantity pack_size expiry_date delivery_date manufacture
+                                          drug_id reason])
           raise InvalidParameterError, 'reason is required' if permitted_params[:reason].blank?
 
           if params[:batch_number].present? && params[:pharmacy_batch_id].present?
@@ -33,10 +33,6 @@ module Api
 
           if params[:id].present? && params[:doses_wasted].present?
               service.update_dispose_item(params[:doses_wasted], params[:id], params[:date], params[:reallocation_code], params[:waste_reason])
-          end
-
-          if params[:id].present? && params[:vvm_stage].present?
-              service.update_vvm_stage(params[:vvm_stage], params[:id])
           end
 
           item = service.edit_batch_item(params[:id], permitted_params)
