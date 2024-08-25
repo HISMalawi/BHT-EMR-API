@@ -3,12 +3,15 @@
 class ProgramAppointmentService
   extend ModelUtils
 
-  def self.booked_appointments(program_id, date, location_id: nil)   
-    location_id = "AND e.location_id = #{location_id} AND obs.location_id = #{location_id}" if location_id
+  def self.booked_appointments(program_id, start_date, end_date = nil, location_id: nil)   
+    location_id_condition = "AND e.location_id = #{location_id} AND obs.location_id = #{location_id}" if location_id
+    end_date ||= start_date # If no end_date is provided, use start_date as the end_date
+
+    date_condition = "AND value_datetime BETWEEN '#{start_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{end_date.strftime('%Y-%m-%d 23:59:59')}'"
 
     clients = ActiveRecord::Base.connection.select_all("SELECT
     i2.identifier arv_number, i.identifier, p.birthdate, p.gender, n.given_name,
-    n.family_name, obs.person_id, p.birthdate_estimated, a.city_village,a.state_province,a.township_division
+    n.family_name, obs.person_id, obs.encounter_id, p.birthdate_estimated, a.city_village,a.state_province,a.township_division, obs.value_datetime AS appointment_date
     FROM obs
     INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
     AND e.voided = 0 AND obs.voided = 0 AND e.program_id = #{program_id}
@@ -21,12 +24,13 @@ class ProgramAppointmentService
     LEFT JOIN patient_identifier i2 ON i2.patient_id = e.patient_id AND i2.voided = 0
     AND i2.identifier_type IN(4)
     WHERE obs.concept_id = #{concept('Appointment date').concept_id}
-    #{location_id}
-    AND value_datetime BETWEEN '#{date.strftime('%Y-%m-%d 00:00:00')}'
-    AND '#{date.strftime('%Y-%m-%d 23:59:59')}'
+    #{location_id_condition}
+    #{date_condition}
     GROUP BY i.identifier, p.birthdate, p.gender,
     n.given_name, n.family_name,
-    obs.person_id, p.birthdate_estimated;")
+    obs.person_id, p.birthdate_estimated, obs.encounter_id, obs.value_datetime
+    ORDER BY obs.value_datetime DESC;
+    ")
 
     clients_formatted = []
     already_counted = []
@@ -42,7 +46,9 @@ class ProgramAppointmentService
         npid: c['identifier'], birthdate_estimated: c['birthdate_estimated'],
         city_village: c['city_village'], state_province: c['state_province'],
         township_division: c['township_division'], 
-        arv_number: c['arv_number']
+        arv_number: c['arv_number'],
+        encounter_id: c['encounter_id'],
+        appointment_date: c['appointment_date'],
       }
     end
 
