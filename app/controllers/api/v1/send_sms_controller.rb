@@ -17,43 +17,28 @@ class Api::V1::SendSmsController < ApplicationController
   end
 
   def show
-    config_file = Rails.root.join('config', 'application.yml')
-    config = YAML.load_file(config_file) 
-    environment = Rails.env
 
-    if config.key?(environment)
-      render json: config[environment]
-    else
-      render json: { error: "#{environment} configuration not found" }, status: :not_found
+    facility_id = User.current.location_id
+    config = fetch_configuration_from_global_property(facility_id)
+
+    if config.empty?
+      config = fetch_default_configuration
     end
+
+    render json: config
   rescue Errno::ENOENT
     render json: { error: 'Configuration file not found' }, status: :not_found
   end
 
   def update
-    config_file = Rails.root.join('config', 'application.yml')
-    temp_file = Rails.root.join('config', 'application_temp.yml')
-  
-    File.open(temp_file, 'w') do |file|
-      File.foreach(config_file) do |line|
-        key_value_match = line.match(/^\s*(\w+):\s*(.*)$/)
-  
-        if key_value_match && params.key?(key_value_match[1])
-          key = key_value_match[1]
-          value = params[key]
-          indent = line[/^\s*/]
-          line = "#{indent}#{key}: #{value}\n"
-        end
-  
-        file.write(line)
-      end
+    
+    params.each do |key, value|
+      global_property = GlobalProperty.find_or_initialize_by(property: "#{User.current.location_id}_#{key}")
+      global_property.property_value = value
+      global_property.save
     end
-  
-    File.rename(temp_file, config_file)
-  
-    config = YAML.load_file(config_file)
-    environment = Rails.env
-    render json: config[environment], status: :ok
+
+    render json: { message: 'Configuration updated successfully' }, status: :ok
   rescue StandardError => e
     render json: { error: e.message }, status: :unprocessable_entity
   end
@@ -81,6 +66,17 @@ class Api::V1::SendSmsController < ApplicationController
                               person_phone: patient.phone
                             }
                           end
+  end
+
+  def fetch_configuration_from_global_property(facility_id)
+    GlobalProperty.where("property LIKE ?", "#{facility_id}_%")
+                  .map { |gp| [gp.property.sub("#{facility_id}_", ''), gp.property_value] }
+                  .to_h
+  end
+
+  def fetch_default_configuration
+    config_file = Rails.root.join('config', 'application.yml')
+    YAML.load_file(config_file)[Rails.env] || {}
   end
 
 
