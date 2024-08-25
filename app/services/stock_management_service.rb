@@ -128,8 +128,6 @@ class StockManagementService
   def find_batch_item_by_id(id)
     PharmacyBatchItem.find(id)
   end
-
-
   def find_batch_items(filters = {})
     query = PharmacyBatchItem
     unless filters.empty?
@@ -143,6 +141,7 @@ class StockManagementService
       query = query.where(current_quantity: filters[:current_quantity]) unless filters[:current_quantity].nil?
       query = query.where(pharmacy_batch_id: filters[:pharmacy_batch_id]) unless filters[:pharmacy_batch_id].nil?
       query = query.where(pack_size: filters[:pack_size]) if filters.key?(:pack_size)
+      query = query.group('drug.drug_id, pharmacy_batches.batch_number') unless filters[:display_details].nil?
       unless filters[:batch_number].nil?
         query = query.where("pharmacy_batches.batch_number = '#{filters[:batch_number]}'")
       end
@@ -154,28 +153,24 @@ class StockManagementService
                  .joins('LEFT JOIN pharmacy_batch_item_reallocations ON pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id')
                  .joins('INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id')
                  .joins('INNER JOIN pharmacy_batches ON pharmacy_batches.id = pharmacy_batch_items.pharmacy_batch_id')
-                 .group('drug.drug_id, pharmacy_batches.batch_number')
+                 .group('drug.drug_id')
                  .select <<~SQL
                    pharmacy_batch_items.*,
-                   pharmacy_batch_item_reallocations.quantity	as doses_wasted,
-                   CASE
-                     WHEN pharmacy_obs.quantity IS NULL
-                     THEN 0
-                   ELSE
-                    ABS(SUM(pharmacy_obs.quantity)) - 
-                      COALESCE((
-                          SELECT SUM(quantity)
-                          FROM pharmacy_obs
-                          WHERE transaction_reason LIKE "%Reversing voided drug dispensation%"
-                          AND batch_item_id = pharmacy_batch_items.id
-                      ), 0)
-                   END AS dispensed_quantity,
+                   SUM(DISTINCT pharmacy_batch_items.delivered_quantity) as delivered_quantity, 
+                   SUM(DISTINCT pharmacy_batch_items.current_quantity) as current_quantity,
+                   SUM(DISTINCT pharmacy_batch_item_reallocations.quantity)	as doses_wasted,
+                    (SUM(DISTINCT pharmacy_batch_items.delivered_quantity) - 
+                  (SUM(DISTINCT pharmacy_batch_items.current_quantity) + 
+                   SUM(DISTINCT pharmacy_batch_item_reallocations.quantity))) as dispensed_quantity,
                    pharmacy_batches.batch_number,
                    COUNT(*) OVER() AS total_count
                  SQL
     
       unless filters[:drug_name].nil?
         query = query.where('drug.name like ?', "#{filters[:drug_name]}%" )
+      end
+      unless filters[:_drug_name].nil?
+        query = query.where('drug.name like ?', "#{filters[:_drug_name]}%" )
       end
     query.order(Arel.sql('pharmacy_batch_items.date_created DESC, pharmacy_batch_items.expiry_date ASC'))
   end
