@@ -3,11 +3,21 @@
 class ProgramAppointmentService
   extend ModelUtils
 
-  def self.booked_appointments(program_id, start_date, end_date = nil, location_id: nil)   
+  def self.booked_appointments(program_id, start_date, end_date = nil, search_txt = '', location_id: nil)   
     location_id_condition = "AND e.location_id = #{location_id} AND obs.location_id = #{location_id}" if location_id
     end_date ||= start_date # If no end_date is provided, use start_date as the end_date
 
     date_condition = "AND value_datetime BETWEEN '#{start_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{end_date.strftime('%Y-%m-%d 23:59:59')}'"
+
+    # Split search_txt into two parts if it contains a space
+    search_terms = search_txt.split(' ', 2)
+    search_terms.map!(&:strip)
+    search_condition = if search_terms.size > 1
+      "(n.given_name LIKE '%#{search_terms[0]}%' OR n.family_name LIKE '%#{search_terms[0]}%') AND " \
+      "(n.given_name LIKE '%#{search_terms[1]}%' OR n.family_name LIKE '%#{search_terms[1]}%')"
+    else
+      "n.given_name LIKE '%#{search_txt}%' OR n.family_name LIKE '%#{search_txt}%'"
+    end
 
     clients = ActiveRecord::Base.connection.select_all("SELECT
     i2.identifier arv_number, i.identifier, p.birthdate, p.gender, n.given_name,
@@ -26,6 +36,7 @@ class ProgramAppointmentService
     WHERE obs.concept_id = #{concept('Appointment date').concept_id}
     #{location_id_condition}
     #{date_condition}
+    AND (#{search_condition})
     GROUP BY i.identifier, p.birthdate, p.gender,
     n.given_name, n.family_name,
     obs.person_id, p.birthdate_estimated, obs.encounter_id, obs.value_datetime
