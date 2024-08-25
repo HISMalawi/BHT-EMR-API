@@ -6,14 +6,14 @@ class Api::V1::SendSmsController < ApplicationController
   before_action :initialize_variables, only: [:index, :fetch_phone]
 
   def index
-    return render json: { message: "SMS reminder turned off" } if sms_reminder_off?
-    output = process_sms_request
-    render json: { message: output }
+      patient_details = patients_phone
+      output = enqueue_sms(params[:appointment_date], patient_details)
+      render json: { message: output }
   end
 
   def fetch_phone
-    phone_number = validated_phone_number
-    render json: { message: phone_number }
+    patient_details = patients_phone
+    render json: { message: patient_details[:cell_phone] }
   end
 
   def show
@@ -115,32 +115,4 @@ class Api::V1::SendSmsController < ApplicationController
     "Failed to queue SMS: #{e.message}"
   end
 
-  def validatephone(phone)
-    phone = "+265" + phone[1..] if phone.present? && phone.starts_with?('0')
-    phone_pattern = /\A\+\d{12}\z/
-    phone_pattern.match?(phone) ? phone : "Invalid phone number"
-  end
-
-  def validated_phone_number
-    patient_details = patients_phone
-    validatephone(patient_details[:cell_phone])
-  end
-
-  def sms_reminder_off?
-    config_file = Rails.root.join('config', 'application.yml')
-    config = YAML.load_file(config_file)
-    environment = Rails.env
-    config.dig(environment, 'sms_reminder') == 'false'
-  end
-
-  def process_sms_request
-    phone_number = validated_phone_number
-    if phone_number.length == 13
-      patient_details = patients_phone
-      patient_details[:cell_phone] = phone_number
-      enqueue_sms(params[:appointment_date], patient_details)
-    else
-      phone_number
-    end
-  end
 end
