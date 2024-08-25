@@ -426,4 +426,5 @@ Rails.application.routes.draw do
   post '/api/v1/send_sms', to: 'api/v1/send_sms#index'
   post '/api/v1/sms_configuration', to: 'api/v1/send_sms#update'
   get '/api/v1/configurations', to: 'api/v1/send_sms#show'
+  get '/api/v1/patient_phone', to: 'api/v1/send_sms#fetch_phone'
 end

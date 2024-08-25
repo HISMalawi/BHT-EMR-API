@@ -191,26 +191,33 @@ module ImmunizationService
     end
 
     def calculate_due_date(birthdate, age_string)
+      # If the age string is "at birth", return the birthdate as the due date
       return birthdate if age_string.downcase == 'at birth'
-
+      
+      # Split the age string into a number and a unit (e.g., "2 months" -> ["2", "months"])
       age_parts = age_string.split(' ')
+      
+      # Convert the number part of the age string to an integer
       number = age_parts[0].to_i
-      unit = age_parts[1]
-
+      
+      # Get the unit of time (e.g., "days", "weeks", "months", "years") and make it lowercase
+      unit = age_parts[1].downcase
+      
+      # Calculate the due date by adding the appropriate amount of time to the birthdate
       case unit
       when 'days', 'day'
-        birthdate + number
+        birthdate + number.days   # Add the specified number of days to the birthdate
       when 'weeks', 'week'
-        birthdate + (number * 7)
+        birthdate + number.weeks  # Add the specified number of weeks to the birthdate
       when 'months', 'month'
-        birthdate + (number * 30)
+        birthdate + number.months # Add the specified number of months to the birthdate
       when 'years', 'year'
-        birthdate + (number * 12 * 30)
+        birthdate + number.years  # Add the specified number of years to the birthdate
       else
-        birthdate
+        birthdate  # If the unit is not recognized, return the birthdate unchanged
       end
     end
-
+    
     # Counts the antigens due
     def aggregate_antigens(antigens)
       antigen_count = Hash.new {  |hash, key| hash[key] = { drug_name: key, due_count: 0 }}
