@@ -17,12 +17,10 @@ module TbService
     end
 
     def patient_outcome
-      begin
-        state = patient_state_service.find_patient_state(get_program, @patient, @date)
-        state.nil? ? blank_outcome : state
-      rescue
-        blank_outcome
-      end
+      state = patient_state_service.find_patient_state(get_program, @patient, @date)
+      state.nil? ? blank_outcome : state
+    rescue StandardError
+      blank_outcome
     end
 
     def next_appointment
@@ -101,3 +99,4 @@ module TbService
       OpenStruct.new(name: 'Unknown', date_created: nil, start_date: nil)
     end
   end
+end
