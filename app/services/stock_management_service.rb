@@ -41,7 +41,6 @@ class StockManagementService
       event_log = Pharmacy.where(dispensation_obs_id: dispensation_id, type: pharmacy_event_type(STOCK_DEBIT)).lock!
       reversal_amount = event_log.sum(&:quantity).abs
       return reversal_amount unless reversal_amount.positive?
-
       amount_rejected = credit_drug(dispensation_drug_id(dispensation),
                                     dispensation_pack_size(dispensation),
                                     reversal_amount,
@@ -349,8 +348,7 @@ class StockManagementService
 
     drugs = find_batch_items(drug_id:, pack_size:, display_details: 'true')
             .where('delivery_date < :date AND expiry_date > :date AND pharmacy_batch_items.date_changed >= :date', date:)
-            .order(:expiry_dafind_batch_itemste)
-    debugger
+            .order(:expiry_date)
     # Spread the quantity being credited back among the existing drugs,
     # making sure that no drug in stock ends up having more than was
     # initially delivered. BTW: Crediting is done following First to Expire,
