@@ -62,10 +62,12 @@ module ImmunizationService
           result = []
           vaccine_adverse_effects.each do |ob|
             data = {
-              value_coded_name: nil,
+              concept_id: nil,
+              concept_name: nil,
               drugs: []
             }
-            data[:value_coded_name] = ob.value_coded_name
+            data[:concept_id] = ob.value_coded
+            data[:concept_name] = ob.value_coded_name
           
             if ob.children
               ob.children.each do |ob_child|
@@ -74,8 +76,8 @@ module ImmunizationService
                 end
               end
             end
-
-            result << data
+            
+            result << data if data[:drugs].any?
           end
                               
           {
