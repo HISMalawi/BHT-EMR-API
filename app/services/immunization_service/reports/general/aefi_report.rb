@@ -43,8 +43,13 @@ module ImmunizationService
           
           vaccine_adverse_effects = Observation.joins(:encounter)
                               .merge(immunization_followup_encounter)
-                              .joins("LEFT JOIN concept_name ON obs.value_coded = concept_name.concept_id")
-                              .select("obs.*, concept_name.name AS value_coded_name")
+                              .joins("LEFT JOIN (
+                                SELECT concept_id, MIN(name) AS name
+                                FROM concept_name
+                                WHERE voided = 0
+                                GROUP BY concept_id
+                              ) AS unique_concept_name ON obs.value_coded = unique_concept_name.concept_id")
+                              .select("obs.*, unique_concept_name.name AS value_coded_name")
                               .where(
                                 concept_id: vaccine_adverse_effects_concept_id,
                                 location_id: @location_id,
@@ -64,7 +69,9 @@ module ImmunizationService
           
             if ob.children
               ob.children.each do |ob_child|
-                data[:drugs] << { drug_inventory_id: ob_child.value_coded }
+                if ob_child.value_coded
+                  data[:drugs] << { drug_inventory_id: ob_child.value_coded }
+                end
               end
             end
 
