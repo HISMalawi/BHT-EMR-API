@@ -4,28 +4,39 @@ module ImmunizationService
   module Reports
     module General
       class AefiReport
-        include ModelUtils
-        attr_reader :start_date, :end_date, :age_group
-        require 'date'
-
-        def initialize(start_date: nil, end_date: nil, location_id: nil, **kwargs)
-          @start_date = start_date ? Date.parse(start_date).beginning_of_day : Date.today.beginning_of_day
-          @end_date = end_date ? Date.parse(end_date).end_of_day : Date.today.end_of_day
-          @location_id = location_id
-          @age_group = kwargs[:age_group] ? JSON.parse(kwargs[:age_group]) : ['all']
+        attr_reader :start_date, :end_date, :location_id, :age_group
+      
+        def initialize(params)
+          set_attributes(params)
         end
-
+      
         def data
           find_report()
         end
-
+      
         private
-
+      
+        def set_attributes(params)
+          @start_date = parse_date(params[:start_date], :beginning_of_day)
+          @end_date = parse_date(params[:end_date], :end_of_day)
+          @location_id = params[:location_id]
+          @age_group = parse_age_group(params[:age_group])
+        end
+      
+        def parse_date(date_string, time_of_day)
+          date_string ? Date.parse(date_string).send(time_of_day) : Date.today.send(time_of_day)
+        end
+      
+        def parse_age_group(age_group_string)
+          age_group_string ? JSON.parse(age_group_string) : ['all']
+        rescue JSON::ParserError
+          ['all']
+        end
+      
         def find_report
           generate(@start_date, @end_date)
         end
-        
-        
+      
         def generate(start_date, end_date)
           end_date ||= start_date
           vaccine_adverse_effects_concept_id = ConceptName.find_by_name('Vaccine adverse effects').concept_id
