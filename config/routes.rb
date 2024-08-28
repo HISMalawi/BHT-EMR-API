@@ -315,6 +315,7 @@ Rails.application.routes.draw do
       get '/immunization/months_picker', to: 'immunization_report#months_picker'
       get '/immunization/weeks_picker', to: 'immunization_report#weeks_picker'
       get '/immunization/vaccines_administered', to: 'immunization_report#vaccines_administered'
+      get '/immunization/aefi_report', to: 'immunization_report#aefi_report'
       get '/immunization/drugs', to: 'immunization_report#drugs'
     end
   end

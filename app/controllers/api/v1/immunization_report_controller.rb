@@ -29,6 +29,21 @@ class Api::V1::ImmunizationReportController < ApplicationController
     render json: data
   end
 
+  def aefi_report
+    start_date = report_params[:start_date]
+    end_date = report_params[:end_date]
+
+    # Get the current location id
+    location_id = User.current.location_id
+
+    aefi_service = ImmunizationService::Reports::General::AefiReport.new(start_date:,
+                                                                          end_date:,
+                                                                          location_id:)
+    data = aefi_service.data
+
+    render json: data
+  end
+
   def months_picker
     render json: months_generator
   end
