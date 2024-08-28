@@ -62,10 +62,12 @@ module ImmunizationService
           result = []
           vaccine_adverse_effects.each do |ob|
             data = {
+              person_id: nil,
               concept_id: nil,
               concept_name: nil,
               drugs: []
             }
+            data[:person_id] = ob.person_id
             data[:concept_id] = ob.value_coded
             data[:concept_name] = ob.value_coded_name
           
