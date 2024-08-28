@@ -90,7 +90,7 @@ class StockManagementService
 
         item = find_batch_items(pharmacy_batch_id: batch.id,
                                 drug_id:,
-                                pack_size:).first
+                                pack_size:, display_details: 'true').first
 
         barcode = barcode.blank? ? nil : barcode
         if item
@@ -326,10 +326,9 @@ class StockManagementService
   private
 
   def debit_drug(drug_id, pack_size, debit_quantity, date, reason, dispensation_id: nil)
-    drugs = find_batch_items(drug_id:, pack_size:)
+    drugs = find_batch_items(drug_id:, pack_size:, display_details: 'true')
             .where('expiry_date > ? AND current_quantity > 0', date)
             .order('expiry_date')
-
     commit_kwargs = { update_item: true, dispensation_obs_id: dispensation_id, transaction_reason: reason }
 
     drugs.each do |drug|
@@ -348,10 +347,10 @@ class StockManagementService
   def credit_drug(drug_id, pack_size, credit_quantity, date, reason)
     return credit_quantity unless credit_quantity.positive?
 
-    drugs = find_batch_items(drug_id:, pack_size:)
+    drugs = find_batch_items(drug_id:, pack_size:, display_details: 'true')
             .where('delivery_date < :date AND expiry_date > :date AND pharmacy_batch_items.date_changed >= :date', date:)
-            .order(:expiry_date)
-
+            .order(:expiry_dafind_batch_itemste)
+    debugger
     # Spread the quantity being credited back among the existing drugs,
     # making sure that no drug in stock ends up having more than was
     # initially delivered. BTW: Crediting is done following First to Expire,
