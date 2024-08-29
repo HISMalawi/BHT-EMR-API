@@ -16,6 +16,12 @@ module Api
         end
       end
 
+      def get_tb_regimen_group
+        patient, regimen_group = params.require(%i[patient regimen_group])
+        regimens = service.get_tb_regimen_group patient, regimen_group
+        render json: regimens
+      end
+
       def find_starter_pack
         regimen, weight = params.require(%i[regimen weight])
         render json: service.find_starter_pack(regimen, weight)

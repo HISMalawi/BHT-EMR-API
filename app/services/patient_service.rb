@@ -358,6 +358,18 @@ class PatientService
     { new_identifier:, voided_identifiers: existing_identifiers }
   end
 
+  def most_recent_lab_order(patient_id:, program_id:, date:)
+    outcome_date = patient_last_outcome_date(patient_id, program_id, date)
+    Encounter.joins(:observations)
+             .where(type: encounter_type('Lab Orders'),
+                    patient_id: patient_id,
+                    program_id: program_id)
+              .where(obs: {concept_id: concept('Test type').concept_id})
+              .where('obs.obs_datetime >= ? AND DATE(obs.obs_datetime) <= DATE(?)', outcome_date, date)
+              .order(encounter_datetime: :desc)
+              .first
+  end
+
   def current_htn_drugs_summary(patient, date)
     {
       drugs: current_htn_drugs(patient, date),
@@ -582,6 +594,33 @@ class PatientService
       AND quantity > 0", drug_concept_ids, patient.id, date)\
                   .group('DATE(orders.start_date)').select('DATE(start_date)')
     { count: orders.length }
+  end
+
+  def find_patient_visits_dates_since_last_outcome(patient, program, date)
+    outcome_date = patient_last_outcome_date(patient, program, date)
+    encounters = visit_dates_ref(patient, program)
+                          .where('encounter_datetime >= ?', outcome_date)
+                          .order(encounter_datetime: :desc)
+                          .group(:visit_date)
+    encounters.present? ? encounters.map(&:visit_date) : []
+  end
+
+  def visit_dates_ref(patient, program)
+    Encounter.select('DATE(encounter_datetime) AS visit_date')
+             .where(patient_id: patient, program_id: program)
+  end
+
+  def patient_last_outcome_date(patient, program, date)
+    obs = Observation.joins(:encounter)
+                     .where(encounter: {
+                          type: encounter_type('EXIT FROM CARE'),
+                          patient_id: patient,
+                          program_id: program
+                        })
+                        .where('DATE(obs_datetime) <= DATE(?)', date)
+                        .where(concept: concept('Tuberculosis treatment end date'))
+                        .order(obs_datetime: :desc).first
+    obs.present? ? obs.value_datetime : '1970-01-01 00:00:00'
   end
 
   private
