@@ -4,7 +4,7 @@ module ImmunizationService
   class FollowUp
     
     # Immunization program ID
-    PROGRAM_ID = 33
+    IMMUNIZATION_PROGRAM_ID = 33
 
     def initialize
     end
@@ -85,7 +85,7 @@ module ImmunizationService
     # Fetch clients eligible for immunization follow-up
     def fetch_immunization_clients(location_id)
       Patient.joins(:encounters, person: :names)
-             .where('encounter.program_id = ? AND encounter.location_id = ?', PROGRAM_ID, location_id)
+             .where('encounter.program_id = ? AND encounter.location_id = ?', IMMUNIZATION_PROGRAM_ID, location_id)
              .distinct
              .pluck('patient.patient_id, person.birthdate, person_name.given_name, person_name.family_name')
     end
