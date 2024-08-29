@@ -103,6 +103,7 @@ idsr_sms:
 #   username: admin
 #   password: test
 
+
 #To get the sms key follow the following steps in the ReadMe
 eir_sms_configurations:
   development:

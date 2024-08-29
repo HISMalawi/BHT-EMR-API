@@ -68,7 +68,6 @@ class Api::V1::SendSmsController < ApplicationController
     end
   end
   
-
   private
 
   def initialize_variables

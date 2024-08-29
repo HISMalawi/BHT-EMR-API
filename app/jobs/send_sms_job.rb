@@ -10,7 +10,6 @@ class SendSmsJob < ApplicationJob
     sms_gateway_url = config["sms_gateway_url"]
         sms_api_key = config["sms_api_key"]
     appointment_message = get_global_property(key)
-    
     message = "#{appointment_message},\n" \
               "pa tsiku **#{@converted_date}**.\n"
 

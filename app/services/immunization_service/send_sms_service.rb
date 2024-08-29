@@ -39,7 +39,6 @@ module ImmunizationService
       config_key = "#{User.current.location_id}_cancel_appointment_message"
 
       cancel_scheduled_sms(date, details)
-
       SendSmsJob.perform_later(date, details, config_key) if config['sms_activation']
     end
 
