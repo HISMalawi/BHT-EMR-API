@@ -1,21 +1,17 @@
 class SendSmsJob < ApplicationJob
   queue_as :default
 
-  def perform(date, details)
+  def perform(date, details, key)
+    config = load_config
     @date = Date.parse(date)
     @details = details
     @converted_date = @date.strftime('%d-%B-%Y')
-    facility_id = User.current.location_id
     
-    sms_gateway_url = get_global_property("#{facility_id}_sms_gateway_url")
-    sms_api_key = get_global_property("#{facility_id}_sms_api_key")
-    next_appointment_message = get_global_property("#{facility_id}_next_appointment_message")
-
-    sms_gateway_url ||= ENV['SMS_GATEWAY_URL']
-    sms_api_key ||= ENV['SMS_API_KEY']
-    next_appointment_message ||= ENV['NEXT_APPOINTMENT_MESSAGE']
-
-    message = "#{next_appointment_message},\n" \
+    sms_gateway_url = config["sms_gateway_url"]
+        sms_api_key = config["sms_api_key"]
+    appointment_message = get_global_property(key)
+    
+    message = "#{appointment_message},\n" \
               "pa tsiku **#{@converted_date}**.\n"
 
     uri = URI.parse(sms_gateway_url)
@@ -33,11 +29,16 @@ class SendSmsJob < ApplicationJob
     end
 
     raise "Failed to send SMS" unless response.is_a?(Net::HTTPSuccess)
-
     response.body
+
   end
 
   private
+
+  def load_config
+    config_file = Rails.root.join('config', 'application.yml')
+    YAML.load_file(config_file)["eir_sms_configurations"][Rails.env] || {}
+  end
 
   def get_global_property(property_name)
     GlobalProperty.find_by(property: property_name)&.property_value

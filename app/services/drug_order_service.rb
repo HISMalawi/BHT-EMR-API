@@ -134,29 +134,30 @@ module DrugOrderService
       # Store user specified drug run out date separately as it is overriden
       # based on the drugs that actually get dispensed.
 
-      if  encounter.type.name = 'IMMUNIZATION RECORD'
-        Observation.create!(concept_id: ConceptName.find_by_name!('Batch Number').concept_id,
-              encounter:,
-              person_id: encounter.patient_id,
-              order:,
-              obs_datetime: start_date,
-              value_datetime: drug_runout_date,
-              value_text: create_params[:batch_number],
-              comments: 'Batch Number of for drug ordered',
-              location_id: User.current.location_id
-        )
+      # Determine which concept to use and any additional attributes based 
+      # on the encounter type and presence of batch number
+      if create_params[:batch_number].present?
+        concept_id = ConceptName.find_by_name!('Batch Number').concept_id
+        value_text = create_params[:batch_number]
+        comments = 'Batch Number for drug ordered'
+      else
+        concept_id = ConceptName.find_by_name('Drug end date').concept_id
+        value_text = nil
+        comments = 'User specified drug run out date during drug prescription'
       end
 
-
-      Observation.create!(concept_id: ConceptName.find_by_name!('Drug end date').concept_id,
-                          encounter:,
-                          person_id: encounter.patient_id,
-                          order:,
-                          obs_datetime: start_date,
-                          value_datetime: drug_runout_date,
-                          comments: 'User specified drug run out date during drug prescription',
-                          location_id: User.current.location_id
-                          )
+      # Create the observation based on the determined logic
+      Observation.create!(
+        concept_id: concept_id,
+        encounter:,
+        person_id: encounter.patient_id,
+        order:, 
+        obs_datetime: start_date,
+        value_datetime: drug_runout_date,
+        value_text: value_text,
+        comments: comments,
+        location_id: User.current.location_id
+      )
 
       order
     end

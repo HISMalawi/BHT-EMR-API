@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require 'sidekiq/web'
+require 'sidekiq/cron/web'
 
 Rails.application.routes.draw do
   mount Lab::Engine => '/'
@@ -311,6 +312,10 @@ Rails.application.routes.draw do
 
       post '/immunization/administer_vaccine', to: 'administer_vaccine#administer_vaccine'
       get '/immunization/stats', to: 'immunization_report#stats'
+      get '/immunization/months_picker', to: 'immunization_report#months_picker'
+      get '/immunization/weeks_picker', to: 'immunization_report#weeks_picker'
+      get '/immunization/vaccines_administered', to: 'immunization_report#vaccines_administered'
+      get '/immunization/drugs', to: 'immunization_report#drugs'
     end
   end
 

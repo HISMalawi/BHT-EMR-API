@@ -57,10 +57,10 @@ module ImmunizationService
     end
   
     def self.immunization_drugs
-        ConceptSet.joins(concept: %i[concept_names drugs])
-                  .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
-                  .group('concept.concept_id, drug.name, drug.drug_id')
-                  .select('concept.concept_id, drug.name as name, drug.drug_id drug_id')
+      ConceptSet.joins(concept: %i[concept_names drugs])
+                .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
+                .group('concept.concept_id, drug.name, drug.drug_id')
+                .select('concept.concept_id, drug.name as name, drug.drug_id drug_id')
     end
   
     def self.filter_female_specific_immunizations(immunizations)
@@ -149,7 +149,7 @@ module ImmunizationService
               administered_by: vaccine_given&.[](:administered_by),
               location_administered: vaccine_given&.[](:location_administered),
               vaccine_batch_number: vaccine_given&.[](:batch_number),
-              order_id: vaccine_given&.[](:order_id)
+              encounter_id: vaccine_given&.[](:encounter_id)
             }
           end
         }
@@ -165,12 +165,12 @@ module ImmunizationService
                  .joins(order: :drug_order)
                  .where(drug_order: { drug_inventory_id: drugs }, person_id: patient_id)
                  .select(:obs_datetime, :drug_inventory_id, :order_id, :location_id,
-                         :creator, :given_name, :family_name).map do |obs|
+                         :creator, :given_name, :family_name, :encounter_id).map do |obs|
         {
           obs_datetime: obs.obs_datetime,
           drug_inventory_id: obs.drug_inventory_id,
           batch_number: get_batch_id(obs.order_id),
-          order_id: obs.order_id,
+          encounter_id: obs.encounter_id,
           administered_by: {
             person_id: obs.creator,
             given_name: obs.given_name,
@@ -199,7 +199,7 @@ module ImmunizationService
       elsif milestone.include?('weeks') || milestone.include?('week')
         milestone_weeks = milestone.split.first.to_i
         age_in_weeks = (today - dob).to_i / 7
-        return 'current' if milestone_weeks ==  age_in_weeks.to_i
+        return 'current' if milestone_weeks == age_in_weeks.to_i
   
         age_in_weeks > milestone_weeks ? 'passed' : 'upcoming'
       elsif milestone.include?('months') || milestone.include?('month')
@@ -210,11 +210,11 @@ module ImmunizationService
         age_in_months > milestone_months ? 'passed' : 'upcoming'
       elsif milestone.include?('years') || milestone.include?('year')
         milestone_years = milestone.split.first.to_i
-        age_in_years = today.year - dob.year
+        age_in_years = (today - dob).to_i / 365
 
         case milestone_years
         when 9
-          return 'current' if age_in_years >= 9 && age_in_years <= 14
+          return 'current' if age_in_years >= 9
   
           default_milstone_status(age_in_years, milestone_years)
         when 12
@@ -222,7 +222,7 @@ module ImmunizationService
   
           default_milstone_status(age_in_years, milestone_years)
         when 15
-          return 'current' if age_in_years >= 15 && age_in_years <= 45
+          return 'current' if age_in_years >= 15 
   
           default_milstone_status(age_in_years, milestone_years)
         when 18

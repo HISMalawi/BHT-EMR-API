@@ -1,28 +1,31 @@
 module Api
   module V1
     class AdministerVaccineController < ApplicationController
-      
-        after_action :immunization_cache_update, only: [:administer_vaccine]
-        
+
         def administer_vaccine
-          encounter_id, drug_orders, program_id = params.require(%i[encounter_id drug_orders program_id])
+          encounter_id, drug_orders, program_id = params.require(%i[ encounter_id drug_orders program_id])
 
-          encounter = Encounter.find(encounter_id)
+          program = Program.find(program_id)
 
-          unless encounter.type.name = 'IMMUNIZATION RECORD'
-            return render json: { errors: "Not an immunization encounter ##{encounter.encounter_id}"},
+          unless program.name = 'IMMUNIZATION PROGRAM'
+            return render json: { errors: "Not an immunization program ##{program.program_id}"},
                           status: :bad_request
           end
 
-        
+          encounter = Encounter.find(encounter_id)
+
+          unless encounter.type.name = 'TREATMENT'
+            return render json: { errors: "Not a treatment encounter ##{encounter.encounter_id}"},
+                          status: :bad_request
+          end
+
           drug_orders.each do |drug_order|
             #Verify if batch number exists in pharmacy batches
-            unless PharmacyBatch.find_by(batch_number: drug_order["batch_number"]).present?
-              return render json: { errors: "Batch number #{drug_order["batch_number"]} does not exist"},
+            unless PharmacyBatch.find_by(batch_number: drug_order["batch_number"]).present? || drug_order["batch_number"] == "Unknown"
+              return render json: { errors: "Batch number #{drug_order["batch_number"]} does not exist and its not even set to unknown"},
                         status: :bad_request
             end
           end
-        
 
           orders = DrugOrderService.create_drug_orders(encounter: , drug_orders:)
 
@@ -44,20 +47,6 @@ module Api
           render json: orders, status: :created
         end
 
-        private 
-
-        def immunization_cache_update
-          # Update Immunization Data Cache
-          start_date = 1.year.ago.to_date.to_s
-          end_date = Date.today.to_s
-          
-          location_id = User.current.location_id
-
-          ImmunizationReportJob.perform_later(start_date, end_date, location_id)  
-          DashboardStatsJob.perform_later(location_id)
-        end
     end
   end
 end
-
-

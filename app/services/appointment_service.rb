@@ -9,6 +9,7 @@ class AppointmentService
     'CXCA PROGRAM' => CxcaService::AppointmentEngine,
     'HTC PROGRAM' => HtsService::AppointmentEngine,
     'NCD PROGRAM' => NcdService::AppointmentEngine,
+    'IMMUNIZATION PROGRAM' => ImmunizationService::AppointmentEngine,
   }.freeze
 
   def initialize(program_id:, patient_id:, retro_date:)

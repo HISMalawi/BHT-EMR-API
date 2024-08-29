@@ -14,13 +14,13 @@ module ImmunizationService
   
           def data
             {
-              total_client_registered: total_client_registered,
-              total_male_registered: total_male_registered,
-              total_female_registered: total_female_registered,
-              total_vaccinated_this_year: total_vaccinated_this_year,
-              total_female_vaccinated_this_year: total_female_vaccinated_this_year,
-              total_male_vaccinated_this_year: total_male_vaccinated_this_year,
-              vaccination_counts_by_month: vaccination_counts_by_month
+              total_client_registered:,
+              total_male_registered:,
+              total_female_registered:,
+              total_vaccinated_this_year:,
+              total_female_vaccinated_this_year:,
+              total_male_vaccinated_this_year:,
+              vaccination_counts_by_month:
             }
           end
   
@@ -29,7 +29,7 @@ module ImmunizationService
           def fetch_registrations
             base_query
               .where(
-                encounter_type: { name: "REGISTRATION" },
+                encounter_type: { name: 'REGISTRATION' },
                 obs: { obs_datetime: @start_date..@end_date }
               )
               .distinct
@@ -38,15 +38,15 @@ module ImmunizationService
           def fetch_immunizations
             base_query
               .where(
-                encounter_type: { name: "IMMUNIZATION RECORD" },
-                concept_name: { name: "Batch Number" },
+                encounter_type: { name: 'TREATMENT' },
+                concept_name: { name: 'Batch Number' },
                 obs: { obs_datetime: @start_date..@end_date }
               )
               .distinct
           end
   
           def base_query
-            Observation.joins(concept: :concept_names, 
+            Observation.joins(concept: :concept_names,
                               encounter: %i[program type], person: [])
                        .where(program: { program_id: 33 }, location_id: @location_id)
           end
@@ -56,11 +56,11 @@ module ImmunizationService
           end
   
           def total_male_registered
-            @registrations.where(person: { gender: "M" }).count(:person_id)
+            @registrations.where(person: { gender: 'M' }).count(:person_id)
           end
   
           def total_female_registered
-            @registrations.where(person: { gender: "F" }).count(:person_id)
+            @registrations.where(person: { gender: 'F' }).count(:person_id)
           end
   
           def total_vaccinated_this_year
@@ -68,11 +68,11 @@ module ImmunizationService
           end
   
           def total_female_vaccinated_this_year
-            @immunizations.where(person: { gender: "F" }).count(:person_id)
+            @immunizations.where(person: { gender: 'F' }).count(:person_id)
           end
   
           def total_male_vaccinated_this_year
-            @immunizations.where(person: { gender: "M" }).count(:person_id)
+            @immunizations.where(person: { gender: 'M' }).count(:person_id)
           end
   
           def vaccination_counts_by_month
@@ -84,7 +84,7 @@ module ImmunizationService
               start_date = current_date.beginning_of_month - i.months
               end_date = current_date.end_of_month - i.months
   
-              month_name = start_date.strftime("%b") # Short month name
+              month_name = start_date.strftime('%b') # Short month name
               count = @immunizations.where(obs: { obs_datetime: start_date..end_date }).count(:person_id)
   
               months << month_name

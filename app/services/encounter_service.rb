@@ -18,14 +18,17 @@ class EncounterService
   def create(type:, patient:, program:, encounter_datetime: nil, provider: nil)
     encounter_datetime ||= Time.now
     provider ||= User.current.person
-
-    encounter = find_encounter(type:, patient:, provider:,
-                               encounter_datetime:, program:)
-    if type.id == EncounterType.find_by(name: 'LAB ORDERS')&.id
-      PatientProgramService.new.create(patient:, program: Program.find_by(name: 'Laboratory program'),
-                                       date_enrolled: encounter_datetime)
+    
+    # TODO To be refactored in future
+    unless program.program_id.to_i == Program.find_by_name('IMMUNIZATION PROGRAM').program_id.to_i
+      encounter = find_encounter(type:, patient:, provider:,
+                                encounter_datetime:, program:)
+      if type.id == EncounterType.find_by(name: 'LAB ORDERS')&.id
+        PatientProgramService.new.create(patient:, program: Program.find_by(name: 'Laboratory program'),
+                                        date_enrolled: encounter_datetime)
+      end
+      return encounter if encounter
     end
-    return encounter if encounter
 
     Encounter.create(
       type:, patient:, provider:,

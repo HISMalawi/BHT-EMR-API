@@ -3,52 +3,94 @@
 class ProgramAppointmentService
   extend ModelUtils
 
-  def self.booked_appointments(program_id, date)
-    clients = ActiveRecord::Base.connection.select_all("SELECT
-    i2.identifier arv_number, i.identifier, p.birthdate, p.gender, n.given_name,
-    n.family_name, obs.person_id, p.birthdate_estimated, a.city_village,a.state_province,a.township_division
-    FROM obs
-    INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
-    AND e.voided = 0 AND obs.voided = 0 AND e.program_id = #{program_id}
-    AND e.encounter_type = #{encounter_type('APPOINTMENT').id}
-    LEFT JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
-    LEFT JOIN person_address a ON a.person_id = e.patient_id AND a.voided = 0
-    LEFT JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
-    LEFT JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.voided = 0
-    AND i.identifier_type IN(2,3)
-    LEFT JOIN patient_identifier i2 ON i2.patient_id = e.patient_id AND i2.voided = 0
-    AND i2.identifier_type IN(4)
-    WHERE obs.concept_id = #{concept('Appointment date').concept_id}
-    AND value_datetime BETWEEN '#{date.strftime('%Y-%m-%d 00:00:00')}'
-    AND '#{date.strftime('%Y-%m-%d 23:59:59')}'
-    GROUP BY i.identifier, p.birthdate, p.gender,
-    n.given_name, n.family_name,
-    obs.person_id, p.birthdate_estimated;")
-
+  def self.booked_appointments(program_id, start_date, end_date = nil, search_txt = '', location_id: nil)
+    end_date ||= start_date # If no end_date is provided, use start_date as the end_date
+    
+    query = <<-SQL
+      SELECT
+        i2.identifier arv_number, i.identifier, p.birthdate, p.gender, n.given_name,
+        n.family_name, obs.person_id, obs.encounter_id, p.birthdate_estimated, a.city_village,
+        a.state_province, a.township_division, obs.value_datetime AS appointment_date
+      FROM obs
+      INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
+        AND e.voided = 0 AND obs.voided = 0 AND e.program_id = :program_id
+        AND e.encounter_type = :appointment_encounter_type
+      LEFT JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
+      LEFT JOIN person_address a ON a.person_id = e.patient_id AND a.voided = 0
+      LEFT JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
+      LEFT JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.voided = 0
+        AND i.identifier_type IN(2,3)
+      LEFT JOIN patient_identifier i2 ON i2.patient_id = e.patient_id AND i2.voided = 0
+        AND i2.identifier_type IN(4)
+      WHERE obs.concept_id = :appointment_date_concept_id
+      AND value_datetime BETWEEN :start_date AND :end_date
+    SQL
+  
+    query_params = {
+      program_id: program_id,
+      appointment_encounter_type: encounter_type('APPOINTMENT').id,
+      appointment_date_concept_id: concept('Appointment date').concept_id,
+      start_date: start_date.strftime('%Y-%m-%d 00:00:00'),
+      end_date: end_date.strftime('%Y-%m-%d 23:59:59')
+    }
+  
+    if location_id
+      query += " AND e.location_id = :location_id AND obs.location_id = :location_id"
+      query_params[:location_id] = location_id
+    end
+  
+    # Handle search functionality
+    unless search_txt.blank?
+      search_terms = search_txt.split(' ', 2).map(&:strip)
+      if search_terms.size > 1
+        query += " AND ((n.given_name LIKE :term1 OR n.family_name LIKE :term1) AND (n.given_name LIKE :term2 OR n.family_name LIKE :term2))"
+        query_params[:term1] = "%#{search_terms[0]}%"
+        query_params[:term2] = "%#{search_terms[1]}%"
+      else
+        query += " AND (n.given_name LIKE :term OR n.family_name LIKE :term)"
+        query_params[:term] = "%#{search_txt}%"
+      end
+    end
+  
+    query += <<-SQL
+      GROUP BY i.identifier, p.birthdate, p.gender,
+        n.given_name, n.family_name,
+        obs.person_id, p.birthdate_estimated, obs.encounter_id, obs.value_datetime
+      ORDER BY obs.value_datetime DESC
+    SQL
+  
+    clients = ActiveRecord::Base.connection.select_all(
+      ActiveRecord::Base.sanitize_sql_array([query, query_params])
+    )
+  
     clients_formatted = []
     already_counted = []
-
+  
     (clients || []).each do |c|
       next if already_counted.include? c['person_id']
-
+      
       already_counted << c['person_id']
-
+      
       clients_formatted << {
         given_name: c['given_name'], family_name: c['family_name'],
         birthdate: c['birthdate'], gender: c['gender'], person_id: c['person_id'],
         npid: c['identifier'], birthdate_estimated: c['birthdate_estimated'],
         city_village: c['city_village'], state_province: c['state_province'],
-        township_division: c['township_division'], 
-        arv_number: c['arv_number']
+        township_division: c['township_division'],
+        arv_number: c['arv_number'],
+        encounter_id: c['encounter_id'],
+        appointment_date: c['appointment_date'],
       }
     end
-
+  
     clients_formatted
   end
 
   # Pretty much exactly like booked appointments above but limits itself to
   # patients with arv_numbers... Lord have mercy...
-  def self.scheduled_appointments(program_id, date)
+  def self.scheduled_appointments(program_id, date, location_id: nil)
+    location_id = "AND e.location_id = #{location_id} AND obs.location_id = #{location_id}" if location_id
+
     if program_id != program('HIV Program').program_id
       raise InvalidParameterError, 'Scheduled appointments is limited to HIV Program only'
     end
@@ -71,6 +113,7 @@ class ProgramAppointmentService
     AND att.person_attribute_type_id = 12
 
     WHERE obs.concept_id = #{concept('Appointment date').concept_id}
+    #{location_id}
     AND value_datetime BETWEEN '#{date.strftime('%Y-%m-%d 00:00:00')}'
     AND '#{date.strftime('%Y-%m-%d 23:59:59')}'
     GROUP BY i.identifier, p.birthdate, p.gender,
