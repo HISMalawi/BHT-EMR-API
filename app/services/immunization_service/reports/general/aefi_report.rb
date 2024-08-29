@@ -40,52 +40,41 @@ module ImmunizationService
         def generate(start_date, end_date)
           end_date ||= start_date
           vaccine_adverse_effects_concept_id = ConceptName.find_by_name('Vaccine adverse effects').concept_id
-          
+        
           vaccine_adverse_effects = Observation.joins(:encounter)
-                              .merge(immunization_followup_encounter)
-                              .joins("LEFT JOIN (
-                                SELECT concept_id, MIN(name) AS name
-                                FROM concept_name
-                                WHERE voided = 0
-                                GROUP BY concept_id
-                              ) AS unique_concept_name ON obs.value_coded = unique_concept_name.concept_id")
-                              .select("obs.*, unique_concept_name.name AS value_coded_name")
-                              .where(
-                                concept_id: vaccine_adverse_effects_concept_id,
-                                location_id: @location_id,
-                                voided: 0,
-                                obs_datetime: start_date..end_date
-                              )
-                              .where.not(value_coded: nil)
-                              .order(obs_datetime: :desc)
-
-          result = []
-          vaccine_adverse_effects.each do |ob|
-            data = {
-              person_id: nil,
-              concept_id: nil,
-              concept_name: nil,
-              drugs: []
-            }
-            data[:person_id] = ob.person_id
-            data[:concept_id] = ob.value_coded
-            data[:concept_name] = ob.value_coded_name
-          
-            if ob.children
-              ob.children.each do |ob_child|
-                if ob_child.value_coded
-                  data[:drugs] << { drug_inventory_id: ob_child.value_coded }
-                end
-              end
-            end
+            .merge(immunization_followup_encounter)
+            .joins("LEFT JOIN (
+              SELECT concept_id, MIN(name) AS name
+              FROM concept_name
+              WHERE voided = 0
+              GROUP BY concept_id
+            ) AS unique_concept_name ON obs.value_coded = unique_concept_name.concept_id")
+            .select("obs.*, unique_concept_name.name AS value_coded_name")
+            .where(
+              concept_id: vaccine_adverse_effects_concept_id,
+              location_id: @location_id,
+              voided: 0,
+              obs_datetime: start_date..end_date
+            )
+            .where.not(value_coded: nil)
+            .includes(:children) # Eager load children to avoid N+1 queries
+            .order(obs_datetime: :desc)
+        
+          result = vaccine_adverse_effects.map do |ob|
+            drugs = ob.children.select { |child| child.value_coded.present? }
+                               .map { |child| { drug_inventory_id: child.value_coded } }
             
-            result << data if data[:drugs].any?
-          end
-                              
-          {
-            data: result
-          }
-
+            next if drugs.empty?
+        
+            {
+              person_id: ob.person_id,
+              concept_id: ob.value_coded,
+              concept_name: ob.value_coded_name,
+              drugs: drugs
+            }
+          end.compact
+        
+          { data: result }
         end
 
         def immunization_followup_encounter
