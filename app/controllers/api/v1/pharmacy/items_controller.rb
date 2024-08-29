@@ -6,17 +6,16 @@ module Api
       class ItemsController < ApplicationController
         # GET /pharmacy/items[?drug_id=]
         def index
-          user_program = User.current.programs.detect { |x| x["name"] == "IMMUNIZATION PROGRAM" }
-          permitted_params = params.permit(:drug_id, :current_quantity, :start_date, :end_date, :batch_number, :drug_name, :display_details, :_drug_name)
-          
-          if user_program.present?
-            permitted_params = permitted_params.merge("location_id" => User.current.location_id)
-          end
-          
+          user_program = User.current.programs.detect { |x| x['name'] == 'IMMUNIZATION PROGRAM' }
+          permitted_params = params.permit(:drug_id, :current_quantity, :start_date, :end_date, :batch_number,
+                                           :drug_name, :display_details, :_drug_name)
+
+          permitted_params = permitted_params.merge('location_id' => User.current.location_id) if user_program.present?
+
           items = service.find_batch_items(permitted_params)
           render json: paginate(items)
         end
-        
+
 
         def show
           render json: item
