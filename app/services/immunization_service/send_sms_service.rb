@@ -2,7 +2,12 @@ module ImmunizationService
   module SendSmsService
     def self.perform_async(date, details, action)
       config = load_config
+      globalconfig = load_siteglobal_config
 
+      if globalconfig.present?
+        config.merge!(globalconfig)
+      end
+       
       case action
       when 'send_appointment'
         send_appointment_reminder(date, details, config)
@@ -14,6 +19,27 @@ module ImmunizationService
     def self.load_config
       config_file = Rails.root.join('config', 'application.yml')
       YAML.load_file(config_file)["eir_sms_configurations"][Rails.env] || {}
+    end
+
+    def self.load_siteglobal_config
+      config = {}
+      keys = [
+        "next_appointment_reminder_period",
+        "next_appointment_message", 
+        "cancel_appointment_message",
+        "sms_reminder",
+        "sms_activation",
+        "show_sms_popup"
+      ]
+      properties = GlobalProperty.where(property: keys.map { |key| "#{User.current.location_id}_#{key}" })
+                                 .pluck(:property, :property_value)
+                                 .to_h
+      keys.each do |key|
+        property_key = "#{User.current.location_id}_#{key}"
+        config[key] = properties[property_key] || nil
+      end
+    
+      config 
     end
 
     def self.send_appointment_reminder(date, details, config)
@@ -39,7 +65,7 @@ module ImmunizationService
       config_key = "#{User.current.location_id}_cancel_appointment_message"
 
       cancel_scheduled_sms(date, details)
-      SendSmsJob.perform_later(date, details, config_key) if config['sms_activation']
+       SendSmsJob.perform_later(date, details, config_key) if config['sms_activation']
     end
 
     def self.cancel_scheduled_sms(date, details)

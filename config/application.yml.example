@@ -107,8 +107,8 @@ idsr_sms:
 #To get the sms key follow the following steps in the ReadMe
 eir_sms_configurations:
   development:
-    sms_gateway_url: https://gateway.seven.io/api/sms
-    sms_api_key: c73C9ac143c557296F3E928f7b29ffB6da32473d93fa873e87Fb5521E1D7eBEB
+    sms_gateway_url: ''
+    sms_api_key: ''
     sms_reminder: true
     next_appointment_message: Okondewa  dziwani kuti mukuyera kukabayisa katemera
     cancel_appointment_message: "Okondewa  dziwani kut mukudziwisidwa kut tsiku lakatemela lanu lachosedwa"
@@ -117,8 +117,8 @@ eir_sms_configurations:
     show_sms_popup: true
 
   test:
-    sms_gateway_url: https://gateway.seven.io/api/sms
-    sms_api_key: c73C9ac143c557296F3E928f7b29ffB6da32473d93fa873e87Fb5521E1D7eBEB
+    sms_gateway_url: ''
+    sms_api_key: ''
     sms_reminder: true
     next_appointment_message: Okondewa  dziwani kuti mukuyera kukabayisa katemera
     cancel_appointment_message: "Okondewa  dziwani kut mukudziwisidwa kut tsiku lakatemela lanu lachosedwa"
@@ -127,8 +127,8 @@ eir_sms_configurations:
     show_sms_popup: true
 
   production:
-    sms_gateway_url: https://gateway.seven.io/api/sms
-    sms_api_key: c73C9ac143c557296F3E928f7b29ffB6da32473d93fa873e87Fb5521E1D7eBEB
+    sms_gateway_url: ''
+    sms_api_key: ''
     sms_reminder: true
     next_appointment_message: Okondewa  dziwani kuti mukuyera kukabayisa katemera
     cancel_appointment_message: "Okondewa  dziwani kut mukudziwisidwa kut tsiku lakatemela lanu lachosedwa"
