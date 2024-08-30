@@ -17,7 +17,7 @@ class Api::V1::SendSmsController < ApplicationController
   def index
       patient_details = patients_phone
       output = enqueue_sms(params[:appointment_date], patient_details,'send_appointment')
-      render json: { message: output }
+      render json: { message: patient_details }
   end
 
   def cancel
