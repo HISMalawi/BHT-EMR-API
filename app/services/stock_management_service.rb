@@ -130,10 +130,19 @@ class StockManagementService
   end
   
   def find_batch_items(filters = {})
-  query = PharmacyBatchItem
+    query = PharmacyBatchItem
+      .joins('INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id')
+      .joins('INNER JOIN pharmacy_batches ON pharmacy_batches.id = pharmacy_batch_items.pharmacy_batch_id')
 
-  # Apply filters
-  unless filters.empty?
+    query = apply_filters(query, filters)
+    query = apply_select_and_group(query, filters[:display_details])
+
+    query.order(Arel.sql('pharmacy_batch_items.date_created DESC, pharmacy_batch_items.expiry_date ASC'))
+  end
+
+  def apply_filters(query, filters)
+    return query if filters.empty?
+
     query = query.where("DATE(pharmacy_batch_items.delivery_date) >= ?", filters[:start_date]) if filters[:start_date]
     query = query.where("DATE(pharmacy_batch_items.delivery_date) <= ?", filters[:end_date]) if filters[:end_date]
     query = query.where(drug_id: filters[:drug_id]) if filters[:drug_id]
@@ -143,57 +152,53 @@ class StockManagementService
     query = query.where("pharmacy_batches.batch_number = ?", filters[:batch_number]) if filters[:batch_number]
     query = query.where("pharmacy_batches.location_id = ?", filters[:location_id]) if filters[:location_id]
     query = query.where('drug.name LIKE ?', "#{filters[:drug_name]}%") if filters[:drug_name]
+
+    query
   end
 
-  # Join tables
-  query = query.joins('INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id')
-               .joins('INNER JOIN pharmacy_batches ON pharmacy_batches.id = pharmacy_batch_items.pharmacy_batch_id')
-
-  # Apply grouping based on display_details
-  if filters[:display_details].nil?
-     # Define the SELECT clause
-    select_clause = <<~SQL
+  def apply_select_and_group(query, display_details)
+    select_clause = if display_details.nil?
+      <<~SQL
         pharmacy_batch_items.*,
         pharmacy_batch_items.delivered_quantity as delivered_quantity, 
         pharmacy_batch_items.current_quantity as current_quantity,
         COALESCE((
-            SELECT SUM(quantity)
-            FROM pharmacy_batch_item_reallocations
-            WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+          SELECT SUM(quantity)
+          FROM pharmacy_batch_item_reallocations
+          WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
         ), 0) as doses_wasted,
-        (pharmacy_batch_items.delivered_quantity- (pharmacy_batch_items.current_quantity +  COALESCE((
-            SELECT SUM(quantity)
-            FROM pharmacy_batch_item_reallocations
-            WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
-        ), 0) )) as dispensed_quantity,
+        (pharmacy_batch_items.delivered_quantity - (pharmacy_batch_items.current_quantity + COALESCE((
+          SELECT SUM(quantity)
+          FROM pharmacy_batch_item_reallocations
+          WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+        ), 0))) as dispensed_quantity,
         pharmacy_batches.batch_number,
         COUNT(*) OVER() AS total_count
-    SQL
-    query = query.group('drug.drug_id, pharmacy_batches.batch_number')
-  else
-     # Define the SELECT clause
-    select_clause = <<~SQL
+      SQL
+    else
+      <<~SQL
         pharmacy_batch_items.*,
         SUM(pharmacy_batch_items.delivered_quantity) as delivered_quantity, 
         SUM(pharmacy_batch_items.current_quantity) as current_quantity,
         SUM(COALESCE((
-            SELECT SUM(quantity)
-            FROM pharmacy_batch_item_reallocations
-            WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+          SELECT SUM(quantity)
+          FROM pharmacy_batch_item_reallocations
+          WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
         ), 0)) as doses_wasted,
-
-       SUM(pharmacy_batch_items.delivered_quantity)-(SUM(pharmacy_batch_items.current_quantity) 
-       + SUM(COALESCE((
-            SELECT SUM(quantity)
-            FROM pharmacy_batch_item_reallocations
-            WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+        SUM(pharmacy_batch_items.delivered_quantity) - (SUM(pharmacy_batch_items.current_quantity) 
+        + SUM(COALESCE((
+          SELECT SUM(quantity)
+          FROM pharmacy_batch_item_reallocations
+          WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
         ), 0))) as dispensed_quantity,
         COUNT(*) OVER() AS total_count
-    SQL
-    query = query.group('drug.drug_id')
-  end
+      SQL
+    end
+
   query = query.select(select_clause)
-               .order(Arel.sql('pharmacy_batch_items.date_created DESC, pharmacy_batch_items.expiry_date ASC'))
+  query = query.group('drug.drug_id, pharmacy_batches.batch_number') if display_details.nil?
+  query = query.group('drug.drug_id') unless display_details.nil?
+
   query
 end
 
