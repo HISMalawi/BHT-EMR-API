@@ -161,7 +161,11 @@ class StockManagementService
             FROM pharmacy_batch_item_reallocations
             WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
         ), 0) as doses_wasted,
-        (pharmacy_batch_items.delivered_quantity) as dispensed_quantity,
+        (pharmacy_batch_items.delivered_quantity- (pharmacy_batch_items.current_quantity +  COALESCE((
+            SELECT SUM(quantity)
+            FROM pharmacy_batch_item_reallocations
+            WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+        ), 0) )) as dispensed_quantity,
         pharmacy_batches.batch_number,
         COUNT(*) OVER() AS total_count
     SQL
@@ -183,7 +187,8 @@ class StockManagementService
             SELECT SUM(quantity)
             FROM pharmacy_batch_item_reallocations
             WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
-        ), 0))) as dispensed_quantity
+        ), 0))) as dispensed_quantity,
+        COUNT(*) OVER() AS total_count
     SQL
     query = query.group('drug.drug_id')
   end
