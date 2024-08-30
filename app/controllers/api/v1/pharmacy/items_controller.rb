@@ -8,7 +8,7 @@ module Api
         def index
           user_program = User.current.programs.detect { |x| x['name'] == 'IMMUNIZATION PROGRAM' }
           permitted_params = params.permit(:drug_id, :current_quantity, :start_date, :end_date, :batch_number,
-                                           :drug_name, :display_details, :_drug_name)
+                                           :drug_name, :display_details)
 
           permitted_params = permitted_params.merge('location_id' => User.current.location_id) if user_program.present?
 
