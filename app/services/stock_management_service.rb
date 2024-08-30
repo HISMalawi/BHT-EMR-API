@@ -90,7 +90,7 @@ class StockManagementService
 
         item = find_batch_items(pharmacy_batch_id: batch.id,
                                 drug_id:,
-                                pack_size:, display_details: 'true').first
+                                pack_size:).first
 
         barcode = barcode.blank? ? nil : barcode
         if item
@@ -130,51 +130,67 @@ class StockManagementService
   end
   
   def find_batch_items(filters = {})
-    query = PharmacyBatchItem
-    unless filters.empty?
-      unless filters[:start_date].nil?
-        query = query.where("DATE(pharmacy_batch_items.delivery_date) >= '#{filters[:start_date]}'")
-      end
-      unless filters[:end_date].nil?
-        query = query.where("DATE(pharmacy_batch_items.delivery_date) <= '#{filters[:end_date]}'")
-      end
-      query = query.where(drug_id: filters[:drug_id]) unless filters[:drug_id].nil?
-      query = query.where(current_quantity: filters[:current_quantity]) unless filters[:current_quantity].nil?
-      query = query.where(pharmacy_batch_id: filters[:pharmacy_batch_id]) unless filters[:pharmacy_batch_id].nil?
-      query = query.where(pack_size: filters[:pack_size]) if filters.key?(:pack_size)
-      query = query.group('drug.drug_id, pharmacy_batches.batch_number') unless filters[:display_details].nil?
-      unless filters[:batch_number].nil?
-        query = query.where("pharmacy_batches.batch_number = '#{filters[:batch_number]}'")
-      end
-      unless filters[:location_id].nil?
-        query = query.where("pharmacy_batches.location_id = '#{filters[:location_id]}'")
-      end
-    end
-    query = query.joins("LEFT JOIN pharmacy_obs ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id AND pharmacy_obs.transaction_reason = 'Drug dispensed'")
-                 .joins('LEFT JOIN pharmacy_batch_item_reallocations ON pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id')
-                 .joins('INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id')
-                 .joins('INNER JOIN pharmacy_batches ON pharmacy_batches.id = pharmacy_batch_items.pharmacy_batch_id')
-                 .group('drug.drug_id')
-                 .select <<~SQL
-                   pharmacy_batch_items.*,
-                   SUM(DISTINCT pharmacy_batch_items.delivered_quantity) as delivered_quantity, 
-                   SUM(DISTINCT pharmacy_batch_items.current_quantity) as current_quantity,
-                   SUM(DISTINCT pharmacy_batch_item_reallocations.quantity)	as doses_wasted,
-                    (SUM(DISTINCT pharmacy_batch_items.delivered_quantity) - 
-                  (SUM(DISTINCT pharmacy_batch_items.current_quantity) + 
-                   SUM(DISTINCT pharmacy_batch_item_reallocations.quantity))) as dispensed_quantity,
-                   pharmacy_batches.batch_number,
-                   COUNT(*) OVER() AS total_count
-                 SQL
-    
-      unless filters[:drug_name].nil?
-        query = query.where('drug.name like ?', "#{filters[:drug_name]}%" )
-      end
-      unless filters[:_drug_name].nil?
-        query = query.where('drug.name like ?', "#{filters[:_drug_name]}%" )
-      end
-    query.order(Arel.sql('pharmacy_batch_items.date_created DESC, pharmacy_batch_items.expiry_date ASC'))
+  query = PharmacyBatchItem
+
+  # Apply filters
+  unless filters.empty?
+    query = query.where("DATE(pharmacy_batch_items.delivery_date) >= ?", filters[:start_date]) if filters[:start_date]
+    query = query.where("DATE(pharmacy_batch_items.delivery_date) <= ?", filters[:end_date]) if filters[:end_date]
+    query = query.where(drug_id: filters[:drug_id]) if filters[:drug_id]
+    query = query.where(current_quantity: filters[:current_quantity]) if filters[:current_quantity]
+    query = query.where(pharmacy_batch_id: filters[:pharmacy_batch_id]) if filters[:pharmacy_batch_id]
+    query = query.where(pack_size: filters[:pack_size]) if filters[:pack_size]
+    query = query.where("pharmacy_batches.batch_number = ?", filters[:batch_number]) if filters[:batch_number]
+    query = query.where("pharmacy_batches.location_id = ?", filters[:location_id]) if filters[:location_id]
+    query = query.where('drug.name LIKE ?', "#{filters[:drug_name]}%") if filters[:drug_name]
   end
+
+  # Join tables
+  query = query.joins('INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id')
+               .joins('INNER JOIN pharmacy_batches ON pharmacy_batches.id = pharmacy_batch_items.pharmacy_batch_id')
+
+  # Apply grouping based on display_details
+  if filters[:display_details].nil?
+     # Define the SELECT clause
+    select_clause = <<~SQL
+        pharmacy_batch_items.*,
+        pharmacy_batch_items.delivered_quantity as delivered_quantity, 
+        pharmacy_batch_items.current_quantity as current_quantity,
+        COALESCE((
+            SELECT SUM(quantity)
+            FROM pharmacy_batch_item_reallocations
+            WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+        ), 0) as doses_wasted,
+        (pharmacy_batch_items.delivered_quantity) as dispensed_quantity,
+        pharmacy_batches.batch_number,
+        COUNT(*) OVER() AS total_count
+    SQL
+    query = query.group('drug.drug_id, pharmacy_batches.batch_number')
+  else
+     # Define the SELECT clause
+    select_clause = <<~SQL
+        pharmacy_batch_items.*,
+        SUM(pharmacy_batch_items.delivered_quantity) as delivered_quantity, 
+        SUM(pharmacy_batch_items.current_quantity) as current_quantity,
+        SUM(COALESCE((
+            SELECT SUM(quantity)
+            FROM pharmacy_batch_item_reallocations
+            WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+        ), 0)) as doses_wasted,
+
+       SUM(pharmacy_batch_items.delivered_quantity)-(SUM(pharmacy_batch_items.current_quantity) 
+       + SUM(COALESCE((
+            SELECT SUM(quantity)
+            FROM pharmacy_batch_item_reallocations
+            WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+        ), 0))) as dispensed_quantity
+    SQL
+    query = query.group('drug.drug_id')
+  end
+  query = query.select(select_clause)
+               .order(Arel.sql('pharmacy_batch_items.date_created DESC, pharmacy_batch_items.expiry_date ASC'))
+  query
+end
 
   def void_batch(batch_number, reason)
     batch = find_batch_by_batch_number(batch_number)
@@ -327,10 +343,9 @@ class StockManagementService
   private
 
   def debit_drug(drug_id, pack_size, debit_quantity, date, reason, dispensation_id: nil)
-    drugs = find_batch_items(drug_id:, pack_size:, display_details: 'true')
+    drugs = find_batch_items(drug_id:, pack_size:)
             .where('expiry_date > ? AND current_quantity > 0', date)
             .order('expiry_date')
-
     commit_kwargs = { update_item: true, dispensation_obs_id: dispensation_id, transaction_reason: reason }
 
     drugs.each do |drug|
@@ -349,7 +364,7 @@ class StockManagementService
   def credit_drug(drug_id, pack_size, credit_quantity, date, reason)
     return credit_quantity unless credit_quantity.positive?
 
-    drugs = find_batch_items(drug_id:, pack_size:, display_details: 'true')
+    drugs = find_batch_items(drug_id:, pack_size:)
             .where('delivery_date < :date AND expiry_date > :date AND pharmacy_batch_items.date_changed >= :date', date:)
             .order(:expiry_date)
 
