@@ -44,11 +44,12 @@ class Api::V1::SendSmsController < ApplicationController
     begin
       update_global_properties
       update_configuration_file
-
+      
+      globalconfig = fetch_configuration_from_global_property(User.current.location_id)
       config = YAML.load_file(Rails.root.join('config', 'application.yml'))
-      environment = Rails.env
-
-      render json: { message: config["eir_sms_configurations"][environment] }, status: :ok
+      ymlconfig = config["eir_sms_configurations"][Rails.env]
+      ymlconfig.merge!(globalconfig)
+      render json: { message: ymlconfig }, status: :ok
     rescue StandardError => e
       render json: { error: e.message }, status: :unprocessable_entity
     end
@@ -57,7 +58,8 @@ class Api::V1::SendSmsController < ApplicationController
   private
 
   def initialize_variables
-    @patient = Observation.where(voided: 0, person_id: params[:person_id])
+                person_id = params.require(:person_id)
+    @patient = Observation.where(voided: 0, person_id: person_id)
                           .group(:person_id)
                           .joins("INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id AND encounter.encounter_type = #{EncounterType.find_by_name('APPOINTMENT').id}")
                           .joins("INNER JOIN person ON person.person_id = obs.person_id")
@@ -104,17 +106,25 @@ class Api::V1::SendSmsController < ApplicationController
   end
 
   def update_configuration_file
+    environment = Rails.env
     config_file = Rails.root.join('config', 'application.yml')
     temp_file = Rails.root.join('config', 'application_temp.yml')
 
     File.open(temp_file, 'w') do |file|
+      current_section = nil
       File.foreach(config_file) do |line|
-        if (key_value_match = line.match(/^\s*(\w+):\s*(.*)$/)) && params.key?(key_value_match[1])
-          key = key_value_match[1]
-          value = params[key]
-          indent = line[/^\s*/]
-          line = "#{indent}#{key}: #{value}\n"
+
+        if (env_match = line.match(/^\s*(\w+):$/)) 
+          current_section = env_match[1]
         end
+          if current_section == environment
+            if (key_value_match = line.match(/^\s*(\w+):\s*(.*)$/)) && params.key?(key_value_match[1])
+                 key = key_value_match[1]
+               value = params[key]
+              indent = line[/^\s*/]
+                line = "#{indent}#{key}: #{value}\n"
+            end
+          end
         file.write(line)
       end
     end

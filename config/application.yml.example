@@ -110,28 +110,13 @@ eir_sms_configurations:
     sms_gateway_url: ''
     sms_api_key: ''
     sms_reminder: true
-    next_appointment_message: Okondewa  dziwani kuti mukuyera kukabayisa katemera
-    cancel_appointment_message: "Okondewa  dziwani kut mukudziwisidwa kut tsiku lakatemela lanu lachosedwa"
-    next_appointment_reminder_period: Instant reminder
-    sms_activation: true
-    show_sms_popup: true
 
   test:
     sms_gateway_url: ''
     sms_api_key: ''
     sms_reminder: true
-    next_appointment_message: Okondewa  dziwani kuti mukuyera kukabayisa katemera
-    cancel_appointment_message: "Okondewa  dziwani kut mukudziwisidwa kut tsiku lakatemela lanu lachosedwa"
-    next_appointment_reminder_period: Instant reminder
-    sms_activation: true
-    show_sms_popup: true
 
   production:
     sms_gateway_url: ''
     sms_api_key: ''
     sms_reminder: true
-    next_appointment_message: Okondewa  dziwani kuti mukuyera kukabayisa katemera
-    cancel_appointment_message: "Okondewa  dziwani kut mukudziwisidwa kut tsiku lakatemela lanu lachosedwa"
-    next_appointment_reminder_period: Instant reminder
-    sms_activation: true
-    show_sms_popup: true
