@@ -1,6 +1,14 @@
 module ImmunizationService
   module VaccineScheduleService
     # This module is used to get the vaccine schedule for a patient
+    ZERO_INDEXED_VACCINES = { bOPV: 'OPV' }.freeze
+    ONE_INDEXED_VACCINES = {
+      'DPT-HepB-Hib_vac': 'Penta', Rota_liq: 'Rota', PCV13: 'PCV',
+      'MR vaccine': 'MR', 'HPV vaccine 4-valent': 'HPV', RTS: 'MV'
+    }.freeze
+    VACCINE_NAME_MAP = { 'Pfizer-BioNTech COVID-19 vaccine': 'Pfizer COVID-19' }.freeze
+
+
     def self.vaccine_schedule(patient)
       # Get Vaccine Schedule
       # begin
@@ -15,15 +23,17 @@ module ImmunizationService
   
       # For each of these get the window period and schedule
       immunization_with_window = immunizations.flat_map do |immunization_drug|
-        vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones').map do |milestone|
-          {
+        vaccines = []
+        vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones').each_with_index do |milestone, i|
+         vaccines << {
             milestone_name: milestone.name,
             sort_weight: milestone.sort_weight,
             drug_id: immunization_drug.drug_id,
-            drug_name: immunization_drug.name,
+            drug_name: vaccine_display_name(immunization_drug.name, i),
             window_period: vaccine_attribute(immunization_drug.concept_id, 'Immunization window period').first&.name
           }
         end
+        vaccines
       end
       vaccines_given = administered_vaccines(patient.person_id, immunization_with_window.pluck(:drug_id))
       grouped_immunizations = immunization_with_window.group_by { | immunizations | immunizations[:milestone_name] }
@@ -46,6 +56,16 @@ module ImmunizationService
       end
   
       unique_data
+    end
+
+    def self.vaccine_display_name(vaccine, index)
+      if ZERO_INDEXED_VACCINES.keys.include?(vaccine.to_sym)
+        "#{ZERO_INDEXED_VACCINES[vaccine.to_sym]} #{index}"
+      elsif ONE_INDEXED_VACCINES.keys.include?(vaccine.to_sym)
+        "#{ONE_INDEXED_VACCINES[vaccine.to_sym]} #{index + 1}"
+      else
+        VACCINE_NAME_MAP[vaccine.to_sym] || vaccine
+      end
     end
   
   
@@ -91,7 +111,7 @@ module ImmunizationService
         end
       elsif visit_one[:antigens].all? { |antigen| antigen[:status] == 'administered' }
         visit_one[:milestone_status] = 'passed'
-        administered_date = Date.strptime(visit_one[:antigens].first[:date_administered], "%d/%b/%Y %H:%M:%S")
+        administered_date = Date.strptime(visit_one[:antigens].first[:date_administered], '%d/%b/%Y %H:%M:%S')
   
         vaccine_schedule.each_with_index do |visit, index|
           next if visit[:visit] <= 1
@@ -129,6 +149,7 @@ module ImmunizationService
                 .where(concept_set: ConceptName.where(name: attribute_type).pluck(:concept_id))
                 .where(concept_id: ConceptSet.where(concept_set: drug_concept_id).pluck(:concept_id))
                 .select('concept_name.name, concept_set.sort_weight')
+                .order(:sort_weight)
     end
   
     def self.format_schedule(schedule, vaccines_given, client_dob)
@@ -149,7 +170,8 @@ module ImmunizationService
               administered_by: vaccine_given&.[](:administered_by),
               location_administered: vaccine_given&.[](:location_administered),
               vaccine_batch_number: vaccine_given&.[](:batch_number),
-              encounter_id: vaccine_given&.[](:encounter_id)
+              encounter_id: vaccine_given&.[](:encounter_id),
+              order_id: vaccine_given&.[](:order_id)
             }
           end
         }
@@ -171,6 +193,7 @@ module ImmunizationService
           drug_inventory_id: obs.drug_inventory_id,
           batch_number: get_batch_id(obs.order_id),
           encounter_id: obs.encounter_id,
+          order_id: obs.order_id,
           administered_by: {
             person_id: obs.creator,
             given_name: obs.given_name,

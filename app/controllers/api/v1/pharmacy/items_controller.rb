@@ -6,25 +6,24 @@ module Api
       class ItemsController < ApplicationController
         # GET /pharmacy/items[?drug_id=]
         def index
-          user_program = User.current.programs.detect { |x| x["name"] == "IMMUNIZATION PROGRAM" }
-          permitted_params = params.permit(:drug_id, :current_quantity, :start_date, :end_date, :batch_number, :drug_name)
-          
-          if user_program.present?
-            permitted_params = permitted_params.merge("location_id" => User.current.location_id)
-          end
-          
+          user_program = User.current.programs.detect { |x| x['name'] == 'IMMUNIZATION PROGRAM' }
+          permitted_params = params.permit(:drug_id, :current_quantity, :start_date, :end_date, :batch_number,
+                                           :drug_name, :display_details)
+
+          permitted_params = permitted_params.merge('location_id' => User.current.location_id) if user_program.present?
+
           items = service.find_batch_items(permitted_params)
           render json: paginate(items)
         end
-        
+
 
         def show
           render json: item
         end
 
         def update
-          permitted_params = params.permit(%i[current_quantity delivered_quantity pack_size expiry_date delivery_date unit_doses manufacture
-                                             dosage_form drug_id reason])
+          permitted_params = params.permit(%i[current_quantity delivered_quantity pack_size expiry_date delivery_date manufacture
+                                          drug_id reason])
           raise InvalidParameterError, 'reason is required' if permitted_params[:reason].blank?
 
           if params[:batch_number].present? && params[:pharmacy_batch_id].present?
@@ -32,11 +31,7 @@ module Api
           end
 
           if params[:id].present? && params[:doses_wasted].present?
-              service.update_dispose_item(params[:doses_wasted], params[:id])
-          end
-
-          if params[:id].present? && params[:vvm_stage].present?
-              service.update_vvm_stage(params[:vvm_stage], params[:id])
+              service.update_dispose_item(params[:doses_wasted], params[:id], params[:date], params[:reallocation_code], params[:waste_reason])
           end
 
           item = service.edit_batch_item(params[:id], permitted_params)

@@ -82,10 +82,7 @@ class StockManagementService
         quantity = fetch_parameter(item, :quantity)
         barcode = fetch_parameter(item, :barcode)
         product_code = fetch_parameter(item, :product_code)
-        unit_doses = fetch_parameter(item, :unit_doses)
-        vvm_stage = fetch_parameter(item, :vvm_stage)
         manufacture = fetch_parameter(item, :manufacture)
-        dosage_form = fetch_parameter(item, :dosage_form)
         pack_size = item[:pack_size]
 
         delivery_date = fetch_parameter_as_date(item, :delivery_date, Date.today)
@@ -98,15 +95,14 @@ class StockManagementService
         barcode = barcode.blank? ? nil : barcode
         if item
           # Update existing item if already in batch
-          item.delivered_quantity += quantity * unit_doses
-          item.current_quantity += quantity * unit_doses
+          item.delivered_quantity += quantity
+          item.current_quantity += quantity
           item.product_code = product_code
           item.barcode = barcode
           item.save
         else
           item = create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code,
-                                   barcode,unit_doses,manufacture,dosage_form)
-          create_vvm(item[:id], vvm_stage)
+                                   barcode,manufacture)
           validate_activerecord_object(item)
         end
 
@@ -132,58 +128,79 @@ class StockManagementService
   def find_batch_item_by_id(id)
     PharmacyBatchItem.find(id)
   end
-
-
+  
   def find_batch_items(filters = {})
     query = PharmacyBatchItem
-    unless filters.empty?
-      unless filters[:start_date].nil?
-        query = query.where("DATE(pharmacy_batch_items.delivery_date) >= '#{filters[:start_date]}'")
-      end
-      unless filters[:end_date].nil?
-        query = query.where("DATE(pharmacy_batch_items.delivery_date) <= '#{filters[:end_date]}'")
-      end
-      query = query.where(drug_id: filters[:drug_id]) unless filters[:drug_id].nil?
-      query = query.where(current_quantity: filters[:current_quantity]) unless filters[:current_quantity].nil?
-      query = query.where(pharmacy_batch_id: filters[:pharmacy_batch_id]) unless filters[:pharmacy_batch_id].nil?
-      query = query.where(pack_size: filters[:pack_size]) if filters.key?(:pack_size)
-      unless filters[:batch_number].nil?
-        query = query.where("pharmacy_batches.batch_number = '#{filters[:batch_number]}'")
-      end
-      unless filters[:location_id].nil?
-        query = query.where("pharmacy_batches.location_id = '#{filters[:location_id]}'")
-      end
-    end
-    query = query.joins("LEFT JOIN pharmacy_obs ON pharmacy_batch_items.id = pharmacy_obs.batch_item_id AND pharmacy_obs.transaction_reason = 'Drug dispensed'")
-                 .joins('LEFT JOIN pharmacy_batch_item_reallocations ON pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id')
-                 .joins('LEFT JOIN pharmacy_batch_vvms ON pharmacy_batch_items.id = pharmacy_batch_vvms.batch_item_id')
-                 .joins('INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id')
-                 .joins('INNER JOIN pharmacy_batches ON pharmacy_batches.id = pharmacy_batch_items.pharmacy_batch_id')
-                 .group('drug.drug_id, pharmacy_batches.batch_number')
-                 .select <<~SQL
-                   pharmacy_batch_items.*,
-                   pharmacy_batch_item_reallocations.quantity	as doses_wasted,
-                   pharmacy_batch_vvms.vvm	as vvm_stage,
-                   CASE
-                     WHEN pharmacy_obs.quantity IS NULL
-                     THEN 0
-                   ELSE
-                    ABS(SUM(pharmacy_obs.quantity))- (
-                      SELECT SUM(quantity)
-                      FROM pharmacy_obs
-                      WHERE transaction_reason LIKE "%Reversing voided drug dispensation%"
-                      AND batch_item_id = pharmacy_batch_items.id
-                    )
-                   END AS dispensed_quantity,
-                   pharmacy_batches.batch_number,
-                   COUNT(*) OVER() AS total_count
-                 SQL
-    
-      unless filters[:drug_name].nil?
-        query = query.where('drug.name like ?', "#{filters[:drug_name]}%" )
-      end
+      .joins('INNER JOIN drug ON drug.drug_id = pharmacy_batch_items.drug_id')
+      .joins('INNER JOIN pharmacy_batches ON pharmacy_batches.id = pharmacy_batch_items.pharmacy_batch_id')
+
+    query = apply_filters(query, filters)
+    query = apply_select_and_group(query, filters[:display_details])
+
     query.order(Arel.sql('pharmacy_batch_items.date_created DESC, pharmacy_batch_items.expiry_date ASC'))
   end
+
+  def apply_filters(query, filters)
+    return query if filters.empty?
+
+    query = query.where("DATE(pharmacy_batch_items.delivery_date) >= ?", filters[:start_date]) if filters[:start_date]
+    query = query.where("DATE(pharmacy_batch_items.delivery_date) <= ?", filters[:end_date]) if filters[:end_date]
+    query = query.where(drug_id: filters[:drug_id]) if filters[:drug_id]
+    query = query.where(current_quantity: filters[:current_quantity]) if filters[:current_quantity]
+    query = query.where(pharmacy_batch_id: filters[:pharmacy_batch_id]) if filters[:pharmacy_batch_id]
+    query = query.where(pack_size: filters[:pack_size]) if filters[:pack_size]
+    query = query.where("pharmacy_batches.batch_number = ?", filters[:batch_number]) if filters[:batch_number]
+    query = query.where("pharmacy_batches.location_id = ?", filters[:location_id]) if filters[:location_id]
+    query = query.where('drug.name LIKE ?', "#{filters[:drug_name]}%") if filters[:drug_name]
+
+    query
+  end
+
+  def apply_select_and_group(query, display_details)
+    select_clause = if display_details.nil?
+      <<~SQL
+        pharmacy_batch_items.*,
+        pharmacy_batch_items.delivered_quantity as delivered_quantity, 
+        pharmacy_batch_items.current_quantity as current_quantity,
+        COALESCE((
+          SELECT SUM(quantity)
+          FROM pharmacy_batch_item_reallocations
+          WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+        ), 0) as doses_wasted,
+        (pharmacy_batch_items.delivered_quantity - (pharmacy_batch_items.current_quantity + COALESCE((
+          SELECT SUM(quantity)
+          FROM pharmacy_batch_item_reallocations
+          WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+        ), 0))) as dispensed_quantity,
+        pharmacy_batches.batch_number,
+        COUNT(*) OVER() AS total_count
+      SQL
+    else
+      <<~SQL
+        pharmacy_batch_items.*,
+        SUM(pharmacy_batch_items.delivered_quantity) as delivered_quantity, 
+        SUM(pharmacy_batch_items.current_quantity) as current_quantity,
+        SUM(COALESCE((
+          SELECT SUM(quantity)
+          FROM pharmacy_batch_item_reallocations
+          WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+        ), 0)) as doses_wasted,
+        SUM(pharmacy_batch_items.delivered_quantity) - (SUM(pharmacy_batch_items.current_quantity) 
+        + SUM(COALESCE((
+          SELECT SUM(quantity)
+          FROM pharmacy_batch_item_reallocations
+          WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+        ), 0))) as dispensed_quantity,
+        COUNT(*) OVER() AS total_count
+      SQL
+    end
+
+  query = query.select(select_clause)
+  query = query.group('drug.drug_id, pharmacy_batches.batch_number') if display_details.nil?
+  query = query.group('drug.drug_id') unless display_details.nil?
+
+  query
+end
 
   def void_batch(batch_number, reason)
     batch = find_batch_by_batch_number(batch_number)
@@ -213,26 +230,17 @@ class StockManagementService
       item.update(batch_number: batch_number)
     end
   end
-  def update_dispose_item(quantity, batch_item_id)
+  def update_dispose_item(quantity, batch_item_id, date, reallocation_code, reason)
     ActiveRecord::Base.transaction do
-      reallocation_item = PharmacyBatchItemReallocation.where(batch_item_id:batch_item_id)
-      reallocation_item.update(quantity: quantity.to_f)
-      pharmacy_item = Pharmacy.where(pharmacy_encounter_type: 3, batch_item_id:batch_item_id)
-      pharmacy_item.update(quantity: -quantity.to_f)
-    end
-  end
-  def update_dispose_item(quantity, batch_item_id)
-    ActiveRecord::Base.transaction do
-      reallocation_item = PharmacyBatchItemReallocation.where(batch_item_id:batch_item_id)
-      reallocation_item.update(quantity: quantity.to_f)
-      pharmacy_item = Pharmacy.where(pharmacy_encounter_type: 3, batch_item_id:batch_item_id)
-      pharmacy_item.update(quantity: -quantity.to_f)
-    end
-  end
-  def update_vvm_stage(vvm, batch_item_id)
-    ActiveRecord::Base.transaction do
-      item = PharmacyBatchVvm.where(batch_item_id:batch_item_id)
-      item.update(vvm: vvm)
+      reallocation_item = PharmacyBatchItemReallocation.find_by(batch_item_id: batch_item_id)
+      if reallocation_item
+        reallocation_item.update(quantity: quantity.to_f)
+        pharmacy_item = Pharmacy.find_by(pharmacy_encounter_type: 3, batch_item_id: batch_item_id)
+        pharmacy_item.update(quantity: -quantity.to_f) if pharmacy_item
+      else
+        date = date.to_date
+        dispose_item(reallocation_code, batch_item_id, quantity, date, reason)
+      end
     end
   end
   def process_edit_batch_item(batch_item_id, params, verif_id: nil)
@@ -316,12 +324,6 @@ class StockManagementService
                                            creator: User.current.id)
     end
   end
-  def create_vvm(batch_item_id, vvm)
-    ActiveRecord::Base.transaction do
-      item = PharmacyBatchItem.find(batch_item_id) 
-      PharmacyBatchVvm.create(item:, vvm:) 
-    end
-  end
   def update_batch_item!(batch_item, quantity)
     batch_item.with_lock do
       batch_item.current_quantity += quantity.to_f
@@ -354,7 +356,6 @@ class StockManagementService
     drugs = find_batch_items(drug_id:, pack_size:)
             .where('expiry_date > ? AND current_quantity > 0', date)
             .order('expiry_date')
-
     commit_kwargs = { update_item: true, dispensation_obs_id: dispensation_id, transaction_reason: reason }
 
     drugs.each do |drug|
@@ -420,19 +421,16 @@ class StockManagementService
     PharmacyBatch.create(batch_number:, location_id:)
   end
 
-  def create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code, barcode,unit_doses,manufacture,dosage_form)
+  def create_batch_item(batch, drug_id, pack_size, quantity, delivery_date, expiry_date, product_code, barcode,manufacture)
     quantity = quantity.to_f
-    unit_doses = unit_doses.to_f
 
     PharmacyBatchItem.create(
       batch:,
       drug_id: drug_id.to_i,
-      unit_doses: unit_doses,
       manufacture:,
-      dosage_form:,
       pack_size:,
-      delivered_quantity: quantity*unit_doses,
-      current_quantity: quantity*unit_doses,
+      delivered_quantity: quantity,
+      current_quantity: quantity,
       delivery_date:,
       expiry_date:,
       product_code:,
