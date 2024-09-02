@@ -3,63 +3,66 @@ require "json"
 require "net/http"
 
 class Api::V1::SendSmsController < ApplicationController
-  before_action :initialize_variables, only: [:index, :cancel]
-
-  CONFIG_KEYS = [
-    "next_appointment_reminder_period",
-    "next_appointment_message", 
-    "cancel_appointment_message",
-    "sms_reminder",
-    "sms_activation",
-    "show_sms_popup"
-  ].freeze
+  before_action :initialize_variables, only: [:index, :fetch_phone]
 
   def index
-      patient_details = patients_phone
-      output = enqueue_sms(params[:appointment_date], patient_details,'send_appointment')
-      render json: { message: patient_details }
+    return render json: { message: "SMS reminder turned off" } if sms_reminder_off?
+    output = process_sms_request
+    render json: { message: output }
   end
 
-  def cancel
-    patient_details = patients_phone
-    output = enqueue_sms(params[:appointment_date], patient_details,'cancel_appointment')
-    render json: { message: patient_details }
+  def fetch_phone
+    phone_number = validated_phone_number
+    render json: { message: phone_number }
   end
 
   def show
+    config_file = Rails.root.join('config', 'application.yml')
+    config = YAML.load_file(config_file) 
+    environment = Rails.env
 
-    globalconfig = fetch_configuration_from_global_property(User.current.location_id)
-    config = fetch_default_configuration
-
-    if globalconfig.present?
-      config.merge!(globalconfig)
+    if config.key?(environment)
+      render json: config[environment]
+    else
+      render json: { error: "#{environment} configuration not found" }, status: :not_found
     end
-
-    render json: config
   rescue Errno::ENOENT
     render json: { error: 'Configuration file not found' }, status: :not_found
   end
 
   def update
-    begin
-      update_global_properties
-      update_configuration_file
-      
-      globalconfig = fetch_configuration_from_global_property(User.current.location_id)
-      config = YAML.load_file(Rails.root.join('config', 'application.yml'))
-      ymlconfig = config["eir_sms_configurations"][Rails.env]
-      ymlconfig.merge!(globalconfig)
-      render json: { message: ymlconfig }, status: :ok
-    rescue StandardError => e
-      render json: { error: e.message }, status: :unprocessable_entity
+    config_file = Rails.root.join('config', 'application.yml')
+    temp_file = Rails.root.join('config', 'application_temp.yml')
+  
+    File.open(temp_file, 'w') do |file|
+      File.foreach(config_file) do |line|
+        key_value_match = line.match(/^\s*(\w+):\s*(.*)$/)
+  
+        if key_value_match && params.key?(key_value_match[1])
+          key = key_value_match[1]
+          value = params[key]
+          indent = line[/^\s*/]
+          line = "#{indent}#{key}: #{value}\n"
+        end
+  
+        file.write(line)
+      end
     end
+  
+    File.rename(temp_file, config_file)
+  
+    config = YAML.load_file(config_file)
+    environment = Rails.env
+    render json: config[environment], status: :ok
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
   
+
   private
 
   def initialize_variables
-                person_id = params.require(:person_id)
-    @patient = Observation.where(voided: 0, person_id: person_id)
+    @patient = Observation.where(voided: 0, person_id: params[:person_id])
                           .group(:person_id)
                           .joins("INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id AND encounter.encounter_type = #{EncounterType.find_by_name('APPOINTMENT').id}")
                           .joins("INNER JOIN person ON person.person_id = obs.person_id")
@@ -75,61 +78,9 @@ class Api::V1::SendSmsController < ApplicationController
                               sirname: patient.sirname,
                               dob: patient.birthdate,
                               gender: patient.gender,
-                              person_phone: patient.phone.gsub(/\s+/, '')
+                              person_phone: patient.phone
                             }
                           end
-  end
-
-  def fetch_configuration_from_global_property(facility_id)
-    config = {}
-    CONFIG_KEYS.each do |key|
-      GlobalProperty.where("property", "#{facility_id}_#{key}")
-                    .each do |gp|
-        config[gp.property.sub("#{facility_id}_", '')] = gp.property_value
-      end
-    end
-    config
-  end
-
-  def fetch_default_configuration
-    config_file = Rails.root.join('config', 'application.yml')
-    YAML.load_file(config_file)["eir_sms_configurations"][Rails.env] || {}
-  end
-
-  def update_global_properties
-    params.each do |key, value|
-      if CONFIG_KEYS.include?(key)
-        GlobalProperty.find_or_initialize_by(property: "#{User.current.location_id}_#{key}")
-                      .update(property_value: value)
-      end
-    end
-  end
-
-  def update_configuration_file
-    environment = Rails.env
-    config_file = Rails.root.join('config', 'application.yml')
-    temp_file = Rails.root.join('config', 'application_temp.yml')
-
-    File.open(temp_file, 'w') do |file|
-      current_section = nil
-      File.foreach(config_file) do |line|
-
-        if (env_match = line.match(/^\s*(\w+):$/)) 
-          current_section = env_match[1]
-        end
-          if current_section == environment
-            if (key_value_match = line.match(/^\s*(\w+):\s*(.*)$/)) && params.key?(key_value_match[1])
-                 key = key_value_match[1]
-               value = params[key]
-              indent = line[/^\s*/]
-                line = "#{indent}#{key}: #{value}\n"
-            end
-          end
-        file.write(line)
-      end
-    end
-
-    File.rename(temp_file, config_file)
   end
 
 
@@ -139,6 +90,7 @@ class Api::V1::SendSmsController < ApplicationController
     @patient.each do |patient|
       patient_details[:demographics] = patient
       age_in_days = (Date.today - patient[:dob]).to_i
+
       patient_details[:cell_phone] = age_in_days < 5840 ? guardian_phone : patient[:person_phone]
     end
 
@@ -150,17 +102,45 @@ class Api::V1::SendSmsController < ApplicationController
     relationships = service.find_relationships(filters)
     relationships[0].relation.try(:person_attributes)
                     .try(:find_by, person_attribute_type_id: PersonAttributeType.find_by_name('Cell Phone Number').id)
-                    .try(:value).gsub(/\s+/, '')
+                    .try(:value)
   end
 
   def service
     PersonRelationshipService.new(Person.find(params[:person_id]))
   end
 
-  def enqueue_sms(date, details, action)
-    ImmunizationService::SendSmsService.perform_async(date, details, action)
+  def enqueue_sms(date, details)
+    ImmunizationService::SendSmsService.perform_async(date, details)
   rescue => e
     "Failed to queue SMS: #{e.message}"
   end
 
+  def validatephone(phone)
+    phone = "+265" + phone[1..] if phone.present? && phone.starts_with?('0')
+    phone_pattern = /\A\+\d{12}\z/
+    phone_pattern.match?(phone) ? phone : "Invalid phone number"
+  end
+
+  def validated_phone_number
+    patient_details = patients_phone
+    validatephone(patient_details[:cell_phone])
+  end
+
+  def sms_reminder_off?
+    config_file = Rails.root.join('config', 'application.yml')
+    config = YAML.load_file(config_file)
+    environment = Rails.env
+    config.dig(environment, 'sms_reminder') == 'false'
+  end
+
+  def process_sms_request
+    phone_number = validated_phone_number
+    if phone_number.length == 13
+      patient_details = patients_phone
+      patient_details[:cell_phone] = phone_number
+      enqueue_sms(params[:appointment_date], patient_details)
+    else
+      phone_number
+    end
+  end
 end
