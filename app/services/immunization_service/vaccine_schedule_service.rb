@@ -170,7 +170,8 @@ module ImmunizationService
               administered_by: vaccine_given&.[](:administered_by),
               location_administered: vaccine_given&.[](:location_administered),
               vaccine_batch_number: vaccine_given&.[](:batch_number),
-              encounter_id: vaccine_given&.[](:encounter_id)
+              encounter_id: vaccine_given&.[](:encounter_id),
+              order_id: vaccine_given&.[](:order_id)
             }
           end
         }
@@ -192,6 +193,7 @@ module ImmunizationService
           drug_inventory_id: obs.drug_inventory_id,
           batch_number: get_batch_id(obs.order_id),
           encounter_id: obs.encounter_id,
+          order_id: obs.order_id,
           administered_by: {
             person_id: obs.creator,
             given_name: obs.given_name,
