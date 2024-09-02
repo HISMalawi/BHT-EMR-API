@@ -17,7 +17,7 @@ class Api::V1::ImmunizationReportController < ApplicationController
   def under_five_immunizations_drugs
     render json: ConceptName.joins("INNER JOIN concept_set s ON s.concept_id = concept_name.concept_id")
                             .joins("INNER JOIN drug ON drug.concept_id = concept_name.concept_id")
-                            .where("s.concept_set = ? AND concept_name.name LIKE ? AND drug.retired = 0", 11834)
+                            .where("s.concept_set = ? AND concept_name.name LIKE ? AND drug.retired = 0", 11834, "%#{params[:name]}%")
                             .group('concept_name.concept_id', 'drug.drug_id')
                             .select('concept_name.concept_id, concept_name.concept_name_id, drug.name, drug.drug_id')
   end
