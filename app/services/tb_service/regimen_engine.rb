@@ -1,60 +1,69 @@
 # frozen_string_literal: true
 
-require 'set'
-
 module TbService
   class RegimenEngine
     include ModelUtils
     include TimeUtils
 
-    def initialize(program:)
+    def initialize(program:, date: Date.today)
       @program = program
+      @date = date
+    end
+
+    def get_tb_regimen_group(person, group)
+      patient = Patient.find_by(patient_id: person)
+      case group
+      when 'first-line'
+        first_line_drugs(patient:)
+      when 'second-line'
+        second_line_drugs(patient:)
+      when 'second-line-concepts'
+        second_line_concepts
+      when 'current-regimen'
+        find_regimens(patient: person)
+      when 'secondline-supplements'
+        secondline_supplements(patient:)
+      end
+    end
+
+    def secondline_supplements(patient:)
+      NtpRegimen.adjust_weight_band(
+        Drug.get_drug_group('Secondline supplements'),
+        patient.weight.floor
+      )
     end
 
     def first_line_drugs(patient:)
-      drug_set = Drug.first_line_tb_drugs().map(&:drug_id)
-      drug_placeholders = '(' + (['?'] * drug_set.size).join(', ')
-      NtpRegimen.joins(:drug).where(
-        "? BETWEEN CAST(min_weight AS DECIMAL(4, 1)) AND CAST(max_weight AS DECIMAL(4, 1))) AND ntp_regimens.drug_id IN #{drug_placeholders}",
-        patient.weight.to_f.round(1),
-        *drug_set
+      NtpRegimen.adjust_weight_band(
+        Drug.get_drug_group('First-line tuberculosis drugs'),
+        patient.weight.floor
       )
     end
 
     def second_line_drugs(patient:)
-      drug_set = Drug.second_line_tb_drugs().map(&:drug_id)
-      drug_placeholders = '(' + (['?'] * drug_set.size).join(', ') + ')'
-      NtpRegimen.joins(:drug).where(
-        "? BETWEEN CAST(min_weight AS DECIMAL(4, 1)) AND CAST(max_weight AS DECIMAL(4, 1)) AND ntp_regimens.drug_id IN #{drug_placeholders}",
-        patient.weight.to_f.round(1),
-        *drug_set
+      NtpRegimen.adjust_weight_band(
+        Drug.get_drug_group('Second line TB drugs'),
+        patient.weight.floor
       )
     end
 
-    def has_mdr_tb?(patient:)
-      mdr_tb_state_id = 99
-      PatientState.joins(:patient_program)\
-                  .where('patient_program.program_id = ? AND patient_program.patient_id = ? AND state = ? AND end_date is null',
-                         @program.program_id,
-                         patient.patient_id,
-                         mdr_tb_state_id).exists?
+    def second_line_concepts
+      Drug.get_drug_group_concepts('Second line TB drugs')
     end
 
-    def meningitis_tb_absent?(patient:)
-      classification = concept('Tuberculosis')
+    def meningitis_tb?(patient:)
+      classification = concept('Tuberculosis classification')
       meningitis_tb_concept = concept('Meningitis Tuberculosis')
-      return true if Observation.where('concept_id = ? AND value_coded = ? AND person_id = ?',
-                                       classification.concept_id,
-                                       meningitis_tb_concept.concept_id,
-                                       patient.patient_id).blank?
-
-      cured(patient: patient)
+      Observation.where(concept: classification,
+                        answer_concept: meningitis_tb_concept,
+                        person: patient.patient_id)\
+                 .exists?
     end
 
     def is_eligible_for_ipt?(person:)
       return false if TimeUtils.get_person_age(birthdate: person.birthdate) > 5
 
-      currently_tb_negative?(person: person)
+      currently_tb_negative?(person:)
     end
 
     # retrieve the most recent Negative TB status
@@ -62,8 +71,8 @@ module TbService
       tb_status = concept('TB status')
       negative = concept('Negative')
       status = Observation.where(
-        'person_id = ? AND concept_id = ?',
-        person.person_id, tb_status.concept_id
+        'person_id = ? AND concept_id = ? AND DATE(obs_datetime) <= DATE(?)',
+        person.person_id, tb_status.concept_id, @date
       ).order(obs_datetime: :desc).first
       begin
         (status.value_coded == negative.concept_id)
@@ -73,15 +82,15 @@ module TbService
     end
 
     def tb_hiv_present?(patient:)
-      tb_positive(patient: patient) && Observation.where(person: patient.person,
-                                                         concept: concept('HIV Status'),
-                                                         value_coded: concept('Positive').concept_id).exists?
+      tb_positive?(patient:) && Observation.where(person: patient.person,
+                                                  concept: concept('HIV Status'),
+                                                  value_coded: concept('Positive').concept_id).exists?
     end
 
     def tb_positive?(patient:)
       Observation.where(person: patient.person,
                         concept: concept('TB Status'),
-                        value_coded: concept('Positive').concept_id).exists? && !cured?(patient: patient)
+                        value_coded: concept('Positive').concept_id).exists? && !cured?(patient:)
     end
 
     def cured?(patient:)
@@ -89,8 +98,8 @@ module TbService
       PatientState.joins(:patient_program)\
                   .where('patient_program.program_id = ? AND patient_program.patient_id = ? AND state = ? AND end_date = null',
                          @program.program_id,
-                         @patient.patient_id,
-                         cured_state).exists?
+                         patient.patient_id,
+                         cured_state_id).exists?
     end
 
     def pregnant?(patient:)
@@ -119,25 +128,45 @@ module TbService
 
     def custom_regimen_ingredients(patient:)
       NtpRegimen.joins(:drug).where(
-        "? BETWEEN CAST(min_weight AS DECIMAL(4, 1)) AND CAST(max_weight AS DECIMAL(4, 1))",
-        patient.weight.to_f.round(1)
+        '? BETWEEN min_weight AND max_weight',
+        patient.weight.floor
       )
     end
 
-    def find_regimens(patient)
-      return second_line_drugs(patient: patient) if has_mdr_tb?(patient: patient)
+    def find_regimens(patient:)
+      mdr = mdr_service(patient:)
+
+      patient = patient[:patient] if patient.is_a? Hash
+
+      return mdr.get_current_regimen_drugs if mdr.patient_on_mdr_treatment?
 
       return ipt_drug(weight: patient.weight) if is_eligible_for_ipt?(person: patient.person)
 
-      return first_line_drugs(patient: patient).select { |regimen|
-               regimen.drug.name != 'Streptomycin'
-             } if (meningitis_tb_absent?(patient: patient) || pregnant?(patient: patient))
+      if averse_to_strepto?(patient)
+        return first_line_drugs(patient:).reject do |regimen|
+                 regimen.drug.name[/Streptomycin/]
+               end
+      end
 
-      return first_line_drugs(patient: patient).select { |regimen|
-               regimen.drug.name != 'Rifabutin Isoniazid Pyrazinamide Ethambutol'
-             } unless tb_hiv_present?(patient: patient)
+      unless tb_hiv_present?(patient:)
+        return first_line_drugs(patient:).reject do |regimen|
+                 regimen.drug.name == 'Rifabutin Isoniazid Pyrazinamide Ethambutol'
+               end
+      end
 
-      first_line_drugs(patient: patient)
+      first_line_drugs(patient:)
+    end
+
+    def find_regimens_by_patient(patient:)
+      find_regimens(patient:)
+    end
+
+    def averse_to_strepto?(patient)
+      !meningitis_tb?(patient:) || pregnant?(patient:)
+    end
+
+    def mdr_service(patient:)
+      TbService::TbMdrService.new(patient, @program, Time.now)
     end
   end
 end
