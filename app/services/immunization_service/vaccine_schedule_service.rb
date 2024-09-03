@@ -7,7 +7,7 @@ module ImmunizationService
       'MR vaccine': 'MR', 'HPV vaccine 4-valent': 'HPV', RTS: 'MV',
       'Albendazole (200mg tablet)': 'Albendazole (200mg tablet)',
       'Albendazole (400mg tablet)': 'Albendazole (400mg tablet)',
-      'TD': 'TD', 'TD (0.5ml)': 'TD (0.5ml)', 'Vit A': 'Vit A',
+      'TD': 'TD', 'TD (0.5ml)': 'TD (0.5ml)', 'Vit A': 'Vit A'
     }.freeze
     VACCINE_NAME_MAP = { 'Pfizer-BioNTech COVID-19 vaccine': 'Pfizer COVID-19' }.freeze
 
