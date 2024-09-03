@@ -32,6 +32,7 @@ class Api::V1::SendSmsController < ApplicationController
     config = fetch_default_configuration
 
     if globalconfig.present?
+      config.delete('sms_api_key')
       config.merge!(globalconfig)
     end
 
