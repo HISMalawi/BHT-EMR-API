@@ -109,14 +109,11 @@ eir_sms_configurations:
   development:
     sms_gateway_url: ''
     sms_api_key: ''
-    sms_reminder: true
 
   test:
     sms_gateway_url: ''
     sms_api_key: ''
-    sms_reminder: true
 
   production:
     sms_gateway_url: ''
     sms_api_key: ''
-    sms_reminder: true
