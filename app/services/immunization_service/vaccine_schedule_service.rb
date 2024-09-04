@@ -4,7 +4,10 @@ module ImmunizationService
     ZERO_INDEXED_VACCINES = { bOPV: 'OPV' }.freeze
     ONE_INDEXED_VACCINES = {
       'DPT-HepB-Hib_vac': 'Penta', Rota_liq: 'Rota', PCV13: 'PCV',
-      'MR vaccine': 'MR', 'HPV vaccine 4-valent': 'HPV', RTS: 'MV'
+      'MR vaccine': 'MR', 'HPV vaccine 4-valent': 'HPV', RTS: 'MV',
+      'Albendazole (200mg tablet)': 'Albendazole (200mg tablet)',
+      'Albendazole (400mg tablet)': 'Albendazole (400mg tablet)',
+      'TD': 'TD', 'TD (0.5ml)': 'TD (0.5ml)', 'Vit A': 'Vit A'
     }.freeze
     VACCINE_NAME_MAP = { 'Pfizer-BioNTech COVID-19 vaccine': 'Pfizer COVID-19' }.freeze
 
@@ -40,7 +43,7 @@ module ImmunizationService
       sorted_grouped_immunizations = grouped_immunizations.sort_by { |milestone| milestone[1][0][:sort_weight]}.to_h
       vaccines = format_schedule(make_unique(sorted_grouped_immunizations), vaccines_given, patient.birthdate)
   
-      return {vaccine_schedule: vaccines}
+      return { vaccine_schedule: vaccines }
       # rescue => e
       {error: e.message}
       #end
@@ -159,8 +162,8 @@ module ImmunizationService
           milestone_status: milestone_status(milestone_name, client_dob),
           age: milestone_name,
           antigens: antigens.map do |drug|
-            vaccine_given = vaccines_given.find { |vaccine| vaccine[:drug_inventory_id] == drug[:drug_id] }
-            {
+            vaccine_given = vaccines_given.find { |vaccine| vaccine[:drug_name] == drug[:drug_name] }
+            vaccines = {
               drug_id: drug[:drug_id],
               drug_name: drug[:drug_name],
               window_period: drug[:window_period],
@@ -173,16 +176,15 @@ module ImmunizationService
               encounter_id: vaccine_given&.[](:encounter_id),
               order_id: vaccine_given&.[](:order_id)
             }
+            vaccines_given.delete(vaccine_given) if vaccine_given
+            vaccines
           end
         }
       end
     end
-  
-    def vaccine_given?(drug_id)
-  
-    end
-  
+
     def self.administered_vaccines(patient_id, drugs)
+      drug_name_dispensed = ConceptName.where('name = ?', 'Drugs dispensed').pluck(:concept_id)
       Observation.joins(person: :names)
                  .joins(order: :drug_order)
                  .where(drug_order: { drug_inventory_id: drugs }, person_id: patient_id)
@@ -194,6 +196,8 @@ module ImmunizationService
           batch_number: get_batch_id(obs.order_id),
           encounter_id: obs.encounter_id,
           order_id: obs.order_id,
+          drug_name: Observation.find_by(person_id: patient_id, encounter_id: obs.encounter_id,
+                                         concept_id: drug_name_dispensed)&.value_text,
           administered_by: {
             person_id: obs.creator,
             given_name: obs.given_name,
