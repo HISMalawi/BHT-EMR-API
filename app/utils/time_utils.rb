@@ -44,5 +44,29 @@ module TimeUtils
     def get_person_age(birthdate:)
       ((Time.zone.now - birthdate.to_time) / 1.year.seconds).floor
     end
+
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    def smart_time_difference(start_time:, end_time:)
+      time_diff = TimeDifference.between(DateTime.parse(start_time), DateTime.parse(end_time)).in_general
+
+      if (time_diff[:years]).positive?
+        "#{time_diff[:years]} year#{time_diff[:years] > 1 ? 's' : ''}"
+      elsif (time_diff[:months]).positive?
+        "#{time_diff[:months]} month#{time_diff[:months] > 1 ? 's' : ''}"
+      elsif (time_diff[:weeks]).positive?
+        "#{time_diff[:weeks]} week#{time_diff[:weeks] > 1 ? 's' : ''}"
+      elsif (time_diff[:days]).positive?
+        "#{time_diff[:days]} day#{time_diff[:days] > 1 ? 's' : ''}"
+      elsif (time_diff[:hours]).positive?
+        "#{time_diff[:hours]} hour#{time_diff[:hours] > 1 ? 's' : ''}"
+      elsif (time_diff[:minutes]).positive?
+        "#{time_diff[:minutes]} minute#{time_diff[:years] > 1 ? 's' : ''}"
+      elsif (time_diff[:seconds]).positive?
+        "#{time_diff[:seconds]} second#{time_diff[:years] > 1 ? 's' : ''}"
+      else
+        '0 seconds'
+      end
+    end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   end
 end

@@ -13,13 +13,22 @@ module OpdService
       'TRIAGE_COVID' => OpdService::Reports::TriageCovid,
       'TRIAGE_REGISTRATION' => OpdService::Reports::TriageRegistration,
       'ATTENDANCE' => OpdService::Reports::Attendance,
-      'DRUG' => OpdService::Reports::DrugReport
+      'DRUG' => OpdService::Reports::DrugReport,
+      'MAHIS_DASHBOARD' => OpdService::Reports::MahisDashboard
     }.freeze
 
     def initialize; end
 
     def find_report(type:, **kwargs)
       report_engine(type).find_report(**kwargs)
+    end
+
+    def mahis_dashboard(date:)
+      REPORTS['MAHIS_DASHBOARD'].new(date:).stats
+    end
+
+    def mahis_dashboard_indicators(date:, **kwargs)
+      REPORTS['MAHIS_DASHBOARD'].new(date:).indicators(**kwargs)
     end
 
     # Retrieves the next encounter for bound patient

@@ -41,6 +41,14 @@ class ReportService
     nil
   end
 
+  def mahis_dashboard(date:)
+    engine(@program).mahis_dashboard(date:)
+  end
+
+  def mahis_dashboard_indicators(date:, **kwargs)
+    engine(@program).mahis_dashboard_indicators(date:, **kwargs)
+  end
+
   def dashboard_stats(date)
     engine(@program).dashboard_stats(date)
   end
