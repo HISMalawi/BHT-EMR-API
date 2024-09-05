@@ -24,40 +24,48 @@ module RadiologyService
         label.draw_multi_text("#{order_type}-#{examination}-#{detailed_examination}")
       end
       label.draw_multi_text("#{session_date}, #{@order.accession_number} (#{referred_from.upcase})")
-      label.print(1)
+
+      {
+        zpl: label.print(1),
+        accession_number: @order.accession_number,
+        name: @order.patient.person.name,
+        desc: "#{@order.patient.national_id_with_dashes} #{@order.patient.person.gender} #{@order.patient.person.birthdate}",
+        examination: "#{order_type}-#{examination} #{detailed_examination.blank? ? "" : "-" + detailed_examination}",
+        summary: "#{session_date}, #{@order.accession_number} (#{referred_from.upcase})",
+      }
     end
 
     def examination
       return @examination if @examination
 
-      examination_concept = ConceptName.find_by_name('EXAMINATION').concept_id
+      examination_concept = ConceptName.find_by_name("EXAMINATION").concept_id
       examination_obs = Observation.where(concept_id: examination_concept)
                                    .where(encounter_id: @order.encounter_id)
                                    .where(order_id: @order.id)
                                    .last
       examination = begin
-        examination_obs.answer_concept.shortname
-      rescue StandardError
-        ''
-      end
+          examination_obs.answer_concept.shortname
+        rescue StandardError
+          ""
+        end
       if examination.blank?
         examination = begin
-          examination_obs.answer_concept.fullname
-        rescue StandardError
-          ''
-        end
+            examination_obs.answer_concept.fullname
+          rescue StandardError
+            ""
+          end
       end
       @examination = examination
     end
 
     def session_date
-      @session_date ||= @order.start_date.strftime('%d-%b-%Y')
+      @session_date ||= @order.start_date.strftime("%d-%b-%Y")
     end
 
     def detailed_examination
       return @detailed_examination if @detailed_examination
 
-      detailed_examination_concept = ConceptName.find_by_name('DETAILED EXAMINATION').concept_id
+      detailed_examination_concept = ConceptName.find_by_name("DETAILED EXAMINATION").concept_id
       detailed_examination_obs = Observation.where(concept_id: detailed_examination_concept)
                                             .where(encounter_id: @order.encounter_id)
                                             .where(order_id: @order.id)
@@ -70,9 +78,9 @@ module RadiologyService
     end
 
     def referred_from
-      referred_from_concept = ConceptName.find_by_name('REFERRED FROM').concept_id
+      referred_from_concept = ConceptName.find_by_name("REFERRED FROM").concept_id
       referred_from = @order.encounter.observations.find_by(concept_id: referred_from_concept)&.value_text
-      referred_from.blank? ? 'Unknown' : referred_from
+      referred_from.blank? ? "Unknown" : referred_from
     end
   end
 end

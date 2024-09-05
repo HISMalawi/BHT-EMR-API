@@ -88,7 +88,16 @@ class TbNumberService
     label.draw_text(identifier_name, 40, 60, 0, 2, 2, 2, false)
     label.draw_text(patient_identifier.identifier, 40, 120, 0, 2, 2, 2, false)
     label.draw_barcode(50, 180, 0, 1, 5, 15, 120, false, patient_identifier.identifier)
-    label.print(1)
+
+    {
+      data: {
+        name:,
+        identifier: patient_identifier.identifier,
+        identifier_name: identifier_name,
+        barcode: patient_identifier.identifier,
+      },
+      zpl: label.print(1),
+    }
   end
 
   def self.generate_tb_number(_patient_id, date, number, type)
@@ -124,10 +133,10 @@ class TbNumberService
   end
 
   def self.regimen_engine
-    TbService::RegimenEngine.new(program: program('TB Program'))
+    TbService::RegimenEngine.new(program: program("TB Program"))
   end
 
   def self.facility_code
-    global_property('tb_site_prefix')&.property_value
+    global_property("tb_site_prefix")&.property_value
   end
 end
