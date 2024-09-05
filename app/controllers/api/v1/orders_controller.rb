@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'zebra_printer/init'
+require "zebra_printer/init"
 
 module Api
   module V1
@@ -57,11 +57,7 @@ module Api
       end
 
       def print_radiology_order
-        printer_commands = RadiologyService::OrderLabel.new(params.permit(:accession_number, :order_id)).print
-        send_data(printer_commands, type: 'application/label; charset=utf-8',
-                                    stream: false,
-                                    filename: "#{SecureRandom.hex(24)}.lbl",
-                                    disposition: 'inline')
+        render json: RadiologyService::OrderLabel.new(params.permit(:accession_number, :order_id)).print
       end
 
       private

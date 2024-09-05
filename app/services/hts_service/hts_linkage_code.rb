@@ -2,7 +2,7 @@
 
 module HtsService
   class HtsLinkageCode
-    HTS_LINK_CODE_CONCEPT = ConceptName.find_by_name('HTC serial number').concept_id
+    HTS_LINK_CODE_CONCEPT = ConceptName.find_by_name("HTC serial number").concept_id
 
     attr_reader :patient_id, :code
 
@@ -24,7 +24,15 @@ module HtsService
       label.draw_text(name, 20, 10, 0, 1, 2, 2, false)
       label.draw_text(hts_linkage_code, 30, 60, 0, 1, 2, 2, false)
       label.draw_barcode(40, 100, 0, 1, 5, 15, 120, false, hts_linkage_code)
-      label.print(1)
+
+      {
+        data: {
+          name: name,
+          hts_linkage_code: hts_linkage_code,
+          barcode: hts_linkage_code,
+        },
+        zpl: label.print(1),
+      }
     end
   end
 end

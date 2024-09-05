@@ -6,11 +6,7 @@ module Api
       skip_before_action :authenticate
 
       def print_order_label
-        commands = engine.print_order_label(params[:accession_number])
-        send_data(commands, type: 'application/label; charset=utf-8',
-                            stream: false,
-                            filename: "#{SecureRandom.hex(24)}.lbl",
-                            disposition: 'inline')
+        render json: engine.print_order_label(params[:accession_number])
       end
 
       private
