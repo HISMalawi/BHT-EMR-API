@@ -31,10 +31,11 @@ module Api
           end
 
           if params[:id].present? && params[:doses_wasted].present?
-              service.update_dispose_item(params[:doses_wasted], params[:id], params[:date], params[:reallocation_code], params[:waste_reason])
+              date = params['date']&.to_date || Date.today
+              service.dispose_item(params[:reallocation_code],params[:id],params[:doses_wasted],date , params[:waste_reason])
           end
 
-          item = service.edit_batch_item(params[:id], permitted_params)
+          # item = service.edit_batch_item(params[:id], permitted_params)
           if item.errors.empty?
             render json: item
           else
