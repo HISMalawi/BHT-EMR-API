@@ -1,7 +1,15 @@
 class Api::V1::SessionScheduleController < ApplicationController
 
     def index
-      # Logic for index action (if needed)
+      session_schedule_vaccines = service.fetch_session_schedules
+
+      unless session_schedule_vaccines.blank?
+        render json: session_schedule_vaccines, status: :ok   
+      else
+        rnder json: {}, status: :unprocessable_entity
+      end
+
+
     end 
   
     def show

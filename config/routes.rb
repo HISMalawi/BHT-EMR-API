@@ -428,5 +428,5 @@ Rails.application.routes.draw do
   get '/api/v1/configurations', to: 'api/v1/send_sms#show'
   get '/api/v1/cancel_appointment', to: 'api/v1/send_sms#cancel'
   post '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#create'
-  
+  get '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#index'
 end

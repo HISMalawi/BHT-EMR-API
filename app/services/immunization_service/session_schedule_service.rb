@@ -15,8 +15,9 @@ module ImmunizationService
                                                     start_date: , 
                                                     end_date:,
                                                     session_type:,
-                                                    repeat:,
-                                                    target:)
+                                                    repeat_type: repeat,
+                                                    target:,
+                                                    location_id: User.current.location_id)
 
         assignees.each do |assignee_id|
           SessionScheduleAssignee.create!(
@@ -35,5 +36,37 @@ module ImmunizationService
 
       session_schedule
     end
+
+    def fetch_session_schedules
+      session_schedules = SessionSchedule.select("session_schedules.*")
+                                         .where(voided: false, location_id: User.current.location_id)
+    
+      # Transform the session schedules into a format that allows extra fields
+      session_schedules.map do |session_schedule|
+        session_schedule_data = session_schedule.as_json
+    
+        # Add assignees and vaccines as additional keys to the serialized session schedule
+        session_schedule_data[:assignees] = get_session_assignees(session_schedule.session_schedule_id)
+        session_schedule_data[:vaccines] = get_session_vaccines(session_schedule.session_schedule_id)
+    
+        session_schedule_data
+      end
+    end
+    
+    private
+    
+    def get_session_assignees(session_schedule_id)
+      SessionScheduleAssignee.joins(user: { person: :names })
+                             .select('session_schedule_assignees.*, users.user_id, users.username,
+                              person_name.given_name, person_name.family_name')
+                             .where(session_schedule_id: session_schedule_id)
+    end
+    
+    def get_session_vaccines(session_schedule_id)
+      SessionScheduleVaccine.joins(:drug)
+                            .select('session_schedule_vaccines.*, drug.name, drug.drug_id')
+                            .where(session_schedule_id: session_schedule_id)
+    end    
+    
   end
 end
