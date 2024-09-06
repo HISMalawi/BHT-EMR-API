@@ -64,8 +64,8 @@ class Api::V1::SendSmsController < ApplicationController
       end
       config = YAML.load_file(Rails.root.join('config', 'application.yml'))
       ymlconfig = config["eir_sms_configurations"][Rails.env]
+      ymlconfig.delete('sms_api_key')
       ymlconfig.merge!(globalconfig)
-      puts "#{ymlconfig}"
       render json: { message: ymlconfig }, status: :ok
     rescue StandardError => e
       render json: { error: e.message }, status: :unprocessable_entity
