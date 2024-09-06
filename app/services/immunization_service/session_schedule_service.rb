@@ -59,13 +59,13 @@ module ImmunizationService
       SessionScheduleAssignee.joins(user: { person: :names })
                              .select('session_schedule_assignees.*, users.user_id, users.username,
                               person_name.given_name, person_name.family_name')
-                             .where(session_schedule_id: session_schedule_id)
+                             .where(session_schedule_id: session_schedule_id).where(voided: false)
     end
     
     def get_session_vaccines(session_schedule_id)
       SessionScheduleVaccine.joins(:drug)
                             .select('session_schedule_vaccines.*, drug.name, drug.drug_id')
-                            .where(session_schedule_id: session_schedule_id)
+                            .where(session_schedule_id: session_schedule_id).where(voided: false)
     end    
     
   end
