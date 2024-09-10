@@ -12,8 +12,9 @@ class Encounter < VoidableRecord
   has_many :drug_orders, through: :orders, foreign_key: 'order_id'
   has_many :orders, dependent: :destroy
 
-  belongs_to :type, class_name: 'EncounterType', foreign_key: :encounter_type
-  belongs_to :provider, class_name: 'Person', foreign_key: :provider_id
+  belongs_to :encounter_type, class_name: 'EncounterType', foreign_key: :encounter_type_id
+  belongs_to :visit, class_name: 'Visit', foreign_key: :visit_id 
+  belongs_to :person, class_name: 'Person', foreign_key: :person_id  
   belongs_to :patient
   belongs_to :location, optional: true
   belongs_to :program

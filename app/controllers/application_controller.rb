@@ -17,7 +17,7 @@ class ApplicationController < ActionController::API
   DEFAULT_PAGE_SIZE = 10
 
   def authenticate
-    authentication_token = request.headers['Authorization']
+    authentication_token = request.headers['Authorization']&.split(' ')&.last
     unless authentication_token
       errors = ['Authorization token required']
       render json: { errors: }, status: :unauthorized

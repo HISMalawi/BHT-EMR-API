@@ -10,9 +10,10 @@ module Api
       end
 
       def index
-        permitted_params = params.permit(:name, :set)
-        name = permitted_params[:name]
-        set = permitted_params[:set]
+        params = params.permit(:name, :set, :indication)
+        name = params[:name]
+        set = params[:set]
+        indication = params[:indication]
 
         query = Concept.all
 
@@ -25,8 +26,16 @@ module Api
           query = query.joins(:concept_sets)
                        .merge(ConceptSet.where(concept_set: Concept.find_by_name(set)))
         end
+        
+        if indication
+          query = query.joins(:concept_names)
+                       .where(concept_names: { name: indication })
+        end
 
-        render json: paginate(query)
+        #render json: paginate(query)
+        visit = VisitService.index(indication: indication)
+
+        render json: visit, status: :ok
       end
     end
   end

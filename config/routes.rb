@@ -12,8 +12,76 @@ Rails.application.routes.draw do
   mount ActionCable.server => '/api/v1/cable'
   mount Sidekiq::Web => '/sidekiq'
 
+
+
+  get '/api/v1/daily_visits', to: 'api/v1/visits#daily_visits'
+  post '/api/v1/create_visit', to: 'api/v1/visits#create'
+  post '/api/v1/update_visit', to: 'api/v1/visits#update'    
+  get '/api/v1/previous_visits/:uuid', to: 'api/v1/previous_visits#previous_visits'
+  
+
   namespace :api do
     namespace :v1 do
+      get '/_health' => 'auth#health'
+      resources :xforms_xforms
+      resources :xforms_person_repeat_attributes
+      resources :xforms_medical_history_fields
+      resources :visit_types
+      resources :visit_attribute_types
+      resources :visit_attributes
+      resources :visits do
+        collection do
+          get ':uuid/encounters_done' => 'visits#encounters_done' # visit UUID
+          get ':uuid/open_visits' => 'visits#open_visits' # patient UUID
+        end
+      end
+      get '/generate_visit_number' => 'visits#generate_visit_number'
+      resources :users
+      resources :user_roles
+      resources :user_properties
+      resources :tribes
+      resources :serialized_objects
+      resources :scheduler_task_config_properties
+      resources :scheduler_task_configs
+      resources :room_temperatures
+      resources :role_roles
+      resources :role_privileges
+      resources :roles
+      resources :reporting_report_requests
+      resources :reporting_report_design_resources
+      resources :reporting_report_designs
+      resources :report_schema_xmls
+      resources :report_objects
+      resources :relationship_types
+      resources :relationships
+      resources :provider_attribute_types
+      resources :provider_attributes
+      resources :providers
+      resources :program_workflow_states
+      resources :program_workflows
+      resources :program_attribute_types
+      resources :programs
+      resources :privileges
+      resources :person_names
+      resources :person_merge_logs
+      resources :person_attribute_types
+      resources :person_attributes
+      resources :person_addresses
+      resources :people do
+        collection do
+          get '/search' => 'people#search'
+        end
+      end
+      resources :patient_states
+      resources :patient_program_attributes
+      resources :patient_programs
+      resources :patient_identifier_types
+      resources :patient_identifiers
+      resources :patients do
+        collection do
+          get ':uuid/visits' => 'patients#visits'
+        end
+      end
       # Helper for creating dynamic redirect urls with redirect blocks
       def paginate_url(url, params)
         page = params[:page]
