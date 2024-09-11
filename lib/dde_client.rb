@@ -61,7 +61,7 @@ class DdeClient
     LOGGER.debug 'Loading DDE connection'
     if connection[:expires] < Time.now
       LOGGER.debug 'DDE connection expired'
-      establish_connection(connection[:config])
+      establish_connection(**connection[:config])
     else
       @base_url = connection[:config][:url]
       connection
