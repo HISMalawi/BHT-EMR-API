@@ -429,4 +429,11 @@ Rails.application.routes.draw do
   get '/api/v1/cancel_appointment', to: 'api/v1/send_sms#cancel'
   post '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#create'
   get '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#index'
+  delete '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#destroy'
+
+  namespace :eir do
+    post '/session_schedule', to: 'session_schedule#create' 
+    get '/session_schedule', to: 'session_schedule#index'  
+    delete '/session_schedule', to: 'session_schedule#destroy'
+  end
 end
