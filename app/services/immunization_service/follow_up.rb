@@ -126,11 +126,14 @@ module ImmunizationService
             # Appending due today antigens
             due_antigens.each do |antigen|
               (due_today_antigens[antigen[:drug_id]] ||= { drug_name: antigen[:drug_name], clients: [] })[:clients] << immunization_client
+              (due_this_week_antigens[antigen[:drug_id]] ||= { drug_name: antigen[:drug_name], clients: [] })[:clients] << immunization_client
+              (due_this_month_antigens[antigen[:drug_id]] ||= { drug_name: antigen[:drug_name], clients: [] })[:clients] << immunization_client
             end
           elsif due_date >= start_of_week && due_date <= end_of_week
             # Appending due this week antigens
             due_antigens.each do |antigen|
               (due_this_week_antigens[antigen[:drug_id]] ||= { drug_name: antigen[:drug_name], clients: [] })[:clients] << immunization_client
+              (due_this_month_antigens[antigen[:drug_id]] ||= { drug_name: antigen[:drug_name], clients: [] })[:clients] << immunization_client
             end
           elsif due_date >= start_of_month && due_date <= end_of_month
             # Appending due this month antigens

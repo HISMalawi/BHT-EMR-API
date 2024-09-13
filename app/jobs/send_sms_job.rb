@@ -12,7 +12,7 @@ class SendSmsJob < ApplicationJob
     appointment_message = get_global_property(key)
     
     message = "#{appointment_message},\n" \
-              "pa tsiku **#{@converted_date}**.\n"
+              "**#{@converted_date}**.\n"
 
     uri = URI.parse(sms_gateway_url)
     request = Net::HTTP::Post.new(uri)

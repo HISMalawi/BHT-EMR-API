@@ -31,6 +31,14 @@ class Api::V1::SendSmsController < ApplicationController
     globalconfig = fetch_configuration_from_global_property(User.current.location_id)
     config = fetch_default_configuration
 
+    globalconfig.each do |key, value|
+      if value == "true"
+        globalconfig[key] = true
+      elsif value == "false"
+        globalconfig[key] = false
+      end
+    end
+
     if globalconfig.present?
       config.delete('sms_api_key')
       config.merge!(globalconfig)
@@ -47,8 +55,16 @@ class Api::V1::SendSmsController < ApplicationController
       update_configuration_file
       
       globalconfig = fetch_configuration_from_global_property(User.current.location_id)
+      globalconfig.each do |key, value|
+        if value == "true"
+          globalconfig[key] = true
+        elsif value == "false"
+          globalconfig[key] = false
+        end
+      end
       config = YAML.load_file(Rails.root.join('config', 'application.yml'))
       ymlconfig = config["eir_sms_configurations"][Rails.env]
+      ymlconfig.delete('sms_api_key')
       ymlconfig.merge!(globalconfig)
       render json: { message: ymlconfig }, status: :ok
     rescue StandardError => e
@@ -99,6 +115,7 @@ class Api::V1::SendSmsController < ApplicationController
 
   def update_global_properties
     params.each do |key, value|
+      value = value.to_s
       if CONFIG_KEYS.include?(key)
         GlobalProperty.find_or_initialize_by(property: "#{User.current.location_id}_#{key}")
                       .update(property_value: value)
