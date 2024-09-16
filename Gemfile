@@ -90,4 +90,5 @@ gem 'whenever', '~> 1.0'
 # gems for reading excel and csv files
 gem 'roo', '~> 2.8'
 
-
+#gem for string matching
+gem 'fuzzy_match'

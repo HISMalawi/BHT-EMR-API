@@ -65,6 +65,75 @@ module Api
         render json: patient
       end
 
+      def duplicates_finder
+        # Get all patients along with the necessary attributes
+        patients = Person.all
+                         .joins("INNER JOIN person_name ON person_name.person_id = person.person_id")
+                         .joins("INNER JOIN patient_program ON patient_program.patient_id = person.person_id")
+                         .joins("INNER JOIN person_address ON person_address.person_id = person.person_id")
+                         .where(patient_program: { program_id: 33, voided: 0 })
+                         .select("person.person_id AS person_id, person.birthdate AS birthdate, person.gender AS gender,
+                                  person_name.given_name AS firstname, person_name.family_name AS sirname,
+                                  person_address.address2 AS home_district, person_address.neighborhood_cell AS home_village,
+                                  person_address.county_district AS home_traditional_authority")
+                                  
+        fuzzy_firstname_matcher = FuzzyMatch.new(patients.map(&:firstname))
+        fuzzy_sirname_matcher = FuzzyMatch.new(patients.map(&:sirname))
+        fuzzy_home_district_matcher = FuzzyMatch.new(patients.map(&:home_district))
+        fuzzy_home_village_matcher = FuzzyMatch.new(patients.map(&:home_village))
+        fuzzy_home_traditional_authority_matcher = FuzzyMatch.new(patients.map(&:home_traditional_authority))
+                                
+        duplicate_matches = []
+        already_checked = Set.new 
+      
+        patients.each do |primary_patient|
+          next if already_checked.include?(primary_patient.person_id)
+      
+          matches = []
+      
+          patients.each do |secondary_patient|
+            next if primary_patient.person_id == secondary_patient.person_id || already_checked.include?(secondary_patient.person_id)
+      
+            match_percentage = 0
+            match_percentage += 14.28 if fuzzy_firstname_matcher.find(primary_patient.firstname) == secondary_patient.firstname
+            match_percentage += 14.28 if fuzzy_sirname_matcher.find(primary_patient.sirname) == secondary_patient.sirname
+            match_percentage += 14.28 if fuzzy_home_district_matcher.find(primary_patient.home_district) == secondary_patient.home_district
+            match_percentage += 14.28 if fuzzy_home_village_matcher.find(primary_patient.home_village) == secondary_patient.home_village
+            match_percentage += 14.28 if fuzzy_home_traditional_authority_matcher.find(primary_patient.home_traditional_authority) == secondary_patient.home_traditional_authority
+            
+            match_percentage += 14.28 if primary_patient.birthdate == secondary_patient.birthdate
+            match_percentage += 14.28 if primary_patient.gender == secondary_patient.gender
+      
+            if match_percentage.round(0) > 85
+              matches << { 
+                secondary_patient_id: secondary_patient.person_id,
+                secondary_firstname: secondary_patient.firstname,
+                secondary_sirname: secondary_patient.sirname,
+                match_percentage: match_percentage.round(0)
+              }
+            end
+          end
+      
+          if matches.any?
+            duplicate_matches << {
+              primary_patient_id: primary_patient.person_id,
+              primary_firstname: primary_patient.firstname,
+              primary_sirname: primary_patient.sirname,
+              primary_birthdate: primary_patient.birthdate,
+              primary_gender: primary_patient.gender,
+              duplicates: matches
+            }
+      
+            already_checked << primary_patient.person_id
+            matches.each do |match|
+              already_checked << match[:secondary_patient_id]
+            end
+          end
+        end
+      
+        render json: duplicate_matches
+      end
+
       private
 
       MATCH_PARAMS = %i[given_name family_name gender birthdate home_village
