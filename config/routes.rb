@@ -439,5 +439,6 @@ Rails.application.routes.draw do
     post '/session_schedule', to: 'session_schedule#create' 
     get '/session_schedule', to: 'session_schedule#index'  
     delete '/session_schedule', to: 'session_schedule#destroy'
+    post  '/session_schedule', to: 'session_schedule#update'
   end
 end

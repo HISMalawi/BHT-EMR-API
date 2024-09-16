@@ -23,7 +23,7 @@ module ImmunizationService
     end
 
     def update_session_schedule(session_schedule_id:, session_name:, start_date:, end_date:, session_type:, repeat:, 
-                                assignees:, void_reason:)
+                                assignees:)
       current_time = Time.current
       voided_by = User.current.id
 
@@ -32,7 +32,7 @@ module ImmunizationService
         session_schedule = SessionSchedule.find(session_schedule_id)
         update_schedule_details(session_schedule, session_name, start_date, end_date, session_type, repeat)
 
-        handle_assignees(session_schedule_id, assignees, void_reason, current_time, voided_by)
+        handle_assignees(session_schedule_id, assignees, current_time, voided_by)
       end
     end
 
@@ -141,7 +141,7 @@ module ImmunizationService
     def handle_assignees(session_schedule_id, assignees, void_reason, current_time, voided_by)
       existing_assignee_ids = session_schedule_assignees(session_schedule_id).pluck(:user_id)
       if assignees.sort != existing_assignee_ids.sort
-        void_and_replace_assignees(session_schedule_id, assignees, void_reason, current_time, voided_by)
+        void_and_replace_assignees(session_schedule_id, assignees, current_time, voided_by)
       end
     end
 
@@ -164,8 +164,8 @@ module ImmunizationService
     end
 
     # Voids old assignees and adds new ones
-    def void_and_replace_assignees(session_schedule_id, assignees, void_reason, current_time, voided_by)
-      void_records(SessionScheduleAssignee, session_schedule_id, void_reason, current_time)
+    def void_and_replace_assignees(session_schedule_id, assignees, current_time, voided_by)
+      void_records(SessionScheduleAssignee, session_schedule_id, current_time)
       assignees.each do |assignee_id|
         SessionScheduleAssignee.create!(session_schedule_id: session_schedule_id, user_id: assignee_id)
       end
