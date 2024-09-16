@@ -3,6 +3,7 @@
 module Api
   module V1
     class ProgramsController < ApplicationController
+      before_action :authenticate, except: %i[index]
       def show
         render json: Program.find(params[:id])
       end
