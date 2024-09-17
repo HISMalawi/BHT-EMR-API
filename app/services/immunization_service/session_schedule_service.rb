@@ -29,10 +29,18 @@ module ImmunizationService
 
       SessionSchedule.transaction do
         # Find and update the session schedule details
-        session_schedule = SessionSchedule.find(session_schedule_id)
-        update_schedule_details(session_schedule, session_name, start_date, end_date, session_type, repeat)
+        session_schedule = SessionSchedule.where(session_schedule_id:).update!(
+                                                                  session_name:,
+                                                                  start_date:,
+                                                                  end_date:, 
+                                                                  session_type:,
+                                                                  repeat_type: repeat
+                                                                )
 
         handle_assignees(session_schedule_id, assignees, current_time, voided_by)
+
+        session_schedule
+
       end
     end
 
@@ -126,19 +134,8 @@ module ImmunizationService
       }
     end
 
-    # Updates the details of an existing session schedule
-    def update_schedule_details(session_schedule, session_name, start_date, end_date, session_type, repeat)
-      session_schedule.update!(
-        session_name: session_name,
-        start_date: start_date,
-        end_date: end_date,
-        session_type: session_type,
-        repeat_type: repeat
-      )
-    end
-
     # Handles changes to assignees, including voiding old ones and adding new ones
-    def handle_assignees(session_schedule_id, assignees, void_reason, current_time, voided_by)
+    def handle_assignees(session_schedule_id, assignees, current_time, voided_by)
       existing_assignee_ids = session_schedule_assignees(session_schedule_id).pluck(:user_id)
       if assignees.sort != existing_assignee_ids.sort
         void_and_replace_assignees(session_schedule_id, assignees, current_time, voided_by)
@@ -165,7 +162,7 @@ module ImmunizationService
 
     # Voids old assignees and adds new ones
     def void_and_replace_assignees(session_schedule_id, assignees, current_time, voided_by)
-      void_records(SessionScheduleAssignee, session_schedule_id, current_time)
+      void_records(SessionScheduleAssignee, session_schedule_id, nil,  current_time)
       assignees.each do |assignee_id|
         SessionScheduleAssignee.create!(session_schedule_id: session_schedule_id, user_id: assignee_id)
       end

@@ -12,7 +12,7 @@ class Api::V1::SessionScheduleController < ApplicationController
     def create
       params = get_schedule_session_params 
       
-      session_name, start_date, end_date, session_type, repeat, assignees = params
+      session_name, start_date, end_date, session_type, repeat, assignees =  get_schedule_session_params
       
       session_schedule = service.create_session_schedule(
                                     session_name:, 
@@ -25,19 +25,19 @@ class Api::V1::SessionScheduleController < ApplicationController
       unless session_schedule.blank?
         render json: session_schedule, status: :ok
       else
-        render json: {}, status: :unprocessable_entity
+        render json: [], status: :ok
       end
 
     end
   
     def update
       # Logic for update action (if needed)
-      session_id  = params[:id]
+      session_schedule_id = params[:id]
 
-      session_name, start_date, end_date, session_type, repeat, assignees = params
+      session_name, start_date, end_date, session_type, repeat, assignees = get_schedule_session_params
 
       session_schedule = service.update_session_schedule(
-                                    session_id:,
+                                    session_schedule_id:,
                                     session_name:, 
                                     start_date:, 
                                     end_date:, 
@@ -48,7 +48,7 @@ class Api::V1::SessionScheduleController < ApplicationController
       unless session_schedule.blank?
         render json: session_schedule, status: :ok
       else
-        render json: {}, status: :unprocessable_entity
+        render json: [], status: :ok
       end
 
     end  

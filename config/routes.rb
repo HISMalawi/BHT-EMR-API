@@ -434,6 +434,6 @@ Rails.application.routes.draw do
   post '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#create'
   get '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#index'
   delete '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#destroy'
-  put  '/api/v1/eir/session_schedule/:id', to: 'session_schedule#update'
+  put  '/api/v1/eir/session_schedule/:id', to: 'api/v1/session_schedule#update'
 
 end
