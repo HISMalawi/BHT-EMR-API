@@ -56,19 +56,19 @@ class VisitService
                         "MAX(CASE WHEN #{encounter_type_condition} THEN CONCAT(le.given_name, ' ',
                         le.family_name) ELSE NULL END) last_encounter_creator"
                       )
-                      .group('visit.patient_id', 'visit.uuid')
+                      .group('visit.patient_id', 'visit.uuid')   
   
       people = people.where(visit: { date_started: date.beginning_of_day..date.end_of_day }) if date.present?
-      people = people.where(visit: { date_stopped: nil }) if open_visits_only
+     # people = people.where(visit: { date_stopped: nil }) if open_visits_only
   
       people
+        
     end
   
-    def self.daily_visits(date: nil, category: nil, open_visits_only: true)
+    def self.daily_visits(date: nil, category: nil, open_visits_only: true)      
       ActiveRecord::Base.transaction do
         patients = visits_query(date:, open_visits_only:)
         return patients if category.nil?
-  
         patients.map do |patient|
           patient if eligible?(category, patient)
         end.compact
@@ -104,64 +104,106 @@ class VisitService
     end
   
     def self.create_visit(params)  
-
       
+
       person = Person.find_by(person_id: params[:patient]) 
-      visit_type = VisitType.find_by(uuid: params[:visit_type])
+     # program = Program.find_by(concept_id: params[:program])  
+      visit_type = VisitType.find_by(uuid: params[:visit_type])         
       location = Location.find_by_uuid(params[:location]) if params[:location]
       #indication = ConceptName.find_by_name(params[:indication]) if params[:indication]
-      #indication = ConceptName.find_by_name(params[:indication]) if params[:indication] 
-      stop_datetime = params[:stop_datetime]
-      start_datetime = params[:start_datetime]
-      encounters = params.delete(:encounters)
+      #stop_datetime = params[:stop_datetime]
+      start_datetime = params[:start_datetime]     
+     # encounters = params.delete(:encounters)
+      encounters = params[:encounters]  
+     
+
   
- 
     
-      visit = Visit.new(
-        patient: person.patient,
-        visit_type: visit_type,
+      visit = Visit.new(     
+        patient: person.patient,       
+        visit_type: visit_type,     
         location: location,
        # indication: indication&.concept_id,
-        date_stopped: stop_datetime.presence,
-        date_started: start_datetime
+       # date_stopped: stop_datetime.presence,
+        date_started: start_datetime   
       )
 
     visit.save!
-  
+           
       encounters&.each do |encounter|
-        visit.add_encounter(Encounter.find_by_uuid(encounter))
+        visit.add_encounter(Encounter.find_by_uuid(encounters))
       end
   
       # TODO: Generate visit number
       visit
     end
-  
-    def self.update_visit(uuid, params)
+   
+   
+ 
+    def self.generate_visit_number
+    # Close off hanging visits for the screening category
+     # daily_visits(category: 'screening')
+       
+    # Fetch taken visit numbers for ongoing visits
+    #  taken_visit_ids = Observation.joins(encounter: :visit).where(
+    #    visit: { date_stopped: nil },
+    #    obs: { concept_id: ConceptName.find_by_name('OPD Visit number').concept_id }
+    #  ).pluck('obs.value_numeric')
       
+      # Fetch taken visit numbers for ongoing visits using raw SQL query
+      taken_visit_ids = ActiveRecord::Base.connection.execute("
+      SELECT `obs`.`value_numeric`
+      FROM `obs`
+      INNER JOIN `encounter` ON `encounter`.`voided` = 0 AND `encounter`.`encounter_id` = `obs`.`encounter_id`
+      INNER JOIN `visit` ON `visit`.`voided` = FALSE AND `visit`.`visit_id` = `encounter`.`visit_id`
+      WHERE `obs`.`voided` = 0 
+      AND `visit`.`date_stopped` IS NULL 
+      AND `obs`.`concept_id` = #{ConceptName.find_by_name('OPD Visit number').concept_id}
+      ").map { |row| row['value_numeric'].to_f }
+   
+
+        
+    # Start with visit number 1 and find the next available one
+      visit_number = 1
+      while taken_visit_ids.include?(visit_number) && not_assigned_today?(visit_number)
+        visit_number += 1  
+      # Optional safeguard: limit visit number to avoid infinite loop
+        break if visit_number > 1000 # Adjust the limit as necessary
+      end
+
+      visit_number
+    end
+
+
+
+    def self.update_visit(visit_id, params)      
       
-      visit = Visit.find_by(uuid)
-      
+        
+      visit = Visit.find_by(visit_id) 
+
       visit_type = VisitType.find_by_uuid(params[:visit_type])
-      location = Location.find_by_uuid(params[:location]) if params[:location]
+      location = Location.find_by_uuid(params[:location]) if params[:location]       
       #indication = ConceptName.find_by_name(params[:indication]) if params[:indication]
       stop_datetime = params[:stop_datetime]
       start_datetime = params[:start_datetime]
       encounters = params.delete(:encounters)   
-
-       
+    
+      
       visit.visit_type = visit_type if visit_type.present?
       visit.location = location if location.present?
      # visit.indication_concept_id = indication&.concept_id if indication.present?
       visit.date_stopped = stop_datetime if stop_datetime.present?
       visit.date_started = start_datetime if start_datetime.present?
       visit.save!
-
-  
-      encounters&.each do |encounter|
+                   
+       
+      encounters&.each do |encounter|    
         visit.add_encounter(Encounter.find_by_uuid(encounter))
       end
   
       visit
+    
+    
     end
   
     private_class_method def self.all_previous_encounters_completed?(category, patient)
@@ -198,7 +240,7 @@ class VisitService
       if patient_open_visit.date_started < 24.hours.ago
   
         # create an observation for the reason the patient is being exited
-  
+           
         reason = Observation.new
         reason.person = patient.person
         reason.concept_id = ConceptName.find_by_name('Reason for exiting care').concept_id

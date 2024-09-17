@@ -49,22 +49,25 @@ module ParamConstants
   ].freeze
 
   VISIT_SEARCH_PARAMS = %i[
-    date_started
+    date_started    
     date_stopped
     patient_id
     visit_type_id
   ].freeze
 
   VISIT_WHITELISTED_PARAMS = [
-    :id,
-    :patient,
-    :visit_type,
-    :start_datetime,
+    :id,      
+    :patient, 
+    :visit_id,    
+    :program,  
+    :visit_type, 
+    :visit_type_id,         
+    :start_datetime,   
     :location,
     :indication,
     :stop_datetime,
     { visit: {},
-      encounters: [],
+      encounters: [],   
       attributes: %i[
         attribute_type
         value

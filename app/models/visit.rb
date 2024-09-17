@@ -1,23 +1,33 @@
-class Visit < VoidableRecord
-  def self.find_by_uuid(uuid)
-    find_by(uuid: uuid)
+class Visit < VoidableRecord 
+  before_create :generate_uuid
+
+  #private
+
+  def generate_uuid
+    self.uuid ||= SecureRandom.uuid
   end
 
-    self.table_name = 'visit'
-    self.primary_key = 'visit_id'
-    
-    belongs_to :patient, optional: false
-   # belongs_to :patient, foreign_key: :patient_id, primary_key: :patient_id
-    belongs_to :person, foreign_key: :patient_id, primary_key: :person_id
-    belongs_to :visit_type, optional: false
-    belongs_to :indication, class_name: 'Concept', optional: true
-    belongs_to :location
-    
-    has_many :encounters, -> { order(encounter_datetime: :desc, encounter_id: :desc) }
-    
-    validates :date_started, presence: true
+  def self.find_by_uuid(uuid)        
+    find_by(uuid: uuid)
+  end   
   
-    before_validation :validate_dates
+  self.table_name = 'visit'
+  self.primary_key = 'visit_id'
+   
+  belongs_to :patient, optional: false
+   # belongs_to :patient, foreign_key: :patient_id, primary_key: :patient_id
+  belongs_to :person, foreign_key: :patient_id, primary_key: :person_id
+   # belongs_to :concept
+   # belongs_to :program, foreign_key: :concept_id, primary_key: :program_id        
+  belongs_to :visit_type, optional: false   
+  belongs_to :indication, class_name: 'Concept', optional: true
+  belongs_to :location
+    
+  has_many :encounters, -> { order(encounter_datetime: :desc, encounter_id: :desc) }
+    
+  validates :date_started, presence: true
+  
+  before_validation :validate_dates
   
     def as_json(options = {})
       super(options.merge(methods: %i[visit_type_name], include: %i[patient]))
