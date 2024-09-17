@@ -32,7 +32,26 @@ class Api::V1::SessionScheduleController < ApplicationController
   
     def update
       # Logic for update action (if needed)
-    end 
+      session_id  = params[:id]
+
+      session_name, start_date, end_date, session_type, repeat, assignees = params
+
+      session_schedule = service.update_session_schedule(
+                                    session_id:,
+                                    session_name:, 
+                                    start_date:, 
+                                    end_date:, 
+                                    session_type:, 
+                                    repeat:, 
+                                    assignees:)
+
+      unless session_schedule.blank?
+        render json: session_schedule, status: :ok
+      else
+        render json: {}, status: :unprocessable_entity
+      end
+
+    end  
   
     def destroy
       # Logic for destroy action (if needed)
