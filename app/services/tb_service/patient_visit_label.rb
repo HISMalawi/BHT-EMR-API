@@ -27,21 +27,12 @@ module TbService
       label = ZebraPrinter::Lib::StandardLabel.new
       # label.draw_text("Printed: #{Date.today.strftime('%b %d %Y')}",597,280,0,1,1,1,false)
       label.draw_text(seen_by(patient, date).to_s, 499, 255, 0, 1, 1, 1, false)
-      label.draw_text(date&.strftime("%B %d %Y")&.upcase, 25, 30, 0, 3, 1, 1, false)
+      label.draw_text(date&.strftime("%B %d %Y").upcase, 25, 30, 0, 3, 1, 1, false)
       label.draw_text(tb_number.to_s, 470, 30, 0, 3, 1, 1, true)
       label.draw_text("#{patient.person.name}(#{patient.gender})", 25, 60, 0, 3, 1, 1, false)
 
       pill_count = visit.pills_brought.collect { |c| c.join(",") }&.join(" ")
-      height = 
-"#{unless visit.height.blank?
-                    visit.height.to_s + "cm"
-                  end}  #{unless visit.weight.blank?
-                                                                            visit.weight.to_s + "kg"
-                                                                          end}  #{unless visit.bmi.blank?
-                                                                                                                                    "BMI:" + visit.bmi.to_s
-                                                                                                                                  end} VL:#{art_visit.viral_load_result} #{unless pill_count.blank?
-                                                                                                                                                                                                                         "(PC:" + pill_count[0..24] + ")"
-                                                                                                                                                                                                                       end}", 25, 95, 0, 2, 1, 1, false
+      height = "#{visit.height.to_s + "cm" unless visit.height.blank?}  #{visit.weight.to_s + "kg" unless visit.weight.blank?}  #{"BMI:" + visit.bmi.to_s unless visit.bmi.blank?} VL:#{art_visit.viral_load_result} #{"(PC:" + pill_count[0..24] + ")" unless pill_count.blank?}", 25, 95, 0, 2, 1, 1, false
       label.draw_text(height, 25, 95, 0, 2, 1, 1, false)
 
       label.draw_text("SE", 25, 130, 0, 3, 1, 1, false)
@@ -86,7 +77,7 @@ module TbService
       {
         data: {
           seen_by: seen_by(patient, date),
-          date:,
+          date: date,
           arv_number: patient.identifier('ARV Number'),
           name: "#{patient.person.name} (#{patient.gender})",
           height: "#{visit&.height} cm",
@@ -96,7 +87,7 @@ module TbService
           outcome_date: date,
           next_appointment: visit.next_appointment
         },
-        zpl: label.print(1)
+        zpl: label.print(1),
       }
     end
 
@@ -109,9 +100,9 @@ module TbService
                                   ORDER BY date_created DESC")
       provider = begin
           [a.first.name, a.first.creator]
-      rescue StandardError
+        rescue StandardError
           nil
-      end
+        end
       # provider = patient.encounters.find_by_date(date).collect{|e| next unless e.name == 'HIV CLINIC CONSULTATION' ; [e.name,e.creator]}.compact
       provider_username = ("Seen by: " + User.find(provider[1]).username).to_s unless provider.blank?
       if provider_username.blank?
@@ -122,9 +113,9 @@ module TbService
                                      encounter_type_ids]).order("encounter_datetime DESC").first
         provider_username = begin
             ("Seen by: " + User.find(encounter.creator).username).to_s
-        rescue StandardError
+          rescue StandardError
             nil
-        end
+          end
       end
       provider_username
     end
@@ -135,22 +126,22 @@ module TbService
       # we will show the one with 198%.
       # in future we are planning to show all available drug adherences
 
-      0
+      adherence_to_show = 0
       adherence_over_100 = 0
       adherence_below_100 = 0
       over_100_done = false
       below_100_done = false
 
-      adherence_data.each_value do |adh|
+      adherence_data.each do |_drug, adh|
         next if adh.blank?
 
         drug_adherence = adh.to_i
         if drug_adherence <= 100
-          adherence_below_100 = adh.to_i if adherence_below_100.zero?
+          adherence_below_100 = adh.to_i if adherence_below_100 == 0
           adherence_below_100 = adh.to_i if drug_adherence <= adherence_below_100
           below_100_done = true
         else
-          adherence_over_100 = adh.to_i if adherence_over_100.zero?
+          adherence_over_100 = adh.to_i if adherence_over_100 == 0
           adherence_over_100 = adh.to_i if drug_adherence >= adherence_over_100
           over_100_done = true
         end
@@ -196,7 +187,7 @@ module TbService
         string = "#{drug} (#{pills})"
         if string.length > 26
           line = string[0..25]
-          line2 = string[26..]
+          line2 = string[26..-1]
           data["arv_given#{count}"] = '255', line
           data["arv_given#{count += 1}"] = '255', line2
         else
