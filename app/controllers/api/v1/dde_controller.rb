@@ -115,8 +115,8 @@ module Api
                 end
            end
          
-        #duplicates = save_matching(duplicate_matches)
-        render json: duplicate_matches, status: :ok
+        duplicates = save_matching(duplicate_matches)
+        render json: duplicates, status: :ok
       end
 
       def duplicates_match
