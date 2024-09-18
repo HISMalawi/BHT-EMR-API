@@ -90,7 +90,7 @@ module Api
              # Perform two objects matching of the two objects
               match_percentage = perform_fuzzy_soundex_matching(primary_patient, secondary_patient)
 
-             if match_percentage.round(0) > 20
+             if match_percentage.round(0) > 85
                   matches << {
                     secondary_patient_id: secondary_patient.person_id,
                    secondary_firstname: secondary_patient.firstname,
