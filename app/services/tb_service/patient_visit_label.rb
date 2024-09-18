@@ -78,11 +78,12 @@ module TbService
         data: {
           seen_by: seen_by(patient, date),
           date: date,
-          arv_number: patient.identifier('ARV Number'),
+          tb_number: patient.identifier('District TB Number').identifier,
           name: "#{patient.person.name} (#{patient.gender})",
           height: "#{visit&.height} cm",
           tb_status: visit.tb_status,
           adherence_data: adhearance_to_show,
+          drugs: visit.patient_pills_dispensed,
           outcome: visit.patient_outcome,
           outcome_date: date,
           next_appointment: visit.next_appointment

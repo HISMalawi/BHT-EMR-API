@@ -109,7 +109,7 @@ module TbService
         pills_dispensed[drug_name] += observation.value_numeric
       end
 
-      @pills_dispensed = @pills_dispensed.collect { |k, v| [k, v] }
+      @pills_dispensed.collect { |k, v| [k, v] }
     end
 
     def cpt; end
