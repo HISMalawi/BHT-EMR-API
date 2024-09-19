@@ -1,4 +1,4 @@
-class PatientMatch < ApplicationRecord
+class PotentialDuplicate < ApplicationRecord
     belongs_to :patient_a, class_name: 'Patient', foreign_key: 'patient_id_a'
     belongs_to :patient_b, class_name: 'Patient', foreign_key: 'patient_id_b'
   
@@ -11,8 +11,6 @@ class PatientMatch < ApplicationRecord
     private
   
     def set_date_changed
-      self.date_changed = Time.now
-      self.date_created = Time.now
       self.changed_by = User.current.person_id if User.current 
       self.uuid ||= SecureRandom.uuid
     end

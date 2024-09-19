@@ -117,3 +117,6 @@ eir_sms_configurations:
   production:
     sms_gateway_url: ''
     sms_api_key: ''
+
+#The threshold for the EIR duplicates percentage.
+  matching_percent: 85

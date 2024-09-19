@@ -92,6 +92,4 @@ gem 'roo', '~> 2.8'
 
 #gem for object matching
 gem 'whitesimilarity'
-gem 'text'
-
 
