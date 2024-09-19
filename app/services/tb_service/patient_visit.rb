@@ -18,16 +18,35 @@ module TbService
 
     def patient_outcome
       state = patient_state_service.find_patient_state(get_program, @patient, @date)
-      state.nil? ? blank_outcome : state
+      state.nil? ? 'Unknown' : state
     rescue StandardError
-      blank_outcome
+      'Unknown'
+    end
+
+    def side_effects
+      return @side_effects if @side_effects
+
+      parent_obs = Observation.where(concept: concept('MLW TB side effects'), person: patient.person)
+                              .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                              .order(obs_datetime: :desc)
+
+      return [] unless parent_obs
+
+      @side_effects = []
+      parent_obs.each do |obs|
+        result = obs.children
+                    .where(value_coded: ConceptName.find_by_name!('Yes').concept_id)
+                    .collect { |side_effect| side_effect.concept.fullname }
+
+        @side_effects << result.join(',') unless result.blank?
+      end
+
+      @side_effects
     end
 
     def next_appointment
-      Observation.where(person: patient.person, concept: concept('Appointment date'))\
-                 .order(obs_datetime: :desc)\
-                 .first\
-                 &.value_datetime
+      Observation.where(person: patient.person,
+                        concept: concept('Appointment date')).order(obs_datetime: :desc).first&.value_datetime
     end
 
     def tb_status
@@ -73,7 +92,45 @@ module TbService
       @visit_drugs.pills_dispensed
     end
 
+    def patient_pills_dispensed
+      return @pills_dispensed if @pills_dispensed
+
+      observations = Observation.where(concept: concept('Amount dispensed'),
+                                       person: patient.person).where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                                .includes(order: { drug_order: { drug: %i[alternative_names] } })
+                                .select(%i[order_id value_numeric])
+
+      @pills_dispensed = observations.each_with_object({}) do |observation, pills_dispensed|
+        drug = observation&.order&.drug_order&.drug
+        next unless drug
+
+        drug_name = format_drug_name(drug)
+        pills_dispensed[drug_name] ||= 0
+        pills_dispensed[drug_name] += observation.value_numeric
+      end
+
+      @pills_dispensed.collect { |k, v| [k, v] }
+    end
+
+    def cpt; end
+
     private
+
+    def format_drug_name(drug)
+      moh_name = drug.alternative_names.first&.short_name
+
+      if moh_name && %r{^\d*[A-Z]+\s*\d+(\s*/\s*\d*[A-Z]+\s*\d+)*$}i.match(moh_name)
+        return moh_name.gsub(/\s+/, '')
+                       .gsub(/Isoniazid/i, 'INH')
+      end
+
+      match = drug.name.match(/^(.+)\s*\(.*$/)
+      name = match.nil? ? drug.name : match[1]
+
+      name = 'CPT' if name.match?('Cotrimoxazole')
+      # name = 'INH' if name.match?('INH')
+      name
+    end
 
     def patient_state_service
       PatientStateService.new
@@ -88,11 +145,9 @@ module TbService
     end
 
     def ipt?
-      PatientProgram.joins(:patient_states)\
-                    .where(patient_program: { patient_id: @patient,
-                                              program_id: program('IPT Program') },
-                           patient_state: { end_date: nil })\
-                    .exists?
+      PatientProgram.joins(:patient_states).where(patient_program: { patient_id: @patient,
+                                                                     program_id: program('IPT Program') },
+                                                  patient_state: { end_date: nil }).exists?
     end
 
     def blank_outcome

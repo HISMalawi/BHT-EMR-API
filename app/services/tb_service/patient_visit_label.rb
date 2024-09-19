@@ -13,26 +13,27 @@ module TbService
     end
 
     def get_visit_short_drug_list(drugs)
-        drug_list = drugs.map { |drug, pills| "#{drug.delete(' ')}(#{pills})"}
-        drug_list.each_slice(3).to_a
+      drug_list = drugs.map { |drug, pills| "#{drug.delete(" ")}(#{pills})" }
+      drug_list.each_slice(3).to_a
     end
 
     def print
       visit = TbService::PatientVisit.new patient, date
+      art_visit = ArtService::PatientVisit.new patient, date
       return unless visit
 
-      tb_number = patient.identifier('District TB Number')&.identifier || patient.identifier('District IPT Number')&.identifier || patient.national_id
+      tb_number = patient.identifier("District TB Number")&.identifier || patient.identifier("District IPT Number")&.identifier || patient.national_id
 
       label = ZebraPrinter::Lib::StandardLabel.new
       # label.draw_text("Printed: #{Date.today.strftime('%b %d %Y')}",597,280,0,1,1,1,false)
       label.draw_text(seen_by(patient, date).to_s, 499, 255, 0, 1, 1, 1, false)
-      label.draw_text(date&.strftime('%B %d %Y').upcase, 25, 30, 0, 3, 1, 1, false)
+      label.draw_text(date&.strftime("%B %d %Y").upcase, 25, 30, 0, 3, 1, 1, false)
       label.draw_text(tb_number.to_s, 470, 30, 0, 3, 1, 1, true)
       label.draw_text("#{patient.person.name}(#{patient.gender})", 25, 60, 0, 3, 1, 1, false)
 
       pill_count = visit.pills_brought.collect { |c| c.join(",") }&.join(" ")
-      height = "#{visit.height.to_s + "cm" unless visit.height.blank?}  #{visit.weight.to_s + "kg" unless visit.weight.blank?}  #{"BMI:" + visit.bmi.to_s unless visit.bmi.blank?} VL:#{visit.viral_load_result} #{"(PC:" + pill_count[0..24] + ")" unless pill_count.blank?}", 25, 95, 0, 2, 1, 1, false
-      label.draw_text(height)
+      height = "#{visit.height.to_s + "cm" unless visit.height.blank?}  #{visit.weight.to_s + "kg" unless visit.weight.blank?}  #{"BMI:" + visit.bmi.to_s unless visit.bmi.blank?} VL:#{art_visit.viral_load_result} #{"(PC:" + pill_count[0..24] + ")" unless pill_count.blank?}", 25, 95, 0, 2, 1, 1, false
+      label.draw_text(height, 25, 95, 0, 2, 1, 1, false)
 
       label.draw_text("SE", 25, 130, 0, 3, 1, 1, false)
       label.draw_text("TB", 110, 130, 0, 3, 1, 1, false)
@@ -43,8 +44,8 @@ module TbService
       label.draw_text(visit.tb_status.to_s, 110, 160, 0, 2, 1, 1, false)
       adhearance_to_show = adherence_to_show(visit.adherence)&.gsub("%", '\\\\%').to_s
       label.draw_text(adhearance_to_show, 185, 160, 0, 2, 1, 1, false)
-      label.draw_text(visit.outcome.to_s, 577, 160, 0, 2, 1, 1, false)
-      label.draw_text(visit.outcome_date&.strftime("%d/%b/%Y") || "N/A", 655, 130, 0, 2, 1, 1, false)
+      label.draw_text(visit.patient_outcome.to_s, 577, 160, 0, 2, 1, 1, false)
+      label.draw_text(date&.strftime("%d/%b/%Y") || "N/A", 655, 130, 0, 2, 1, 1, false)
       unless visit.next_appointment.blank?
         label.draw_text("Next: " + visit.next_appointment&.strftime("%d/%b/%Y"), 577, 190, 0, 2, 1, 1, false)
       end
@@ -74,16 +75,19 @@ module TbService
         label.draw_text(data.to_s, starting_index, starting_line, 0, 2, 1, 1, bold)
       end
       {
-        seen_by: seen_by(patient, date),
-        date: date,
-        arv_number: arv_number,
-        name: "#{patient.person.name}(#{patient.gender}) #{owner}",
-        height:,
-        tb_status: visit.tb_status,
-        adherence_data: adhearance_to_show,
-        outcome: visit.outcome,
-        outcome_date: visit.outcome_date,
-        next_appointment: visit.next_appointment,
+        data: {
+          seen_by: seen_by(patient, date),
+          date: date,
+          tb_number: patient.identifier('District TB Number').identifier,
+          name: "#{patient.person.name} (#{patient.gender})",
+          height: "#{visit&.height} cm",
+          tb_status: visit.tb_status,
+          adherence_data: adhearance_to_show,
+          drugs: visit.patient_pills_dispensed,
+          outcome: visit.patient_outcome,
+          outcome_date: date,
+          next_appointment: visit.next_appointment
+        },
         zpl: label.print(1),
       }
     end
@@ -159,15 +163,44 @@ module TbService
     private
 
     def get_program
-      ipt? ? program('IPT Program') : program('TB Program')
+      ipt? ? program("IPT Program") : program("TB Program")
     end
 
     def ipt?
-      PatientProgram.joins(:patient_states)\
-                    .where(patient_program: { patient_id: @patient,
-                                              program_id: program('IPT Program') },
-                           patient_state: { end_date: nil })\
-                    .exists?
+      PatientProgram.joins(:patient_states).where(patient_program: { patient_id: @patient,
+                                                                     program_id: program("IPT Program") },
+                                                  patient_state: { end_date: nil }).exists?
+    end
+
+    def visit_extras(visit)
+      return unless visit
+
+      data = {}
+
+      count = 1
+      visit.side_effects.each do |side_eff|
+        data["side_eff#{count}"] = '25', side_eff[0..5]
+        count += 1
+      end
+
+      count = 1
+      visit.patient_pills_dispensed.each do |drug, pills|
+        string = "#{drug} (#{pills})"
+        if string.length > 26
+          line = string[0..25]
+          line2 = string[26..-1]
+          data["arv_given#{count}"] = '255', line
+          data["arv_given#{count += 1}"] = '255', line2
+        else
+          data["arv_given#{count}"] = '255', string
+        end
+        count += 1
+      end
+
+      visit_cpt = visit.cpt || 0
+      data["arv_given#{count}"] = '255', "CPT (#{visit_cpt})" unless visit_cpt.zero?
+
+      data
     end
   end
 end
