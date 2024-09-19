@@ -151,7 +151,7 @@ class VisitService
     #  ).pluck('obs.value_numeric')
       
       # Fetch taken visit numbers for ongoing visits using raw SQL query
-      taken_visit_ids = ActiveRecord::Base.connection.execute("
+      taken_visit_ids = ActiveRecord::Base.connection.execute("   
       SELECT `obs`.`value_numeric`
       FROM `obs`
       INNER JOIN `encounter` ON `encounter`.`voided` = 0 AND `encounter`.`encounter_id` = `obs`.`encounter_id`

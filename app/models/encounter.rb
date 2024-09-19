@@ -5,19 +5,20 @@ class Encounter < VoidableRecord
   self.primary_key = :encounter_id
 
   # before_save :before_save
-  after_create :after_create
+  after_create :after_create  
   after_void :after_void
 
   has_many :observations, dependent: :destroy
   has_many :drug_orders, through: :orders, foreign_key: 'order_id'
   has_many :orders, dependent: :destroy
 
-  belongs_to :encounter_type, class_name: 'EncounterType', foreign_key: :encounter_type_id
-  belongs_to :visit, class_name: 'Visit', foreign_key: :visit_id 
-  belongs_to :person, class_name: 'Person', foreign_key: :person_id  
+  belongs_to :encounter_type, class_name: 'EncounterType', foreign_key: :encounter_type
+  belongs_to :provider, class_name: 'Person', foreign_key: :provider_id
   belongs_to :patient
   belongs_to :location, optional: true
   belongs_to :program
+  belongs_to :visit
+  belongs_to :person, class_name: 'Person', foreign_key: :person_id 
 
   validate :encounter_datetime_cannot_be_in_the_future
 
@@ -31,7 +32,7 @@ class Encounter < VoidableRecord
   def as_json(options = {})
     super(options.merge(
       include: {
-        type: {},
+        encounter_type: {},
         patient: {},
         location: {},
         provider: {

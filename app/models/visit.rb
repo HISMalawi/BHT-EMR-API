@@ -22,6 +22,7 @@ class Visit < VoidableRecord
   belongs_to :visit_type, optional: false   
   belongs_to :indication, class_name: 'Concept', optional: true
   belongs_to :location
+   
     
   has_many :encounters, -> { order(encounter_datetime: :desc, encounter_id: :desc) }
     

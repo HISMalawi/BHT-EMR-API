@@ -110,8 +110,8 @@ module ParamConstants
     patient
     location
     form
-    encounter_datetime
-    visit
+    encounter_datetime  
+    visit   
   ].freeze
 
   OBS_WHITELISTED_PARAMS = [
