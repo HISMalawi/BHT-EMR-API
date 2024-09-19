@@ -47,24 +47,23 @@ module ImmunizationService
     def fetch_session_schedules
       session_schedules = SessionSchedule.not_voided
                                          .where(location_id: User.current.location_id)
+                                         .includes(session_schedule_assignees: {user: { person: :names} })
+      session_vaccines = get_session_vaccines
 
       session_schedules.map do |session_schedule|
-        session_schedule_data = session_schedule.as_json
-        session_schedule_data[:assignees] = get_session_assignees(session_schedule.id)
-        session_schedule_data[:session_vaccines] = get_session_vaccines
+        session_schedule_data = session_schedule.as_json(only: [:session_schedule_id,
+                                                                :session_name,
+                                                                :start_date, :end_date,
+                                                                :session_type, :repeat_type ])
+        
+        
+        session_schedule_data[:assignees] = get_session_assignees(session_schedule)
+        session_schedule_data[:session_vaccines] = session_vaccines
         session_schedule_data
       end
     end
 
-    def fetch_session_schedule(session_schedule_id)
-      session_schedule = SessionSchedule.find_by(id: session_schedule_id, voided: false)
-      return nil unless session_schedule
-
-      session_schedule_data = session_schedule.as_json
-      session_schedule_data[:assignees] = get_session_assignees(session_schedule_id)
-      session_schedule_data[:session_vaccines] = get_session_vaccines
-      session_schedule_data
-    end
+     
 
     def void_session_schedule(session_id, reason)
       current_time = Time.current
@@ -95,6 +94,21 @@ module ImmunizationService
           session_schedule_id: session_schedule_id,
           user_id: user_id
         )
+      end
+    end
+
+    # Helper method to retrieve assignees from preloaded data
+    def get_session_assignees(session_schedule)
+      session_schedule.session_schedule_assignees.map do |assignee|
+        user = assignee.user
+        person_name = user.person.names.first
+        {
+          assignee_id: assignee.id,
+          user_id: user.user_id,
+          username: user.username,
+          given_name: person_name.given_name,
+          family_name: person_name.family_name
+        }
       end
     end
 
@@ -140,16 +154,6 @@ module ImmunizationService
       if assignees.sort != existing_assignee_ids.sort
         void_and_replace_assignees(session_schedule_id, assignees, current_time, voided_by)
       end
-    end
-
-
-    # Retrieves assignees for a given session schedule ID
-    def get_session_assignees(session_schedule_id)
-      session_schedule_assignees(session_schedule_id)
-        .joins(user: { person: :names })
-        .select('session_schedule_assignees.*, users.user_id as user_id, users.username,
-                 person_name.given_name, person_name.family_name')
-        .where(voided: false)
     end
 
     # Marks records as voided with a reason and timestamp
