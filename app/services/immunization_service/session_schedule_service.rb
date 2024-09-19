@@ -45,8 +45,8 @@ module ImmunizationService
     end
 
     def fetch_session_schedules
-      session_schedules = SessionSchedule.select("session_schedules.*")
-                                         .where(voided: false, location_id: User.current.location_id)
+      session_schedules = SessionSchedule.not_voided
+                                         .where(location_id: User.current.location_id)
 
       session_schedules.map do |session_schedule|
         session_schedule_data = session_schedule.as_json
