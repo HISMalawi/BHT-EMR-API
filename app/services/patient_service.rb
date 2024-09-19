@@ -233,9 +233,23 @@ class PatientService
   end
 
   def drugs_orders_by_program(patient, date, program_id: nil)
+    last_visit = find_last_visit(patient, date, program_id)
+    return [] unless last_visit
+  
+    find_drug_orders(patient, last_visit.order.start_date, program_id)
+  end
+  
+  def find_last_visit(patient, date, program_id)
     DrugOrder.joins(order: :encounter).where(
-      'orders.start_date <= ? AND orders.patient_id = ? AND quantity IS NOT NULL AND encounter.program_id = ?',
+      'orders.start_date <= ? AND orders.patient_id = ? AND quantity > 0 AND encounter.program_id = ?',
       TimeUtils.day_bounds(date)[1], patient.patient_id, program_id
+    ).order('orders.start_date DESC').first
+  end
+  
+  def find_drug_orders(patient, start_date, program_id)
+    DrugOrder.joins(order: :encounter).where(
+      'orders.start_date = ? AND orders.patient_id = ? AND quantity > 0 AND encounter.program_id = ?',
+      start_date, patient.patient_id, program_id
     ).order('orders.start_date DESC')
   end
 
