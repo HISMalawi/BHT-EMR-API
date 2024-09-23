@@ -220,6 +220,7 @@ module CxcaService
         @patient.patient_id, encounter_type.encounter_type_id, @date
       ).order(encounter_datetime: :desc).first
 
+      return false if encounter.blank?
       result = encounter.observations.where(concept_id: concept("Treatment").concept_id,
                                             value_coded: [
                                               concept("Palliative Care").concept_id,
