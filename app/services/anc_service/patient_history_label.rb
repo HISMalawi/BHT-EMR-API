@@ -11,10 +11,10 @@ module AncService
 
     def print
       @patient = begin
-        patient
-      rescue StandardError
-        nil
-      end
+          patient
+        rescue StandardError
+          nil
+        end
 
       @pregnancies = active_range
 
@@ -27,70 +27,70 @@ module AncService
       end
 
       deliveries = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('PARITY').concept_id]).last.answer_string.squish
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("PARITY").concept_id]).last.answer_string.squish
+        rescue StandardError
+          nil
+        end
 
       if deliveries
         @deliveries = begin
-          deliveries.to_i
-        rescue StandardError
-          deliveries
-        end
+            deliveries.to_i
+          rescue StandardError
+            deliveries
+          end
       end
 
       @deliveries += (!@range.empty? ? @range.length - 1 : @range.length) unless @deliveries.nil?
 
       gravida = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('GRAVIDA').concept_id]).last.answer_string.squish
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("GRAVIDA").concept_id]).last.answer_string.squish
+        rescue StandardError
+          nil
+        end
 
       @gravida = begin
-        gravida.to_i
-      rescue StandardError
-        gravida
-      end
+          gravida.to_i
+        rescue StandardError
+          gravida
+        end
 
       @multipreg = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('MULTIPLE GESTATION').concept_id]).last.answer_string.squish
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("MULTIPLE GESTATION").concept_id]).last.answer_string.squish
+        rescue StandardError
+          nil
+        end
 
       abortions = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('NUMBER OF ABORTIONS').concept_id]).last.answer_string.squish
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("NUMBER OF ABORTIONS").concept_id]).last.answer_string.squish
+        rescue StandardError
+          nil
+        end
 
       @abortions = begin
-        abortions.to_i
-      rescue StandardError
-        abortions
-      end
+          abortions.to_i
+        rescue StandardError
+          abortions
+        end
 
       still_births_concepts = ConceptName.find_by_sql("SELECT concept_id FROM concept_name where name like '%still birth%'").collect(&:concept_id).compact
 
       @stillbirths = begin
-        Observation.where(["person_id = ? AND concept_id = ? AND (value_coded IN (?) OR value_text like '%still birth%')", @patient.id,
-                           ConceptName.find_by_name('Condition at Birth').concept_id, still_births_concepts]).last.answer_string.squish
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ? AND (value_coded IN (?) OR value_text like '%still birth%')", @patient.id,
+                             ConceptName.find_by_name("Condition at Birth").concept_id, still_births_concepts]).last.answer_string.squish
+        rescue StandardError
+          nil
+        end
 
       @csections = begin
-        Observation.where(['person_id = ? AND (concept_id = ? AND value_coded = ?)', @patient.id,
-                           ConceptName.find_by_name('Caesarean section').concept_id, ConceptName.find_by_name('Yes').concept_id]).length
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND (concept_id = ? AND value_coded = ?)", @patient.id,
+                             ConceptName.find_by_name("Caesarean section").concept_id, ConceptName.find_by_name("Yes").concept_id]).length
+        rescue StandardError
+          nil
+        end
 
       if begin
         @csections <= 0
@@ -98,130 +98,130 @@ module AncService
         true
       end
         @csections = begin
-          Observation.where(['person_id = ? AND (value_coded = ? OR value_text REGEXP ?)', @patient.id,
-                             ConceptName.find_by_name('Caesarean Section').concept_id, 'Caesarean section']).length
-        rescue StandardError
-          nil
-        end
+            Observation.where(["person_id = ? AND (value_coded = ? OR value_text REGEXP ?)", @patient.id,
+                               ConceptName.find_by_name("Caesarean Section").concept_id, "Caesarean section"]).length
+          rescue StandardError
+            nil
+          end
       end
 
       @vacuum = begin
-        Observation.where(['person_id = ? AND (value_coded = ? OR value_text = ?)', @patient.id,
-                           ConceptName.find_by_name('Vacuum extraction delivery').concept_id, 'Vacuum extraction delivery']).length
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND (value_coded = ? OR value_text = ?)", @patient.id,
+                             ConceptName.find_by_name("Vacuum extraction delivery").concept_id, "Vacuum extraction delivery"]).length
+        rescue StandardError
+          nil
+        end
 
       @symphosio = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('SYMPHYSIOTOMY').concept_id]).last.answer_string.squish
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("SYMPHYSIOTOMY").concept_id]).last.answer_string.squish
+        rescue StandardError
+          nil
+        end
 
       @haemorrhage = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('HEMORRHAGE').concept_id]).last.answer_string.squish
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("HEMORRHAGE").concept_id]).last.answer_string.squish
+        rescue StandardError
+          nil
+        end
 
       @preeclampsia = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('PRE-ECLAMPSIA').concept_id]).last.answer_string.squish
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("PRE-ECLAMPSIA").concept_id]).last.answer_string.squish
+        rescue StandardError
+          nil
+        end
 
       @asthma = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('ASTHMA').concept_id]).last.answer_string.squish.upcase
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("ASTHMA").concept_id]).last.answer_string.squish.upcase
+        rescue StandardError
+          nil
+        end
 
       @hyper = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('HYPERTENSION').concept_id]).last.answer_string.squish.upcase
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("HYPERTENSION").concept_id]).last.answer_string.squish.upcase
+        rescue StandardError
+          nil
+        end
 
       @diabetes = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('DIABETES').concept_id]).last.answer_string.squish.upcase
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("DIABETES").concept_id]).last.answer_string.squish.upcase
+        rescue StandardError
+          nil
+        end
 
       @epilepsy = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('EPILEPSY').concept_id]).last.answer_string.squish.upcase
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("EPILEPSY").concept_id]).last.answer_string.squish.upcase
+        rescue StandardError
+          nil
+        end
 
       @renal = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('RENAL DISEASE').concept_id]).last.answer_string.squish.upcase
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("RENAL DISEASE").concept_id]).last.answer_string.squish.upcase
+        rescue StandardError
+          nil
+        end
 
       @fistula = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('FISTULA REPAIR').concept_id]).last.answer_string.squish.upcase
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("FISTULA REPAIR").concept_id]).last.answer_string.squish.upcase
+        rescue StandardError
+          nil
+        end
 
       @deform = begin
-        Observation.where(['person_id = ? AND concept_id = ?', @patient.id,
-                           ConceptName.find_by_name('SPINE OR LEG DEFORM').concept_id]).last.answer_string.squish.upcase
-      rescue StandardError
-        nil
-      end
+          Observation.where(["person_id = ? AND concept_id = ?", @patient.id,
+                             ConceptName.find_by_name("SPINE OR LEG DEFORM").concept_id]).last.answer_string.squish.upcase
+        rescue StandardError
+          nil
+        end
 
       @surgicals = begin
-        Observation.where(['person_id = ? AND encounter_id IN (?) AND concept_id = ?',
-                           @patient.id, Encounter.where(['patient_id = ? AND encounter_type = ?',
-                                                         @patient.id, EncounterType.find_by_name('SURGICAL HISTORY').id]).collect(&:encounter_id),
-                           ConceptName.find_by_name('PROCEDURE DONE').concept_id]).collect do |o|
-          "#{o.answer_string.squish} (#{o.obs_datetime.strftime('%d-%b-%Y')})"
+          Observation.where(["person_id = ? AND encounter_id IN (?) AND concept_id = ?",
+                             @patient.id, Encounter.where(["patient_id = ? AND encounter_type = ?",
+                                                           @patient.id, EncounterType.find_by_name("SURGICAL HISTORY").id]).collect(&:encounter_id),
+                             ConceptName.find_by_name("PROCEDURE DONE").concept_id]).collect do |o|
+            "#{o.answer_string.squish} (#{o.obs_datetime.strftime("%d-%b-%Y")})"
+          end
+        rescue StandardError
+          []
         end
-      rescue StandardError
-        []
-      end
 
       @age = begin
-        age
-      rescue StandardError
-        0
-      end
+          age
+        rescue StandardError
+          0
+        end
 
       label = ZebraPrinter::Lib::StandardLabel.new
 
-      label.draw_text('Obstetric History', 28, 8, 0, 1, 1, 2, false)
-      label.draw_text('Medical History', 400, 8, 0, 1, 1, 2, false)
-      label.draw_text('Refer', 750, 8, 0, 1, 1, 2, true)
+      label.draw_text("Obstetric History", 28, 8, 0, 1, 1, 2, false)
+      label.draw_text("Medical History", 400, 8, 0, 1, 1, 2, false)
+      label.draw_text("Refer", 750, 8, 0, 1, 1, 2, true)
       label.draw_line(25, 39, 172, 1, 0)
       label.draw_line(400, 39, 152, 1, 0)
-      label.draw_text('Gravida', 28, 59, 0, 2, 1, 1, false)
-      label.draw_text('Asthma', 400, 59, 0, 2, 1, 1, false)
-      label.draw_text('Deliveries', 28, 89, 0, 2, 1, 1, false)
-      label.draw_text('Hypertension', 400, 89, 0, 2, 1, 1, false)
-      label.draw_text('Abortions', 28, 119, 0, 2, 1, 1, false)
-      label.draw_text('Diabetes', 400, 119, 0, 2, 1, 1, false)
-      label.draw_text('Still Births', 28, 149, 0, 2, 1, 1, false)
-      label.draw_text('Epilepsy', 400, 149, 0, 2, 1, 1, false)
-      label.draw_text('Vacuum Extraction', 28, 179, 0, 2, 1, 1, false)
-      label.draw_text('Renal Disease', 400, 179, 0, 2, 1, 1, false)
-      label.draw_text('C/Section', 28, 209, 0, 2, 1, 1, false)
-      label.draw_text('Fistula Repair', 400, 209, 0, 2, 1, 1, false)
-      label.draw_text('Haemorrhage', 28, 239, 0, 2, 1, 1, false)
-      label.draw_text('Leg/Spine Deformation', 400, 239, 0, 2, 1, 1, false)
-      label.draw_text('Pre-Eclampsia', 28, 269, 0, 2, 1, 1, false)
-      label.draw_text('Age', 400, 269, 0, 2, 1, 1, false)
+      label.draw_text("Gravida", 28, 59, 0, 2, 1, 1, false)
+      label.draw_text("Asthma", 400, 59, 0, 2, 1, 1, false)
+      label.draw_text("Deliveries", 28, 89, 0, 2, 1, 1, false)
+      label.draw_text("Hypertension", 400, 89, 0, 2, 1, 1, false)
+      label.draw_text("Abortions", 28, 119, 0, 2, 1, 1, false)
+      label.draw_text("Diabetes", 400, 119, 0, 2, 1, 1, false)
+      label.draw_text("Still Births", 28, 149, 0, 2, 1, 1, false)
+      label.draw_text("Epilepsy", 400, 149, 0, 2, 1, 1, false)
+      label.draw_text("Vacuum Extraction", 28, 179, 0, 2, 1, 1, false)
+      label.draw_text("Renal Disease", 400, 179, 0, 2, 1, 1, false)
+      label.draw_text("C/Section", 28, 209, 0, 2, 1, 1, false)
+      label.draw_text("Fistula Repair", 400, 209, 0, 2, 1, 1, false)
+      label.draw_text("Haemorrhage", 28, 239, 0, 2, 1, 1, false)
+      label.draw_text("Leg/Spine Deformation", 400, 239, 0, 2, 1, 1, false)
+      label.draw_text("Pre-Eclampsia", 28, 269, 0, 2, 1, 1, false)
+      label.draw_text("Age", 400, 269, 0, 2, 1, 1, false)
       label.draw_line(250, 49, 130, 1, 0)
       label.draw_line(250, 49, 1, 236, 0)
       label.draw_line(250, 285, 130, 1, 0)
@@ -252,125 +252,150 @@ module AncService
       end)
       label.draw_text(@abortions.to_s, 280, 119, 0, 2, 1, 1, (@abortions > 1))
       label.draw_text((if !@stillbirths.nil?
-                         @stillbirths.upcase == 'NO' ? 'NO' : 'YES'
-                       else
-                         ''
-                       end).to_s, 280, 149, 0, 2, 1, 1,
-                      (!@stillbirths.nil? ? @stillbirths.upcase != 'NO' : false))
+        @stillbirths.upcase == "NO" ? "NO" : "YES"
+      else
+        ""
+      end).to_s, 280, 149, 0, 2, 1, 1,
+                      (!@stillbirths.nil? ? @stillbirths.upcase != "NO" : false))
       label.draw_text((if !@vacuum.nil?
-                         @vacuum.positive? ? 'YES' : 'NO'
-                       else
-                         ''
-                       end).to_s, 280, 179, 0, 2, 1, 1,
+        @vacuum.positive? ? "YES" : "NO"
+      else
+        ""
+      end).to_s, 280, 179, 0, 2, 1, 1,
                       (if !@vacuum.nil?
-                         @vacuum.positive? ? true : false
-                       else
-                         false
-                       end))
+        @vacuum.positive? ? true : false
+      else
+        false
+      end))
       label.draw_text((if !@csections.blank?
-                         @csections <= 0 ? 'NO' : 'YES'
-                       else
-                         ''
-                       end).to_s, 280, 209, 0, 2, 1, 1,
+        @csections <= 0 ? "NO" : "YES"
+      else
+        ""
+      end).to_s, 280, 209, 0, 2, 1, 1,
                       (if !@csections.blank?
-                         @csections.positive?
-                       else
-                         false
-                       end))
+        @csections.positive?
+      else
+        false
+      end))
       label.draw_text(@haemorrhage.to_s, 280, 239, 0, 2, 1, 1,
                       begin
-                        (@haemorrhage.upcase == 'PPH')
-                      rescue StandardError
-                        false ? true : false
-                      end)
+        (@haemorrhage.upcase == "PPH")
+      rescue StandardError
+        false ? true : false
+      end)
       label.draw_text((if !@preeclampsia.nil?
-                         begin
-                           (@preeclampsia.upcase == 'NO')
-                         rescue StandardError
-                           false ? 'NO' : 'YES'
-                         end
-                       else
-                         ''
-                       end).to_s, 280, 264, 0, 2, 1, 1,
+        begin
+          (@preeclampsia.upcase == "NO")
+        rescue StandardError
+          false ? "NO" : "YES"
+        end
+      else
+        ""
+      end).to_s, 280, 264, 0, 2, 1, 1,
                       (if !@preeclampsia.nil?
-                         @preeclampsia.upcase != 'NO'
-                       else
-                         false
-                       end))
+        @preeclampsia.upcase != "NO"
+      else
+        false
+      end))
       label.draw_text((if !@asthma.nil?
-                         @asthma.upcase == 'NO' ? 'NO' : 'YES'
-                       else
-                         ''
-                       end).to_s, 690, 59, 0, 2, 1, 1,
+        @asthma.upcase == "NO" ? "NO" : "YES"
+      else
+        ""
+      end).to_s, 690, 59, 0, 2, 1, 1,
                       (if !@asthma.nil?
-                         @asthma.upcase != 'NO'
-                       else
-                         false
-                       end))
+        @asthma.upcase != "NO"
+      else
+        false
+      end))
       label.draw_text((if !@hyper.nil?
-                         @hyper.upcase == 'NO' ? 'NO' : 'YES'
-                       else
-                         ''
-                       end).to_s, 690, 89, 0, 2, 1, 1,
+        @hyper.upcase == "NO" ? "NO" : "YES"
+      else
+        ""
+      end).to_s, 690, 89, 0, 2, 1, 1,
                       (if !@hyper.nil?
-                         @hyper.upcase != 'NO'
-                       else
-                         false
-                       end))
+        @hyper.upcase != "NO"
+      else
+        false
+      end))
       label.draw_text((if !@diabetes.nil?
-                         @diabetes.upcase == 'NO' ? 'NO' : 'YES'
-                       else
-                         ''
-                       end).to_s, 690, 119, 0, 2, 1, 1,
+        @diabetes.upcase == "NO" ? "NO" : "YES"
+      else
+        ""
+      end).to_s, 690, 119, 0, 2, 1, 1,
                       (if !@diabetes.nil?
-                         @diabetes.upcase != 'NO'
-                       else
-                         false
-                       end))
+        @diabetes.upcase != "NO"
+      else
+        false
+      end))
       label.draw_text((if !@epilepsy.nil?
-                         @epilepsy.upcase == 'NO' ? 'NO' : 'YES'
-                       else
-                         ''
-                       end).to_s, 690, 149, 0, 2, 1, 1,
+        @epilepsy.upcase == "NO" ? "NO" : "YES"
+      else
+        ""
+      end).to_s, 690, 149, 0, 2, 1, 1,
                       (if !@epilepsy.nil?
-                         @epilepsy.upcase != 'NO'
-                       else
-                         false
-                       end))
+        @epilepsy.upcase != "NO"
+      else
+        false
+      end))
       label.draw_text((if !@renal.nil?
-                         @renal.upcase == 'NO' ? 'NO' : 'YES'
-                       else
-                         ''
-                       end).to_s, 690, 179, 0, 2, 1, 1,
+        @renal.upcase == "NO" ? "NO" : "YES"
+      else
+        ""
+      end).to_s, 690, 179, 0, 2, 1, 1,
                       (if !@renal.nil?
-                         @renal != 'NO'
-                       else
-                         false
-                       end))
+        @renal != "NO"
+      else
+        false
+      end))
       label.draw_text((if !@fistula.nil?
-                         @fistula.upcase == 'NO' ? 'NO' : 'YES'
-                       else
-                         ''
-                       end).to_s, 690, 209, 0, 2, 1, 1,
+        @fistula.upcase == "NO" ? "NO" : "YES"
+      else
+        ""
+      end).to_s, 690, 209, 0, 2, 1, 1,
                       (if !@fistula.nil?
-                         @fistula.upcase != 'NO'
-                       else
-                         false
-                       end))
+        @fistula.upcase != "NO"
+      else
+        false
+      end))
       label.draw_text((if !@deform.nil?
-                         @deform.upcase == 'NO' ? 'NO' : 'YES'
-                       else
-                         ''
-                       end).to_s, 690, 239, 0, 2, 1, 1,
+        @deform.upcase == "NO" ? "NO" : "YES"
+      else
+        ""
+      end).to_s, 690, 239, 0, 2, 1, 1,
                       (if !@deform.nil?
-                         @deform != 'NO'
-                       else
-                         false
-                       end))
+        @deform != "NO"
+      else
+        false
+      end))
       label.draw_text(@age.to_s, 690, 264, 0, 2, 1, 1,
                       ((@age.positive? && @age < 16) || (@age > 40) ? true : false))
 
-      label.print(1)
+      {
+        zpl: label.print(1),
+        data: {
+          obstetric_history: {
+            gravida: @gravida.to_s,
+            deliveries: @deliveries.to_s,
+            abortions: @abortions.to_s,
+            still_births: !@stillbirths.nil? ? (@stillbirths.upcase == "NO" ? "NO" : "YES") : "",
+            vacuum_extraction: !@vacuum.nil? ? (@vacuum.positive? ? "YES" : "NO") : "",
+            csection: !@csections.blank? ? (@csections <= 0 ? "NO" : "YES") : "",
+            haemorrhage: @haemorrhage.to_s,
+            preeclampsia: !@preeclampsia.nil? ? (@preeclampsia.upcase == "NO" ? "NO" : "YES") : "",
+          },
+          medical_history: {
+            asthma: !@asthma.nil? ? (@asthma.upcase == "NO" ? "NO" : "YES") : "",
+            hypertension: !@hyper.nil? ? (@hyper.upcase == "NO" ? "NO" : "YES") : "",
+            diabetes: !@diabetes.nil? ? (@diabetes.upcase == "NO" ? "NO" : "YES") : "",
+            epilepsy: !@epilepsy.nil? ? (@epilepsy.upcase == "NO" ? "NO" : "YES") : "",
+            renal_disease: !@renal.nil? ? (@renal.upcase == "NO" ? "NO" : "YES") : "",
+            fistula_repair: !@fistula.nil? ? (@fistula.upcase == "NO" ? "NO" : "YES") : "",
+            leg_spine_deform: !@deform.nil? ? (@deform.upcase == "NO" ? "NO" : "YES") : "",
+            age: @age.to_s,
+          },
+          surgical_history: @surgicals,
+        },
+      }
     end
 
     def active_range(date = Date.today)
@@ -383,53 +408,53 @@ module AncService
       # active_years = {}
 
       abortion_check_encounter = begin
-        patient.encounters.where(['encounter_type = ? AND encounter_datetime > ? AND DATE(encounter_datetime) <= ?',
-                                  EncounterType.find_by_name('PREGNANCY STATUS').encounter_type_id, date.to_date - 7.months, date.to_date]).order(['encounter_datetime DESC']).first
-      rescue StandardError
-        nil
-      end
+          patient.encounters.where(["encounter_type = ? AND encounter_datetime > ? AND DATE(encounter_datetime) <= ?",
+                                    EncounterType.find_by_name("PREGNANCY STATUS").encounter_type_id, date.to_date - 7.months, date.to_date]).order(["encounter_datetime DESC"]).first
+        rescue StandardError
+          nil
+        end
 
       aborted = begin
-        abortion_check_encounter.observations.collect do |ob|
-          ob.answer_string.downcase.strip if ob.concept_id == ConceptName.find_by_name('PREGNANCY ABORTED').concept_id
-        end.compact.include?('yes')
-      rescue StandardError
-        false
-      end
+          abortion_check_encounter.observations.collect do |ob|
+            ob.answer_string.downcase.strip if ob.concept_id == ConceptName.find_by_name("PREGNANCY ABORTED").concept_id
+          end.compact.include?("yes")
+        rescue StandardError
+          false
+        end
 
       date_aborted = begin
-        abortion_check_encounter.observations.find_by_concept_id(ConceptName.find_by_name('DATE OF SURGERY').concept_id).answer_string
-      rescue StandardError
-        nil
-      end
+          abortion_check_encounter.observations.find_by_concept_id(ConceptName.find_by_name("DATE OF SURGERY").concept_id).answer_string
+        rescue StandardError
+          nil
+        end
       recent_lmp = begin
-        find_by_sql(["SELECT * from obs WHERE person_id = #{patient.id} AND concept_id =
+          find_by_sql(["SELECT * from obs WHERE person_id = #{patient.id} AND concept_id =
                             (SELECT concept_id FROM concept_name WHERE name = 'DATE OF LAST MENSTRUAL PERIOD' LIMIT 1)"]).last.answer_string.squish.to_date
-      rescue StandardError
-        nil
-      end
+        rescue StandardError
+          nil
+        end
 
-      patient.encounters.order(['encounter_datetime DESC']).each do |e|
-        next unless e.name == 'CURRENT PREGNANCY' && !pregnancies[e.encounter_datetime.strftime('%Y-%m-%d')]
+      patient.encounters.order(["encounter_datetime DESC"]).each do |e|
+        next unless e.name == "CURRENT PREGNANCY" && !pregnancies[e.encounter_datetime.strftime("%Y-%m-%d")]
 
-        pregnancies[e.encounter_datetime.strftime('%Y-%m-%d')] = {}
+        pregnancies[e.encounter_datetime.strftime("%Y-%m-%d")] = {}
 
         e.observations.each do |o|
           concept = begin
-            o.concept.name
-          rescue StandardError
-            nil
-          end
+              o.concept.name
+            rescue StandardError
+              nil
+            end
           next unless concept
 
           # if !active_years[e.encounter_datetime.beginning_of_quarter.strftime("%Y-%m-%d")]
           next unless o.concept_id == begin
-            ConceptName.find_by_name('DATE OF LAST MENSTRUAL PERIOD').concept_id
+            ConceptName.find_by_name("DATE OF LAST MENSTRUAL PERIOD").concept_id
           rescue StandardError
             nil
           end
 
-          pregnancies[e.encounter_datetime.strftime('%Y-%m-%d')]['DATE OF LAST MENSTRUAL PERIOD'] =
+          pregnancies[e.encounter_datetime.strftime("%Y-%m-%d")]["DATE OF LAST MENSTRUAL PERIOD"] =
             o.answer_string.squish
           # active_years[e.encounter_datetime.beginning_of_quarter.strftime("%Y-%m-%d")] = true
           # end
@@ -439,42 +464,41 @@ module AncService
       # pregnancies = pregnancies.delete_if{|x, v| v == {}}
 
       pregnancies.each do |preg|
-        if preg[1]['DATE OF LAST MENSTRUAL PERIOD']
-          preg[1]['START'] = preg[1]['DATE OF LAST MENSTRUAL PERIOD'].to_date
-          preg[1]['END'] = preg[1]['DATE OF LAST MENSTRUAL PERIOD'].to_date + 7.day + 45.week # 9.month
+        if preg[1]["DATE OF LAST MENSTRUAL PERIOD"]
+          preg[1]["START"] = preg[1]["DATE OF LAST MENSTRUAL PERIOD"].to_date
+          preg[1]["END"] = preg[1]["DATE OF LAST MENSTRUAL PERIOD"].to_date + 7.day + 45.week # 9.month
         else
-          preg[1]['START'] = preg[0].to_date
-          preg[1]['END'] = preg[0].to_date + 7.day + 45.week # 9.month
+          preg[1]["START"] = preg[0].to_date
+          preg[1]["END"] = preg[0].to_date + 7.day + 45.week # 9.month
         end
 
-        if active_date >= preg[1]['START'] && active_date <= preg[1]['END']
-          current_range['START'] = preg[1]['START']
-          current_range['END'] = preg[1]['END']
+        if active_date >= preg[1]["START"] && active_date <= preg[1]["END"]
+          current_range["START"] = preg[1]["START"]
+          current_range["END"] = preg[1]["END"]
         end
       end
 
       if recent_lmp.present?
-        current_range['START'] = recent_lmp
-        current_range['END'] = current_range['START'] + 9.months
+        current_range["START"] = recent_lmp
+        current_range["END"] = current_range["START"] + 9.months
       end
 
       if begin
-        abortion_check_encounter.present? && aborted && date_aborted.present? && current_range['START'].to_date < date_aborted.to_date
+        abortion_check_encounter.present? && aborted && date_aborted.present? && current_range["START"].to_date < date_aborted.to_date
       rescue StandardError
         false
       end
-
-        current_range['START'] = date_aborted.to_date + 10.days
-        current_range['END'] = current_range['START'] + 9.months
+        current_range["START"] = date_aborted.to_date + 10.days
+        current_range["END"] = current_range["START"] + 9.months
       end
 
       unless begin
-        (current_range['START']).to_date.blank?
+        (current_range["START"]).to_date.blank?
       rescue StandardError
         true
       end
-        current_range['END'] =
-          current_range['START'] + 7.day + 45.week
+        current_range["END"] =
+          current_range["START"] + 7.day + 45.week
       end
 
       [current_range, pregnancies]
@@ -484,33 +508,30 @@ module AncService
 
     def age
       person = begin
-        @patient.person
-      rescue StandardError
-        nil
-      end
+          @patient.person
+        rescue StandardError
+          nil
+        end
       return 0 if person.blank?
 
       today = @date
       # This code which better accounts for leap years
-      patient_age = (today.year - person.birthdate.year) + \
-                    (if ((today.month - person.birthdate.month) + \
-                     ((today.day - person.birthdate.day).negative? ? -1 : 0)).negative?
-                       -1
-                     else
-                       0
-                     end)
+      patient_age = (today.year - person.birthdate.year) + (if ((today.month - person.birthdate.month) + ((today.day - person.birthdate.day).negative? ? -1 : 0)).negative?
+        -1
+      else
+        0
+      end)
 
       # If the birthdate was estimated this year, we round up the age, that way if
       # it is March and the patient says they are 25, they stay 25 (not become 24)
       birth_date = person.birthdate
       estimate = person.birthdate_estimated == 1
-      patient_age += if estimate && birth_date.month == 7 && birth_date.day == 1  \
-        && today.month < birth_date.month && \
-                        person.date_created.year == today.year
-                       1
-                     else
-                       0
-                     end
+      patient_age += if estimate && birth_date.month == 7 && birth_date.day == 1 \
+          && today.month < birth_date.month && person.date_created.year == today.year
+          1
+        else
+          0
+        end
 
       patient_age
     end

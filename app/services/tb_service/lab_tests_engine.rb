@@ -33,18 +33,17 @@ module TbService
     def panels(test_type)
       nlims.specimen_types(test_type)
     rescue StandardError
-      # TODO: Remove this once the LIMS is fixed
-      # TODO: add specimen type from concept sets
-      # ConceptName.where(
-      #   'concept_id in (?)', ConceptSet.where(concept_set: concept('TB Specimen Types')).map(&:concept_id)
-      # ).map(&:name)
-      %w[Sputum Spit Urine Blood]
+      ConceptName.where(
+        concept_id:
+          ConceptSet.where(concept_set: concept(test_type).concept_id)
+                    &.map(&:concept_id),
+        concept_name_type: 'FULLY_SPECIFIED'
+      ).map(&:name)
     end
 
     def results(accession_number)
-      LabParameter.joins(:lab_sample)\
-                  .where('Lab_Sample.AccessionNum = ?', accession_number)\
-                  .order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
+      LabParameter.joins(:lab_sample).where('Lab_Sample.AccessionNum = ?',
+                                            accession_number).order(Arel.sql('DATE(Lab_Sample.TimeStamp) DESC'))
     end
 
     # Create test with lims
@@ -174,7 +173,17 @@ module TbService
       label.draw_text(order_info[:reason_for_examination], 188, 266, 0, 2, 1, 1, false)
       label.draw_text(order_info[:previous_tb_patient], 188, 296, 0, 2, 1, 1, false)
 
-      label.print(1)
+      {
+        zpl: label.print(1),
+        identifier:,
+        date: order_info[:date],
+        test_type: order_info[:test_type],
+        specimen_type: order_info[:specimen_type],
+        recommended_examination: order_info[:recommended_examination],
+        target_lab: order_info[:target_lab],
+        reason_for_examination: order_info[:reason_for_examination],
+        previous_tb_patient: order_info[:previous_tb_patient]
+      }
     end
 
     private

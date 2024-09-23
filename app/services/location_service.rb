@@ -10,6 +10,14 @@ class LocationService
     label.left_margin = 50
     label.draw_barcode(50, 180, 0, 1, 5, 15, 120, false, location.location_id.to_s)
     label.draw_multi_text(location.name.to_s)
-    label.print(1)
+
+    {
+      zpl: label.print(1),
+      data: {
+        barcode: location.location_id.to_s,
+        location_id: location.location_id,
+        location_name: location.name,
+      },
+    }
   end
 end

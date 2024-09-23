@@ -76,27 +76,19 @@ module Api
                     false
                   end
 
-        label = generate_national_id_label(patient, qr_code)
-        send_data label, type: 'application/label;charset=utf-8',
-                         stream: false,
-                         filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
-                         disposition: 'inline',
-                         refresh: "1; url=#{params[:redirect_to]}"
+        render json: generate_national_id_label(patient, qr_code)
       end
 
       def print_filing_number
         archived = params[:archived]&.downcase == 'true'
 
-        label_commands = if archived
-                           generate_archived_filing_number_label(patient)
-                         else
-                           generate_filing_number_label(patient)
-                         end
+        data = if archived
+                 generate_archived_filing_number_label(patient)
+               else
+                 generate_filing_number_label(patient)
+               end
 
-        send_data label_commands, type: 'application/label; charset=utf-8',
-                                  stream: false,
-                                  filename: "#{patient.id}#{rand(10_000)}.lbl",
-                                  disposition: 'inline'
+        render json: data
       end
 
       def visits
@@ -114,9 +106,9 @@ module Api
       def drugs_received
         cut_off_date = params[:date]&.to_date || Date.today
         program_id = params[:program_id] || Program.first.id
-        drugs_orders = paginate(service.drugs_orders_by_program(patient, cut_off_date, program_id:))
+        drugs_orders = service.drugs_orders_by_program(patient, cut_off_date, program_id:)
 
-        render json: drugs_orders
+        render json: drugs_orders.present? ? paginate(drugs_orders) : []
       end
 
       def bp_readings_trail
@@ -261,27 +253,15 @@ module Api
       end
 
       def print_tb_lab_order_summary
-        label = lab_tests_engine.generate_lab_order_summary(tb_lab_order_params)
-        send_data label, type: 'application/label;charset=utf-8',
-                         stream: false,
-                         filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
-                         disposition: 'inline'
+        render json: lab_tests_engine.generate_lab_order_summary(tb_lab_order_params)
       end
 
       def print_hts_linkage_code
-        label = HtsService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code
-        send_data label, type: 'application/label;charset=utf-8',
-                         stream: false,
-                         filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
-                         disposition: 'inline'
+        render json: HtsService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code
       end
 
       def print_tb_number
-        label = TbNumberService.generate_tb_patient_id(params[:patient_id])
-        send_data label, type: 'application/label;charset=utf-8',
-                         stream: false,
-                         filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
-                         disposition: 'inline'
+        render json: TbNumberService.generate_tb_patient_id(params[:patient_id])
       end
 
       def visit
@@ -344,7 +324,7 @@ module Api
         national_id = patient.national_id
         return nil unless national_id
 
-        sex =  "(#{person.gender})"
+        sex = "(#{person.gender})"
         address = person.addresses.first.to_s.strip[0..24].humanize
         label = ZebraPrinter::Lib::StandardLabel.new
         label.font_size = 2
@@ -364,7 +344,20 @@ module Api
           label.draw_multi_text("#{patient.national_id_with_dashes} #{person.birthdate}#{sex}")
           label.draw_multi_text(address)
         end
-        label.print(1)
+
+        json = {
+          name: person.name.titleize,
+          national_id: patient.national_id_with_dashes,
+          birthdate: person.birthdate,
+          sex:,
+          address: person.addresses.first.to_s.strip[0..24].humanize,
+          barcode: national_id
+        }
+
+        {
+          zpl: label.print(1),
+          data: json.merge({ qr: json.values.join('~') })
+        }
       end
 
       def generate_filing_number_label(patient, num = 1)
@@ -382,7 +375,13 @@ module Api
         label.draw_text(number, 75, 30, 0, 4, 4, 4, false)
         label.draw_text("Filing area #{file_type}", 75, 150, 0, 2, 2, 2, false)
         label.draw_text("Version number: #{version_number}", 75, 200, 0, 2, 2, 2, false)
-        label.print(num)
+
+        {
+          zpl: label.print(num),
+          number:,
+          file_type:,
+          version_number:
+        }
       end
 
       def generate_archived_filing_number_label(patient, num = 1)
@@ -400,7 +399,15 @@ module Api
         label.draw_text(number, 75, 30, 0, 4, 4, 4, false)
         label.draw_text("Filing area #{file_type}", 75, 150, 0, 2, 2, 2, false)
         label.draw_text("Version number: #{version_number}", 75, 200, 0, 2, 2, 2, false)
-        label.print(num)
+
+        {
+          zpl: label.print(num),
+          data: {
+            number:,
+            file_type:,
+            version_number:
+          }
+        }
       end
 
       def service
