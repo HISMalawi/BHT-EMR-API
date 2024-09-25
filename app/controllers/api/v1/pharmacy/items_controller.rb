@@ -6,7 +6,6 @@ module Api
       class ItemsController < ApplicationController
         # GET /pharmacy/items[?drug_id=]
         def index
-          user_program = User.current.programs.detect { |x| x['name'] == 'IMMUNIZATION PROGRAM' }
           permitted_params = params.permit(:drug_id, :current_quantity, :start_date, :end_date, :batch_number,
                                            :drug_name, :display_details)
 
@@ -18,7 +17,9 @@ module Api
 
 
         def show
-          render json: item
+          filters = show_params.merge('location_id' => User.current.location_id) if user_program.present?
+          items = service.find_batch_items(filters)
+          render json: paginate(items)
         end
 
         def update
@@ -89,6 +90,16 @@ module Api
         end
 
         private
+
+        def user_program
+          User.current.programs.detect { |x| x['name'] == 'IMMUNIZATION PROGRAM' }
+        end
+
+        def show_params
+          params.require(%i[id show_depleted show_expired])
+          params.permit(%i[id show_depleted show_expired])
+          { drug_id: params[:id], show_depleted: params[:show_depleted], show_expired: params[:show_expired] }
+        end
 
         def service
           StockManagementService.new

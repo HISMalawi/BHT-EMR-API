@@ -136,13 +136,14 @@ class StockManagementService
 
     query = apply_filters(query, filters)
     query = apply_select_and_group(query, filters[:display_details])
+    query = query.having('current_quantity > 0') if filters[:show_depleted] == 'false'
 
     query.order(Arel.sql('pharmacy_batch_items.date_created DESC, pharmacy_batch_items.expiry_date ASC'))
   end
 
   def apply_filters(query, filters)
     return query if filters.empty?
-
+    query = query.where("DATE(pharmacy_batch_items.expiry_date) >= ?", Date.today) if filters[:show_expired] == 'false'
     query = query.where("DATE(pharmacy_batch_items.delivery_date) >= ?", filters[:start_date]) if filters[:start_date]
     query = query.where("DATE(pharmacy_batch_items.delivery_date) <= ?", filters[:end_date]) if filters[:end_date]
     query = query.where(drug_id: filters[:drug_id]) if filters[:drug_id]
