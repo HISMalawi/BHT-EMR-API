@@ -119,4 +119,5 @@ eir_sms_configurations:
     sms_api_key: ''
 
 #The threshold for the EIR duplicates percentage.
-  matching_percent: 85
+:deduplication:
+  :matching_percent: 85

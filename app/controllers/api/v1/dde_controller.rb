@@ -3,6 +3,10 @@ require 'bantu_soundex'
 module Api
   module V1
     class DdeController < ApplicationController
+
+      MATCH_PARAMS = %i[given_name family_name gender birthdate home_village
+                        home_traditional_authority home_district].freeze
+
       # GET /api/v1/dde/patients
       def find_patients_by_npid
         npid = params.require(:npid)
@@ -65,156 +69,186 @@ module Api
         render json: patient
       end
 
-      
 
-    def duplicates_match
 
-                results =  paginate(PotentialDuplicate.where(merge_status: 0))
-                                                      .group_by(&:patient_id_a)
-                                                      .map do |primary_patient_id, matches|
+      def duplicates_match
 
-                  primary_patient = Person.joins("INNER JOIN person_name ON person_name.person_id = person.person_id")
-                                          .joins("INNER JOIN person_address ON person_address.person_id = person.person_id")
-                                          .select("person.person_id AS person_id, person.birthdate AS birthdate, person.gender AS gender,
+                  results =  paginate(PotentialDuplicate.where(merge_status: 0))
+                                                        .group_by(&:patient_id_a)
+                                                        .map do |primary_patient_id, matches|
+
+                    primary_patient = Person.joins("INNER JOIN person_name ON person_name.person_id = person.person_id")
+                                            .joins("INNER JOIN person_address ON person_address.person_id = person.person_id")
+                                            .select("person.person_id AS person_id, person.birthdate AS birthdate, person.gender AS gender,
                                                    person_name.given_name AS firstname, person_name.family_name AS sirname,person_name.middle_name AS middlename")
-                                          .find_by(person_id: primary_patient_id)
+                                            .find_by(person_id: primary_patient_id)
 
-                  duplicates = matches.map do |match|
-                     secondary_patient = Person.joins("INNER JOIN person_name ON person_name.person_id = person.person_id")
-                                               .select("person.person_id AS person_id, person_name.given_name AS firstname, 
+                    duplicates = matches.map do |match|
+                       secondary_patient = Person.joins("INNER JOIN person_name ON person_name.person_id = person.person_id")
+                                                 .select("person.person_id AS person_id, person_name.given_name AS firstname,
                                                           person_name.family_name AS sirname,person_name.middle_name AS middlename")
-                                               .find_by(person_id: match.patient_id_b)
+                                                 .find_by(person_id: match.patient_id_b)
 
-                               {
-                                    secondary_patient_id: secondary_patient.person_id,
-                                    secondary_firstname: secondary_patient.firstname,
-                                    secondary_middlename: secondary_patient.middlename,
-                                      secondary_sirname: secondary_patient.sirname,
-                                       match_percentage: match.match_percentage
-                                }
-                  end
+                       {
+                            secondary_patient_id: secondary_patient.person_id,
+                            secondary_firstname: secondary_patient.firstname,
+                            secondary_middlename: secondary_patient.middlename,
+                              secondary_sirname: secondary_patient.sirname,
+                               match_percentage: match.match_percentage
+                        }
+                    end
 
-                               {
-                                   primary_patient_id: primary_patient.person_id,
-                                    primary_firstname: primary_patient.firstname,
-                                   primary_middlename: primary_patient.middlename,
-                                      primary_sirname: primary_patient.sirname,
-                                    primary_birthdate: primary_patient.birthdate,
-                                       primary_gender: primary_patient.gender,
-                                           duplicates: duplicates
-                              }
-                  end
+                    {
+                        primary_patient_id: primary_patient.person_id,
+                         primary_firstname: primary_patient.firstname,
+                        primary_middlename: primary_patient.middlename,
+                           primary_sirname: primary_patient.sirname,
+                         primary_birthdate: primary_patient.birthdate,
+                            primary_gender: primary_patient.gender,
+                                duplicates:
+                   }
+                    end
 
-          render json: results, status: :ok
-    end
+                  render json: results, status: :ok
+      end
 
-    def duplicates_finder
-      # Get all patients along with the necessary attributes          
-      patients = paginate(
-        Person.joins("INNER JOIN person_name ON person_name.person_id = person.person_id")
-              .joins("INNER JOIN patient_program ON patient_program.patient_id = person.person_id")
-              .joins("INNER JOIN person_address ON person_address.person_id = person.person_id")
+
+      def duplicates_finder
+        # Get all patients along with the necessary attributes
+        global_duplicates = []
+
+        Person.joins(:names, :addresses)
+              .joins(patient: :patient_programs)
               .where(patient_program: { program_id: 33, voided: 0 })
-              .select("person.person_id AS person_id, person.birthdate AS birthdate, person.gender AS gender,
-                       person_name.given_name AS firstname, person_name.family_name AS sirname, person_name.middle_name AS middle_name,
-                       person_address.address2 AS home_district, person_address.neighborhood_cell AS home_village,
-                       person_address.county_district AS home_traditional_authority")
-      )
-    
-      potential_duplicates = []
-      already_checked = Set.new
-      threshold_percent = YAML.safe_load(File.read(Rails.root.join('config', 'application.yml')))["matching_percent"]
-    
-      patients.each do |primary_patient|
-        next if already_checked.include?(primary_patient.person_id)
-    
-        fuzzy_potential_duplicates = patients.select do |potential_duplicate|
-          potential_duplicate.person_id != primary_patient.person_id &&
-            !already_checked.include?(potential_duplicate.person_id) &&
-            (WhiteSimilarity.similarity(primary_patient.to_s, potential_duplicate.to_s) * 100) > threshold_percent
-        end
-    
-        soundex_potential_duplicates = patients.select do |client|
-          perform_soundex_matching(primary_patient, client) == true && 
-          !already_checked.include?(client.person_id)
-        end
-    
-        all_potential_duplicates = (fuzzy_potential_duplicates + soundex_potential_duplicates).uniq
-    
-        final_potential_duplicates = all_potential_duplicates.select do |client|
-          client.person_id != primary_patient.person_id && 
-          (WhiteSimilarity.similarity(client.to_s, primary_patient.to_s) * 100) > threshold_percent
-        end
-    
-        final_potential_duplicates.each { |match| already_checked << match.person_id }
+              .select('person.person_id, person.birthdate, person.gender,
+                    person_name.given_name, person_name.family_name,
+                    person_name.middle_name,person_address.address2 AS home_district,
+                    person_address.neighborhood_cell AS home_village,
+                    person_address.county_district AS home_traditional_authority')
+              .find_each(batch_size: 1000) do |primary_patient|
+
+          potential_duplicates = []
+          already_checked = Set.new
+          threshold_percent = 85
+          fuzzy_potential_duplicates = []
+          soundex_duplicates = []
+          soundex_potentials = []
         
-        potential_duplicates << {
+          Person.joins(:names, :addresses)
+                .joins(patient: :patient_programs)
+                .where(patient_program: { program_id: 33, voided: 0 })
+                .select('person.person_id, person.birthdate, person.gender,
+                      person_name.given_name, person_name.family_name,
+                      person_name.middle_name,person_address.address2 AS home_district,
+                      person_address.neighborhood_cell AS home_village,
+                      person_address.county_district AS home_traditional_authority')
+                .find_each(batch_size: 1000) do |potential_duplicate|
+
+            next if already_checked.include?(primary_patient.person_id)
+
+            fuzzy_potential_duplicates << fuzzy_match([potential_duplicate], primary_patient, already_checked,
+                                                     threshold_percent)
+            soundex_duplicates << soundex_potential_duplicates(primary_patient, [potential_duplicate], already_checked)
+            soundex_potentials << soundex_fuzzy_match(soundex_duplicates,
+                                                     primary_patient, already_checked, threshold_percent)
+            all_potential_duplicates = (fuzzy_potential_duplicates + soundex_potentials).uniq
+
+            all_potential_duplicates.each { |match| already_checked << match.person_id }
+
+            potential_duplicates << format_potential_duplicates(primary_patient, all_potential_duplicates)
+
+            already_checked << primary_patient.person_id
+          end
+          save_matching(potential_duplicates)
+          global_duplicates << potential_duplicates unless potential_duplicates.empty?
+        end
+
+       
+        render json: global_duplicates, status: :ok
+      end
+
+
+    private
+
+      def perform_soundex_matching(primary_patient, secondary_patient)
+        primary_patient.given_name.soundex == secondary_patient.given_name.soundex &&
+          primary_patient.middle_name.soundex == secondary_patient.middle_name.soundex &&
+          primary_patient.family_name.soundex == secondary_patient.family_name.soundex
+      end
+
+      def format_potential_duplicates(primary_patient, final_potential_duplicates)
+        {
           primary_patient_id: primary_patient.person_id,
-          primary_firstname: primary_patient.firstname,
-          primary_sirname: primary_patient.sirname,
-          primary_birthdate: primary_patient.birthdate,
-          primary_gender: primary_patient.gender,
           duplicates: final_potential_duplicates.map do |match|
             {
               secondary_patient_id: match.person_id,
-              secondary_firstname: match.firstname,
-              secondary_sirname: match.sirname,
               match_percentage: (WhiteSimilarity.similarity(primary_patient.to_s, match.to_s) * 100).round(0)
             }
           end
         }
-    
-        already_checked << primary_patient.person_id
       end
-        
-      save_matching(potential_duplicates)
-      render json: potential_duplicates, status: :ok
-    end
-    
-      
-    private
 
-      def perform_soundex_matching(primary_patient, secondary_patient)
-      
-        names = PersonName.where(person_id: primary_patient.person_id)
-        match_percentage = 0
-        match_percentage += 5 if names.where('SOUNDEX(given_name) = SOUNDEX(?)', secondary_patient.firstname).exists?
-        match_percentage += 5 if names.where('SOUNDEX(middle_name) = SOUNDEX(?)', secondary_patient.middle_name).exists?
-        match_percentage += 5 if names.where('SOUNDEX(family_name) = SOUNDEX(?)', secondary_patient.sirname).exists?
-        match_percentage >= 10
+      def soundex_fuzzy_match(patients, primary_patient, already_checked, threshold_percent)
+        # Here we just compare the person attribute DOB,gender home_village,home_traditional_authority,home_district
+        # Because we have already concluded that the names sound alike and probablity of being same person is high
+        patients.select do |potential_duplicate|
+          filtered_primary_patient = primary_patient.attributes.except('given_name', 'family_name', 'middle_name')
+          filtered_potential_duplicate = potential_duplicate.attributes.except('given_name',
+                                                                               'family_name', 'middle_name')
+
+          filtered_potential_duplicate['person_id'] != filtered_primary_patient['person_id'] &&
+            !already_checked.include?(filtered_potential_duplicate['person_id']) &&
+            (WhiteSimilarity.similarity(
+              filtered_primary_patient.to_s,
+              filtered_potential_duplicate.to_s
+            ) * 100
+            ) > threshold_percent
+        end
       end
-      
+
+      def fuzzy_match(patients, primary_patient, already_checked, threshold_percent)
+        patients.select do |potential_duplicate|
+          potential_duplicate.person_id != primary_patient.person_id &&
+            !already_checked.include?(potential_duplicate.person_id) &&
+            (WhiteSimilarity.similarity(primary_patient.to_s, potential_duplicate.to_s) * 100) > threshold_percent
+        end
+      end
+
+      def soundex_potential_duplicates(primary_patient, patients, already_checked)
+        patients.select do |client|
+          perform_soundex_matching(primary_patient, client) &&
+            !already_checked.include?(client.person_id)
+        end
+      end
 
       def save_matching(duplicate_matches)
         ActiveRecord::Base.transaction do
           duplicate_matches.each do |client|
             primary_patient_id = client[:primary_patient_id]
-            
-            client[:duplicates].each do |clientB|
-              secondary_patient_id = clientB[:secondary_patient_id]
-                  match_percentage = clientB[:match_percentage]
-          
+
+            client[:duplicates].each do |client_b|
+              secondary_patient_id = client_b[:secondary_patient_id]
+              match_percentage = client_b[:match_percentage]
+
               match_exists = PotentialDuplicate.where(
-                "(patient_id_a = :primary_id AND patient_id_b = :secondary_id) OR (patient_id_a = :secondary_id AND patient_id_b = :primary_id)",
+                '(patient_id_a = :primary_id AND patient_id_b = :secondary_id) OR
+                 (patient_id_a = :secondary_id AND patient_id_b = :primary_id)',
                 primary_id: primary_patient_id, secondary_id: secondary_patient_id
               ).exists?
-      
-              unless match_exists
-                PotentialDuplicate.create!(
-                  patient_id_a: primary_patient_id,
-                  patient_id_b: secondary_patient_id,
-                  match_percentage: match_percentage,
-                )
-              end
+
+              next if match_exists
+
+              PotentialDuplicate.create!(
+                patient_id_a: primary_patient_id,
+                patient_id_b: secondary_patient_id,
+                match_percentage:
+              )
             end
           end
         end
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error("Failed to save patient match: #{e.message}")
       end
-      
-      MATCH_PARAMS = %i[given_name family_name gender birthdate home_village
-                        home_traditional_authority home_district].freeze
 
       def match_params
         MATCH_PARAMS.each_with_object({}) do |param, params_hash|
