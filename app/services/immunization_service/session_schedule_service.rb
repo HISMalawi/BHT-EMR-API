@@ -4,11 +4,11 @@ module ImmunizationService
       # Initialization logic if needed
     end
 
-    def create_session_schedule(session_name:, start_date:, end_date:, session_type:, repeat:, assignees:)
+    def create_session_schedule(session_name:, start_date:, end_date:, session_type:, repeat:, frequency:, assignees:)
       session_schedule = nil
 
       SessionSchedule.transaction do
-        session_schedule = create_schedule(session_name, start_date, end_date, session_type, repeat)
+        session_schedule = create_schedule(session_name, start_date, end_date, session_type, repeat, frequency)
         create_assignees(session_schedule.id, assignees)
       end
 
@@ -23,7 +23,7 @@ module ImmunizationService
     end
 
     def update_session_schedule(session_schedule_id:, session_name:, start_date:, end_date:, session_type:, repeat:, 
-                                assignees:)
+                                frequency:, assignees:)
       current_time = Time.current
       voided_by = User.current.id
 
@@ -34,7 +34,8 @@ module ImmunizationService
                                                                   start_date:,
                                                                   end_date:, 
                                                                   session_type:,
-                                                                  repeat_type: repeat
+                                                                  repeat_type: repeat,
+                                                                  frequency:
                                                                 )
 
         handle_assignees(session_schedule_id, assignees, current_time, voided_by)
@@ -54,7 +55,7 @@ module ImmunizationService
         session_schedule_data = session_schedule.as_json(only: [:session_schedule_id,
                                                                 :session_name,
                                                                 :start_date, :end_date,
-                                                                :session_type, :repeat_type ])
+                                                                :session_type, :repeat_type, :frequency ])
         
         
         session_schedule_data[:assignees] = get_session_assignees(session_schedule)
@@ -76,13 +77,14 @@ module ImmunizationService
 
     private
 
-    def create_schedule(session_name, start_date, end_date, session_type, repeat_type)
+    def create_schedule(session_name, start_date, end_date, session_type, repeat_type, frequency)
       SessionSchedule.create!(
-        session_name: session_name,
-        start_date: start_date,
-        end_date: end_date,
-        session_type: session_type,
-        repeat_type: repeat_type,
+        session_name:,
+        start_date:,
+        end_date:,
+        session_type:,
+        repeat_type:,
+        frequency:,
         location_id: User.current.location_id
       )
     end

@@ -12,14 +12,15 @@ class Api::V1::SessionScheduleController < ApplicationController
     def create
       params = get_schedule_session_params 
       
-      session_name, start_date, end_date, session_type, repeat, assignees =  get_schedule_session_params
+      session_name, start_date, end_date, session_type, repeat,  frequency, assignees =  get_schedule_session_params
       
       session_schedule = service.create_session_schedule(
                                     session_name:, 
                                     start_date:, 
                                     end_date:, 
                                     session_type:, 
-                                    repeat:, 
+                                    repeat:,
+                                    frequency:, 
                                     assignees: )
 
       unless session_schedule.blank?
@@ -34,7 +35,7 @@ class Api::V1::SessionScheduleController < ApplicationController
       # Logic for update action (if needed)
       session_schedule_id = params[:id]
 
-      session_name, start_date, end_date, session_type, repeat, assignees = get_schedule_session_params
+      session_name, start_date, end_date, session_type, repeat, frequency, assignees = get_schedule_session_params
 
       session_schedule = service.update_session_schedule(
                                     session_schedule_id:,
@@ -43,6 +44,7 @@ class Api::V1::SessionScheduleController < ApplicationController
                                     end_date:, 
                                     session_type:, 
                                     repeat:, 
+                                    frequency:,
                                     assignees:)
 
       unless session_schedule.blank?
@@ -72,7 +74,7 @@ class Api::V1::SessionScheduleController < ApplicationController
 
     # Strong params method
     def get_schedule_session_params
-      params.require(%i[session_name start_date end_date session_type repeat assignees])
+      params.require(%i[session_name start_date end_date session_type repeat frequency assignees])
     end
 
     def service
