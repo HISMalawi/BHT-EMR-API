@@ -7,13 +7,7 @@ module OpdService
       attr_accessor :start_date, :end_date, :report
 
       include ModelUtils
-
-      AGE_IN_MONTHS_MAP = [
-        '0-5 months',
-        '6 mth < 5 yrs',
-        '5-14 yrs',
-        '>= 14 years'
-      ].freeze
+      include ArtService::Reports::Pepfar::Utils
 
       def find_report(start_date:, end_date:, **_extra_kwargs)
         @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
@@ -24,7 +18,7 @@ module OpdService
       end
 
       def fmt
-        AGE_IN_MONTHS_MAP.each_with_object({}) do |age_group, r|
+        pepfar_age_groups.each_with_object({}) do |age_group, r|
           r[age_group] = %w[M F].each_with_object({}) do |g, gr|
             gr[g] = {
               total: [],
@@ -43,7 +37,7 @@ module OpdService
 
       def process
         patients = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT opd_disaggregated_age_group(pe.birthdate, '#{end_date}') AS age_group,
+          SELECT disaggregated_age_group(pe.birthdate, '#{end_date}') AS age_group,
             pe.gender,
             p.patient_id,
             hiv_status.value_text hiv_status,
