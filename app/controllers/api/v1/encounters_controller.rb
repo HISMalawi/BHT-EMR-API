@@ -5,6 +5,7 @@ require 'utils/remappable_hash'
 module Api
   module V1
     class EncountersController < ApplicationController
+ 
 
       after_action :immunization_cache_update, only: [:destroy]
       # TODO: Move pretty much all CRUD ops in this module to EncounterService
@@ -74,19 +75,18 @@ module Api
       # Required parameters:
       #   encounter_type_id: Encounter's type
       #   patient_id: Patient involved in the encounter
-      #   
+      #
       # Optional parameters:
-      #   provider_id: user_id of surrogate doing the data entry defaults to current user  
+      #   provider_id: user_id of surrogate doing the data entry defaults to current user
       def create
-        type_id, patient_id, program_id, visit_id = params.require(%i[encounter_type_id patient_id program_id visit_id])
+        type_id, patient_id, program_id = params.require(%i[encounter_type_id patient_id program_id])   
 
-        encounter = encounter_service.create(  
-          encounter_type: EncounterType.find(type_id),
+        encounter = encounter_service.create(
+          type: EncounterType.find(type_id),
           patient: Patient.find(patient_id),
           program: Program.find(program_id),
           provider: params[:provider_id] ? Person.find(params[:provider_id]) : User.current.person,
-          encounter_datetime: TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now),
-          visit: Visit.find(visit_id)
+          encounter_datetime: TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now)
         )
 
         if encounter.errors.empty?
@@ -110,8 +110,58 @@ module Api
         provider = params[:provider_id] ? Person.find(params[:provider_id]) : User.current.person
         encounter_datetime = TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now)
 
-        encounter_service.update(encounter, type:, patient:, provider:, encounter_datetime:)
-      end   
+        encounter_service.update(encounter, type:, patient:,
+                                            provider:,
+                                            encounter_datetime:)
+      end
+
+
+      def daily_visits   
+        # Ignoring error value as required_params never errors when
+        # retrieving optional parameters only
+        filters = params.permit(%i[patient_id location_id encounter_type_id date program_id])
+      
+        if filters.empty?
+          queryset = Encounter.all
+        else
+          remap_encounter_type_id!(filters) if filters[:encounter_type_id]
+          date = filters.delete(:date)
+          queryset = Encounter.where(filters)
+      
+          # Filter by the date range if provided
+          if date
+            queryset = queryset.where('encounter_datetime BETWEEN DATE(?) AND (DATE(?) + INTERVAL 1 DAY)', date, date)
+          end
+        end
+      
+        # Apply the condition for program_id = 14 and encounter_type.name = 'REGISTRATION'
+        queryset = queryset.joins(:type)
+                           .where(program_id: 14, type: { name: 'REGISTRATION' })
+      
+        queryset = queryset.includes(%i[type patient location program], provider: [:names],
+                                                                    observations: { concept: %i[concept_names] })
+                           .order(:date_created)
+      
+        render json: paginate(queryset)
+      end
+      
+
+      #def generate_visit_number
+
+        # close off hanging visits for screening screen
+       # EncounterService.daily_visits(category: 'screening')
+
+     #   taken_visit_ids = Observation.joins(encounter: :visit).where(
+     #     visit: { date_stopped: nil },
+     #     obs: { concept_id: ConceptName.find_by_name('AETC Visit number').concept_id }
+     #   ).select('obs.value_numeric')&.map(&:value_numeric)
+
+     #   visit_number = 1
+
+     #   visit_number += 1 while taken_visit_ids.include?(visit_number) && not_assigned_today?(visit_number)
+
+     #   render json: { next_visit_number: visit_number }, status: :ok
+     # end    
 
       # Void an existing encounter
       #
@@ -151,10 +201,12 @@ module Api
 
         queryset.count
       end
+     
 
       def encounter_service
         EncounterService.new
       end
+
 
       def immunization_cache_update
         # Update Immunization Data Cache

@@ -58,7 +58,9 @@ module ParamConstants
   VISIT_WHITELISTED_PARAMS = [
     :id,      
     :patient, 
-    :visit_id,    
+    :visit_id, 
+    :encounter_id,  
+    :encounter_datetime,    
     :program,  
     :visit_type, 
     :visit_type_id,         

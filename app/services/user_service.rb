@@ -148,11 +148,27 @@ module UserService
   end
 
   def self.authenticate(token)
-    user = User.where(authentication_token: token).first
 
-    return nil if user.nil? || user.token_expiry_time < Time.now
+    return nil if token.nil?
 
+    user = User.find_by(authentication_token: token)
+
+    if user.nil?    
+      Rails.logger.warn("Authentication failed: No user found with token #{token}")
+      return nil
+    elsif user.token_expiry_time < Time.now
+      Rails.logger.warn("Authentication failed: Token expired for user #{user.user_id}")
+      return nil
+    end     
+            
+    Rails.logger.info("User authenticated successfully: #{user.user_id}")
     user
+    
+    #user = User.where(authentication_token: token).first
+
+    #return nil if user.nil? || user.token_expiry_time < Time.now
+
+    #user
   end
 
   def self.login(username, password)

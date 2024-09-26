@@ -64,16 +64,16 @@ class VisitService
       people
         
     end
-  
-    def self.daily_visits(date: nil, category: nil, open_visits_only: true)      
-      ActiveRecord::Base.transaction do
-        patients = visits_query(date:, open_visits_only:)
-        return patients if category.nil?
-        patients.map do |patient|
-          patient if eligible?(category, patient)
-        end.compact
-      end
-    end
+
+    #def self.daily_visits(date: nil, category: nil, open_visits_only: true) 
+    #  ActiveRecord::Base.transaction do
+    #    patients = visits_query(date:, open_visits_only:)
+    #    return patients if category.nil?
+    #    patients.map do |patient|
+    #      patient if eligible?(category, patient)
+    #   end.compact
+    #  end
+    #end  
   
     def self.eligible?(category, patient)
       raise 'Invalid category' unless SCREENS.keys.include? category
@@ -106,8 +106,7 @@ class VisitService
     def self.create_visit(params)  
       
 
-      person = Person.find_by(person_id: params[:patient]) 
-     # program = Program.find_by(concept_id: params[:program])  
+      person = Person.find_by(person_id: params[:patient])  
       visit_type = VisitType.find_by(uuid: params[:visit_type])         
       location = Location.find_by_uuid(params[:location]) if params[:location]
       #indication = ConceptName.find_by_name(params[:indication]) if params[:indication]
@@ -115,10 +114,7 @@ class VisitService
       start_datetime = params[:start_datetime]     
      # encounters = params.delete(:encounters)
       encounters = params[:encounters]  
-     
-
-  
-    
+          
       visit = Visit.new(     
         patient: person.patient,       
         visit_type: visit_type,     
@@ -138,17 +134,35 @@ class VisitService
       visit
     end
    
-   
+    def daily_visits      
+      program = Program.find_by(name: 'OPD Program')
+  
+      return [] unless program
+  
+      #start_date = Encounter.where(voided: 0)
+      #                      .minimum(:encounter_datetime)
+      #                      .to_date.beginning_of_day
+  
+      #end_date = start_date.end_of_day
+    start_date = Time.zone.today.beginning_of_day   
+    end_date = Time.zone.today.end_of_day
+  
+    # Define the start and end date for the query
+  
+    # Use find_by_sql for raw SQL execution
+      Encounter.find_by_sql(
+        "SELECT e.patient_id, e.location_id, et.name, DATE_FORMAT(e.encounter_datetime, '%Y-%m-%d') as enc_date
+         FROM encounter e
+         JOIN encounter_type et ON e.encounter_type = et.encounter_type_id
+         WHERE et.name = 'REGISTRATION'  
+         AND e.voided = 0
+         AND e.encounter_datetime BETWEEN '#{start_date}' AND '#{end_date}'
+         AND e.program_id = '#{program.program_id}'"
+      )
+    end    
+
  
     def self.generate_visit_number
-    # Close off hanging visits for the screening category
-     # daily_visits(category: 'screening')
-       
-    # Fetch taken visit numbers for ongoing visits
-    #  taken_visit_ids = Observation.joins(encounter: :visit).where(
-    #    visit: { date_stopped: nil },
-    #    obs: { concept_id: ConceptName.find_by_name('OPD Visit number').concept_id }
-    #  ).pluck('obs.value_numeric')
       
       # Fetch taken visit numbers for ongoing visits using raw SQL query
       taken_visit_ids = ActiveRecord::Base.connection.execute("   
@@ -173,12 +187,11 @@ class VisitService
 
       visit_number
     end
-
-
-
+         
+    
+    
     def self.update_visit(visit_id, params)      
       
-        
       visit = Visit.find_by(visit_id) 
 
       visit_type = VisitType.find_by_uuid(params[:visit_type])

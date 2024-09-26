@@ -1,27 +1,27 @@
 # frozen_string_literal: true
 require 'sidekiq/web'
 require 'sidekiq/cron/web'
-
+   
 Rails.application.routes.draw do
   mount Lab::Engine => '/'
   # mount Radiology::Engine => '/'
-  mount EmrOhspInterface::Engine => '/'
+  mount EmrOhspInterface::Engine => '/'       
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
   mount ActionCable.server => '/cable'
   mount ActionCable.server => '/api/v1/cable'
   mount Sidekiq::Web => '/sidekiq'
 
+       
 
 
-  get '/api/v1/daily_visits', to: 'api/v1/visits#daily_visits'
-  post '/api/v1/create_visit', to: 'api/v1/visits#create'
-  post '/api/v1/update_visit', to: 'api/v1/visits#update'    
+  get '/api/v1/daily_visits', to: 'api/v1/encounters#daily_visits'           
   get '/api/v1/previous_visits/:uuid', to: 'api/v1/previous_visits#previous_visits'
   
 
   namespace :api do
-    namespace :v1 do
+    namespace :v1 do 
+     
       get '/_health' => 'auth#health'
       resources :xforms_xforms
       resources :xforms_person_repeat_attributes
@@ -35,7 +35,7 @@ Rails.application.routes.draw do
           get ':uuid/open_visits' => 'visits#open_visits' # patient UUID
         end
       end
-      get '/generate_visit_number' => 'visits#generate_visit_number'
+      get '/generate_visit_number' => 'encounters#generate_visit_number'   
       resources :users
       resources :user_roles
       resources :user_properties
