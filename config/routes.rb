@@ -431,4 +431,19 @@ Rails.application.routes.draw do
   post '/api/v1/sms_configuration', to: 'api/v1/send_sms#update'
   get '/api/v1/configurations', to: 'api/v1/send_sms#show'
   get '/api/v1/cancel_appointment', to: 'api/v1/send_sms#cancel'
+
+
+  # OPD visits implementation
+  post '/api/v1/visits', to: 'api/v1/visits#create'
+  namespace :api do
+    namespace :v1 do
+      resources :stages, only: [:index, :show, :create]
+    end
+  end
+  
+  # namespace :api do
+  #   namespace :v1 do
+  #     resources :visits, only: [:create]
+  #   end
+  # end
 end
