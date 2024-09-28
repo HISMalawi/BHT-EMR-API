@@ -435,6 +435,8 @@ Rails.application.routes.draw do
 
   # OPD visits implementation
   post '/api/v1/visits', to: 'api/v1/visits#create'
+  get '/api/v1/check_patient_status/:patient_id', to: 'api/v1/visits#check_patient_status'
+
   namespace :api do
     namespace :v1 do
       resources :stages, only: [:index, :show, :create]

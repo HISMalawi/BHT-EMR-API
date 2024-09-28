@@ -1,7 +1,9 @@
 module Api
     module V1
       class StagesController < ApplicationController
-        # GET /api/v1/stages
+
+      
+        # GET /api/v1/stag pes
         def index
           stages = Stage.all
           render json: stages, status: :ok
