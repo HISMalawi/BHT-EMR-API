@@ -5,8 +5,15 @@ module Api
       
         # GET /api/v1/stag pes
         def index
-          stages = Stage.all
-          render json: stages, status: :ok
+          stages = Stage.includes(:patient).all
+
+          stages_with_names = stages.map do |stage|
+          
+            stage.as_json.merge(
+                fullName: stage.patient.name
+            )
+          end
+          render json: stages_with_names, status: :ok
         end
   
         def create
@@ -20,7 +27,7 @@ module Api
   
         private
         def stage_params
-          params.permit(:patientId, :stage, :arrivalTime, :visit_id, :status)
+          params.permit(:patient_id, :stage, :arrivalTime, :visit_id, :status)
         end
       end
     end
