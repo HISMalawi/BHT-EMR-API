@@ -43,10 +43,12 @@ class CachedReport
   end
 
   def report_saved?
-    Report.exists?(
+    last_saved_report = Report.where(
       type: ReportType.find_by_name("Cohort"),
-      start_date: @start_date,
-      end_date: @end_date,
-    )
+    ).last
+
+    return false unless last_saved_report
+
+    last_saved_report.start_date == @start_date && last_saved_report.end_date == @end_date
   end
 end
