@@ -104,23 +104,23 @@ module ArtService
       end
       
       def yes_concepts
-        @yes_concepts ||= ::ConceptName.where(name: 'Yes').select(:concept_id).map do |record|
+        @yes_concepts ||= ConceptName.where(name: 'Yes').select(:concept_id).map do |record|
           record['concept_id'].to_i
         end
       end
 
       def pregnant_concepts
-        @pregnant_concepts ||= ::ConceptName.where(name: ['Is patient pregnant?', 'patient pregnant'])
+        @pregnant_concepts ||= ConceptName.where(name: ['Is patient pregnant?', 'patient pregnant'])
                                             .select(:concept_id)
       end
 
       def breast_feeding_concepts
-        @breast_feeding_concepts ||= ::ConceptName.where(name: ['Breast feeding?', 'Breast feeding', 'Breastfeeding'])
+        @breast_feeding_concepts ||= ConceptName.where(name: ['Breast feeding?', 'Breast feeding', 'Breastfeeding'])
                                                   .select(:concept_id)
       end
 
       def encounter_types
-        @encounter_types ||= ::EncounterType.where(name: ['HIV CLINIC CONSULTATION', 'HIV STAGING'])
+        @encounter_types ||= EncounterType.where(name: ['HIV CLINIC CONSULTATION', 'HIV STAGING'])
                                             .select(:encounter_type_id)
       end
     end
