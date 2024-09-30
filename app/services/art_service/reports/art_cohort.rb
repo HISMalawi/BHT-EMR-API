@@ -85,7 +85,7 @@ module ArtService
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT i.identifier arv_number, p.birthdate,
                  p.gender, n.given_name, n.family_name, p.person_id person_id,
-                 outcomes.cum_outcome AS outcome, tesd.earliest_start_date art_start_date
+                 outcomes.moh_cum_outcome AS outcome, tesd.earliest_start_date art_start_date
           FROM person p
           INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
           INNER JOIN temp_patient_outcomes AS outcomes
