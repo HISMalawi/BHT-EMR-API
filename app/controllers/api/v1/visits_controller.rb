@@ -54,9 +54,7 @@ module Api
                     rescue ActiveRecord::RecordInvalid => e
                       Rails.logger.debug("Failed to update status: #{e.message}")
                     end
-                end
-
-                # Rails.logger.debug("======> Failed to update status: #{visit.patientId}<========")    
+                end 
             end
 
             private
