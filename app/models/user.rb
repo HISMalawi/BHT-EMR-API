@@ -47,4 +47,8 @@ class User < RetirableRecord
       }
     ))
   end
+
+  def name
+    person&.name
+  end
 end

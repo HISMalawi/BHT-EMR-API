@@ -4,7 +4,7 @@ class Order < VoidableRecord
   self.table_name = :orders
   self.primary_key = :order_id
 
-  after_void :clear_dispensed_drugs
+  after_void :void_records
 
   belongs_to :order_type
   belongs_to :concept
@@ -27,6 +27,11 @@ class Order < VoidableRecord
     errors.add(:start_date, ' cannot be in the future')
   end
 
+  def void_records(void_reason)
+    clear_associated_obs(void_reason)
+    clear_dispensed_drugs(void_reason)
+  end
+
   def clear_dispensed_drugs(void_reason)
     lims_acknowledgement_status&.void(void_reason)
     return unless drug_order
@@ -35,5 +40,11 @@ class Order < VoidableRecord
     # Skip validations which check for existence of order, in this case we have just voided it
     # so it doesn't exist.
     drug_order.save(validate: false)
+  end
+
+  def clear_associated_obs(void_reason)
+    observations.each do |obs|
+      obs.void(void_reason)
+    end
   end
 end

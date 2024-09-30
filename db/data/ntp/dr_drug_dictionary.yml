@@ -1,0 +1,115 @@
+tb_drugs:
+    Moxifloxacin:
+        name: Moxifloxacin
+        abbreviation: Mfx
+        substitute: Levofloxacin
+
+    Levofloxacin:
+        name: Levofloxacin
+        abbreviation: Lfx
+        substitute: Moxifloxacin
+
+    Bedaquiline:
+        name: Bedaquiline
+        abbreviation: Bdq
+        substitute:
+
+    Linezolid:
+        name: Linezolid
+        abbreviation: Lzd
+        substitute:
+
+    Clofazimine:
+        name: Clofazimine
+        abbreviation: Cfz
+        substitute:
+
+    Cycloserine:
+        name: Cycloserine
+        abbreviation: Cs
+        substitute: Terizidone
+
+    Terizidone:
+        name: Terizidone
+        abbreviation: Trd
+        substitute: Cycloserine
+
+    Ethambutol:
+        name: Ethambutol
+        abbreviation: E
+        substitute:
+
+    Delamanid:
+        name: Delamanid
+        abbreviation: Dlm
+        substitute:
+
+    Pyrazinamide:
+        name: Pyrazinamide
+        abbreviation: Z
+        substitute:
+
+    Imipenem-cilastatin:
+        name: Imipenem-cilastatin
+        abbreviation: Ipm
+        substitute:
+
+    Amikacin:
+        name: Amikacin
+        abbreviation: Am
+        substitute: Streptomycin
+
+    Capreomycin:
+        name: Capreomycin
+        abbreviation: Cm
+        substitute:
+
+    Streptomycin:
+        name: Streptomycin
+        abbreviation: (S)
+        substitute: Amikacin
+
+    Ethionamide:
+        name: Ethionamide
+        abbreviation: Eto
+        substitute: Prothionamide
+
+    Prothionamide:
+        name: Prothionamide
+        abbreviation: Pto
+        substitute: Ethionamide
+
+    P-aminosalicylic acid:
+        name: P-aminosalicylic acid
+        abbreviation: PAS
+        substitute:
+
+    High-dose isoniazid:
+        name: High-dose isoniazid
+        abbreviation: Hh
+        substitute:
+
+    Kanamycin:
+        name: Kanamycin
+        abbreviation: Km
+        substitute:
+
+    Meropenem4:
+        name: Meropenem4
+        abbreviation: Km
+        substitute:
+
+    Amoxicillin-clavulanate:
+        name: Amoxicillin-clavulanate
+        abbreviation: Amx-Clv
+        substitute:
+
+    Rifampicin:
+       name: Rifampicin
+       abbreviation: R
+       substitue:
+
+    Gatifloxacin:
+       name: Gatifloxacin
+       abbreviation: Gfx
+       substitute:

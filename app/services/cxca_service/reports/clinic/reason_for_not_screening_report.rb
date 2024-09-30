@@ -55,25 +55,33 @@ module CxcaService
            cxca_program = Program.find_by_name('CxCa program').id
             art_program = Program.find_by_name('HIV Program').id
 
-          ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT
-            p.patient_id,
-            reason_name.name AS reason_for_not_screening
-          FROM patient p
-          INNER JOIN encounter ON encounter.patient_id = p.patient_id
-          AND encounter.voided = 0
-          AND (encounter.program_id = #{cxca_program} OR encounter.program_id = #{art_program})
-          AND encounter.encounter_datetime >= '#{@start_date}'
-          AND encounter.encounter_datetime <= '#{@end_date}'
-          INNER JOIN obs reason ON reason.encounter_id = encounter.encounter_id
-          AND reason.voided = 0
-          AND reason.concept_id = #{concept('Reason for NOT offering CxCa').concept_id}
-          INNER JOIN concept_name reason_name ON reason_name.concept_id = reason.value_coded
-          AND reason_name.voided = 0
-          WHERE p.voided = 0
-          GROUP BY p.patient_id, reason_name.name
-         SQL
-
+            ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT
+              p.patient_id,
+              CASE
+                WHEN reason.concept_id = #{concept('Pregnant?').concept_id} 
+                AND reason.value_coded = #{ConceptName.find_by(name: 'Yes').concept_id}
+                THEN 'Pregnancy'
+                ELSE reason_name.name
+              END AS reason_for_not_screening
+            FROM patient p
+            INNER JOIN encounter ON encounter.patient_id = p.patient_id
+            AND encounter.voided = 0
+            AND (encounter.program_id = #{cxca_program} OR encounter.program_id = #{art_program})
+            AND encounter.encounter_datetime >= '#{@start_date}'
+            AND encounter.encounter_datetime <= '#{@end_date}'
+            INNER JOIN obs reason ON reason.encounter_id = encounter.encounter_id
+            AND reason.voided = 0
+            AND (reason.concept_id = #{concept('Reason for NOT offering CxCa').concept_id} 
+                 OR (reason.concept_id = #{concept('Pregnant?').concept_id} 
+                 AND reason.value_coded = #{ConceptName.find_by(name: 'Yes').concept_id}))
+            INNER JOIN concept_name reason_name 
+            ON reason_name.concept_id = reason.value_coded
+            AND reason_name.voided = 0
+            WHERE p.voided = 0
+            GROUP BY p.patient_id, reason_for_not_screening
+          SQL
+          
         end
       end
     end

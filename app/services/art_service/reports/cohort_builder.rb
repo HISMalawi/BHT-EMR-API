@@ -19,14 +19,14 @@ module ArtService
         @outcomes_definition = outcomes_definition
       end
 
-      def init_temporary_tables(_start_date, end_date, occupation)
+      def init_temporary_tables(start_date, end_date, occupation)
         prepare_tables
         load_temp_other_patient_types(end_date)
         load_temp_register_start_date_table(end_date)
         load_temp_order_details(end_date)
         load_art_start_date(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
-        update_cum_outcome(end_date)
+        update_cum_outcome(start_date:, end_date:)
       end
 
       def build(cohort_struct, start_date, end_date, occupation)
@@ -292,7 +292,7 @@ module ArtService
         cohort_struct.quarterly_kaposis_sarcoma = kaposis_sarcoma(quarter_start_date, end_date)
 
         # From this point going down: we update temp_earliest_start_date cum_outcome field to have the latest Cumulative outcome
-        update_cum_outcome(end_date)
+        update_cum_outcome(start_date: quarter_start_date, end_date:)
         update_tb_status(end_date)
         update_patient_side_effects(end_date)
 
@@ -753,6 +753,7 @@ module ArtService
           AND o.obs_datetime < (DATE('#{end_date}') + INTERVAL 1 DAY) AND e.voided = 0
           WHERE e.voided = 0
           GROUP BY o.person_id
+          HAVING value_datetime IS NOT NULL
         SQL
       end
 
@@ -810,8 +811,8 @@ module ArtService
       # rubocop:enable Metrics/MethodLength
       # rubocop:enable Metrics/AbcSize
 
-      def update_cum_outcome(end_date)
-        ArtService::Reports::Cohort::Outcomes.new(end_date:,
+      def update_cum_outcome(start_date:, end_date:)
+        ArtService::Reports::Cohort::Outcomes.new(end_date:, start_date:,
                                                   definition: @outcomes_definition,
                                                   rebuild: 'true').update_cummulative_outcomes
       end
