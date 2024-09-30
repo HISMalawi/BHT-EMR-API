@@ -2,6 +2,8 @@ module Api
   module V1
     class StagesController < ApplicationController
 
+      VALID_STAGES = %w[VITALS CONSULTATION DISPENSATION].freeze
+
       def index
         stageName = params[:stage]
         stages = Stage.includes(:patient)
@@ -21,21 +23,35 @@ module Api
 
       def create
 
-        patient_id = params[:stage][:patient_id]
+        patientId = params[:stage][:patient_id]
 
-        active_visit = Visit.find_by(patientId: patient_id, closedDateTime: nil)
-
-        Rails.logger.debug("======>Patient ID<========: #{patient_id}")
-        Rails.logger.debug("======>Active visit<========: #{active_visit.inspect}")
-
-        if active_visit.nil?
-          render json: { errors: 'The patient does not have an active visit' }, status: :unprocessable_entity
+        # validate stage name
+        requestedStage = params[:stage][:stage]
+        unless VALID_STAGES.include?(requestedStage)
+          render json: { errors: "#{requestedStage} is not a valid stage. Allowed stages are: #{VALID_STAGES.join(', ')}" }, status: :unprocessable_entity
           return
         end
 
 
-        stage = Stage.new(stage_params.merge(visit_id: active_visit.id))
+     
+        activeVisit = Visit.find_by(patientId: patientId, closedDateTime: nil)
+        if activeVisit.nil?
+          render json: { errors: 'The patient does not have an active visit' }, status: :unprocessable_entity
+          return
+        end
 
+        
+        active_stage = Stage.find_by(patient_id: patientId, status: true)  
+        if active_stage
+          begin
+            active_stage.update!(status: false)
+          rescue ActiveRecord::RecordInvalid => e
+            Rails.logger.debug("Failed to update status: #{e.message}")
+          end
+        end
+
+
+        stage = Stage.new(stage_params.merge(visit_id: activeVisit.id, status: params[:stage][:status] || true))
         
         if stage.save
           render json: { message: 'Stage created successfully', stage: stage }, status: :created
@@ -45,7 +61,6 @@ module Api
       end
 
       private
-
       def stage_params
         params.require(:stage).permit(:patient_id, :stage, :arrivalTime, :visit_id, :status)
       end

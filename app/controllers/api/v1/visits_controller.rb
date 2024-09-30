@@ -14,13 +14,18 @@ module Api
             end
             def create
                 patientId = visit_params[:patientId]
-                checkVisit = Visit.where(patientId: patientId, closedDateTime: nil)
+                checkPatient = Patient.find_by(patient_id: patientId)
 
+                if checkPatient.nil?
+                    render json: { message: "patient with ID #{patientId} doesnt exist " }, status: :conflict
+                    return
+                end
+
+                checkVisit = Visit.where(patientId: patientId, closedDateTime: nil)
                 if checkVisit.exists?
                     render json: { message: "there is an active visit for patient with #{patientId}" }, status: :conflict
                     return
                 end
-
 
                 visit = Visit.new(visit_params)
                 if visit.save
