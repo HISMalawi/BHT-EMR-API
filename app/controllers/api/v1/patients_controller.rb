@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require "securerandom"
-require "dde_client"
-require "person_service"
-require "zebra_printer/init"
+require 'securerandom'
+require 'dde_client'
+require 'person_service'
+require 'zebra_printer/init'
 
 module Api
   module V1
@@ -21,19 +21,19 @@ module Api
       end
 
       def search_by_npid
-        voided = params[:voided]&.casecmp?("true") || false
+        voided = params[:voided]&.casecmp?('true') || false
         render json: paginate(service.find_patients_by_npid(params.require(:npid), voided:))
       end
 
       def search_by_identifier
         identifier_type_id, identifier = params.require(%i[type_id identifier])
-        voided = params[:voided]&.casecmp?("true") || false
+        voided = params[:voided]&.casecmp?('true') || false
         identifier_type = if voided
-            PatientIdentifierType.where(name: ["National id",
-                                               "Old identification number"])
-          else
-            PatientIdentifierType.find(identifier_type_id)
-          end
+                            PatientIdentifierType.where(name: ['National id',
+                                                               'Old identification number'])
+                          else
+                            PatientIdentifierType.find(identifier_type_id)
+                          end
 
         render json: service.find_patients_by_identifier(identifier, identifier_type, voided:)
       end
@@ -71,22 +71,22 @@ module Api
       def print_national_health_id_label
         patient = Patient.find(params[:patient_id])
         qr_code = if params[:qr_code]
-            params[:qr_code].casecmp?("true") ? true : false
-          else
-            false
-          end
+                    params[:qr_code].casecmp?('true') ? true : false
+                  else
+                    false
+                  end
 
         render json: generate_national_id_label(patient, qr_code)
       end
 
       def print_filing_number
-        archived = params[:archived]&.downcase == "true"
+        archived = params[:archived]&.downcase == 'true'
 
         data = if archived
-            generate_archived_filing_number_label(patient)
-          else
-            generate_filing_number_label(patient)
-          end
+                 generate_archived_filing_number_label(patient)
+               else
+                 generate_filing_number_label(patient)
+               end
 
         render json: data
       end
@@ -95,7 +95,7 @@ module Api
         program = params[:program_id] ? Program.find(params[:program_id]) : nil
         date = params[:date]&.to_date
         render json: service.find_patient_visit_dates(patient, program,
-                                                      params[:include_defaulter_dates] == "true", date)
+                                                      params[:include_defaulter_dates] == 'true', date)
       end
 
       def find_median_weight_and_height
@@ -106,9 +106,9 @@ module Api
       def drugs_received
         cut_off_date = params[:date]&.to_date || Date.today
         program_id = params[:program_id] || Program.first.id
-        drugs_orders = paginate(service.drugs_orders_by_program(patient, cut_off_date, program_id:))
+        drugs_orders = service.drugs_orders_by_program(patient, cut_off_date, program_id:)
 
-        render json: drugs_orders
+        render json: drugs_orders.present? ? paginate(drugs_orders) : []
       end
 
       def bp_readings_trail
@@ -178,7 +178,7 @@ module Api
       end
 
       def assign_npid
-        render json: service.assign_npid(patient, params["program_id"]), status: :created
+        render json: service.assign_npid(patient, params['program_id']), status: :created
       end
 
       def find_archiving_candidates
@@ -231,7 +231,7 @@ module Api
       def eligible_for_htn_screening
         date = params[:date]&.to_time || Time.now
         render json: {
-          eligible: service.patient_eligible_for_htn_screening(patient, date),
+          eligible: service.patient_eligible_for_htn_screening(patient, date)
         }
       end
 
@@ -285,13 +285,13 @@ module Api
         patient_id = params.delete(:patient_id)
 
         AitIntergrationJob.perform_later({ from_date:, to_date:, patient_id: })
-        render json: { status: "Enqueued ait sync" }, status: :ok
+        render json: { status: 'Enqueued ait sync' }, status: :ok
       end
 
       def oldest_hts_patient
         Patient.joins(:person, encounters: :program)
-               .where(encounter: { encounter_type: EncounterType.find_by_name("testing") },
-                      program: { name: Program.find_by_name("HTC program").name })
+               .where(encounter: { encounter_type: EncounterType.find_by_name('testing') },
+                      program: { name: Program.find_by_name('HTC program').name })
                .distinct.order(patient_id: :asc).first.id
       end
 
@@ -349,19 +349,19 @@ module Api
           name: person.name.titleize,
           national_id: patient.national_id_with_dashes,
           birthdate: person.birthdate,
-          sex: sex,
+          sex:,
           address: person.addresses.first.to_s.strip[0..24].humanize,
-          barcode: national_id,
+          barcode: national_id
         }
 
         {
           zpl: label.print(1),
-          data: json.merge({ qr: json.values.join("~") }),
+          data: json.merge({ qr: json.values.join('~') })
         }
       end
 
       def generate_filing_number_label(patient, num = 1)
-        identifier = patient.identifier("Filing number") || patient.identifier("Archived filing number")
+        identifier = patient.identifier('Filing number') || patient.identifier('Archived filing number')
         raise NotFoundError, "Filing number for patient #{patient.id} not found" unless identifier
 
         file = identifier.identifier
@@ -380,12 +380,12 @@ module Api
           zpl: label.print(num),
           number:,
           file_type:,
-          version_number:,
+          version_number:
         }
       end
 
       def generate_archived_filing_number_label(patient, num = 1)
-        identifier = patient.identifier("Archived filing number")
+        identifier = patient.identifier('Archived filing number')
         raise NotFoundError, "Archived filing number for patient #{patient.id} not found" unless identifier
 
         file = identifier.identifier
@@ -405,8 +405,8 @@ module Api
           data: {
             number:,
             file_type:,
-            version_number:,
-          },
+            version_number:
+          }
         }
       end
 
@@ -444,12 +444,12 @@ module Api
           recommended_examination: params[:recommended_examination],
           target_lab: params[:target_lab],
           reason_for_examination: params[:reason_for_examination],
-          previous_tb_patient: params[:previous_tb_patient],
+          previous_tb_patient: params[:previous_tb_patient]
         }
       end
 
       def lab_tests_engine
-        program = Program.find_by(name: "TB PROGRAM")
+        program = Program.find_by(name: 'TB PROGRAM')
         TbService::LabTestsEngine.new program:
       end
     end
