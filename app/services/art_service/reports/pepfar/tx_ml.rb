@@ -3,24 +3,17 @@
 module ArtService
   module Reports
     module Pepfar
-      class TxMl
+      class TxMl < CachedReport
         attr_reader :start_date, :end_date, :rebuild, :occupation
 
         include Utils
         include CommonSqlQueryUtils
 
         def initialize(start_date:, end_date:, **kwargs)
-          @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
-          @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
-          @occupation = kwargs[:occupation]
-          @rebuild = kwargs[:rebuild]&.casecmp?('true')
+          super(start_date:, end_date:, **kwargs)
         end
 
         def data
-          if rebuild
-            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar').init_temporary_tables(start_date,
-                                                                                                        end_date, occupation)
-          end
           process_data
         end
 

@@ -6,7 +6,7 @@ require 'parallel'
 module ArtService
   module Reports
     module Pepfar
-      class TxCurrMmd
+      class TxCurrMmd < CachedReport
         include ModelUtils
         include Pepfar::Utils
         include CommonSqlQueryUtils
@@ -14,11 +14,7 @@ module ArtService
         attr_reader :report
 
         def initialize(start_date:, end_date:, **kwargs)
-          @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
-          @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
-          @org = kwargs[:definition]
-          @rebuild = kwargs[:rebuild]&.casecmp?('true')
-          @occupation = kwargs[:occupation]
+          super(start_date:, end_date:, **kwargs)
           @report = init_report
         end
 
@@ -34,16 +30,7 @@ module ArtService
           end
         end
 
-        private
-
         def find_report
-          report_type = (@org.match(/pepfar/i) ? 'pepfar' : 'moh')
-          if @rebuild
-            ArtService::Reports::CohortBuilder\
-              .new(outcomes_definition: report_type)\
-              .init_temporary_tables(@start_date, @end_date, @occupation)
-          end
-
           patients = ActiveRecord::Base.connection.select_all <<~SQL
             SELECT tesd.patient_id,
                 CASE tesd.gender
@@ -52,9 +39,9 @@ module ArtService
                   ELSE 'Unknown'
                 END gender,
                 disaggregated_age_group(tesd.birthdate, '#{@end_date}') age_group,
-                TIMESTAMPDIFF(DAY, tcm.start_date, tcm.auto_expire_date) prescribed_days
+                TIMESTAMPDIFF(DAY, tcm.start_date, tcm.expiry_date) prescribed_days
             FROM temp_earliest_start_date tesd
-            INNER JOIN temp_patient_outcomes tpo ON tpo.patient_id = tesd.patient_id AND tpo.#{report_type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome = 'On antiretrovirals'
+            INNER JOIN temp_patient_outcomes tpo ON tpo.patient_id = tesd.patient_id AND tpo.#{@report_type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome = 'On antiretrovirals'
             INNER JOIN temp_current_medication tcm ON tcm.patient_id = tesd.patient_id
             WHERE tesd.date_enrolled <= '#{@end_date}'
           SQL

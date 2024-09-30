@@ -3,37 +3,22 @@
 module ArtService
   module Reports
     module Pepfar
-      class TxRtt
+      class TxRtt < CachedReport
         attr_reader :start_date, :end_date, :rebuild, :occupation
 
         include CommonSqlQueryUtils
         include Utils
 
         def initialize(start_date:, end_date:, **kwargs)
-          @start_date = ActiveRecord::Base.connection.quote(start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S'))
-          @end_date = ActiveRecord::Base.connection.quote(end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S'))
-          @occupation = kwargs[:occupation]
-          @rebuild = kwargs[:rebuild]&.casecmp?(true)
+          super(start_date:, end_date:, **kwargs)
         end
 
         def find_report
-          if rebuild
-            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar').init_temporary_tables(start_date,
-                                                                                                        end_date, occupation)
-          end
           process_report
         end
 
         def data
-          if rebuild
-            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar').init_temporary_tables(start_date,
-                                                                                                        end_date, occupation)
-          end
-          process_report
-        rescue StandardError => e
-          Rails.logger.error "Error running TX_RTT Report: #{e}"
-          Rails.logger.error e.backtrace.join("\n")
-          raise e
+          find_report
         end
 
         private
@@ -135,7 +120,7 @@ module ArtService
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
               e.patient_id,
-              disaggregated_age_group(e.birthdate, #{end_date}) AS age_group,
+              disaggregated_age_group(e.birthdate, '#{end_date}') AS age_group,
               e.gender,
               s.pepfar_cum_outcome initial_outcome,
               o.pepfar_cum_outcome final_outcome,
