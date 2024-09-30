@@ -30,13 +30,13 @@ module ArtService
 
       private 
 
-      def vl_maternal_status(patient_list)
-        return { FP: [], FBf: [] } if patient_list.blank?
+      def vl_maternal_status
+        return { FP: [], FBf: [] } if @patient_ids.blank?
 
-        pregnant = pregnant_women(patient_list).map { |woman| woman['person_id'].to_i }
-        return { FP: pregnant, FBf: [] } if (patient_list - pregnant).blank?
+        pregnant = pregnant_women(@patient_ids).map { |woman| woman['patient_id'].to_i }
+        return { FP: pregnant, FBf: [] } if (@patient_ids - pregnant).blank?
 
-        feeding = breast_feeding(patient_list - pregnant).map { |woman| woman['person_id'].to_i }
+        feeding = breast_feeding(@patient_ids - pregnant).map { |woman| woman['patient_id'].to_i }
 
         {
           FP: pregnant,
@@ -45,16 +45,16 @@ module ArtService
       end
 
       def pregnant_women(patient_list)
-        ActiveRecord::Base.connection.execute <<~SQL
-          SELECT person_id
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT patient_id, maternal_status
           FROM temp_maternal_status 
-          WHERE maternal_status = 'FP' AND patient_od IN (#{patient_list.join(',')})
+          WHERE maternal_status = 'FP' AND patient_id IN (#{patient_list.join(',')})
         SQL
       end
 
       def breast_feeding(patient_list)
-        ActiveRecord::Base.connection.execute <<~SQL
-          SELECT person_id
+        ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT patient_id, maternal_status
           FROM temp_maternal_status 
           WHERE maternal_status = 'FBf' AND patient_id IN (#{patient_list.join(',')})
         SQL
