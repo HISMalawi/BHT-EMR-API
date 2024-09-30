@@ -64,7 +64,6 @@ class CachedReport
     # format should be Q{quater} {year} based on the dates
     quater = (@start_date.to_date.month - 1) / 3 + 1
     year = @start_date.to_date.year
-    debugger
     "Q#{quater} #{year}"
   end
 end
