@@ -35,8 +35,31 @@ module Api
                 end
             end
 
-            private
 
+            def close
+                visitId= params[:id]
+                visit = Visit.find_by(id: visitId);
+
+                if visit.nil?
+                    render json: { errors: "visit with id #{visitId} doesn't exist" }, status: :unprocessable_entity
+                    return
+                end
+                visit.update(closedDateTime: params[:visit][:closedDateTime]);
+
+                activeStage = Stage.find_by(patient_id:visit.patientId, status: true)
+
+                if activeStage
+                    begin
+                      activeStage.update!(status: false)
+                    rescue ActiveRecord::RecordInvalid => e
+                      Rails.logger.debug("Failed to update status: #{e.message}")
+                    end
+                end
+
+                # Rails.logger.debug("======> Failed to update status: #{visit.patientId}<========")    
+            end
+
+            private
             def visit_params
                 params.require(:visit).permit(:patientId, :startDate, :closedDateTime, :programId)
             end
