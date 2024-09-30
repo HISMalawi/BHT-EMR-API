@@ -133,7 +133,7 @@ module Api
           fuzzy_potential_duplicates = []
           soundex_duplicates = []
           soundex_potentials = []
-        
+
           Person.joins(:names, :addresses)
                 .joins(patient: :patient_programs)
                 .where(patient_program: { program_id: 33, voided: 0 })
@@ -142,28 +142,29 @@ module Api
                       person_name.middle_name,person_address.address2 AS home_district,
                       person_address.neighborhood_cell AS home_village,
                       person_address.county_district AS home_traditional_authority')
-                .find_each(batch_size: 1000) do |potential_duplicate|
+                .in_batches(of: 1000) do |potential_duplicates|
 
-            next if already_checked.include?(primary_patient.person_id)
+          debugger
+          next if already_checked.include?(primary_patient.person_id)
 
-            fuzzy_potential_duplicates << fuzzy_match([potential_duplicate], primary_patient, already_checked,
-                                                     threshold_percent)
-            soundex_duplicates << soundex_potential_duplicates(primary_patient, [potential_duplicate], already_checked)
-            soundex_potentials << soundex_fuzzy_match(soundex_duplicates,
-                                                     primary_patient, already_checked, threshold_percent)
-            all_potential_duplicates = (fuzzy_potential_duplicates + soundex_potentials).uniq
+          fuzzy_potential_duplicates << fuzzy_match(potential_duplicates, primary_patient, already_checked,
+                                                    threshold_percent)
+          soundex_duplicates << soundex_potential_duplicates(primary_patient, potential_duplicates, already_checked)
+          soundex_potentials << soundex_fuzzy_match(soundex_duplicates,
+                                                    primary_patient, already_checked, threshold_percent)
+          all_potential_duplicates = (fuzzy_potential_duplicates + soundex_potentials).uniq
 
-            all_potential_duplicates.each { |match| already_checked << match.person_id }
+          all_potential_duplicates.each { |match| already_checked << match.person_id }
 
-            potential_duplicates << format_potential_duplicates(primary_patient, all_potential_duplicates)
+          potential_duplicates << format_potential_duplicates(primary_patient, all_potential_duplicates)
 
-            already_checked << primary_patient.person_id
+          already_checked << primary_patient.person_id
           end
           save_matching(potential_duplicates)
           global_duplicates << potential_duplicates unless potential_duplicates.empty?
         end
 
-       
+
         render json: global_duplicates, status: :ok
       end
 
@@ -191,8 +192,9 @@ module Api
       def soundex_fuzzy_match(patients, primary_patient, already_checked, threshold_percent)
         # Here we just compare the person attribute DOB,gender home_village,home_traditional_authority,home_district
         # Because we have already concluded that the names sound alike and probablity of being same person is high
+        filtered_primary_patient = primary_patient.attributes.except('given_name', 'family_name', 'middle_name')
         patients.select do |potential_duplicate|
-          filtered_primary_patient = primary_patient.attributes.except('given_name', 'family_name', 'middle_name')
+          debugger
           filtered_potential_duplicate = potential_duplicate.attributes.except('given_name',
                                                                                'family_name', 'middle_name')
 
