@@ -16,8 +16,8 @@ class CachedReport
   }
 
   def initialize(start_date:, end_date:, **kwargs)
-    @start_date = start_date.to_date.strftime("%Y-%m-%d 00:00:00")
-    @end_date = end_date.to_date.strftime("%Y-%m-%d 23:59:59")
+    @start_date = start_date.to_date
+    @end_date = end_date.to_date
     @org = kwargs[:definition]
     @rebuild = kwargs[:rebuild]&.casecmp?("true")
     @occupation = kwargs[:occupation]
@@ -26,7 +26,13 @@ class CachedReport
   end
 
   def initialize_cohort
-    ArtService::Reports::CohortBuilder.new.init_temporary_tables(@start_date, @end_date, @occupation)
+    ArtService::Reports::ArtCohort.new(
+      name: build_report_name,
+      type: @report_type,
+      start_date: @start_date,
+      end_date: @end_date,
+      occupation: @occupation,
+    ).build_report
   end
 
   def find_or_initialize_cohort
@@ -49,6 +55,16 @@ class CachedReport
 
     return false unless last_saved_report
 
-    last_saved_report.start_date == @start_date && last_saved_report.end_date == @end_date
+    last_saved_report.start_date.to_date == @start_date.to_date && last_saved_report.end_date.to_date == @end_date.to_date
+  end
+
+  private
+
+  def build_report_name
+    # format should be Q{quater} {year} based on the dates
+    quater = (@start_date.to_date.month - 1) / 3 + 1
+    year = @start_date.to_date.year
+    debugger
+    "Q#{quater} #{year}"
   end
 end
