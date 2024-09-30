@@ -117,16 +117,16 @@ module Api
 
    
       def daily_visits   
-          # Get the queryset by calling the helper method
+          
         queryset = fetch_daily_visits_query
       
-          # Render the queryset as JSON
+         
         render json: paginate(queryset)
       end
+
       
-        # Separate endpoint to generate visit numbers
       def generate_visit_number
-          # Get the queryset by calling the helper method
+         
         queryset = fetch_daily_visits_query
       
           # Generate visit numbers based on the queryset
@@ -138,52 +138,11 @@ module Api
       
       private
       
-        # Refactored method to fetch the queryset for daily visits
-      def fetch_daily_visits_query
-        filters = params.permit(%i[patient_id location_id encounter_type_id date program_id])
+   
+     
+      #def fetch_daily_visits_query
+      #  filters = params.permit(%i[patient_id location_id encounter_type_id date program_id])  
           
-        if filters.empty?
-          queryset = Encounter.all
-        else
-          remap_encounter_type_id!(filters) if filters[:encounter_type_id]
-          date = filters.delete(:date)
-          queryset = Encounter.where(filters)
-      
-            # Filter by the date range if provided
-          if date
-            queryset = queryset.where('encounter_datetime BETWEEN DATE(?) AND (DATE(?) + INTERVAL 1 DAY)', date, date)
-          end
-        end
-      
-          # Apply the condition for program_id = 14 and encounter_type.name = 'REGISTRATION'
-        queryset = queryset.joins(:type)
-                            .where(program_id: 14, type: { name: 'REGISTRATION' })
-      
-        queryset = queryset.includes(%i[type patient location program], provider: [:names],
-                                                                observations: { concept: %i[concept_names] })
-                            .order(:date_created)
-      
-        queryset
-      end
-      
-        # Generate visit numbers for the queryset
-      def generate_visit_numbers(queryset)
-        visit_numbers = {}
-        queryset.each_with_index do |encounter, index|
-            # Generate visit number logic
-          visit_numbers[encounter.id] = "VISIT-#{encounter.id}-#{index + 1}"
-        end
-        visit_numbers
-      end
-    
-      
-      
-
-      #def daily_visits   
-        # Ignoring error value as required_params never errors when
-        # retrieving optional parameters only
-      #  filters = params.permit(%i[patient_id location_id encounter_type_id date program_id])
-      
       #  if filters.empty?
       #    queryset = Encounter.all
       #  else
@@ -197,32 +156,57 @@ module Api
       #    end
       #  end
       
-        # Apply the condition for program_id = 14 and encounter_type.name = 'REGISTRATION'
+        # Apply AND condition for program_id = 14 and OR condition for type.name
       #  queryset = queryset.joins(:type)
-      #                     .where(program_id: 14, type: { name: 'REGISTRATION' })
+      #                      .where(program_id: 14)
+      #                      .where(type: { name: ['REGISTRATION', 'VITALS', 'CONSULTATION'] })
       
       #  queryset = queryset.includes(%i[type patient location program], provider: [:names],
-      #                                                              observations: { concept: %i[concept_names] })
-      #                     .order(:date_created)
+      #                                                            observations: { concept: %i[concept_names] })
+      #                      .order(:date_created)
       
-      #  render json: paginate(queryset)
-     # end
+      #  queryset
+      #end
+      def fetch_daily_visits_query
+        filters = params.permit(%i[patient_id location_id encounter_type_id date program_id])
       
-    
-      #def generate_visit_number
-
-  
-      #  taken_visit_ids = Observation.joins(:encounter)
-      #     .where(
-      #       concept_id: ConceptName.find_by_name('OPD Visit number').concept_id
-      #     )
-      #     .select('obs.value_numeric')
-
-      #  visit_number = 1
-      #  visit_number += 1 while taken_visit_ids.include?(visit_number) && not_assigned_today?(visit_number)
-
-      #  render json: { next_visit_number: visit_number }, status: :ok
-      #end      
+        if filters.empty?
+          queryset = Encounter.all
+        else
+          remap_encounter_type_id!(filters) if filters[:encounter_type_id]
+          date = filters.delete(:date) || Date.today # Use current date if no date is provided
+          queryset = Encounter.where(filters)
+      
+          # Filter by the date range (defaulting to the current date)
+          queryset = queryset.where('encounter_datetime BETWEEN DATE(?) AND (DATE(?) + INTERVAL 1 DAY)', date, date)
+          #queryset = queryset.where('DATE(encounter_datetime) = ?', date)  
+        end
+      
+        # Apply AND condition for program_id = 14 and OR condition for type.name
+        queryset = queryset.joins(:type)
+                            .where(program_id: 14)
+                            .where(type: { name: ['REGISTRATION', 'VITALS', 'General Consultation', 'DISPENSING'] })    
+        
+        queryset = queryset.where('encounter.voided = 1 OR (encounter.voided = 0 AND encounter_datetime <= NOW() - INTERVAL 24 HOUR)')
+      
+        queryset = queryset.includes(%i[type patient location program], provider: [:names],
+                                                              observations: { concept: %i[concept_names] })
+                            .order(:date_created)
+      
+        queryset
+      end
+      
+      
+        
+      def generate_visit_numbers(queryset)
+        visit_numbers = {}
+        queryset.each_with_index do |encounter, index|
+            
+          visit_numbers[encounter.id] = "#{index + 1}"
+        end
+        visit_numbers
+      end
+      
 
       # Void an existing encounter
       #

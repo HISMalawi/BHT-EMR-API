@@ -27,7 +27,7 @@ Rails.application.routes.draw do
       resources :xforms_person_repeat_attributes
       resources :xforms_medical_history_fields
       resources :visit_types
-      resources :visit_attribute_types
+      resources :visit_attribute_types            
       resources :visit_attributes
       resources :visits do
         collection do
