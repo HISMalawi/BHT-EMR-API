@@ -815,6 +815,7 @@ module ArtService
         ArtService::Reports::Cohort::Outcomes.new(end_date:, start_date:,
                                                   definition: @outcomes_definition,
                                                   rebuild: 'true').update_cummulative_outcomes
+        ArtService::Reports::MaternalStatus.new(end_date:, start_date:).process_data
       end
 
       def update_tb_status(end_date)

@@ -7,6 +7,7 @@ module ArtTempTablesUtils
   def prepare_tables
     prepare_cohort_tables
     prepare_outcome_tables
+    prepare_maternal_tables
   end
 
   # rubocop:disable Metrics/MethodLength
@@ -65,6 +66,13 @@ module ArtTempTablesUtils
         create_temp_current_medication(start:)
       end
       drop_temp_current_state(start:) unless count_table_columns("temp_current_state#{start ? '_start' : ''}") == 6
+    end
+  end
+
+  def prepare_maternal_tables
+    create_temp_maternal_status unless check_if_table_exists('temp_maternal_status')
+    unless count_table_columns('temp_maternal_status') == 2
+      drop_temp_maternal_status
     end
   end
   # rubocop:enable Metrics/AbcSize
@@ -394,6 +402,31 @@ module ArtTempTablesUtils
   def create_temp_patient_side_effects_indexes
     ActiveRecord::Base.connection.execute <<~SQL
       CREATE INDEX idx_side_effects ON temp_patient_side_effects (patient_id, has_se)
+    SQL
+  end
+
+  # ===================================
+  # Maternal Status Table Management Region
+  # ===================================
+
+  def drop_temp_maternal_status
+    ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_maternal_status'
+    create_temp_maternal_status
+  end
+
+  def create_temp_maternal_status
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_maternal_status (
+        patient_id INT PRIMARY KEY,
+        maternal_status VARCHAR(5) NOT NULL
+      )
+    SQL
+    create_temp_maternal_status_indexes
+  end
+
+  def create_temp_maternal_status_indexes
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE INDEX idx_maternal_status ON temp_maternal_status (patient_id, maternal_status)
     SQL
   end
 

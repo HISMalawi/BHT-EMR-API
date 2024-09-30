@@ -62,10 +62,10 @@ module ArtService
 
       def load_pregnant_women
         ActiveRecord::Base.connection.execute <<~SQL
-          INSERT INTO temp_maternal_status (patient_id, site_id, maternal_status)
+          INSERT INTO temp_maternal_status (patient_id, maternal_status)
           SELECT o.person_id, 'FP' as maternal_status
           FROM obs  o
-          INNER JOIN cdr_temp_cohort_members  c ON c.patient_id = o.person_id AND c.gender = 'F'
+          INNER JOIN temp_earliest_start_date  c ON c.patient_id = o.person_id AND c.gender = 'F'
           LEFT JOIN obs  a ON a.person_id = o.person_id AND a.obs_datetime > o.obs_datetime AND a.concept_id IN (#{pregnant_concepts.to_sql}) AND a.voided = 0
           AND a.obs_datetime >= DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND a.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
           WHERE a.obs_id is null
@@ -80,10 +80,10 @@ module ArtService
 
       def load_breast_feeding
         ActiveRecord::Base.connection.execute <<~SQL
-          INSERT INTO temp_maternal_status  (patient_id, site_id, maternal_status)
+          INSERT INTO temp_maternal_status  (patient_id, maternal_status)
           SELECT o.person_id,  'FBf' as maternal_status
           FROM obs  o
-          INNER JOIN cdr_temp_cohort_members  c ON c.patient_id = o.person_id AND c.gender = 'F'
+          INNER JOIN temp_earliest_start_date  c ON c.patient_id = o.person_id AND c.gender = 'F'
           LEFT JOIN obs  a ON a.person_id = o.person_id AND a.obs_datetime > o.obs_datetime AND a.concept_id IN (#{breast_feeding_concepts.to_sql}) AND a.voided = 0
           AND a.obs_datetime >= DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND a.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
           WHERE a.obs_id is null
@@ -99,7 +99,7 @@ module ArtService
 
       def clear_maternal_status
         ActiveRecord::Base.connection.execute <<~SQL
-          DELETE FROM temp_maternal_status where site_id = #{location}
+          DELETE FROM temp_maternal_status
         SQL
       end
       
