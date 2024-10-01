@@ -10,22 +10,14 @@ module ArtService
       # 4. for the sample drawns available pick the latest sample drawn within the reporting period
       # 5. for the results pick the latest result within the reporting period
       # rubocop:disable Metrics/ClassLength
-      class ViralLoadCoverage2
+      class ViralLoadCoverage2 < CachedReport
         attr_reader :start_date, :end_date, :occupation, :rebuild
 
         include Utils
         include CommonSqlQueryUtils
 
         def initialize(start_date:, end_date:, **kwargs)
-          @start_date = start_date&.to_date
-          raise InvalidParameterError, 'start_date is required' unless @start_date
-
-          @end_date = end_date&.to_date || @start_date + 12.months
-          raise InvalidParameterError, "start_date can't be greater than end_date" if @start_date > @end_date
-
-          @occupation = kwargs.delete(:occupation)
-          @type = kwargs.delete(:application)
-          @rebuild = kwargs[:rebuild_outcomes]&.casecmp?('true')
+          super(start_date:, end_date:, **kwargs)
         end
 
         def find_report
