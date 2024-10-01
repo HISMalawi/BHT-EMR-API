@@ -614,9 +614,9 @@ module AncService
         patients = {}
 
         Order.joins([[drug_order: :drug], :encounter])
-             .where(['encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= ? '\
+             .where(["encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= #{@c_lmp} "\
               'AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?) '\
-              'AND orders.voided = 0', PROGRAM.id, '%TD%', @c_lmp,
+              'AND orders.voided = 0', PROGRAM.id, '%TD%',
                      ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                      @cohort_patients])
              .group([:patient_id])
@@ -632,14 +632,15 @@ module AncService
       def patients_given_td_at_least_two_doses
         patients = {}
 
-        Order.joins([[drug_order: :drug], :encounter])
-             .where(['encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= ? '\
+        query = Order.joins([[drug_order: :drug], :encounter])
+             .where(["encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= #{@c_lmp}"\
               'AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?) '\
-              'AND orders.voided = 0', PROGRAM.id, '%TD%', @c_lmp,
+              'AND orders.voided = 0', PROGRAM.id, '%TD%',
                      ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                      @cohort_patients])
              .group([:patient_id])
-             .select(['encounter.patient_id, count(*) encounter_id']).collect do |o|
+             .select(['encounter.patient_id, count(*) encounter_id'])
+             .collect do |o|
           [o.patient_id, o.encounter_id]
         end.delete_if do |p, e|
           v = 0
