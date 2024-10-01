@@ -25,23 +25,41 @@ class CachedReport
     find_or_initialize_cohort
   end
 
-  def initialize_cohort
-    ArtService::Reports::ArtCohort.new(
-      name: build_report_name,
-      type: @report_type,
+  def initialize_and_save_report
+    ArtService::Reports::CohortBuilder
+      .new(outcomes_definition: @report_type)
+      .init_temporary_tables(@start_date, @end_date, @occupation)
+
+    save_report
+  end
+
+  def save_report
+    truncate_similar_reports
+
+    Report.create(name: report_name,
+                  start_date: @start_date,
+                  end_date: @end_date,
+                  type: ReportType.find_by_name("Cohort"),
+                  creator: User.current.id,
+                  renderer_type: "PDF")
+  end
+
+  def truncate_similar_reports
+    Report.where(
+      type: ReportType.find_by_name("Cohort"),
+      name: report_name,
       start_date: @start_date,
       end_date: @end_date,
-      occupation: @occupation,
-    ).build_report
+    ).destroy_all
   end
 
   def find_or_initialize_cohort
-    initialize_cohort if @rebuild
+    initialize_and_save_report if @rebuild
 
-    initialize_cohort unless report_saved? && all_temp_tables_are_ok
+    initialize_and_save_report unless report_saved? && all_temp_tables_are_ok?
   end
 
-  def all_temp_tables_are_ok
+  def all_temp_tables_are_ok?
     # check if table exists and has the corrent column count
     TEMP_TABLES_COLUMN_COUNT.all? do |table_name, column_count|
       check_if_table_exists(table_name) && count_table_columns(table_name) == column_count
@@ -51,19 +69,17 @@ class CachedReport
   def report_saved?
     last_saved_report = Report.where(
       type: ReportType.find_by_name("Cohort"),
+      name: report_name,
     ).last
 
-    return false unless last_saved_report
+    return false unless last_saved_report.present?
 
     last_saved_report.start_date.to_date == @start_date.to_date && last_saved_report.end_date.to_date == @end_date.to_date
   end
 
   private
 
-  def build_report_name
-    # format should be Q{quater} {year} based on the dates
-    quater = (@start_date.to_date.month - 1) / 3 + 1
-    year = @start_date.to_date.year
-    "Q#{quater} #{year}"
+  def report_name
+    "Cohort~#{@start_date}~#{@end_date}"
   end
 end
