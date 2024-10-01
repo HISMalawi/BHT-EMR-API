@@ -301,6 +301,12 @@ module Api
       def program
         Program.find(params.require(:program_id))
       end
+
+      def update_merged_potential_duplicates(primary_patient_id, secondary_patient_id)
+        PotentialDuplicate.where(patient_id_a: primary_patient_id, patient_id_b: secondary_patient_id)
+                          .or(patient_id_b: primary_patient_id, patient_id_a: secondary_patient_id)
+                          .update_all(merge: true)
+      end
     end
   end
 end
