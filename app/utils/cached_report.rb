@@ -69,7 +69,6 @@ class CachedReport
   def report_saved?
     last_saved_report = Report.where(
       type: ReportType.find_by_name("Cohort"),
-      name: report_name,
     ).last
 
     return false unless last_saved_report.present?
