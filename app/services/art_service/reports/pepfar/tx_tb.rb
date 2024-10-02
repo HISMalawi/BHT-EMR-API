@@ -18,7 +18,6 @@ module ArtService
           drop_temporary_tables
           create_temp_earliest_start_date unless temp_eartliest_start_date_exists?
           init_report
-          build_cohort_tables
           process_patients_alive_and_on_art
           process_tb_screening
           process_tb_confirmed_and_on_treatment
