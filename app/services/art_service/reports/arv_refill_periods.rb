@@ -199,7 +199,7 @@ module ArtService
 
         data = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
-            o.patient_id, p.gender, p.birthdate, o.start_date,
+            o.patient_id, p.gender, p.birthdate, o.start_date, e2.earliest_start_date art_start_date,
             o.auto_expire_date, d.name, quantity, d.drug_id, identifier arv_number,
             TIMESTAMPDIFF(day, DATE(o.start_date), DATE(o.auto_expire_date)) prescribed_days
           FROM orders o
@@ -208,6 +208,7 @@ module ArtService
           INNER JOIN concept_set s ON s.concept_id = d.concept_id
           INNER JOIN person p ON p.person_id = o.patient_id
           INNER JOIN encounter e ON e.patient_id = p.person_id
+          INNER JOIN temp_earliest_start_date e2 ON e2.patient_id = p.person_id
           AND e.program_id = #{program_id}
           LEFT JOIN patient_identifier i ON  i.patient_id = o.patient_id
           AND i.identifier_type = #{identifier_type}
@@ -272,6 +273,7 @@ module ArtService
           birthdate = i['birthdate']
 
           info[patient_id][regimen][drug_id] = {
+            art_start_date: i['art_start_date'].to_date.strftime('%d/%b/%Y'),
             drug_name:,
             start_date: start_date.to_date.strftime('%d/%b/%Y'),
             auto_expire_date: begin
