@@ -3,6 +3,7 @@ require 'bantu_soundex'
 module Api
   module V1
     class DdeController < ApplicationController
+      after_action :update_merged_potential_duplicates, only: [:merge_patients]
 
       MATCH_PARAMS = %i[given_name family_name gender birthdate home_village
                         home_traditional_authority home_district].freeze
