@@ -5,3 +5,4 @@ class ChangeSessionScheduleColumnDataTypes < ActiveRecord::Migration[7.0]
     change_column :session_schedules, :voided, :boolean, default: false
   end
 end
+ 
