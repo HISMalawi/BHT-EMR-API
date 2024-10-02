@@ -53,7 +53,7 @@ module ImmunizationService
 
       session_schedules.map do |session_schedule|
         session_schedule_data = session_schedule.as_json(only: [:session_schedule_id,
-                                                                :session_name,
+                                                                :session_name, :start_date, :end_date,
                                                                 :session_type, :repeat_type, :frequency ])
         
         
