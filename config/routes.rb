@@ -431,6 +431,7 @@ Rails.application.routes.draw do
   post '/api/v1/sms_configuration', to: 'api/v1/send_sms#update'
   get '/api/v1/configurations', to: 'api/v1/send_sms#show'
   get '/api/v1/cancel_appointment', to: 'api/v1/send_sms#cancel'
+<<<<<<< HEAD
 
 
   # OPD visits implementation
@@ -450,4 +451,11 @@ Rails.application.routes.draw do
   #     resources :visits, only: [:create]
   #   end
   # end
+=======
+  post '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#create'
+  get '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#index'
+  delete '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#destroy'
+  put  '/api/v1/eir/session_schedule/:id', to: 'api/v1/session_schedule#update'
+
+>>>>>>> chore/find_patients_pagination
 end
