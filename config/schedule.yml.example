@@ -3,3 +3,8 @@ immunization_stats_midnight_refresh:
   class: "ImmunizationMidnightRefreshJob"
   queue: "default"
   description: "Refreshes the immunization stats at midnight"
+flag_potential_duplicates:
+  cron: "0 0 * * *"
+  class: "FlagPotentialDuplicatesJob"
+  queue: "default"
+  description: "Flags potential duplicates at midnight"
