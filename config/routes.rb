@@ -276,6 +276,8 @@ Rails.application.routes.draw do
       post '/dde/patients/merge', to: 'dde#merge_patients'
       get '/dde/patients/remaining_npids', to: 'dde#remaining_npids'
       get '/rollback/merge_history', to: 'rollback#merge_history'
+      post '/dde/patients/duplicates', to: 'dde#duplicates_finder'
+      get '/dde/patients/matches', to: 'dde#duplicates_match'
       post '/rollback/rollback_patient', to: 'rollback#rollback_patient'
 
       get '/labels/location', to: 'locations#print_label'
