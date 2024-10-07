@@ -54,6 +54,7 @@ module ImmunizationService
           greater_than_one_year = []
         
           orders.each do |order|
+
             birthdate = order.birthdate
             order_date = order.start_date
         

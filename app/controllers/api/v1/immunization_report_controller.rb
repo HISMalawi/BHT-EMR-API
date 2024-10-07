@@ -5,13 +5,23 @@ class Api::V1::ImmunizationReportController < ApplicationController
     DashboardStatsJob.perform_later(User.current.location_id)
   end
 
-  def drugs
+  def vaccine_names
     drugs = ConceptSet.joins(concept: %i[concept_names drugs])
                       .where(concept_set: ConceptName.where(name: 'Immunizations').pluck(:concept_id))
                       .group('concept.concept_id, drug.name, drug.drug_id')
                       .select('concept.concept_id, drug.name as name, drug.drug_id drug_id')
+
+    vacine_drug_names = drugs.flat_map do |immunization_drug|
+      vaccines = []
+      ImmunizationService::VaccineScheduleService.vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones').each_with_index do |milestone, i|
+        vaccines << {
+          drug_name: ImmunizationService::VaccineScheduleService.vaccine_display_name(immunization_drug.name, i)
+        }
+      end
+      vaccines
+    end
     
-    render json: drugs
+    render json: vacine_drug_names
   end
 
   def under_five_immunizations_drugs
