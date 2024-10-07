@@ -27,11 +27,13 @@ module RadiologyService
 
       {
         zpl: label.print(1),
-        accession_number: @order.accession_number,
-        name: @order.patient.person.name,
-        desc: "#{@order.patient.national_id_with_dashes} #{@order.patient.person.gender} #{@order.patient.person.birthdate}",
-        examination: "#{order_type}-#{examination} #{detailed_examination.blank? ? "" : "-" + detailed_examination}",
-        summary: "#{session_date}, #{@order.accession_number} (#{referred_from.upcase})",
+        data: {
+          accession_number: @order.accession_number,
+          name: @order.patient.person.name,
+          desc: "#{@order.patient.national_id_with_dashes} #{@order.patient.person.gender} #{@order.patient.person.birthdate}",
+          examination: "#{order_type}-#{examination} #{detailed_examination.blank? ? "" : "-" + detailed_examination}",
+          summary: "#{session_date}, #{@order.accession_number} (#{referred_from.upcase})"
+        }
       }
     end
 

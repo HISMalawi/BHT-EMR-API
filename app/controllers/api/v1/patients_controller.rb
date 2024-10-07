@@ -76,7 +76,7 @@ module Api
                     false
                   end
 
-        render json: generate_national_id_label(patient, qr_code)
+        render_zpl(generate_national_id_label(patient, qr_code))
       end
 
       def print_filing_number
@@ -88,7 +88,7 @@ module Api
                  generate_filing_number_label(patient)
                end
 
-        render json: data
+        render_zpl(data)
       end
 
       def visits
@@ -253,15 +253,15 @@ module Api
       end
 
       def print_tb_lab_order_summary
-        render json: lab_tests_engine.generate_lab_order_summary(tb_lab_order_params)
+        render_zpl(lab_tests_engine.generate_lab_order_summary(tb_lab_order_params))
       end
 
       def print_hts_linkage_code
-        render json: HtsService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code
+        rrender_zpl(HtsService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code)
       end
 
       def print_tb_number
-        render json: TbNumberService.generate_tb_patient_id(params[:patient_id])
+        render_zpl(TbNumberService.generate_tb_patient_id(params[:patient_id]))
       end
 
       def visit
