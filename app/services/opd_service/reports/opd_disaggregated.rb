@@ -54,7 +54,11 @@ module OpdService
 
         patients = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT disaggregated_age_group(pe.birthdate, '#{end_date}') AS age_group,
-            pe.gender,
+            CASE
+              WHEN pe.gender = 'Male' THEN 'M'
+              WHEN pe.gender = 'Female' THEN 'F'
+              ELSE pe.gender
+            END gender,
             p.patient_id,
             reg_date.encounter_datetime registration_date,
             hiv_obs.hiv_status,
@@ -123,22 +127,19 @@ module OpdService
       end
 
       def process_results(patients)
-        patients.each do |p|
-          reactive = concept('Reactive').concept_id
-          non_reactive = concept('Non-reactive').concept_id
-          unknown = concept('Unknown').concept_id
+        yes_concept = concept('Yes').concept_id
 
+        patients.each do |p|
           patient_id = p['patient_id']
           age_group = p['age_group']
           gender = p['gender']
-          hiv_status = concept(p['hiv_status'])&.concept_id || nil
-          date_started_art = p['date_started_art']&.to_date || p['test_date']&.to_date
+          hiv_status = p['hiv_status']&.downcase || nil
+          date_started_art = p['date_started_art']&.to_date || nil
           opd_reg_date = p['registration_date']&.to_date
           started_art = p['started_art']
-          screened_for_tb = p['screened_for_tb']
+          screened_for_tb = p['screened_for_tb'] || nil
           pregnant = p['pregnant']
           bf = p['breastfeeding']
-          yes_concept = concept('Yes').concept_id
 
           report[:data][age_group][gender][:total] << patient_id
 
@@ -154,7 +155,7 @@ module OpdService
           end
 
           unless hiv_status.nil?
-            if hiv_status == reactive
+            if hiv_status == 'reactive'
               if date_started_art <= opd_reg_date
                 report[:data][age_group][gender][:new_pos] << patient_id
               elsif date_started_art > opd_reg_date && started_art == concept('No').concept_id
@@ -162,15 +163,15 @@ module OpdService
               elsif date_started_art > opd_reg_date && started_art == concept('Yes').concept_id
                 report[:data][age_group][gender][:prev_pos_on_art] << patient_id
               end
-            elsif hiv_status == non_reactive && date_started_art > opd_reg_date
+            elsif hiv_status == 'non-reactive' && date_started_art > opd_reg_date
               report[:data][age_group][gender][:new_neg] << patient_id
-            elsif hiv_status == non_reactive && date_started_art <= opd_reg_date
+            elsif hiv_status == 'non-reactive' && date_started_art <= opd_reg_date
               report[:data][age_group][gender][:prev_neg] << patient_id
-            elsif hiv_status == unknown
+            elsif hiv_status == 'unknown'
               report[:data][age_group][gender][:not_done] << patient_id
             end
           end
-          report[:data][age_group][gender][:not_done] << patient_id if [nil, unknown].any?(hiv_status)
+          report[:data][age_group][gender][:not_done] << patient_id if [nil, 'unknown'].any?(hiv_status)
         end
 
         report
