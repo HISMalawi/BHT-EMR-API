@@ -15,7 +15,8 @@ class Api::V1::ImmunizationReportController < ApplicationController
       vaccines = []
       ImmunizationService::VaccineScheduleService.vaccine_attribute(immunization_drug.concept_id, 'Immunization milestones').each_with_index do |milestone, i|
         vaccines << {
-          drug_name: ImmunizationService::VaccineScheduleService.vaccine_display_name(immunization_drug.name, i)
+          name: ImmunizationService::VaccineScheduleService.vaccine_display_name(immunization_drug.name, i),
+          drug_id: immunization_drug.drug_id,
         }
       end
       vaccines
