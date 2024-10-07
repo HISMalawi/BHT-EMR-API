@@ -433,4 +433,23 @@ Rails.application.routes.draw do
   post '/api/v1/sms_configuration', to: 'api/v1/send_sms#update'
   get '/api/v1/configurations', to: 'api/v1/send_sms#show'
   get '/api/v1/cancel_appointment', to: 'api/v1/send_sms#cancel'
+
+
+  # OPD visits implementation
+  post '/api/v1/visits', to: 'api/v1/visits#create'
+  patch '/api/v1/visits/:id/close', to: 'api/v1/visits#close'
+
+  get '/api/v1/check_patient_status/:patient_id', to: 'api/v1/visits#check_patient_status'
+
+  namespace :api do
+    namespace :v1 do
+      resources :stages, only: [:index, :show, :create]
+    end
+  end
+
+  post '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#create'
+  get '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#index'
+  delete '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#destroy'
+  put  '/api/v1/eir/session_schedule/:id', to: 'api/v1/session_schedule#update'
+
 end

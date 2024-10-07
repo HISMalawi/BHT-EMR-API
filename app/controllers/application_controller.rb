@@ -91,7 +91,7 @@ class ApplicationController < ActionController::API
   end
 
   def refresh_dashboard_needed?
-    patient_programs_create_action? || administer_vaccine_action? || encounters_destroy_action?
+    patient_programs_create_action? || administer_vaccine_action? || orders_destroy_action?
   end
 
   def patient_programs_create_action?
@@ -102,8 +102,8 @@ class ApplicationController < ActionController::API
     controller_name == 'administer_vaccine' && action_name == 'administer_vaccine'
   end
 
-  def encounters_destroy_action?
-    controller_name == 'encounters' && action_name == 'destroy'
+  def orders_destroy_action?
+    controller_name == 'orders' && action_name == 'destroy'
   end
 
 end

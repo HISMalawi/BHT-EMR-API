@@ -30,8 +30,8 @@ module ImmunizationService
       under_five_missed_doses = []
       over_five_missed_doses = []
 
-      immunization_clients.each do |patient_id, birthdate, given_name, family_name|
-        immunization_client = OpenStruct.new(patient_id:, birthdate:, given_name:, family_name:)
+      immunization_clients.each do |patient_id, birthdate, given_name, family_name,city_village|
+        immunization_client = OpenStruct.new(patient_id:, birthdate:, given_name:, family_name:, city_village:)
         client_missed_visits = []
         vaccine_schedules = ImmunizationService::VaccineScheduleService.vaccine_schedule(find_patient(patient_id))
 
@@ -84,10 +84,10 @@ module ImmunizationService
 
     # Fetch clients eligible for immunization follow-up
     def fetch_immunization_clients(location_id)
-      Patient.joins(:encounters, person: :names)
+      Patient.joins(:encounters, person: [:names, :addresses])
              .where('encounter.program_id = ? AND encounter.location_id = ?', IMMUNIZATION_PROGRAM_ID, location_id)
              .distinct
-             .pluck('patient.patient_id, person.birthdate, person_name.given_name, person_name.family_name')
+             .pluck('patient.patient_id, person.birthdate, person_name.given_name, person_name.family_name,person_address.city_village')
     end
 
     # Process vaccine schedules and determine missed doses

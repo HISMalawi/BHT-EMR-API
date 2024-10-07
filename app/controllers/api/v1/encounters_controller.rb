@@ -5,8 +5,6 @@ require 'utils/remappable_hash'
 module Api
   module V1
     class EncountersController < ApplicationController
-
-      after_action :immunization_cache_update, only: [:destroy]
       # TODO: Move pretty much all CRUD ops in this module to EncounterService
 
       # Retrieve a list of encounters
@@ -155,17 +153,6 @@ module Api
 
       def encounter_service
         EncounterService.new
-      end
-
-      def immunization_cache_update
-        # Update Immunization Data Cache
-        start_date = 1.year.ago.to_date.to_s
-        end_date = Date.today.to_s
-        
-        location_id = User.current.location_id
-
-        ImmunizationReportJob.perform_later(start_date, end_date, location_id)  
-        DashboardStatsJob.perform_later(location_id)
       end
 
     end

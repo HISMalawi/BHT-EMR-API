@@ -40,11 +40,13 @@ module ImmunizationService
           base_query = Order.joins(:encounter)
                             .joins("LEFT JOIN obs ON obs.encounter_id = encounter.encounter_id")
                             .joins(patient: :person, drug_order: :drug)
+                            .joins("LEFT JOIN person_address ON person.person_id = person_address.person_id")
+                            .joins("LEFT JOIN person_name ON  person.person_id = person_name.person_id")
                             .merge(vaccine_encounter)
                             .where("obs.location_id = ?", @location_id)
                             .where("obs.concept_id = ?", ConceptName.find_by_name('Batch Number').concept_id)
                             .where("obs.voided = ?", 0)
-                            .select('orders.*, drug_order.*, drug.*', 'person.*', 'obs.*')
+                            .select('orders.*, drug_order.*, drug.*', 'person.*', 'obs.*', 'person_address.*', 'person_name.*')
         
           orders = base_query.where(start_date: start_date..end_date)
                              .or(base_query.where(auto_expire_date: start_date..end_date))
@@ -63,11 +65,16 @@ module ImmunizationService
             relevant_data = {
               order_id: order.order_id,
               patient_id: order.patient_id,
+              given_name: order.given_name,
+              family_name: order.family_name,
               drug_name: order.name,
               drug_inventory_id: order.drug_inventory_id,
               start_date: order.start_date,
               age_at_order: age,
               gender: order.gender,
+              city_village: order.city_village,
+              state_province: order.state_province,
+              township_division: order.township_division,
               changed_by: order.changed_by,
               birthdate: order.birthdate,
               birthdate_estimated: order.birthdate_estimated,

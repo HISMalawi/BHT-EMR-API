@@ -13,6 +13,7 @@ class Drug < ActiveRecord::Base
   has_many :barcodes, class_name: 'DrugOrderBarcode'
   has_many :alternative_names, class_name: 'AlternativeDrugName', foreign_key: 'drug_inventory_id'
   has_many :ntp_regimens, class_name: 'NtpRegimen'
+  has_many :session_schedule_vaccines 
 
   def self.find_all_by_concept_set(concept_name)
     concept = ConceptName.where(name: concept_name).select(:concept_id)

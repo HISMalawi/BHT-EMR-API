@@ -12,9 +12,9 @@ class PersonName < VoidableRecord
 
     if value.nil?
       record.errors.add(attr, 'Name cannot be nil')
-    elsif !value.size.between?(2, 20)
-      record.errors.add attr, 'Must be at least 2 and at most 20 characters long'
-    elsif !(value.match?(/^\s*(!?\w+([-']\w+)*)+\s*$/) || value.match?('N/A'))
+    elsif !value.size.between?(2, 30)
+      record.errors.add attr, 'Must be at least 2 and at most 30 characters long'
+    elsif !(value.match?(/^\s*[A-Za-z]+([\s'-][A-Za-z]+)*\s*$/) || value.match?('N/A'))
       record.errors.add attr, 'Does not look like a valid name'
     end
   end

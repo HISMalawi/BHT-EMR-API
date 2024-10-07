@@ -11,6 +11,7 @@ class User < RetirableRecord
   has_many :user_roles, class_name: 'UserRole'
   has_many :roles, through: :user_roles
   has_many :user_programs
+  has_many :session_schedule_assignees
   has_many :programs, through: :user_programs # User programs
   has_many(:names,
            -> { order('person_name.preferred' => 'DESC') },
