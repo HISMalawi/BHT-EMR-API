@@ -58,23 +58,23 @@ module Api
       end
 
       def print_visit_label
-        render_zpl(service.visit_summary_label(patient, date))
+        render_zpl(service.visit_summary_label(patient, date).print)
       end
 
       def print_history_label
-        render_zpl(service.history_label(patient, date))
+        render_zpl(service.history_label(patient, date).print)
       end
 
       def print_lab_results_label
-        render_zpl(service.lab_results_label(patient, date))
+        render_zpl(service.lab_results_label(patient, date).print)
       end
 
       def print_transfer_out_label
-        render_zpl(service.transfer_out_label(patient, date))
+        render_zpl(service.transfer_out_label(patient, date).print)
       end
 
       def print_patient_history_label
-        render_zpl(service.patient_history_label(patient, date))
+        render_zpl(service.patient_history_label(patient, date).print)
       end
 
       def defaulter_list

@@ -257,7 +257,7 @@ module Api
       end
 
       def print_hts_linkage_code
-        rrender_zpl(HtsService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code)
+        render_zpl(HtsService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code)
       end
 
       def print_tb_number
