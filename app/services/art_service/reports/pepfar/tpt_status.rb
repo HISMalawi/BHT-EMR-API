@@ -117,10 +117,8 @@ module ArtService
             # check if they have been on ART for less than 3 months, they are eligible
             # if they have been on ART continuosly for more than 3 months, they are not eligible
             if diff_in_months <= 1 || art_start_date.blank?
-              three_hp_eligible = true 
-              return
-            end
-            if diff_in_months > 1 &&  difference_in_months(end_date.to_date, art_start_date.to_date) < 3
+              three_hp_eligible = true
+            elsif diff_in_months > 1 &&  difference_in_months(end_date.to_date, art_start_date.to_date) < 3
               #  Patient defaulted for ART and TPT and was on ART for less than 3 months: patient TPT status is reset
               
               three_hp_eligible = true
@@ -137,9 +135,7 @@ module ArtService
             # if they have been on ART continuosly for more than 3 months, they are not eligible
             if diff_in_months <= 2 || art_start_date.blank? 
               six_h_eligible = true 
-              return
-            end
-            if diff_in_months > 2 && difference_in_months(end_date.to_date, art_start_date.to_date) < 3
+            elsif diff_in_months > 2 && difference_in_months(end_date.to_date, art_start_date.to_date) < 3
               #  Patient defaulted for ART and TPT and was on ART for less than 3 months: patient TPT status is reset
               three_hp_eligible = false
               six_h_eligible = true
