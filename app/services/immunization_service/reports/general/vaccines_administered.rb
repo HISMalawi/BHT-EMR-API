@@ -37,6 +37,8 @@ module ImmunizationService
         end
         
         def generate(start_date, end_date)
+          batch_number_concept_id = ConceptName.find_by_name('Batch Number').concept_id
+
           base_query = Order.joins(:encounter)
                             .joins("LEFT JOIN obs ON obs.encounter_id = encounter.encounter_id")
                             .joins(patient: :person, drug_order: :drug)
@@ -44,23 +46,27 @@ module ImmunizationService
                             .joins("LEFT JOIN person_name ON  person.person_id = person_name.person_id")
                             .merge(vaccine_encounter)
                             .where("obs.location_id = ?", @location_id)
-                            .where("obs.concept_id = ?", ConceptName.find_by_name('Batch Number').concept_id)
+                            .where("obs.concept_id != ?", batch_number_concept_id)
                             .where("obs.voided = ?", 0)
+                            .where.not(obs: { value_text: ['Unknown', nil, ''] })
                             .select('orders.*, drug_order.*, drug.*', 'person.*', 'obs.*', 'person_address.*', 'person_name.*')
         
           orders = base_query.where(start_date: start_date..end_date)
                              .or(base_query.where(auto_expire_date: start_date..end_date))
                              .or(base_query.where('orders.start_date < ? AND orders.auto_expire_date > ?', start_date, end_date))
         
+          grouped_orders = orders.group_by { |order| [order.patient_id, order.start_date] }
+          unique_orders = grouped_orders.map { |_, group| group.first }
+        
           less_than_one_year = []
           greater_than_one_year = []
         
-          orders.each do |order|
+          unique_orders.each do |order|
             birthdate = order.birthdate
             order_date = order.start_date
-        
+            
             age = calculate_age(birthdate, order_date)
-        
+            
             relevant_data = {
               order_id: order.order_id,
               patient_id: order.patient_id,
@@ -78,11 +84,11 @@ module ImmunizationService
               birthdate: order.birthdate,
               birthdate_estimated: order.birthdate_estimated,
               date_created: order.date_created,
-              creator: order.creator
+              creator: order.creator,
+              value_text: order.value_text
             }
-        
+            
             if age.nil?
-              # Handle cases where age couldn't be calculated
               puts "Warning: Could not calculate age for order #{order.order_id}"
             elsif age < 1
               less_than_one_year << relevant_data
