@@ -55,15 +55,18 @@ module ImmunizationService
                              .or(base_query.where(auto_expire_date: start_date..end_date))
                              .or(base_query.where('orders.start_date < ? AND orders.auto_expire_date > ?', start_date, end_date))
         
+          grouped_orders = orders.group_by { |order| [order.patient_id, order.start_date] }
+          unique_orders = grouped_orders.map { |_, group| group.first }
+        
           less_than_one_year = []
           greater_than_one_year = []
         
-          orders.each do |order|
+          unique_orders.each do |order|
             birthdate = order.birthdate
             order_date = order.start_date
-        
+            
             age = calculate_age(birthdate, order_date)
-        
+            
             relevant_data = {
               order_id: order.order_id,
               patient_id: order.patient_id,
@@ -84,9 +87,8 @@ module ImmunizationService
               creator: order.creator,
               value_text: order.value_text
             }
-        
+            
             if age.nil?
-              # Handle cases where age couldn't be calculated
               puts "Warning: Could not calculate age for order #{order.order_id}"
             elsif age < 1
               less_than_one_year << relevant_data
