@@ -466,9 +466,9 @@ module ArtService
 
       ActiveRecord::Base.connection.select_all <<~SQL
         SELECT p.person_id patient_id, given_name, family_name, gender, birthdate,
-               i.identifier arv_number, GROUP_CONCAT(DISTINCT(DATE(obs.obs_datetime))) visit_date
+               i.identifier arv_number, GROUP_CONCAT(DISTINCT(DATE(o.obs_datetime))) visit_date
         FROM person p
-        INNER JOIN obs o ON o.person_id = p.person AND (o.concept_id IN(#{concept_ids.join(',')}) OR o.value_coded IN(#{concept_ids.join(',')})) AND o.voided = 0
+        INNER JOIN obs o ON o.person_id = p.person_id AND (o.concept_id IN(#{concept_ids.join(',')}) OR o.value_coded IN(#{concept_ids.join(',')})) AND o.voided = 0
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.identifier_type = #{indetifier_type} AND i.voided = 0
         LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
         WHERE p.voided = 0 AND p.person_id NOT IN(#{external_clients})
