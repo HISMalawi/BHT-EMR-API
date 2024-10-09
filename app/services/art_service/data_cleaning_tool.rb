@@ -471,7 +471,7 @@ module ArtService
         INNER JOIN obs o ON o.person_id = p.person_id AND (o.concept_id IN(#{concept_ids.join(',')}) OR o.value_coded IN(#{concept_ids.join(',')})) AND o.voided = 0
         LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.identifier_type = #{indetifier_type} AND i.voided = 0
         LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-        WHERE p.voided = 0 AND p.person_id NOT IN(#{external_clients})
+        WHERE p.voided = 0 AND p.person_id NOT IN(#{external_clients}) AND (p.gender != 'f' OR p.gender != 'female')
         GROUP BY p.person_id
         ORDER BY n.date_created DESC;
       SQL
