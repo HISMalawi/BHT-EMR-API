@@ -66,7 +66,7 @@ module ArtService
           begin
             data = ActiveRecord::Base.connection.select_all <<~SQL
               SELECT
-                cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
+                moh_cum_outcome cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
                 timestampdiff(year, DATE(e.birthdate), DATE('#{end_date}')) AS patient_age,
                 e.gender
               FROM temp_earliest_start_date e
@@ -167,7 +167,7 @@ module ArtService
 
         data = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
-            cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
+            moh_cum_outcome cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
             timestampdiff(year, DATE(e.birthdate), DATE('#{end_date}')) AS patient_age,
             e.gender
           FROM temp_earliest_start_date e

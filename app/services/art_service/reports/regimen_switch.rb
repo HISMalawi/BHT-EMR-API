@@ -43,7 +43,7 @@ module ArtService
           INNER JOIN drug_order d ON d.order_id = o.order_id AND d.quantity > 0
           INNER JOIN drug ON drug.drug_id = d.drug_inventory_id
           INNER JOIN arv_drug On arv_drug.drug_id = drug.drug_id
-          INNER JOIN temp_patient_outcomes t ON o.patient_id = t.patient_id AND t.cum_outcome = 'On antiretrovirals'
+          INNER JOIN temp_patient_outcomes t ON o.patient_id = t.patient_id AND t.moh_cum_outcome = 'On antiretrovirals'
           INNER JOIN person ON person.person_id = o.patient_id AND person.voided = 0
           INNER JOIN (
             SELECT MAX(o.start_date) start_date, o.patient_id
@@ -275,14 +275,15 @@ module ArtService
       def swicth_report(pepfar)
         clients = {}
         data = regimen_data
-        pepfar_outcome_builder(pepfar.blank? ? 'moh' : 'pepfar')
+        type = pepfar.blank? ? 'moh' : 'pepfar'
+        pepfar_outcome_builder(type)
 
         (data || []).each do |r|
           patient_id = r['patient_id'].to_i
           medications = arv_dispensention_data(patient_id)
 
           outcome_status = ActiveRecord::Base.connection.select_one <<~SQL
-            SELECT cum_outcome FROM temp_patient_outcomes WHERE patient_id = #{patient_id};
+            SELECT #{type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome cum_outcome FROM temp_patient_outcomes WHERE patient_id = #{patient_id};
           SQL
 
           next if outcome_status.blank?

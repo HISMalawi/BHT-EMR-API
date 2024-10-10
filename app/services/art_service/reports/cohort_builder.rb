@@ -472,7 +472,7 @@ module ArtService
           "SELECT t1.patient_id FROM temp_earliest_start_date t1
           INNER JOIN temp_patient_outcomes t2 ON t1.patient_id = t2.patient_id
           WHERE date_enrolled <= '#{end_date.to_date}' AND gender = '#{gender.first}'
-            AND cum_outcome = 'On antiretrovirals'
+            AND moh_cum_outcome = 'On antiretrovirals'
             AND timestampdiff(#{iu}, birthdate, date_enrolled) BETWEEN #{diff[0].to_i} AND #{diff[1].to_i}"
         )
 
@@ -489,7 +489,7 @@ module ArtService
           data2 = ActiveRecord::Base.connection.select_all(
             "SELECT e.patient_id FROM encounter e
             INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-              AND o.cum_outcome = 'On antiretrovirals' INNER JOIN obs ON obs.encounter_id = e.encounter_id
+              AND o.moh_cum_outcome = 'On antiretrovirals' INNER JOIN obs ON obs.encounter_id = e.encounter_id
               AND obs.concept_id = #{amount_dispensed}
             WHERE value_drug IN(#{ipt_drug_ids.join(',')})
               AND e.patient_id IN(#{patient_ids.join(',')})
@@ -592,10 +592,10 @@ module ArtService
       def patients_with_pre_art_or_unknown_outcome(_start_date, _end_date)
         begin
           patients = ActiveRecord::Base.connection.select_all(
-            "SELECT e.*, cum_outcome, patient_reason_for_starting_art_text(e.patient_id) reason_for_starting
+            "SELECT e.*, moh_cum_outcome, patient_reason_for_starting_art_text(e.patient_id) reason_for_starting
             FROM temp_patient_outcomes o
             INNER JOIN temp_earliest_start_date e ON e.patient_id = o.patient_id
-            WHERE cum_outcome LIKE '%Pre-%' OR cum_outcome LIKE '%Unknown%'"
+            WHERE moh_cum_outcome LIKE '%Pre-%' OR moh_cum_outcome LIKE '%Unknown%'"
           )
         rescue StandardError
           raise 'Try running the revised cohort before this report'
@@ -606,7 +606,7 @@ module ArtService
         (patients || []).each do |p|
           Patient.find(p['patient_id'].to_i)
 
-          patient_outcome = p['cum_outcome']
+          patient_outcome = p['moh_cum_outcome']
           person = Person.find(p['patient_id'])
 
           patient_obj = PatientService.get_patient(person)
@@ -815,6 +815,7 @@ module ArtService
         ArtService::Reports::Cohort::Outcomes.new(end_date:, start_date:,
                                                   definition: @outcomes_definition,
                                                   rebuild: 'true').update_cummulative_outcomes
+        ArtService::Reports::MaternalStatus.new(end_date:, start_date:).process_data
       end
 
       def update_tb_status(end_date)
@@ -840,7 +841,7 @@ module ArtService
           INSERT INTO temp_latest_tb_status
           SELECT t.person_id, MAX(t.obs_datetime) obs_datetime
           FROM obs t
-          INNER JOIN temp_patient_outcomes o ON o.patient_id = t.person_id AND o.cum_outcome = 'On antiretrovirals'
+          INNER JOIN temp_patient_outcomes o ON o.patient_id = t.person_id AND o.moh_cum_outcome = 'On antiretrovirals'
           WHERE t.concept_id = 7459 AND t.voided = 0 AND t.obs_datetime <= '#{end_date} 23:59:59'
           GROUP BY t.person_id
         SQL
@@ -1018,7 +1019,7 @@ module ArtService
             AND e.patient_id NOT IN (#{total_pregnant_women.join(',')})
           INNER JOIN temp_patient_outcomes
             ON temp_patient_outcomes.patient_id = e.patient_id
-            AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
+            AND temp_patient_outcomes.moh_cum_outcome = 'On antiretrovirals'
           INNER JOIN temp_max_drug_orders AS max_obs ON max_obs.patient_id = obs.person_id
             AND DATE(max_obs.start_date) = DATE(obs.obs_datetime)
           WHERE obs.person_id = e.patient_id
@@ -1048,7 +1049,7 @@ module ArtService
             AND LEFT(e.gender, 1) = 'F'
           INNER JOIN temp_patient_outcomes
             ON temp_patient_outcomes.patient_id = e.patient_id
-            AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
+            AND temp_patient_outcomes.moh_cum_outcome = 'On antiretrovirals'
           INNER JOIN temp_max_drug_orders AS max_obs ON max_obs.patient_id = obs.person_id
             AND DATE(max_obs.start_date) = DATE(obs.obs_datetime)
           GROUP BY obs.person_id
@@ -1158,7 +1159,7 @@ module ArtService
               AND orders.voided = 0
             INNER JOIN temp_patient_outcomes
               ON temp_patient_outcomes.patient_id = obs.person_id
-              AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
+              AND temp_patient_outcomes.moh_cum_outcome = 'On antiretrovirals'
             WHERE obs.concept_id = 6987
               AND obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
               AND (obs.value_numeric IS NOT NULL OR obs.value_text IS NOT NULL)
@@ -1228,7 +1229,7 @@ module ArtService
           SELECT e.*, tb_status FROM temp_earliest_start_date e
           LEFT JOIN temp_patient_tb_status s ON s.patient_id = e.patient_id
           INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-          WHERE o.cum_outcome = 'On antiretrovirals'
+          WHERE o.moh_cum_outcome = 'On antiretrovirals'
           AND DATE(e.date_enrolled) <= '#{end_date.to_date}';
         ")
       end
@@ -1253,7 +1254,7 @@ module ArtService
           SELECT e.*, s.has_se
           FROM temp_earliest_start_date e
           INNER JOIN temp_patient_side_effects s ON s.patient_id = e.patient_id
-          INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id AND o.cum_outcome = 'On antiretrovirals'
+          INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id AND o.moh_cum_outcome = 'On antiretrovirals'
           WHERE DATE(e.date_enrolled) <= '#{end_date.to_date}';
         SQL
 
@@ -1306,16 +1307,16 @@ module ArtService
         registered = []
         if month_str == '4+ months'
           data = ActiveRecord::Base.connection.select_all(
-            "SELECT patient_id, died_in(t.patient_id, cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
+            "SELECT patient_id, died_in(t.patient_id, moh_cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
             INNER JOIN temp_earliest_start_date t USING(patient_id)
-            WHERE cum_outcome = 'Patient died' GROUP BY patient_id
+            WHERE moh_cum_outcome = 'Patient died' GROUP BY patient_id
             HAVING died_in IN ('4+ months', 'Unknown')"
           )
         else
           data = ActiveRecord::Base.connection.select_all(
-            "SELECT patient_id, died_in(t.patient_id, cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
+            "SELECT patient_id, died_in(t.patient_id, moh_cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
             INNER JOIN temp_earliest_start_date t USING(patient_id)
-            WHERE cum_outcome = 'Patient died' GROUP BY patient_id
+            WHERE moh_cum_outcome = 'Patient died' GROUP BY patient_id
             HAVING died_in = '#{month_str}'"
           )
         end
@@ -1329,9 +1330,9 @@ module ArtService
 
       def get_outcome(outcome)
         sql_patch = if outcome == 'Pre-ART (Continue)'
-                      "cum_outcome = '#{outcome}' OR cum_outcome = 'Unknown'"
+                      "moh_cum_outcome = '#{outcome}' OR moh_cum_outcome = 'Unknown'"
                     else
-                      "cum_outcome = '#{outcome}'"
+                      "moh_cum_outcome = '#{outcome}'"
                     end
 
         ActiveRecord::Base.connection.select_all(

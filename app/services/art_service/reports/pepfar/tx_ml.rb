@@ -3,24 +3,17 @@
 module ArtService
   module Reports
     module Pepfar
-      class TxMl
+      class TxMl < CachedReport
         attr_reader :start_date, :end_date, :rebuild, :occupation
 
         include Utils
         include CommonSqlQueryUtils
 
         def initialize(start_date:, end_date:, **kwargs)
-          @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
-          @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
-          @occupation = kwargs[:occupation]
-          @rebuild = kwargs[:rebuild]&.casecmp?('true')
+          super(start_date:, end_date:, **kwargs)
         end
 
         def data
-          if rebuild
-            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar').init_temporary_tables(start_date,
-                                                                                                        end_date, occupation)
-          end
           process_data
         end
 
@@ -76,14 +69,14 @@ module ArtService
               e.gender,
               e.date_enrolled,
               e.earliest_start_date,
-              o.outcome_date,
-              TIMESTAMPDIFF(MONTH, DATE(e.earliest_start_date), DATE(o.outcome_date)) months,
+              o.pepfar_outcome_date outcome_date,
+              TIMESTAMPDIFF(MONTH, DATE(e.earliest_start_date), DATE(o.pepfar_outcome_date)) months,
               disaggregated_age_group(e.birthdate, DATE('#{end_date}')) age_group,
-              o.cum_outcome outcome
+              o.pepfar_cum_outcome outcome
             FROM temp_earliest_start_date e
-            INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id AND o.cum_outcome IN ('Defaulted', 'Patient died', 'Treatment stopped', 'Patient transferred out')
+            INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id AND o.pepfar_cum_outcome IN ('Defaulted', 'Patient died', 'Treatment stopped', 'Patient transferred out')
             LEFT JOIN (#{current_occupation_query}) a ON a.person_id = e.patient_id
-            WHERE e.patient_id IN (SELECT patient_id FROM temp_patient_outcomes_start WHERE cum_outcome = 'On antiretrovirals')
+            WHERE e.patient_id IN (SELECT patient_id FROM temp_patient_outcomes_start WHERE pepfar_cum_outcome = 'On antiretrovirals')
             AND DATE(e.earliest_start_date) < '#{start_date.to_date}'
             GROUP BY e.patient_id
           SQL
@@ -97,12 +90,12 @@ module ArtService
               e.gender,
               e.date_enrolled,
               e.earliest_start_date,
-              o.outcome_date,
-              TIMESTAMPDIFF(MONTH, DATE(e.earliest_start_date), DATE(o.outcome_date)) months,
+              o.pepfar_outcome_date outcome_date,
+              TIMESTAMPDIFF(MONTH, DATE(e.earliest_start_date), DATE(o.pepfar_outcome_date)) months,
               disaggregated_age_group(e.birthdate, DATE('#{end_date}')) age_group,
-              o.cum_outcome outcome
+              o.pepfar_cum_outcome outcome
             FROM temp_earliest_start_date e
-            INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id AND o.cum_outcome IN ('Defaulted', 'Patient died', 'Treatment stopped', 'Patient transferred out')
+            INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id AND o.pepfar_cum_outcome IN ('Defaulted', 'Patient died', 'Treatment stopped', 'Patient transferred out')
             LEFT JOIN (#{current_occupation_query}) a ON a.person_id = e.patient_id
             WHERE e.earliest_start_date BETWEEN DATE('#{start_date}') AND DATE('#{end_date}')
             GROUP BY e.patient_id
