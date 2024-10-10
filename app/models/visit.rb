@@ -4,4 +4,5 @@ class Visit < ApplicationRecord
     validates :programId, presence: true
 
     has_many :stages
-end
+    belongs_to :location, optional: true   
+end   

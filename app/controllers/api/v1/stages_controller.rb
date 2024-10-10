@@ -4,22 +4,58 @@ module Api
 
       VALID_STAGES = %w[VITALS CONSULTATION DISPENSATION].freeze
 
-      def index
-        stageName = params[:stage]
-        stages = Stage.includes(:patient)
-                       .joins(:visit)
-                       .where(visits: { closedDateTime: nil })  
-                       .where(stages: { status: true }) 
-                       .where(stages: { stage: stageName })
+      #def index
+      #  stageName = params[:stage]
+      #  stages = Stage.includes(:patient)
+      #                 .joins(:visit)
+      #                 .where(visits: { closedDateTime: nil })  
+      #                 .where(stages: { status: true }) 
+      #                 .where(stages: { stage: stageName })
 
+      #  stages_with_names = stages.map do |stage|
+      #    stage.as_json.merge(
+      #        fullName: stage.patient.name
+      #      )
+      #  end
+
+      #  render json: stages_with_names, status: :ok
+      #end
+      def index
+        
+        stageName = params[:stage] 
+        location_id = params[:location_id]    
+      
+        stages = Stage.includes(:patient)
+                      .joins(:visit)
+                      .where(visits: { closedDateTime: nil })
+                     # .where(stages: { status: true}) 
+                      .distinct 
+                      
+            
+        if stageName.present? && location_id.present?    
+          stages = stages.where(stage: stageName, location_id: location_id, status: true)
+        elsif stageName.present?
+          stages = stages.where(stage: stageName, status: true)
+        elsif location_id.present?
+          stages = stages.where(location_id: location_id, status: true)
+        else
+          # Return all stages when status is false
+          stages = Stage.where(status: false).distinct   
+        end
+        
+        
+        # Prepare the result by adding fullName to the stage object
         stages_with_names = stages.map do |stage|
           stage.as_json.merge(
-              fullName: stage.patient.name
-            )
+            fullName: stage.patient.name,   
+            location_id: stage.location_id
+          )
         end
-
+      
+        # Return the result as JSON
         render json: stages_with_names, status: :ok
       end
+      
 
       def create
 
@@ -62,7 +98,7 @@ module Api
 
       private
       def stage_params
-        params.require(:stage).permit(:patient_id, :stage, :arrivalTime, :visit_id, :status)
+        params.require(:stage).permit(:patient_id, :stage, :arrivalTime, :visit_id, :status, :location_id)
       end
     end
   end

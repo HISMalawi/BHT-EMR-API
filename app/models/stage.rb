@@ -1,6 +1,7 @@
 class Stage < ApplicationRecord
     belongs_to :visit
     belongs_to :patient
+    belongs_to :location, optional: true  
     
     VALID_STAGES = %w[VITALS CONSULTATION DISPENSATION].freeze
   
