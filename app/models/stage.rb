@@ -2,8 +2,8 @@ class Stage < ApplicationRecord
     belongs_to :visit
     belongs_to :patient
     belongs_to :location, optional: true  
-    
-    VALID_STAGES = %w[VITALS CONSULTATION DISPENSATION].freeze
+                                                                       
+    VALID_STAGES = %w[VITALS CONSULTATION LAB DISPENSATION].freeze
   
     # Validation to allow `true` and `false` for status
     validates :status, inclusion: { in: [true, false], message: "must be true or false" }

@@ -2,11 +2,11 @@ module Api
   module V1
     class StagesController < ApplicationController
 
-      VALID_STAGES = %w[VITALS CONSULTATION DISPENSATION].freeze
+      VALID_STAGES = %w[VITALS CONSULTATION LAB DISPENSATION].freeze
 
       #def index
       #  stageName = params[:stage]
-      #  stages = Stage.includes(:patient)
+      #  stages = Stage.includes(:patient)      
       #                 .joins(:visit)
       #                 .where(visits: { closedDateTime: nil })  
       #                 .where(stages: { status: true }) 
