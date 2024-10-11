@@ -42,12 +42,12 @@ module Api
               status = params[:status] # Optional filter by status (active or closed)
             
               # Fetch all visits, optionally filtering by patientId or status
-              #visits = Visit.all
+              visits = Visit.all
               visits = Visit.select('MIN(id) as id, patientId, startDate, closedDateTime, location_id, programId')
               .group(:patientId)  
             
               # Filter by patientId if provided
-              visits = visits.where(patientId: patientId) if patientId.present?
+              #visits = visits.where(patientId: patientId) if patientId.present?
             
               # Filter by status (closed or active visits) if provided
               if status.present?
@@ -59,7 +59,9 @@ module Api
                 end
               end
 
-              visits = visits.where('startDate >= ?', Time.now)    
+              #visits = visits.where('startDate = ?', Time.now)
+              today = Date.today
+              visits = visits.where('DATE(startDate) = ?', today)      
             
               # Return the list of visits as JSON
               render json: visits, status: :ok
