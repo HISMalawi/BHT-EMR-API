@@ -31,9 +31,7 @@ module UserService
 
     salt = SecureRandom.base64
 
-    if password.length < 6
-      raise UserCreateError, 'Password must be at least 6 characters in length'
-    end
+    password_valid?(password)
 
     user = User.create(
       username:,
