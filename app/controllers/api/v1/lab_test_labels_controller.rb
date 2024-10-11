@@ -6,7 +6,7 @@ module Api
       skip_before_action :authenticate
 
       def print_order_label
-        render json: engine.print_order_label(params[:accession_number])
+        render_zpl(engine.print_order_label(params[:accession_number]))
       end
 
       private

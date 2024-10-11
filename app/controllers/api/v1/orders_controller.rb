@@ -57,7 +57,7 @@ module Api
       end
 
       def print_radiology_order
-        render json: RadiologyService::OrderLabel.new(params.permit(:accession_number, :order_id)).print
+        render_zpl(RadiologyService::OrderLabel.new(params.permit(:accession_number, :order_id)))
       end
 
       private

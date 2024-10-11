@@ -317,6 +317,8 @@ Rails.application.routes.draw do
   end
 
   root to: 'static#index'
+  get '/api/v1/apk_download', to: 'apk#download'
+  get '/api/v1/apk_version', to: 'apk#version'
   post '/api/v1/concept/find_by_ids', to: 'api/v1/concepts#find_names_by_ids'
   get '/api/v1/archiving_candidates' => 'api/v1/patients#find_archiving_candidates'
   get '/api/v1/_health' => 'healthcheck#index'

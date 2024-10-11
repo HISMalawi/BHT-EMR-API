@@ -3,37 +3,22 @@
 module ArtService
   module Reports
     module Pepfar
-      class TxRtt
+      class TxRtt < CachedReport
         attr_reader :start_date, :end_date, :rebuild, :occupation
 
         include CommonSqlQueryUtils
         include Utils
 
         def initialize(start_date:, end_date:, **kwargs)
-          @start_date = ActiveRecord::Base.connection.quote(start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S'))
-          @end_date = ActiveRecord::Base.connection.quote(end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S'))
-          @occupation = kwargs[:occupation]
-          @rebuild = kwargs[:rebuild]&.casecmp?(true)
+          super(start_date:, end_date:, **kwargs)
         end
 
         def find_report
-          if rebuild
-            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar').init_temporary_tables(start_date,
-                                                                                                        end_date, occupation)
-          end
           process_report
         end
 
         def data
-          if rebuild
-            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar').init_temporary_tables(start_date,
-                                                                                                        end_date, occupation)
-          end
-          process_report
-        rescue StandardError => e
-          Rails.logger.error "Error running TX_RTT Report: #{e}"
-          Rails.logger.error e.backtrace.join("\n")
-          raise e
+          find_report
         end
 
         private
@@ -135,11 +120,11 @@ module ArtService
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT
               e.patient_id,
-              disaggregated_age_group(e.birthdate, #{end_date}) AS age_group,
+              disaggregated_age_group(e.birthdate, '#{end_date}') AS age_group,
               e.gender,
-              s.cum_outcome initial_outcome,
-              o.cum_outcome final_outcome,
-              TIMESTAMPDIFF(MONTH, COALESCE(s.outcome_date, c.outcome_date), ord.min_order_date) months,
+              s.pepfar_cum_outcome initial_outcome,
+              o.pepfar_cum_outcome final_outcome,
+              TIMESTAMPDIFF(MONTH, COALESCE(s.pepfar_outcome_date, c.outcome_date), ord.min_order_date) months,
               CASE
                 WHEN cd4_result.value_numeric < 200 THEN 'cd4_less_than_200'
                 WHEN cd4_result.value_numeric = 200 AND cd4_result.value_modifier = '=' THEN 'cd4_greater_than_or_equal_to_200'
@@ -149,8 +134,8 @@ module ArtService
                 ELSE 'unknown_cd4_count'
               END cd4_count_group
             FROM temp_earliest_start_date e
-            INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id AND o.cum_outcome = 'On antiretrovirals'
-            INNER JOIN temp_patient_outcomes_start s ON s.patient_id = e.patient_id AND s.cum_outcome IN ('Defaulted', 'Treatment stopped')
+            INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id AND o.pepfar_cum_outcome = 'On antiretrovirals'
+            INNER JOIN temp_patient_outcomes_start s ON s.patient_id = e.patient_id AND s.pepfar_cum_outcome IN ('Defaulted', 'Treatment stopped')
             LEFT JOIN temp_current_state_start c ON c.patient_id = e.patient_id
             INNER JOIN temp_max_drug_orders ord ON ord.patient_id = e.patient_id
             LEFT JOIN obs cd4_result ON cd4_result.person_id = e.patient_id AND cd4_result.concept_id = #{concept_name('CD4 count').concept_id} AND cd4_result.voided = 0

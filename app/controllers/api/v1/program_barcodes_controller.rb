@@ -8,10 +8,7 @@ module Api
       def print_barcode
         barcode_name = params.require(:barcode_name)
         label_commands = service.send("#{barcode_name}_barcode", params)
-        send_data label_commands, type: "application/label; charset=utf-8",
-                                  stream: false,
-                                  filename: "#{barcode_name}-#{rand(10_000)}.lbl",
-                                  disposition: "inline"
+        render_zpl(label_commands)
       end
 
       private

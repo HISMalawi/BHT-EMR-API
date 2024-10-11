@@ -124,7 +124,7 @@ module Api
         quantity = params.require(:quantity)
         data = service.print_drug_barcode(drug, quantity)
 
-        render json: data
+        render_zpl(data)
       end
 
       def tb_side_effects_drug

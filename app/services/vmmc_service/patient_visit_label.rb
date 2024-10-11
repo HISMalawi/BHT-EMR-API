@@ -34,14 +34,16 @@ module VmmcService
 
       {
         zpl: label.print(1),
-        seen_by: seen_by(patient, date),
-        date: date&.strftime("%d/%b/%Y"),
-        national_id: patient.national_id,
-        name: p_name,
-        date_of_mc: visit.circumcision_date&.strftime("%d/%b/%Y") || "Not Available",
-        outcome: visit.outcome,
-        outcome_date: visit.outcome_date&.strftime("%d/%b/%Y") || "N/A",
-        next_appointment: visit.next_appointment&.strftime("%d/%b/%Y"),
+        data: {
+          seen_by: seen_by(patient, date),
+          date: date&.strftime("%d/%b/%Y"),
+          national_id: patient.national_id,
+          name: p_name,
+          date_of_mc: visit.circumcision_date&.strftime("%d/%b/%Y") || "Not Available",
+          outcome: visit.outcome,
+          outcome_date: visit.outcome_date&.strftime("%d/%b/%Y") || "N/A",
+          next_appointment: visit.next_appointment&.strftime("%d/%b/%Y")
+        }
       }
     end
 

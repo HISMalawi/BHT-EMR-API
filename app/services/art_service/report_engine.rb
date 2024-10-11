@@ -54,7 +54,8 @@ module ArtService
       'DISCREPANCY_REPORT' => ArtService::Reports::Clinic::DiscrepancyReport,
       'STOCK_CARD' => ArtService::Reports::Clinic::StockCardReport,
       'HYPERTENSION_REPORT' => ArtService::Reports::Clinic::HypertensionReport,
-      'TX_NEW' => ArtService::Reports::Pepfar::TxNew
+      'TX_NEW' => ArtService::Reports::Pepfar::TxNew,
+      'MATERNAL_STATUS' => ArtService::Reports::MaternalStatus,
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -192,11 +193,10 @@ module ArtService
                                                    end_date: end_date.to_date, **kwargs).list
     end
 
-    def vl_maternal_status(start_date, end_date,
-                           tx_curr_definition, patient_ids)
-      REPORTS['VIRAL_LOAD_COVERAGE'].new(start_date: start_date.to_date,
-                                         end_date: end_date.to_date,
-                                         tx_curr_definition:).vl_maternal_status(patient_ids)
+    def vl_maternal_status(start_date, end_date, tx_curr_definition, patient_ids)
+      REPORTS['MATERNAL_STATUS'].new(start_date: start_date.to_date,
+                                     end_date: end_date.to_date,
+                                     tx_curr_definition:, patient_ids:).find_report
     end
 
     def patient_art_vl_dates(end_date, patient_ids)
