@@ -31,8 +31,6 @@ module UserService
 
     salt = SecureRandom.base64
 
-    password_valid?(password)
-
     user = User.create(
       username:,
       # WARNING: Consider using bcrypt (not SHA1 or SHA512) for better security
@@ -53,12 +51,6 @@ module UserService
     user
   end
 
-  def self.password_valid?(password)
-    if password.length < 6
-      raise UserUpdateError, 'Password must be at least 6 characters in length'
-    end
-  end
-
   def self.update_user(user, params)
     # Update person name if specified
     if params.include?(:given_name) || params.include?(:family_name)
@@ -69,7 +61,7 @@ module UserService
     end
 
     # Update password if any
-    if params[:password] && password_valid?(params[:password])
+    if params[:password]
       user.password = Digest::SHA1.hexdigest "#{params[:password]}#{user.salt}"
       user.save
     end
