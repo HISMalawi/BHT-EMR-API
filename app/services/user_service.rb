@@ -10,6 +10,7 @@ module UserService
   LOGGER = Logger.new $stdout
 
   class UserCreateError < StandardError; end
+  class UserUpdateError < InvalidParameterError; end
 
   def self.find_users(role: nil)
     query = User.all
@@ -50,6 +51,12 @@ module UserService
     user
   end
 
+  def self.password_valid?(password)
+    if password.length < 6
+      raise UserUpdateError, 'Password must be at least 6 characters in length'
+    end
+  end
+
   def self.update_user(user, params)
     # Update person name if specified
     if params.include?(:given_name) || params.include?(:family_name)
@@ -60,7 +67,7 @@ module UserService
     end
 
     # Update password if any
-    if params[:password]
+    if params[:password] && password_valid?(params[:password])
       user.password = Digest::SHA1.hexdigest "#{params[:password]}#{user.salt}"
       user.save
     end
