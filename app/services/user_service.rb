@@ -31,6 +31,10 @@ module UserService
 
     salt = SecureRandom.base64
 
+    if password.length < 6
+      raise UserCreateError, 'Password must be at least 6 characters in length'
+    end
+
     user = User.create(
       username:,
       # WARNING: Consider using bcrypt (not SHA1 or SHA512) for better security
