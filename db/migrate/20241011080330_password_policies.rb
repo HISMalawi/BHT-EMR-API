@@ -4,10 +4,10 @@ class PasswordPolicies < ActiveRecord::Migration[7.0]
     user_props = UserProperty
 
     # enable password policy
-    props.find_by_property('password_policy_enabled')&.update(property_value: 'true')
+    handle_policy(props:, property: 'password_policy_enabled', property_value: 'true')
 
     # set password reset interval to 30 days
-    props.find_by_property('password_reset_interval')&.update(property_value: '30')
+    handle_policy(props:, property: 'password_reset_interval', property_value: '30')
 
     # set all user props to forcefully reset passwords
     reset_period = Date.today - 31.days
@@ -20,6 +20,15 @@ class PasswordPolicies < ActiveRecord::Migration[7.0]
         next
       end
       uprop.update(property_value: reset_period)
+    end
+  end
+
+  def handle_policy(props:, property:, property_value:)
+    policy = props.find_by_property(property)
+    if policy.blank?
+      props.create!(property:, property_value:)
+    else
+      policy.update!(property_value:)
     end
   end
 end
