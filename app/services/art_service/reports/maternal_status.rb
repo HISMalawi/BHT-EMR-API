@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 module ArtService
   module Reports
     # rubocop:disable Metrics/ClassLength
     class MaternalStatus
-        include CommonSqlQueryUtils
-        include ModelUtils
-        attr_reader :start_date, :end_date, :location
+      include CommonSqlQueryUtils
+      include ModelUtils
+      attr_reader :start_date, :end_date, :location
 
       def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date&.to_date
@@ -15,20 +17,28 @@ module ArtService
 
         @occupation = kwargs.delete(:occupation)
         @type = kwargs.delete(:application)
-        @patient_ids = kwargs.delete(:patient_ids)&.split(',') || []
+        ids = kwargs.delete(:patient_ids)
+        @patient_ids = case ids.class
+                       when String
+                         ids.split(',').map(&:to_i)
+                       when Array
+                         ids
+                       else
+                         []
+                       end
       end
 
       def find_report
         vl_maternal_status
       end
-      
+
       def process_data
         clear_maternal_status
         load_pregnant_women
         load_breast_feeding
       end
 
-      private 
+      private
 
       def vl_maternal_status
         return { FP: [], FBf: [] } if @patient_ids.blank?
@@ -47,7 +57,7 @@ module ArtService
       def pregnant_women(patient_list)
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT patient_id, maternal_status
-          FROM temp_maternal_status 
+          FROM temp_maternal_status#{' '}
           WHERE maternal_status = 'FP' AND patient_id IN (#{patient_list.join(',')})
         SQL
       end
@@ -55,7 +65,7 @@ module ArtService
       def breast_feeding(patient_list)
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT patient_id, maternal_status
-          FROM temp_maternal_status 
+          FROM temp_maternal_status#{' '}
           WHERE maternal_status = 'FBf' AND patient_id IN (#{patient_list.join(',')})
         SQL
       end
@@ -102,7 +112,7 @@ module ArtService
           DELETE FROM temp_maternal_status
         SQL
       end
-      
+
       def yes_concepts
         @yes_concepts ||= ConceptName.where(name: 'Yes').select(:concept_id).map do |record|
           record['concept_id'].to_i
@@ -111,17 +121,17 @@ module ArtService
 
       def pregnant_concepts
         @pregnant_concepts ||= ConceptName.where(name: ['Is patient pregnant?', 'patient pregnant'])
-                                            .select(:concept_id)
+                                          .select(:concept_id)
       end
 
       def breast_feeding_concepts
         @breast_feeding_concepts ||= ConceptName.where(name: ['Breast feeding?', 'Breast feeding', 'Breastfeeding'])
-                                                  .select(:concept_id)
+                                                .select(:concept_id)
       end
 
       def encounter_types
         @encounter_types ||= EncounterType.where(name: ['HIV CLINIC CONSULTATION', 'HIV STAGING'])
-                                            .select(:encounter_type_id)
+                                          .select(:encounter_type_id)
       end
     end
   end
