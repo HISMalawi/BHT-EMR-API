@@ -7,6 +7,8 @@ class Location < RetirableRecord
   belongs_to :parent, class_name: 'Location', foreign_key: :parent_location, optional: true
   has_many :children, class_name: 'Location', foreign_key: :parent_location
   has_many :tag_maps, class_name: 'LocationTagMap', foreign_key: :location_id
+  has_many :visits
+  has_many :stages  
 
   def self.current
     Thread.current['current_location']
