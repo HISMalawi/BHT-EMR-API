@@ -168,11 +168,23 @@ class StockManagementService
           FROM pharmacy_batch_item_reallocations
           WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
         ), 0) as doses_wasted,
-        (pharmacy_batch_items.delivered_quantity - (pharmacy_batch_items.current_quantity + COALESCE((
-          SELECT SUM(quantity)
-          FROM pharmacy_batch_item_reallocations
-          WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
-        ), 0))) as dispensed_quantity,
+        COALESCE((
+          SUM(pharmacy_batch_items.delivered_quantity) - (SUM(pharmacy_batch_items.current_quantity) 
+            + SUM(
+                COALESCE((
+                  SELECT SUM(quantity)
+                  FROM pharmacy_batch_item_reallocations
+                  WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+                ), 0)
+              )
+          )
+        ),0) + 
+        COALESCE((
+          SELECT SUM(quantity) 
+          FROM openmrs_dev.pharmacy_obs 
+          WHERE (transaction_reason = 'Positive Adjustment' OR transaction_reason = 'Negative Adjustment') 
+          AND batch_item_id = pharmacy_batch_items.id
+        ), 0)  as dispensed_quantity,
         pharmacy_batches.batch_number,
         COUNT(*) OVER() AS total_count
       SQL
@@ -186,12 +198,23 @@ class StockManagementService
           FROM pharmacy_batch_item_reallocations
           WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
         ), 0)) as doses_wasted,
-        SUM(pharmacy_batch_items.delivered_quantity) - (SUM(pharmacy_batch_items.current_quantity) 
-        + SUM(COALESCE((
-          SELECT SUM(quantity)
-          FROM pharmacy_batch_item_reallocations
-          WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
-        ), 0))) as dispensed_quantity,
+        COALESCE((
+          SUM(pharmacy_batch_items.delivered_quantity) - (SUM(pharmacy_batch_items.current_quantity) 
+            + SUM(
+                COALESCE((
+                  SELECT SUM(quantity)
+                  FROM pharmacy_batch_item_reallocations
+                  WHERE pharmacy_batch_items.id = pharmacy_batch_item_reallocations.batch_item_id
+                ), 0)
+              )
+          )
+        ),0) + 
+        COALESCE((
+          SELECT SUM(quantity) 
+          FROM openmrs_dev.pharmacy_obs 
+          WHERE (transaction_reason = 'Positive Adjustment' OR transaction_reason = 'Negative Adjustment') 
+          AND batch_item_id = pharmacy_batch_items.id
+        ), 0)  as dispensed_quantity,
         COUNT(*) OVER() AS total_count
       SQL
     end
@@ -323,6 +346,14 @@ end
                                            reallocation_type: STOCK_ITEM_DISPOSAL,
                                            date_created: Time.now, date_changed: Time.now,
                                            creator: User.current.id)
+    end
+  end
+
+  def adjust_item(reallocation_code, batch_item_id, quantity, date, reason)
+    ActiveRecord::Base.transaction do
+      item = PharmacyBatchItem.find(batch_item_id)
+      quantity = quantity.to_f
+      commit_transaction(item, STOCK_EDIT, quantity.to_f, date, update_item: true, transaction_reason: reason)
     end
   end
   def update_batch_item!(batch_item, quantity)
