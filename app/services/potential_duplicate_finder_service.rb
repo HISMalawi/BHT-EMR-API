@@ -3,6 +3,8 @@ class PotentialDuplicateFinderService
 
   MATCH_PARAMS = %i[given_name family_name gender birthdate home_village
                     home_traditional_authority home_district].freeze
+  
+  SOUNDEX_MATCH_PARAMS = %i[home_village home_traditional_authority home_district].freeze
 
   def self.duplicates_finder
     # Get all patients along with the necessary attributes
@@ -18,7 +20,7 @@ class PotentialDuplicateFinderService
                 person_name.middle_name,person_address.address2 AS home_district,
                 person_address.neighborhood_cell AS home_village,
                 person_address.county_district AS home_traditional_authority')
-          .find_each(batch_size: 1000) do |primary_patient|
+          .find_each do |primary_patient|
 
       potential_duplicates = []
       fuzzy_potential_duplicates = []
@@ -39,10 +41,12 @@ class PotentialDuplicateFinderService
 
         fuzzy_potential_duplicates << fuzzy_match(potential_duplicate, primary_patient, already_checked,
                                                   threshold_percent)
-
+      
         soundex_duplicates << soundex_potential_duplicates(primary_patient, potential_duplicate, already_checked)
-        soundex_potentials << soundex_fuzzy_match(soundex_duplicates,
-                                                  primary_patient, already_checked, threshold_percent)
+        
+        
+        soundex_potentials << soundex_fuzzy_match(soundex_duplicates.flatten!,
+                                                  primary_patient, already_checked, threshold_percent) unless soundex_duplicates.flatten.blank?
         all_potential_duplicates = (fuzzy_potential_duplicates + soundex_potentials).uniq.flatten
 
         all_potential_duplicates.each { |match| already_checked << match.person_id }
@@ -88,24 +92,18 @@ class PotentialDuplicateFinderService
       MATCH_PARAMS.map { |attribute| person.send(attribute) }.join
     end
 
+    def self.concat_home_attributes(person)
+      SOUNDEX_MATCH_PARAMS.map { |attribute| person.send(attribute) }.join
+    end
+
     def self.soundex_fuzzy_match(patients, primary_patient, already_checked, threshold_percent)
       # Here we just do a fuzzy match comparision on the person attributes DOB,gender home_village,
       # home_traditional_authority, home_district
       # Because we have already concluded that the names sound alike and probablity of being same person is high
-      filtered_primary_patient = primary_patient.attributes.except('given_name', 'family_name', 'middle_name')
-      keys_to_remove = %w[given_name family_name middle_name].freeze
       patients.select do |potential_duplicate|
-        filtered_potential_duplicates = potential_duplicate.map { |k, v| [k, v] }.to_h.except(*keys_to_remove)
-
-        filtered_potential_duplicates.each do |filtered_potential_duplicate|
-          filtered_potential_duplicate.first.person_id != filtered_primary_patient['person_id'] &&
-            !already_checked.include?(filtered_potential_duplicate.first.person_id) &&
-            (WhiteSimilarity.similarity(
-              filtered_primary_patient.to_s,
-              filtered_potential_duplicate.to_s
-            ) * 100
-            ) > threshold_percent
-        end
+        potential_duplicate.person_id != primary_patient['person_id'] &&
+        !already_checked.include?(potential_duplicate.person_id) &&
+        (concat_home_attributes(primary_patient) == concat_home_attributes(potential_duplicate)) == 100 # We are only interested in records with exact match on home_village, home_traditional_authority, home_district
       end
     end
 

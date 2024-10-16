@@ -428,14 +428,18 @@ class DdeMergingService
     Rails.logger.debug("Merging patient observations: #{primary_patient} <= #{secondary_patient}")
 
     Observation.where(person_id: secondary_patient.id).each do |obs|
-      check = Observation.find_by("person_id = #{primary_patient.id} AND concept_id = #{obs.concept_id} AND
-        DATE(obs_datetime) = DATE('#{obs.obs_datetime.strftime('%Y-%m-%d')}') #{unless obs.value_coded.blank?
-                                                                                  'AND value_coded IS NOT NULL'
-                                                                                end} #{unless obs.obs_group_id.blank?
-                                                                                         'AND obs_group_id IS NOT NULL'
-                                                                                       end} #{unless obs.order_id.blank?
-                                                                                                'AND order_id IS NOT NULL'
-                                                                                              end}")
+      check = Observation.find_by(
+        "person_id = :person_id AND concept_id = :concept_id
+        AND DATE(obs_datetime) = DATE(:obs_datetime)
+        #{"AND value_drug = '#{obs.value_drug}'" unless obs.value_drug.blank?}
+        #{"AND value_text = '#{obs.value_text}'" unless obs.value_text.blank?}
+        #{'AND value_coded IS NOT NULL' unless obs.value_coded.blank?}
+        #{'AND obs_group_id IS NOT NULL' unless obs.obs_group_id.blank?}
+        #{'AND order_id IS NOT NULL' unless obs.order_id.blank?}",
+        person_id: primary_patient.id,
+        concept_id: obs.concept_id,
+        obs_datetime: obs.obs_datetime.strftime('%Y-%m-%d')
+      )
       if check.blank?
         primary_obs = process_obervation_merging(obs, primary_patient, encounter_map, secondary_patient)
         @obs_map[obs.id] = primary_obs.id if primary_obs
