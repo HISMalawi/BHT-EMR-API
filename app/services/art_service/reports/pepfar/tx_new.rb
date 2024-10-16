@@ -5,7 +5,7 @@ module ArtService
     module Pepfar
       # This class is responsible for generating the tx_new report
       # rubocop:disable Metrics/ClassLength
-      class TxNew
+      class TxNew < CachedReport
         include ModelUtils
         include Pepfar::Utils
         include CommonSqlQueryUtils
@@ -13,29 +13,15 @@ module ArtService
         attr_reader :start_date, :end_date, :rebuild, :occupation
 
         def initialize(start_date:, end_date:, **kwargs)
-          @start_date = start_date.to_date.beginning_of_day.strftime('%Y-%m-%d %H:%M:%S')
-          @end_date = end_date.to_date.end_of_day.strftime('%Y-%m-%d %H:%M:%S')
-          @rebuild = kwargs[:rebuild] == 'true'
-          @occupation = kwargs[:occupation]
+          super(start_date:, end_date:, **kwargs)
         end
 
-        # rubocop:disable Metrics/AbcSize
         def find_report
           report = init_report
           addittional_groups report
-          if rebuild
-            ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar')
-                                              .init_temporary_tables(start_date, end_date, occupation)
-          end
           process_data report
           flatten_the_report report
-        rescue StandardError => e
-          Rails.logger.error e.message
-          Rails.logger.error e.backtrace.join("\n")
-
-          raise e
         end
-        # rubocop:enable Metrics/AbcSize
 
         private
 

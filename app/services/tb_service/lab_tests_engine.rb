@@ -175,14 +175,16 @@ module TbService
 
       {
         zpl: label.print(1),
-        identifier:,
-        date: order_info[:date],
-        test_type: order_info[:test_type],
-        specimen_type: order_info[:specimen_type],
-        recommended_examination: order_info[:recommended_examination],
-        target_lab: order_info[:target_lab],
-        reason_for_examination: order_info[:reason_for_examination],
-        previous_tb_patient: order_info[:previous_tb_patient]
+        data: {
+          identifier:,
+          date: order_info[:date],
+          test_type: order_info[:test_type],
+          specimen_type: order_info[:specimen_type],
+          recommended_examination: order_info[:recommended_examination],
+          target_lab: order_info[:target_lab],
+          reason_for_examination: order_info[:reason_for_examination],
+          previous_tb_patient: order_info[:previous_tb_patient]
+        }
       }
     end
 

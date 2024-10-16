@@ -27,6 +27,12 @@ module TbService
       report = REPORTS[type.upcase]
       raise InvalidParameterError, "Report type (#{type}) not known" unless report
 
+      #  for TB quarterly reports, the report is calculated for the previous year
+      if type.upcase == 'QUARTERLY'
+        start_date = start_date.to_date - 1.year
+        end_date = end_date.to_date - 1.year
+      end
+
       indicator = report.method(name.strip.to_sym)
       raise InvalidParameterError, "Report indicator (#{name}) not known" unless indicator
 

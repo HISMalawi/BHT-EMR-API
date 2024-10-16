@@ -3,8 +3,8 @@
 module AncService
   # Provides various summary statistics for an ART patient
   class PatientSummary
-    NPID_TYPE = 'National id'
-    ARV_NO_TYPE = 'ARV Number'
+    NPID_TYPE = "National id"
+    ARV_NO_TYPE = "ARV Number"
 
     SECONDS_IN_MONTH = 2_592_000
 
@@ -28,11 +28,23 @@ module AncService
         patient_id: patient.patient_id,
         current_outcome: getCurrentPatientOutcome,
         date_of_lnmp: date_of_lnmp,
+        last_visit_date: patient_last_visit_date,
         anc_visits: number_of_visits,
         fundus: fundus,
         gestation: gest_age,
-        edod: edod
+        edod: edod,
       }
+    end
+    
+    def patient_last_visit_date
+      patient.encounters.where(program_id: anc_program)
+        &.last
+        &.encounter_datetime
+        &.strftime("%d/%b/%Y")
+    end
+
+    def anc_program
+      Program.find_by(name: "ANC program")&.id
     end
 
     def date_of_lnmp
@@ -45,10 +57,10 @@ module AncService
       visits = []
 
       anc_visits = patient.encounters.joins([:observations])
-                          .where(['encounter_type = ? AND obs.concept_id = ?
-            AND encounter_datetime > ?',
-                                  EncounterType.find_by_name('ANC Visit Type').id,
-                                  ConceptName.find_by_name('Reason for visit').concept_id,
+                          .where(["encounter_type = ? AND obs.concept_id = ?
+            AND encounter_datetime > ?",
+                                  EncounterType.find_by_name("ANC Visit Type").id,
+                                  ConceptName.find_by_name("Reason for visit").concept_id,
                                   lmp_date]).each do |e|
         e.observations.each do |o|
           visits << o.value_numeric unless o.value_numeric.blank?
@@ -62,12 +74,12 @@ module AncService
       fundus = patient.encounters.joins([:observations])
                       .where(["encounter_type = ? AND obs.concept_id = ?
             AND encounter_datetime > ?",
-                              EncounterType.find_by_name('Current pregnancy').id,
-                              ConceptName.find_by_name('week of first visit').concept_id,
+                              EncounterType.find_by_name("Current pregnancy").id,
+                              ConceptName.find_by_name("week of first visit").concept_id,
                               lmp_date])
                       .last.observations.collect { |o|
-                 o.value_numeric
-               }.compact.last.to_i rescue nil
+        o.value_numeric
+      }.compact.last.to_i rescue nil
     end
 
     def getCurrentPatientOutcome

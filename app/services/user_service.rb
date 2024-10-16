@@ -10,6 +10,7 @@ module UserService
   LOGGER = Logger.new $stdout
 
   class UserCreateError < StandardError; end
+  class UserUpdateError < InvalidParameterError; end
 
   def self.find_users(role: nil)
     query = User.all

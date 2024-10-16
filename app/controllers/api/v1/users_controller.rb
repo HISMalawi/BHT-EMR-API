@@ -4,6 +4,7 @@ module Api
   module V1
     class UsersController < ApplicationController
       DEFAULT_ROLENAME = 'clerk'
+      include PasswordPolicy
 
       skip_before_action :authenticate, only: [:login]
 
@@ -119,7 +120,7 @@ module Api
       end
 
       def user
-        User.find(params[:user_id])
+        User.find(params[:id])
       end
 
       # validate user programs here

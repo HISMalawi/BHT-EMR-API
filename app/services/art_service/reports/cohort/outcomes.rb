@@ -30,15 +30,6 @@ module ArtService
           end
         end
 
-        def update_outcomes_by_definition
-          [false, true].each do |start|
-            update_steps(start:, portion: true)
-            load_patients_on_treatment(start:)
-            load_without_clinical_contact(start:)
-            load_defaulters(start:)
-          end
-        end
-
         private
 
         # The main idea here is to come up with cumulative outcomes for patients in temp_earliest_start_date
@@ -69,9 +60,8 @@ module ArtService
           load_other_patient_who_died(start:)
           load_patients_who_stopped_treatment(start:)
           load_patients_without_drug_orders(start:)
-          load_patients_on_treatment(start:)
-          load_without_clinical_contact(start:)
-          load_defaulters(start:)
+          load_patient_calculated_outcomes(start:)
+          load_outcome_using_functions(start:)
         end
 
         # rubocop:disable Metrics/MethodLength
@@ -230,25 +220,25 @@ module ArtService
         def load_patients_who_died(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
-            SELECT patients.patient_id, 'Patient died', patients.outcome_date, 1
+            SELECT patients.patient_id, 'Patient died', patients.outcome_date, 'Patient died', patients.outcome_date, 1
             FROM temp_current_state#{start ? '_start' : ''} AS patients
             WHERE patients.outcomes = 1 AND patients.cum_outcome = 'Patient died'
             GROUP BY patients.patient_id
-            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
+            ON DUPLICATE KEY UPDATE moh_cum_outcome = VALUES(moh_cum_outcome), moh_outcome_date = VALUES(moh_outcome_date), pepfar_cum_outcome = VALUES(pepfar_cum_outcome), pepfar_outcome_date = VALUES(pepfar_outcome_date), step = VALUES(step)
           SQL
         end
 
         def load_other_patient_who_died(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
-            SELECT tesd.patient_id, 'Patient died', MAX(ps.start_date), 1
+            SELECT tesd.patient_id, 'Patient died', MAX(ps.start_date), 'Patient died', MAX(ps.start_date), 1
             FROM temp_earliest_start_date tesd
             INNER JOIN patient_program pp ON pp.patient_id = tesd.patient_id AND pp.program_id = 1 AND pp.voided = 0
             INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.state = 3 AND ps.voided = 0 AND ps.start_date <= DATE(#{start ? start_date : end_date}) #{start ? '- INTERVAL 1 DAY' : ''}
             WHERE tesd.patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step = 1)
             AND tesd.date_enrolled < DATE(#{start ? start_date : end_date}) #{start ? '' : '+ INTERVAL 1 DAY'}
             GROUP BY tesd.patient_id
-            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
+            ON DUPLICATE KEY UPDATE moh_cum_outcome = VALUES(moh_cum_outcome), moh_outcome_date = VALUES(moh_outcome_date), pepfar_cum_outcome = VALUES(pepfar_cum_outcome), pepfar_outcome_date = VALUES(pepfar_outcome_date), step = VALUES(step)
           SQL
         end
 
@@ -257,11 +247,9 @@ module ArtService
         def load_patients_who_stopped_treatment(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
-            SELECT patients.patient_id,
-              patients.cum_outcome,
-              patients.outcome_date, 2
+            SELECT patients.patient_id, patients.cum_outcome, patients.outcome_date, patients.cum_outcome, patients.outcome_date, 2
             FROM temp_current_state#{start ? '_start' : ''} AS patients
-            WHERE (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step = 1)
+            WHERE patients.patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step = 1)
             AND patients.outcomes = 1
             AND patients.state IN (
               SELECT pws.program_workflow_state_id state
@@ -271,7 +259,7 @@ module ArtService
               AND pws.program_workflow_state_id IN (2, 3, 6) -- Transferred out,Patient Died, Treatment stopped
             )
             GROUP BY patients.patient_id
-            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
+            ON DUPLICATE KEY UPDATE moh_cum_outcome = VALUES(moh_cum_outcome), moh_outcome_date = VALUES(moh_outcome_date), pepfar_cum_outcome = VALUES(pepfar_cum_outcome), pepfar_outcome_date = VALUES(pepfar_outcome_date), step = VALUES(step)
           SQL
         end
 
@@ -280,51 +268,46 @@ module ArtService
         def load_patients_without_drug_orders(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
-            SELECT patients.patient_id,
-                   'Unknown',
-                   NULL, 3
+            SELECT patients.patient_id, 'Unknown', NULL, 'Unknown', NULL,3
             FROM temp_earliest_start_date AS patients
             WHERE date_enrolled < DATE(#{start ? start_date : end_date}) #{start ? '' : '+ INTERVAL 1 DAY'}
               AND (patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2))
               AND (patient_id) NOT IN (SELECT patient_id FROM temp_max_drug_orders#{start ? '_start' : ''})
-            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
+            ON DUPLICATE KEY UPDATE moh_cum_outcome = VALUES(moh_cum_outcome), moh_outcome_date = VALUES(moh_outcome_date), pepfar_cum_outcome = VALUES(pepfar_cum_outcome), pepfar_outcome_date = VALUES(pepfar_outcome_date), step = VALUES(step)
           SQL
         end
 
-        # Loads all patients who are on treatment
-        def load_patients_on_treatment(start: false)
+        def load_patient_calculated_outcomes(start: false)
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
-            SELECT patients.patient_id, 'On antiretrovirals', COALESCE(cs.outcome_date, patients.start_date), 4
+            SELECT patients.patient_id,
+              	  IF(moh_defaulter_date > DATE(#{start ? start_date : end_date}) #{start ? '- INTERVAL 1 DAY' : ''}, 'On antiretrovirals', 'Defaulted'),
+                  IF(moh_defaulter_date > DATE(#{start ? start_date : end_date}) #{start ? '- INTERVAL 1 DAY' : ''}, COALESCE(cs.outcome_date, patients.start_date), moh_defaulter_date),
+                  IF(pepfar_defaulter_date > DATE(#{start ? start_date : end_date}) #{start ? '- INTERVAL 1 DAY' : ''}, 'On antiretrovirals', 'Defaulted'),
+                  IF(pepfar_defaulter_date > DATE(#{start ? start_date : end_date}) #{start ? '- INTERVAL 1 DAY' : ''}, COALESCE(cs.outcome_date, patients.start_date), pepfar_defaulter_date),
+                  4
             FROM temp_min_auto_expire_date#{start ? '_start' : ''} AS patients
             INNER JOIN temp_current_state#{start ? '_start' : ''} AS cs ON cs.patient_id = patients.patient_id AND cs.outcomes = 1
-            WHERE patients.#{@definition == 'pepfar' ? 'pepfar_defaulter_date' : 'moh_defaulter_date'} > DATE(#{start ? start_date : end_date}) #{start ? '- INTERVAL 1 DAY' : ''}
-            AND (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3))
-            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
-          SQL
-        end
-
-        def load_without_clinical_contact(start: false)
-          ActiveRecord::Base.connection.execute <<~SQL
-            INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
-            SELECT patients.patient_id, 'Defaulted', #{@definition == 'pepfar' ? 'pepfar_defaulter_date' : 'moh_defaulter_date'}, 5
-            FROM temp_current_medication#{start ? '_start' : ''} AS patients
-            INNER JOIN temp_current_state#{start ? '_start' : ''} AS cs ON cs.patient_id = patients.patient_id AND cs.outcomes = 1
-            WHERE patients.#{@definition == 'pepfar' ? 'pepfar_defaulter_date' : 'moh_defaulter_date'} <= DATE(#{start ? start_date : end_date}) #{start ? '- INTERVAL 1 DAY' : ''}
-            AND (patients.patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3, 4))
-            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
+            WHERE patients.patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3))
+            ON DUPLICATE KEY UPDATE moh_cum_outcome = VALUES(moh_cum_outcome), moh_outcome_date = VALUES(moh_outcome_date), pepfar_cum_outcome = VALUES(pepfar_cum_outcome), pepfar_outcome_date = VALUES(pepfar_outcome_date), step = VALUES(step)
           SQL
         end
 
         # Load defaulters
-        def load_defaulters(start: false)
+        def load_outcome_using_functions(start: false)
+          function_date = start ? "'#{start_date.to_date - 1.day}'" : end_date
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
-            SELECT patient_id, #{patient_outcome_function('patient_id', start)}, NULL, 6
+            SELECT patient_id,
+                   patient_outcome(patient_id, #{function_date}),
+                   NULL,
+                   pepfar_patient_outcome(patient_id, #{function_date}),
+                   NULL,
+                   5
             FROM temp_earliest_start_date
             WHERE date_enrolled < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY
-            AND (patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3, 4, 5))
-            ON DUPLICATE KEY UPDATE cum_outcome = VALUES(cum_outcome), outcome_date = VALUES(outcome_date), step = VALUES(step)
+              AND (patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3, 4))
+            ON DUPLICATE KEY UPDATE moh_cum_outcome = VALUES(moh_cum_outcome), moh_outcome_date = VALUES(moh_outcome_date), pepfar_cum_outcome = VALUES(pepfar_cum_outcome), pepfar_outcome_date = VALUES(pepfar_outcome_date), step = VALUES(step)
           SQL
         end
 

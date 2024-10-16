@@ -157,7 +157,7 @@ module ArtService
                     disaggregated_age_group(date(earliest_start_date.birthdate), date('#{end_date}')) AS age_group,
                     earliest_start_date.gender
                 FROM temp_current_medication tcm
-                INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = tcm.patient_id AND outcomes.cum_outcome = 'On antiretrovirals'
+                INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = tcm.patient_id AND outcomes.#{type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome = 'On antiretrovirals'
                 INNER JOIN temp_earliest_start_date AS earliest_start_date ON earliest_start_date.patient_id = tcm.patient_id AND earliest_start_date.gender IN ('M','F')
                 GROUP BY tcm.patient_id
             ) AS prescriptions

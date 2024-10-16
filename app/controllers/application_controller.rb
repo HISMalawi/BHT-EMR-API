@@ -63,6 +63,20 @@ class ApplicationController < ActionController::API
     nil
   end
 
+  def render_zpl(data)
+    raw = params.permit(:raw)[:raw]
+
+    unless raw && raw == 'true'
+      render json: data
+      
+      return
+    end
+
+    send_data data[:zpl], type: "application/label; charset=utf-8",
+                   stream: false,
+                   filename: "barcode-#{rand(10_000)}.lbl",
+                   disposition: "inline"
+  end
   # Takes search filters and converts them to an expression containing
   # inexact glob matchers that can be passed to `where` expressins.
   def make_inexact_filters(filters, fields = nil)

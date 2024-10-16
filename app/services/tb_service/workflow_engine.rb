@@ -99,6 +99,7 @@ module TbService
       TB_RECEPTION => %i[no_tb_reception? patient_should_proceed_for_treatment?],
 
       TB_REGISTRATION => %i[patient_needs_registration_number?
+                            not_transferring_to_another_facility?
                             patient_should_proceed_for_treatment?
                             patient_is_no_a_referral?],
 
@@ -298,6 +299,13 @@ module TbService
 
     def patient_should_go_for_appointment?
       (patient_has_dispensation? && patient_is_not_a_transfer_out? && patient_has_no_appointment? && patient_should_proceed_for_treatment?)
+    end
+
+    def not_transferring_to_another_facility?
+      tb_reception_ref('Patient transferred(external facility)')\
+              .where(value_coded: concept('YES').concept_id)\
+              .order(obs_datetime: :desc).first
+              .blank?
     end
 
     def patient_is_not_a_transfer_out?

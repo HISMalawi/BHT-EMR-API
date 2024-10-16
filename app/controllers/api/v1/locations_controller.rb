@@ -61,7 +61,7 @@ module Api
 
         return render json: "location_id or location_name required", status: :bad_request unless location
 
-        render json: service.print_location_label(location)
+        render_zpl(service.print_location_label(location))
       end
 
       private

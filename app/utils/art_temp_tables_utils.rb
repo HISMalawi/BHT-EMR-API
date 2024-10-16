@@ -7,6 +7,7 @@ module ArtTempTablesUtils
   def prepare_tables
     prepare_cohort_tables
     prepare_outcome_tables
+    prepare_maternal_tables
   end
 
   # rubocop:disable Metrics/MethodLength
@@ -42,7 +43,7 @@ module ArtTempTablesUtils
   def prepare_outcome_tables
     [false, true].each do |start|
       create_outcome_table(start:) unless check_if_table_exists("temp_patient_outcomes#{start ? '_start' : ''}")
-      unless count_table_columns("temp_patient_outcomes#{start ? '_start' : ''}") == 4
+      unless count_table_columns("temp_patient_outcomes#{start ? '_start' : ''}") == 6
         drop_temp_patient_outcome_table(start:)
       end
       unless check_if_table_exists("temp_max_drug_orders#{start ? '_start' : ''}")
@@ -65,6 +66,13 @@ module ArtTempTablesUtils
         create_temp_current_medication(start:)
       end
       drop_temp_current_state(start:) unless count_table_columns("temp_current_state#{start ? '_start' : ''}") == 6
+    end
+  end
+
+  def prepare_maternal_tables
+    create_temp_maternal_status unless check_if_table_exists('temp_maternal_status')
+    unless count_table_columns('temp_maternal_status') == 2
+      drop_temp_maternal_status
     end
   end
   # rubocop:enable Metrics/AbcSize
@@ -398,6 +406,31 @@ module ArtTempTablesUtils
   end
 
   # ===================================
+  # Maternal Status Table Management Region
+  # ===================================
+
+  def drop_temp_maternal_status
+    ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_maternal_status'
+    create_temp_maternal_status
+  end
+
+  def create_temp_maternal_status
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_maternal_status (
+        patient_id INT PRIMARY KEY,
+        maternal_status VARCHAR(5) NOT NULL
+      )
+    SQL
+    create_temp_maternal_status_indexes
+  end
+
+  def create_temp_maternal_status_indexes
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE INDEX idx_maternal_status ON temp_maternal_status (patient_id, maternal_status)
+    SQL
+  end
+
+  # ===================================
   #  Outcome Table Management Region
   # ===================================
 
@@ -496,8 +529,10 @@ module ArtTempTablesUtils
     ActiveRecord::Base.connection.execute <<~SQL
       CREATE TABLE IF NOT EXISTS temp_patient_outcomes#{start ? '_start' : ''} (
       patient_id INT NOT NULL,
-      cum_outcome VARCHAR(120) NOT NULL,
-      outcome_date DATE DEFAULT NULL,
+      moh_cum_outcome VARCHAR(120) NOT NULL,
+      moh_outcome_date DATE DEFAULT NULL,
+      pepfar_cum_outcome VARCHAR(120) NOT NULL,
+      pepfar_outcome_date DATE DEFAULT NULL,
       step INT DEFAULT 0,
       PRIMARY KEY (patient_id)
       )
@@ -507,10 +542,16 @@ module ArtTempTablesUtils
 
   def create_outcome_indexes(start: false)
     ActiveRecord::Base.connection.execute <<~SQL
-      CREATE INDEX idx_outcome#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (cum_outcome)
+      CREATE INDEX moh_outcome#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (moh_cum_outcome)
     SQL
     ActiveRecord::Base.connection.execute <<~SQL
-      CREATE INDEX idx_out_date#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (outcome_date)
+      CREATE INDEX moh_out_date#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (moh_outcome_date)
+    SQL
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE INDEX pepfar_outcome#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (pepfar_cum_outcome)
+    SQL
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE INDEX pepfar_out_date#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (pepfar_outcome_date)
     SQL
     ActiveRecord::Base.connection.execute <<~SQL
       CREATE INDEX idx_out_step#{start ? '_start' : ''} ON temp_patient_outcomes#{start ? '_start' : ''} (step)

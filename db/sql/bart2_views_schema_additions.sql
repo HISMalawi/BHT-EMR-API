@@ -1891,9 +1891,9 @@ DECLARE num_of_days INT;
 IF set_status = 'Patient died' THEN
 
   SET date_of_death = (
-    SELECT COALESCE(death_date, outcome_date)
+    SELECT COALESCE(death_date, moh_outcome_date)
     FROM temp_patient_outcomes INNER JOIN temp_earliest_start_date USING (patient_id)
-    WHERE cum_outcome = 'Patient died' AND patient_id = set_patient_id
+    WHERE moh_cum_outcome = 'Patient died' AND patient_id = set_patient_id
   );
 
   IF date_of_death IS NULL THEN

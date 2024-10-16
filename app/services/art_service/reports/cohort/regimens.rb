@@ -12,7 +12,7 @@ module ArtService
             FROM (
               SELECT tcm.patient_id, GROUP_CONCAT(DISTINCT(tcm.drug_id) ORDER BY tcm.drug_id ASC) AS drugs, DATE(tcm.start_date) prescription_date
               FROM temp_current_medication tcm
-              INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = tcm.patient_id AND outcomes.cum_outcome = 'On antiretrovirals'
+              INNER JOIN temp_patient_outcomes AS outcomes ON outcomes.patient_id = tcm.patient_id AND outcomes.moh_cum_outcome = 'On antiretrovirals'
               GROUP BY tcm.patient_id
             ) AS prescriptions
             LEFT JOIN (

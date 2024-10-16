@@ -37,6 +37,7 @@ module CxcaService
     END_STATE = 1 # End terminal for encounters graphCxCa_TEST = 'CXCA TEST'
     CXCA_RECEPTION = "CXCA RECEPTION"
     CXCA_TEST = "CXCA TEST"
+    CXCA_OUTCOME = "CxCa referral feedback"
     CXCA_SCREENING_RESULTS = "CXCA screening result"
     CANCER_TREATMENT = "CxCa treatment"
     APPOINTMENT = "APPOINTMENT"
@@ -46,7 +47,8 @@ module CxcaService
       INITIAL_STATE => CXCA_TEST,
       CXCA_TEST => CXCA_SCREENING_RESULTS,
       CXCA_SCREENING_RESULTS => CANCER_TREATMENT,
-      CANCER_TREATMENT => APPOINTMENT,
+      CANCER_TREATMENT => CXCA_OUTCOME,
+      CXCA_OUTCOME => APPOINTMENT,
       APPOINTMENT => END_STATE,
     }.freeze
 
@@ -54,6 +56,7 @@ module CxcaService
       CXCA_TEST => %i[show_cxca_test?],
       CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results? offer_cxca_screening?],
       CANCER_TREATMENT => %i[show_cancer_treatment? offer_cxca_screening?],
+      CXCA_OUTCOME => %i[require_referral_outcome?],
       APPOINTMENT => %i[show_appointment? offer_cxca_screening? patient_has_not_been_referred?],
     }.freeze
 =begin
@@ -131,7 +134,7 @@ module CxcaService
     def show_cxca_screening_results?
       encounter_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
       encounter = Encounter.joins(:type).where(
-        "patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) = DATE(?)",
+        "patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?)",
         @patient.patient_id, encounter_type.encounter_type_id, @date.to_date
       ).order(encounter_datetime: :desc).first
 
@@ -383,6 +386,29 @@ module CxcaService
       end
 
       return false
+    end
+
+    def require_referral_outcome?
+      screening_type = EncounterType.find_by name: CXCA_SCREENING_RESULTS
+      screening_encounter = Encounter.joins(:type).where(
+        "patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) <= DATE(?)",
+        @patient.patient_id, screening_type.encounter_type_id, @date
+      ).order(encounter_datetime: :desc).first
+
+      return false if screening_encounter.blank?
+
+      referral = screening_encounter.observations.find_by(
+        concept_id: ConceptName.find_by_name("Directly observed treatment option").concept_id,
+        value_coded: ConceptName.find_by_name("Referral").concept_id
+      )
+
+      return false if referral.blank?
+
+      outcome_type = EncounterType.find_by name: CXCA_OUTCOME
+      return Encounter.joins(:type).where(
+        "patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) > DATE(?)",
+        @patient.patient_id, outcome_type.encounter_type_id, screening_encounter.encounter_datetime.to_date
+      ).order(encounter_datetime: :desc).blank?
     end
 
     def concept(name)
