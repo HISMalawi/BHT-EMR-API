@@ -36,6 +36,11 @@ module Api
               service.dispose_item(params[:reallocation_code],params[:id],params[:doses_wasted],date , params[:waste_reason])
           end
 
+          if params[:id].present? && params[:adjust_stock].present?
+              date = params['date']&.to_date || Date.today
+              service.adjust_item(params[:reallocation_code],params[:id],params[:adjust_stock],date , params[:reason])
+          end
+
           # item = service.edit_batch_item(params[:id], permitted_params)
           if item.errors.empty?
             render json: item
