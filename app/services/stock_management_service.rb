@@ -181,7 +181,7 @@ class StockManagementService
         ),0) + 
         COALESCE((
           SELECT SUM(quantity) 
-          FROM openmrs_dev.pharmacy_obs 
+          FROM pharmacy_obs 
           WHERE (transaction_reason = 'Positive Adjustment' OR transaction_reason = 'Negative Adjustment') 
           AND batch_item_id = pharmacy_batch_items.id
         ), 0)  as dispensed_quantity,
@@ -211,7 +211,7 @@ class StockManagementService
         ),0) + 
         COALESCE((
           SELECT SUM(quantity) 
-          FROM openmrs_dev.pharmacy_obs 
+          FROM pharmacy_obs 
           WHERE (transaction_reason = 'Positive Adjustment' OR transaction_reason = 'Negative Adjustment') 
           AND batch_item_id = pharmacy_batch_items.id
         ), 0)  as dispensed_quantity,
