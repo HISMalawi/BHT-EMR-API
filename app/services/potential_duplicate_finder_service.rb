@@ -19,8 +19,7 @@ class PotentialDuplicateFinderService
       soundex_duplicates = []
       soundex_potentials = []
 
-      fetch_patients(use_batches: true).each do |batch|
-        batch.each do |potential_duplicate|
+      fetch_patients(use_batches: true).each do |potential_duplicate|
 
         next if already_checked.include?(primary_patient.person_id)
 
@@ -39,7 +38,6 @@ class PotentialDuplicateFinderService
         potential_duplicates << format_potential_duplicates(primary_patient, all_potential_duplicates)
 
         already_checked << primary_patient.person_id
-        end
       end
       save_matching(potential_duplicates)
       global_duplicates << potential_duplicates unless potential_duplicates.empty?
