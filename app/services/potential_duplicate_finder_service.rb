@@ -23,7 +23,14 @@ class PotentialDuplicateFinderService
                                 .where(patient_program: { program_id: 33, voided: 0 })
                                 .select('person.person_id, person.birthdate, person.gender, ...')
                 end,
-                person_address.neighborhood_cell AS home_village,
+                fetch_patients.each do |primary_patient|
+                   potential_duplicates = []
+      fuzzy_potential_duplicates = []
+                  soundex_duplicates = []
+                  soundex_potentials = []
+
+      fetch_patients(use_batches: true).each do |batch|
+        batch.each do |potential_duplicate|
                 person_address.county_district AS home_traditional_authority')
           .find_each do |primary_patient|
 
