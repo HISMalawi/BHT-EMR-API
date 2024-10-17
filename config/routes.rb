@@ -109,6 +109,9 @@ Rails.application.routes.draw do
       # OPD
       get 'OPD_drugslist' => 'drugs#OPD_drugslist'
 
+      #Totals
+      get 'totals' => 'totals#index'
+
       # Locations
       resources :locations do
         get('/label', to: redirect do |params, _request|
