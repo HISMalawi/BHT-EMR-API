@@ -6,7 +6,7 @@ class InactivityMigration < ActiveRecord::Migration[7.0]
   def change
     props = GlobalProperty
 
-    handle_policy(props:, property: 'inactivity_timeout', property_value: 15)
+    handle_policy(props:, property: 'inactivity_timeout', property_value: 900_000)
   end
 
   def handle_policy(props:, property:, property_value:)
