@@ -17,7 +17,12 @@ class PotentialDuplicateFinderService
           .where(patient_program: { program_id: 33, voided: 0 })
           .select('person.person_id, person.birthdate, person.gender,
                 person_name.given_name, person_name.family_name,
-                person_name.middle_name,person_address.address2 AS home_district,
+                def self.fetch_patients
+                      Person.joins(:names, :addresses)
+                                 .joins(patient: :patient_programs)
+                                .where(patient_program: { program_id: 33, voided: 0 })
+                                .select('person.person_id, person.birthdate, person.gender, ...')
+                end,
                 person_address.neighborhood_cell AS home_village,
                 person_address.county_district AS home_traditional_authority')
           .find_each do |primary_patient|
