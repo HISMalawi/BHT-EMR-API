@@ -12,30 +12,15 @@ class PotentialDuplicateFinderService
     already_checked = Set.new
     threshold_percent = YAML.load(File.read("#{Rails.root}/config/application.yml"), aliases: true)['deduplication']['match_percentage']
 
-    Person.joins(:names, :addresses)
-          .joins(patient: :patient_programs)
-          .where(patient_program: { program_id: 33, voided: 0 })
-          .select('person.person_id, person.birthdate, person.gender,
-                person_name.given_name, person_name.family_name,
-                person_name.middle_name,person_address.address2 AS home_district,
-                person_address.neighborhood_cell AS home_village,
-                person_address.county_district AS home_traditional_authority')
-          .find_each do |primary_patient|
+    fetch_patients.each do |primary_patient|
 
       potential_duplicates = []
       fuzzy_potential_duplicates = []
       soundex_duplicates = []
       soundex_potentials = []
 
-      Person.joins(:names, :addresses)
-            .joins(patient: :patient_programs)
-            .where(patient_program: { program_id: 33, voided: 0 })
-            .select('person.person_id, person.birthdate, person.gender,
-                  person_name.given_name, person_name.family_name,
-                  person_name.middle_name,person_address.address2 AS home_district,
-                  person_address.neighborhood_cell AS home_village,
-                  person_address.county_district AS home_traditional_authority')
-            .in_batches(of: 1000) do |potential_duplicate|
+      fetch_patients(use_batches: true).each do |batch|
+        batch.each do |potential_duplicate|
 
         next if already_checked.include?(primary_patient.person_id)
 
@@ -44,7 +29,7 @@ class PotentialDuplicateFinderService
       
         soundex_duplicates << soundex_potential_duplicates(primary_patient, potential_duplicate, already_checked)
         
-        
+
         soundex_potentials << soundex_fuzzy_match(soundex_duplicates.flatten!,
                                                   primary_patient, already_checked, threshold_percent) unless soundex_duplicates.flatten.blank?
         all_potential_duplicates = (fuzzy_potential_duplicates + soundex_potentials).uniq.flatten
@@ -54,17 +39,33 @@ class PotentialDuplicateFinderService
         potential_duplicates << format_potential_duplicates(primary_patient, all_potential_duplicates)
 
         already_checked << primary_patient.person_id
+        end
       end
       save_matching(potential_duplicates)
       global_duplicates << potential_duplicates unless potential_duplicates.empty?
     end
-
 
     global_duplicates
   end
 
   private
 
+    def self.fetch_patients(use_batches: false)
+      patients_query = Person.joins(:names, :addresses)
+                             .joins(patient: :patient_programs)
+                             .where(patient_program: { program_id: 33, voided: 0 })
+                             .select('person.person_id, person.birthdate, person.gender,
+                                      person_name.given_name, person_name.family_name, 
+                                      person_name.middle_name, person_address.address2 AS home_district,
+                                      person_address.neighborhood_cell AS home_village, 
+                                      person_address.county_district AS home_traditional_authority')
+      if use_batches
+        patients_query.in_batches(of: 1000)
+      else
+        patients_query.find_each
+      end
+    end
+  
     def self.perform_soundex_matching(primary_patient, secondary_patient)
       primary_patient.given_name.soundex == secondary_patient.given_name.soundex &&
         primary_patient.middle_name.soundex == secondary_patient.middle_name.soundex &&
