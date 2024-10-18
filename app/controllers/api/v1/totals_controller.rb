@@ -9,7 +9,7 @@ module Api
           total_districts: District.all.count,
           total_TA:TraditionalAuthority.all.count,
           total_village: Village.all.count,
-          total_relationships: Relationship.all.count,
+          total_relationships: RelationshipType.all.count,
           total_persons: Person.all.count,
           total_programs: Program.all.count
         }
