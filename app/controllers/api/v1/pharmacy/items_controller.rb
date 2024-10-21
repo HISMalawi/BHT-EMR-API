@@ -9,7 +9,7 @@ module Api
           permitted_params = params.permit(:drug_id, :current_quantity, :start_date, :end_date, :batch_number,
                                            :drug_name, :display_details)
 
-          permitted_params = permitted_params.merge('location_id' => User.current.location_id) if user_program.present?
+          permitted_params = permitted_params.merge(location_id: User.current.location_id) if user_program.present?
 
           items = service.find_batch_items(permitted_params)
           render json: paginate(items)
@@ -17,7 +17,7 @@ module Api
 
 
         def show
-          filters = show_params.merge('location_id' => User.current.location_id) if user_program.present?
+          filters = show_params.merge(location_id: User.current.location_id) if user_program.present?
           items = service.find_batch_items(filters)
           render json: paginate(items)
         end
