@@ -73,19 +73,27 @@ class Api::V1::ImmunizationReportController < ApplicationController
 
   def months_generator
     months = {}
-      count = 1
-      curr_date = Date.today
-
-      while count < 13
-        curr_date -= 1.month
+    count = 0
+    curr_date = Date.today
+    
+    while count < 13
+      if count == 0
+        months[curr_date.strftime('%Y/%m')] = [
+          curr_date.strftime('%B-%Y'),
+          "#{curr_date.beginning_of_month} to #{curr_date}"
+        ]
+      else
         months[curr_date.strftime('%Y/%m')] = [
           curr_date.strftime('%B-%Y'),
           "#{curr_date.beginning_of_month} to #{curr_date.end_of_month}"
         ]
-        count += 1
       end
-
-      months.to_a
+      
+      curr_date -= 1.month
+      count += 1
+    end
+    
+    months.to_a
   end
 
   def weeks_generator
