@@ -157,7 +157,7 @@ module ArtService
             cluster_key = DRUG_MAPPING[drug]
             cluster[cluster_key] << patient_id if cluster_key
             # unique cluster[cluster_key]
-            cluster[cluster_key].uniq!
+            cluster[cluster_key]&.uniq!
           end
         end
 
