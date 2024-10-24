@@ -120,7 +120,7 @@ module Api
       end
 
       def user
-        User.find(params[:id])
+        User.find(params[:id] || params[:user_id])
       end
 
       # validate user programs here
