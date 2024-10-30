@@ -370,8 +370,11 @@ module AncService
       label.draw_text(@age.to_s, 690, 264, 0, 2, 1, 1,
                       ((@age.positive? && @age < 16) || (@age > 40) ? true : false))
 
+      detailed_obstetric_history = PatientVisitLabel.new(@patient, @date)
+                                                    .detailed_obstetric_history_label(@date)
+
       {
-        zpl: label.print(1),
+        zpl: label.print(1) + detailed_obstetric_history[:zpl],
         data: {
           obstetric_history: {
             gravida: @gravida.to_s,
@@ -394,7 +397,7 @@ module AncService
             age: @age.to_s,
           },
           surgical_history: @surgicals,
-        },
+        }.merge(detailed_obstetric_history[:data].first),
       }
     end
 

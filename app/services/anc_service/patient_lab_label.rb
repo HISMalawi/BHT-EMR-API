@@ -12,6 +12,35 @@ module AncService
       @date = date
     end
 
+    def patient_labs
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT CONCAT(obs.value_modifier, COALESCE(obs.value_numeric, ''), COALESCE(obs.value_text, '')) result,
+              obs.obs_datetime test_date,
+              tn.name test
+        FROM `obs`
+          INNER JOIN `encounter` ON `encounter`.`voided` = 0 AND `encounter`.`encounter_id` = `obs`.`encounter_id`
+          INNER JOIN obs tt on tt.order_id = obs.order_id
+          INNER join concept_name tn on tn.concept_id = tt.value_coded
+        WHERE `obs`.`voided` = 0
+          AND (encounter.program_id = #{ANC_PROGRAM.id})
+          AND (encounter_type = #{EncounterType.find_by_name("LAB ORDERS").id})
+          AND (obs.concept_id in (SELECT concept_set.concept_id
+                                  FROM concept_set
+                                  WHERE concept_set in
+                                        (
+                                          SELECT concept_id 
+                                          FROM concept_name 
+                                          WHERE name = 'Lab test result indicator')
+                                        ))
+          AND (tt.concept_id = (SELECT concept_id
+                                FROM concept_name
+                                WHERE name = 'Test type'))
+
+          AND (obs.person_id = #{patient.id})
+        GROUP BY tt.value_coded
+      SQL
+    end
+
     def print
       syphil = {}
       @patient.encounters.where(["encounter_type IN (?) AND program_id = ?",
@@ -106,7 +135,7 @@ module AncService
                       )")
                          .where("obs.person_id = #{@patient.id}")
 
-      @hb = "#{syphil["HEPATITIS B TEST RESULT"]&.humanize} g/dl"
+      @hb = "#{syphil["HEPATITIS B TEST RESULT"]&.humanize}"
 
       # @hb1_date = hb["HB TEST RESULT DATE 1"] rescue nil
 
@@ -193,6 +222,27 @@ module AncService
       label.draw_line(180, 230, 250, 1, 0)
       label.draw_line(180, 260, 250, 1, 0)
 
+
+      extra_labs = patient_labs
+
+      if extra_labs.length > 0
+        label.draw_line(590, 80, 250, 1, 0)
+
+        
+        extra_labs.length.times do |i|
+          label.draw_line(590, 80 + (i+1) * 30, 250, 1, 0)
+        end
+      end
+      
+      extra_labs.each_with_index do |lab, i|
+        label.draw_text(lab["test"], 470, 56+((i+1) * 30), 0, 2, 1, 1, false)
+        label.draw_text(lab["test_date"].strftime("%Y-%m-%d"), 590, 56+((i+1) * 30), 0, 2, 1, 1, false)
+        label.draw_text(lab["result"], 730, 56+((i+1) * 30), 0, 2, 1, 1, false)
+      end
+
+      label.draw_line(590, 80, 1, extra_labs.length * 30, 0)
+      label.draw_line(720, 80, 1, extra_labs.length * 30, 0)
+      
       label.draw_text(@height.blank? ? "N/A" : "#{@height} CM", 270, 56, 0, 2, 1, 1, false)
       label.draw_text(@weight.blank? ? "N/A" : "#{@weight} KG", 270, 86, 0, 2, 1, 1, false)
       # label.draw_text(@who,270,136,0,2,1,1,false)
