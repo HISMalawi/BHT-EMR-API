@@ -15,7 +15,7 @@ module AncService
     def patient_labs
       ActiveRecord::Base.connection.select_all <<~SQL
         SELECT CONCAT(obs.value_modifier, COALESCE(obs.value_numeric, ''), COALESCE(obs.value_text, '')) result,
-              obs.obs_datetime test_date,
+              DATE(obs.obs_datetime) test_date,
               tn.name test
         FROM `obs`
           INNER JOIN `encounter` ON `encounter`.`voided` = 0 AND `encounter`.`encounter_id` = `obs`.`encounter_id`
@@ -56,7 +56,6 @@ module AncService
           end
         end
       end
-
       @encounter_datetime = syphil["encounter_date"]
 
       @syphilis = begin
@@ -115,41 +114,13 @@ module AncService
           ""
         end
 
-      hep_b = Observation.select("CONCAT(obs.value_modifier, COALESCE(obs.value_numeric, ''),  COALESCE(obs.value_text, '')) hepatitis_b, obs.obs_datetime hepatitis_b_result_date")
-                         .joins(:encounter)
-                         .joins("INNER JOIN obs tt on tt.order_id = obs.order_id")
-                         .where("encounter.program_id = #{ANC_PROGRAM.id}")
-                         .where("encounter_type  = #{EncounterType.find_by_name("LAB ORDERS").id}")
-                         .where("obs.concept_id in (
-                        SELECT concept_set.concept_id
-                          FROM concept_set
-                        WHERE concept_set in (
-                          SELECT concept_id  FROM concept_name WHERE name = 'Lab test result indicator'
-                        )
-                      )")
-                         .where("tt.concept_id = (
-                        SELECT concept_id  FROM concept_name WHERE name = 'Test type'
-                      )")
-                         .where("tt.value_coded = (
-                        SELECT concept_id  FROM concept_name WHERE name = 'Hepatitis B Test'
-                      )")
-                         .where("obs.person_id = #{@patient.id}")
+      @hepatitis_b = "#{syphil["HEPATITIS B TEST RESULT"]&.humanize}"
 
-      @hb = "#{syphil["HEPATITIS B TEST RESULT"]&.humanize}"
+      @hb = "#{syphil["HB TEST RESULT"]&.humanize}"
 
-      # @hb1_date = hb["HB TEST RESULT DATE 1"] rescue nil
+      @serum_glucose = "#{syphil["BLOOD GLUCOSE"]}"
 
-      @hb2 = begin
-          "#{hep_b[0]["hepatitis_b"]} g/dl"
-        rescue StandardError
-          nil
-        end
-
-      @hb2_date = begin
-          hep_b[0]["hepatitis_b_result_date"]
-        rescue StandardError
-          nil
-        end
+      @hb2_date = @encounter_datetime
 
       @cd4 = begin
           syphil["CD4 COUNT"]
@@ -222,8 +193,19 @@ module AncService
       label.draw_line(180, 230, 250, 1, 0)
       label.draw_line(180, 260, 250, 1, 0)
 
+      extra_labs = [patient_labs&.to_a, [
+        {
+          "test": 'Hepatitis B',
+          "test_date": @encounter_datetime,
+          "result": @hepatitis_b
+        },
+        {
+          "test": 'BG',
+          "test_date": @encounter_datetime,
+          "result": @serum_glucose
+        }
+      ]].flatten!&.map(&:symbolize_keys)
 
-      extra_labs = patient_labs
 
       if extra_labs.length > 0
         label.draw_line(590, 80, 250, 1, 0)
@@ -235,9 +217,9 @@ module AncService
       end
       
       extra_labs.each_with_index do |lab, i|
-        label.draw_text(lab["test"], 470, 56+((i+1) * 30), 0, 2, 1, 1, false)
-        label.draw_text(lab["test_date"].strftime("%Y-%m-%d"), 590, 56+((i+1) * 30), 0, 2, 1, 1, false)
-        label.draw_text(lab["result"], 730, 56+((i+1) * 30), 0, 2, 1, 1, false)
+        label.draw_text(lab[:test], 470, 56+((i+1) * 30), 0, 2, 1, 1, false)
+        label.draw_text(lab[:test_date], 590, 56+((i+1) * 30), 0, 2, 1, 1, false)
+        label.draw_text(lab[:result], 730, 56+((i+1) * 30), 0, 2, 1, 1, false)
       end
 
       label.draw_line(590, 80, 1, extra_labs.length * 30, 0)
