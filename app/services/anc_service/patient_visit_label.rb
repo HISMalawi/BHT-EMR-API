@@ -378,9 +378,14 @@ module AncService
             label.draw_text(sign[m].to_s, 28, (200 + (25 * m)), 0, 2, 1, 1, false)
           }
 
+          main_drugs = %w[Fefol TD SP]
+
           med = encounters[element]["UPDATE OUTCOME"]["OUTCOME"].humanize + "; " rescue ""
           oth = @drugs[element].map { |d, v|
+
+            next if main_drugs.include?(d)
             "#{d}: #{(v.to_s.match(/\.[1-9]/) ? v : v.to_i)}"
+
           }.join("; ") if @drugs[element].length > 0 rescue ""
 
           med = paragraphate(med.to_s + oth.to_s, 17, 5)
