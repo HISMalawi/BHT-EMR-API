@@ -19,7 +19,7 @@ class NidUtilizationReport
     @report = init_report
     addittional_groups
     process_data
-    report
+    flatten_the_report
   end
 
   private
@@ -52,7 +52,7 @@ class NidUtilizationReport
   def flatten_the_report
     result = []
     report.each do |age_group, age_group_data|
-      age_group_report.each_key do |gender|
+      age_group_data.each_key do |gender|
         result << process_age_group_report(age_group, gender, age_group_data[gender])
       end
     end
@@ -86,9 +86,9 @@ class NidUtilizationReport
       next unless GENDER.include?(gender)
       next unless pepfar_age_groups.include?(age_group)
 
-      report[age_group.to_s][gender.to_s][:total_visits] << row['patient']
-      report[age_group.to_s][gender.to_s][:nid_clients] << row['patient'] if row['nid_status'] != 'No NID'
-      report[age_group.to_s][gender.to_s][:new_nid] << row['patient'] if row['nid_status'] == 'NEW NID'
+      report[age_group.to_s][gender.to_s][:total_visits] << row['patient_id']
+      report[age_group.to_s][gender.to_s][:nid_clients] << row['patient_id'] if row['nid_status'] != 'No NID'
+      report[age_group.to_s][gender.to_s][:new_nid] << row['patient_id'] if row['nid_status'] == 'NEW NID'
 
       process_aggreggation_rows(report:, row:, age_group:, gender:)
     end
