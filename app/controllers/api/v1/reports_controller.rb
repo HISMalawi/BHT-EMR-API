@@ -25,6 +25,13 @@ module Api
         end
       end
 
+      def nid_utilization_report
+        start_date, end_date = params.require %i[start_date end_date]
+        stats = service.nid_utilization_report(start_date, end_date)
+
+        render json: stats
+      end
+
       def with_nids
         start_date, end_date = params.require %i[start_date end_date]
         stats = service.with_nids(start_date, end_date)
