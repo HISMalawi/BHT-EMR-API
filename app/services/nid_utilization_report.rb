@@ -43,9 +43,9 @@ class NidUtilizationReport
 
   def initialize_gender_metrics
     {
-      total_client_visits: [],
-      clients_with_nid: [],
-      new_nid_registered: []
+      total_visits: [],
+      nid_clients: [],
+      new_nid: []
     }
   end
 
@@ -86,9 +86,9 @@ class NidUtilizationReport
       next unless GENDER.include?(gender)
       next unless pepfar_age_groups.include?(age_group)
 
-      report[age_group.to_s][gender.to_s][:total_client_visits] << row['patient']
-      report[age_group.to_s][gender.to_s][:clients_with_nid] << row['patient'] if row['nid_status'] != 'No NID'
-      report[age_group.to_s][gender.to_s][:new_nid_registered] << row['patient'] if row['nid_status'] == 'NEW NID'
+      report[age_group.to_s][gender.to_s][:total_visits] << row['patient']
+      report[age_group.to_s][gender.to_s][:nid_clients] << row['patient'] if row['nid_status'] != 'No NID'
+      report[age_group.to_s][gender.to_s][:new_nid] << row['patient'] if row['nid_status'] == 'NEW NID'
 
       process_aggreggation_rows(report:, row:, age_group:, gender:)
     end
@@ -99,21 +99,21 @@ class NidUtilizationReport
     maternal_status_valid = row['maternal_status_valid']
 
     if gender == 'M'
-      report['All']['Male'][:total_client_visits] << row['patient_id']
-      report['All']['Male'][:clients_with_nid] << row['patient_id'] if row['nid_status'] != 'No NID'
-      report['All']['Male'][:new_nid_registered] << row['patient_id'] if row['nid_status'] == 'NEW NID'
+      report['All']['Male'][:total_visits] << row['patient_id']
+      report['All']['Male'][:nid_clients] << row['patient_id'] if row['nid_status'] != 'No NID'
+      report['All']['Male'][:new_nid] << row['patient_id'] if row['nid_status'] == 'NEW NID'
     elsif maternal_status&.match?(/pregnant/i) && maternal_status_valid
-      report['All']['FP'][:total_client_visits] << row['patient_id']
-      report['All']['FP'][:clients_with_nid] << row['patient_id'] if row['nid_status'] != 'No NID'
-      report['All']['FP'][:new_nid_registered] << row['patient_id'] if row['nid_status'] == 'NEW NID'
+      report['All']['FP'][:total_visits] << row['patient_id']
+      report['All']['FP'][:nid_clients] << row['patient_id'] if row['nid_status'] != 'No NID'
+      report['All']['FP'][:new_nid] << row['patient_id'] if row['nid_status'] == 'NEW NID'
     elsif maternal_status&.match?(/breastfeeding/i) && maternal_status_valid
-      report['All']['FBf'][:total_client_visits] << row['patient_id']
-      report['All']['FBf'][:clients_with_nid] << row['patient_id'] if row['nid_status'] != 'No NID'
-      report['All']['FBf'][:new_nid_registered] << row['patient_id'] if row['nid_status'] == 'NEW NID'
+      report['All']['FBf'][:total_visits] << row['patient_id']
+      report['All']['FBf'][:nid_clients] << row['patient_id'] if row['nid_status'] != 'No NID'
+      report['All']['FBf'][:new_nid] << row['patient_id'] if row['nid_status'] == 'NEW NID'
     else
-      report['All']['FNP'][:total_client_visits] << row['patient_id']
-      report['All']['FNP'][:clients_with_nid] << row['patient_id'] if row['nid_status'] != 'No NID'
-      report['All']['FNP'][:new_nid_registered] << row['patient_id'] if row['nid_status'] == 'NEW NID'
+      report['All']['FNP'][:total_visits] << row['patient_id']
+      report['All']['FNP'][:nid_clients] << row['patient_id'] if row['nid_status'] != 'No NID'
+      report['All']['FNP'][:new_nid] << row['patient_id'] if row['nid_status'] == 'NEW NID'
     end
     
   end
