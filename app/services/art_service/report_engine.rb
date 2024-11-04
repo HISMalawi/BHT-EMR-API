@@ -56,7 +56,7 @@ module ArtService
       'HYPERTENSION_REPORT' => ArtService::Reports::Clinic::HypertensionReport,
       'TX_NEW' => ArtService::Reports::Pepfar::TxNew,
       'MATERNAL_STATUS' => ArtService::Reports::MaternalStatus,
-      'NID_CUMULATIVE' => ArtService::Reports::Clinic::NidCumulativeReport,
+      'NID_CUMULATIVE_REPORT' => ArtService::Reports::Clinic::NidCumulativeReport,
     }.freeze
 
     def generate_report(type:, **kwargs)

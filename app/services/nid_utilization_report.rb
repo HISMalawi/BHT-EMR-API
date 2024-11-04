@@ -136,7 +136,7 @@ class NidUtilizationReport
       FROM person p
       INNER JOIN encounter e ON p.person_id = e.patient_id AND e.voided = 0 AND e.program_id = #{program_id}
       INNER JOIN encounter_type et ON e.encounter_type = et.encounter_type_id and et.retired = 0 and et.name != 'Lab'
-      LEFT JOIN patient_identifier pi ON e.patient_id = pi.patient_id AND pi.identifier_type = 28
+      LEFT JOIN patient_identifier pi ON e.patient_id = pi.patient_id AND pi.identifier_type = 28 and pi.voided = 0
       LEFT JOIN obs pregnant_or_breastfeeding ON pregnant_or_breastfeeding.person_id = e.patient_id
         AND pregnant_or_breastfeeding.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Breast feeding?', 'Breast feeding', 'Breastfeeding', 'Is patient pregnant?', 'patient pregnant') AND voided = 0)
         AND pregnant_or_breastfeeding.voided = 0
