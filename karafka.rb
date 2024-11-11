@@ -57,19 +57,19 @@ class KarafkaApp < Karafka::App
   #   ErrorTracker.send_error(error, type, details)
   # end
 
-  routes.draw do
-    # Uncomment this if you use Karafka with ActiveJob
-    # You need to define the topic per each queue name you use
-    # active_job_topic :default
-    topic :example do
-      # Uncomment this if you want Karafka to manage your topics configuration
-      # Managing topics configuration via routing will allow you to ensure config consistency
-      # across multiple environments
-      #
-      # config(partitions: 2, 'cleanup.policy': 'compact')
-      consumer ExampleConsumer
-    end
-  end
+  # routes.draw do
+  #   # Uncomment this if you use Karafka with ActiveJob
+  #   # You need to define the topic per each queue name you use
+  #   # active_job_topic :default
+  #   topic :example do
+  #     # Uncomment this if you want Karafka to manage your topics configuration
+  #     # Managing topics configuration via routing will allow you to ensure config consistency
+  #     # across multiple environments
+  #     #
+  #     # config(partitions: 2, 'cleanup.policy': 'compact')
+  #     consumer ExampleConsumer
+  #   end
+  # end
 end
 
 # Karafka now features a Web UI!
