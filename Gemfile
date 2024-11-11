@@ -80,3 +80,7 @@ gem 'whenever', '~> 1.0'
 
 # gems for reading excel and csv files
 gem 'roo', '~> 2.8'
+
+gem "karafka", ">= 2.4.0"
+
+gem "karafka-web", "~> 0.10.3"
