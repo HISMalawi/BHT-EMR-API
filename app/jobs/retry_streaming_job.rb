@@ -1,6 +1,9 @@
-class RetryStreamingJob < ApplicationJob
+class RetryStreamingJob < ApplicationJob  
   def perform
-    puts "Retry jobs"
-    # debugger
+    SolidQueue::FailedExecution.all\
+    .each do |job|
+      job.retry
+      job.destroy
+    end
   end
 end
