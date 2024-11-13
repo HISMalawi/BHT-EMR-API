@@ -15,11 +15,11 @@ module ArtService
     end
 
     def visit_complete?
-      next_encounter === nil
+      next_encounter(with_user_properties: false) === nil
     end
 
     # Retrieves the next encounter for bound patient
-    def next_encounter
+    def next_encounter(with_user_properties: true)
       state = INITIAL_STATE
       loop do
         state = next_state state
@@ -37,7 +37,7 @@ module ArtService
           next
         end
 
-        return htn_transform(encounter_type) if valid_state?(state)
+        return htn_transform(encounter_type) if valid_state?(state, with_user_properties:)
       end
 
       nil
@@ -182,14 +182,16 @@ module ArtService
                .exists?
     end
 
-    def valid_state?(state)
-      return false if encounter_exists?(encounter_type(state)) || !art_activity_enabled?(state)
+    def valid_state?(state, with_user_properties: true)
+      return false if encounter_exists?(encounter_type(state)) || !art_activity_enabled?(state, with_user_properties:)
 
       (STATE_CONDITIONS[state] || []).all? { |condition| send(condition) }
     end
 
-    def art_activity_enabled?(state)
+    def art_activity_enabled?(state, with_user_properties: true)
       return true if state == FAST_TRACK
+
+      return true if with_user_properties
 
       @activities.include?(state)
     end

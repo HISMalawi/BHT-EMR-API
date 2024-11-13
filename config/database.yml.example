@@ -20,7 +20,7 @@ development:
     <<: *default
     database: openmrs_limbe
     migration_paths: db/migrate
-    processing_wait_time: 10_000
+    processing_delay_time: 300:
 
 test:
   <<: *default
