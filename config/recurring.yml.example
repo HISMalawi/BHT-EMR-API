@@ -1,8 +1,13 @@
 default: &default
   retry_streaming:
     class: RetryStreamingJob
-    queue: background
+    queue: retry
     schedule: every minute
+    priority: 1
+  stream_incomplete_visits:
+    class: StreamingIncompleteVisitsJob
+    queue: incomplete_visits
+    schedule: at 1am every day
     priority: 1
 
 development: 
