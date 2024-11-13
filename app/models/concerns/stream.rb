@@ -23,7 +23,6 @@ module Stream
     end
   rescue StandardError => e
     Rails.logger("Error streaming: #{e.message}")
-    raise ActiveRecord::Rollback
   end
 
   def service
