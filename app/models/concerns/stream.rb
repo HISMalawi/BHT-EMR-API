@@ -8,7 +8,7 @@ module Stream
   end
 
   def stream
-    debugger
+    # debugger
     visit_complete = service.visit_complete?
     if visit_complete
       QueuePatientForStreamingJob

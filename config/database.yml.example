@@ -1,31 +1,43 @@
 # Mysql configurations
 default: &default
-  host: 127.0.0.1
-  port: 3308
+  host: localhost
+  port: 3306
   adapter: mysql2
   encoding: utf8
   collation: utf8_unicode_ci
-  username: your_scoped_username
-  password: your_secret_password
+  username: root
+  password: letmein
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 20 } %>
   checkout_timeout: 5000
   variables:
-    sql_mode: STRICT_TRANS_TABLES
+    sql_mode: traditional
 
 development:
-  <<: *default
-  database: openmrs_dev
+  primary: 
+    <<: *default
+    database: openmrs_limbe
+  queue:
+    <<: *default
+    database: openmrs_limbe
+    migration_paths: db/migrate
+    processing_wait_time: 10_000
 
 test:
   <<: *default
-  database: openmrs_test
+  database: openmrs
 
 production:
   <<: *default
-  database: openmrs_prod
+  database: openmrs_kawale
 
 # Uncomment out the following and update them accordingly if
 # you need to sync hts and anc to RDS.
+
+# metadata:
+#   host: "10.44.0.94"
+#   username: "metadata_user"
+#   password: "letmein"
+#   database: "openmrs"
 
 #hts:
 #  adapter: mysql2
@@ -51,10 +63,6 @@ healthdata:
   host: localhost
   pool: 500
 
-# concepts_merge_db:
-#  adapter: mysql2
-#  username: root
-#  database: openmrs
-#  password:
-#  host: localhost
-#  pool: 500
+concepts_merge_db:
+  <<: *default
+  database: openmrs_limbe
