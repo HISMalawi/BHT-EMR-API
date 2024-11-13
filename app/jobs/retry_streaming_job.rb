@@ -1,6 +1,6 @@
 class RetryStreamingJob < ApplicationJob
   def perform
     puts "Retry jobs"
-    debugger
+    # debugger
   end
 end
