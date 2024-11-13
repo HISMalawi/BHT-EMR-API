@@ -4,6 +4,8 @@ class Encounter < VoidableRecord
   self.table_name = :encounter
   self.primary_key = :encounter_id
 
+  include Stream
+
   # before_save :before_save
   after_create :after_create
   after_void :after_void

@@ -22,7 +22,7 @@ Bundler.require(*Rails.groups)
 module BHTEmrApi
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 6.1
+    config.load_defaults 7.0
     config.eager_load_paths << Rails.root.join('lib')
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers
@@ -38,5 +38,7 @@ module BHTEmrApi
     config.time_zone = 'Africa/Blantyre' # Your local time zone
     config.active_record.default_timezone = :local
     config.active_record.time_zone_aware_attributes = false
+
+    config.solid_queue.use_skip_locked = false
   end
 end

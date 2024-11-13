@@ -15,16 +15,16 @@ namespace :nlims do
     raise 'Global property current_health_center_id not set' unless health_center_id
 
     lims.create_user(location: Location.find(health_center_id).name,
-                     app_name: config['lims_app_name'],
-                     username: config['lims_username'],
-                     password: config['lims_password'],
+                     app_name: lims_config['lims_app_name'],
+                     username: lims_config['lims_username'],
+                     password: lims_config['lims_password'],
                      token: connection.token,
-                     partner: config['lims_partner'])
+                     partner: lims_config['lims_partner'])
 
-    print "Successfully created lims user: #{config['lims_username']}"
+    print "Successfully created lims user: #{lims_config['lims_username']}"
   end
 
-  def config
-    @config ||= YAML.load_file(Rails.root.join('config', 'application.yml'))
+  def lims_config
+    @lims_config ||= YAML.load_file(Rails.root.join('config', 'application.yml'))
   end
 end

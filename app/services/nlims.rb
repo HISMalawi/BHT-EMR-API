@@ -28,28 +28,28 @@ class Nlims
   end
 
   def initialize
-    @api_prefix = config['lims_prefix'] || 'v1'
-    @api_protocol = config['lims_protocol'] || 'http'
-    @api_host = config['lims_host']
-    @api_url = config['lims_url']
-    @api_port = config['lims_port']
-    @username = config['lims_username']
-    @password = config['lims_password']
+    @api_prefix = lims_config['lims_prefix'] || 'v1'
+    @api_protocol = lims_config['lims_protocol'] || 'http'
+    @api_host = lims_config['lims_host']
+    @api_url = lims_config['lims_url']
+    @api_port = lims_config['lims_port']
+    @username = lims_config['lims_username']
+    @password = lims_config['lims_password']
     @on_auth = nil
   end
 
   # We initially require a temporary authentication for user creation.
   # All other requests must start with an auth
   def temp_auth
-    response = get "authenticate/#{config['lims_default_user']}/#{config['lims_default_password']}"
+    response = get "authenticate/#{lims_config['lims_default_user']}/#{lims_config['lims_default_password']}"
 
-    @connection = OpenStruct.new(user: config['lims_default_user'], token: response['token'])
+    @connection = OpenStruct.new(user: lims_config['lims_default_user'], token: response['token'])
   end
 
   def connect(connection, on_auth: nil)
     @on_auth = on_auth if on_auth
 
-    return auth unless connection&.user == @username # user has changed in config file
+    return auth unless connection&.user == @username # user has changed in lims_config file
 
     @connection = connection
   end
@@ -203,8 +203,8 @@ class Nlims
 
   private
 
-  def config
-    @config ||= YAML.load_file("#{Rails.root}/config/application.yml")
+  def lims_config
+    @lims_config ||= YAML.load_file("#{Rails.root}/config/application.yml")
   end
 
   def tests

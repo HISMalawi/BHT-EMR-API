@@ -14,6 +14,10 @@ module ArtService
       @activities = load_user_activities
     end
 
+    def visit_complete?
+      next_encounter === nil
+    end
+
     # Retrieves the next encounter for bound patient
     def next_encounter
       state = INITIAL_STATE

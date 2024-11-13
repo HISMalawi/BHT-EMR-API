@@ -23,6 +23,10 @@ class WorkflowService
     @engine.next_encounter
   end
 
+  def visit_complete?
+    @engine.visit_complete?
+  end
+
   private
 
   # Creates a workflow engine for the given program_id and patient_id

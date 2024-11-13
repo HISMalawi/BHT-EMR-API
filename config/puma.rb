@@ -2,6 +2,8 @@
 
 require 'etc'
 
+plugin :solid_queue
+
 num_cores = Etc.nprocessors
 num = num_cores > 2 ? num_cores - 2 : 1
 
