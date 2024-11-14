@@ -26,8 +26,8 @@ else
 fi
 
 # cp local_queue configs
-cp config/recurring.yml.example config/recurring.yml
-cp config/queue.yml.example config/queue.yml
+cp ./config/recurring.yml.example ./config/recurring.yml
+cp ./config/queue.yml.example ./config/queue.yml
 
 # migrate local_queue_tables
 rails solid_queue:install
@@ -39,37 +39,42 @@ else
     exit 1
 fi
 
+#run DB schema
+rails db:schema:dump
 
 # check if tables already exists in database
-if rails db:schema:dump | grep -q "solid_queue"; then
+if cat ./db/schema.rb | grep -q "solid_queue"; then
     echo "solid_queue tables already exists in database"
 else
     echo "solid_queue tables not found in database migrating ..."
 
-    rails r db/queue_schema.rb    
+    rails r ./db/queue_schema.rb    
 fi
 
 # migrate solid queue tables
 
 if [ $? -eq 0 ]; then
     echo "solid_queue tables migrated successfully"
-    
     # remove the schema file
-    rm db/queue_schema.rb
+    rm ./db/queue_schema.rb
 else
     echo "solid_queue tables migration failed"
     exit 1
 fi
 
+
+# revert whatever changes solidqueue:setup script has done to this file
+git checkout ./config/environments/production.rb
+
 # run update_art_metadata_sh
-bash bin/update_art_metadata.sh $env
+bash ./bin/update_art_metadata.sh $env
 
 # cdr:
 #   url: http://localhost:3001/api/v1/stream
 #   username: admin
 #   password: password
 # add cdr config in application.yml file like above
-output_file="config/application.yml"
+output_file="./config/application.yml"
 
 if [ -f "$output_file" ]; then
     sed -i "s/cdr:\s*url:.*/cdr:\n  url: http:\/\/localhost:3001\/api\/v1\/stream/g" $output_file
@@ -98,5 +103,5 @@ echo -e "${GREEN}${BOLD} Your Application is now setup for streaming ${RESET}"
 echo ""
 echo "but BEFORE YOU START your application "
 echo "Please enter correct CDR details in application.yml file"
-echo "And database.yml file has queue configurations, see database.yml.example for details"
+echo "and make sure database.yml file has queue configurations, see database.yml.example for details"
 

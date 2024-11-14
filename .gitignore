@@ -34,6 +34,7 @@ config/*.yml
 *.pid.lock
 *.pid
 db/schema.rb
+db/queue_schema.rb
 
 .ruby-version
 
