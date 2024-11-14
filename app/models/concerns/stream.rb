@@ -22,7 +22,7 @@ module Stream
         )
     end
   rescue StandardError => e
-    Rails.logger("Error streaming: #{e.message}")
+    Rails.logger.error("Error streaming: #{e.message}")
   end
 
   def service

@@ -1,5 +1,6 @@
-class StreamingService
+# frozen_string_literal: true
 
+class StreamingService
   attr_accessor :patient, :program_id, :date
 
   def initialize(patient_id:, program_id:, date:)
@@ -31,8 +32,7 @@ class StreamingService
     # raise encounters.inspect
   end
 
-  def stream_patient
+  def stream_patient; end
 
-  end
-
+  def stream_incomplete_visits; end
 end
