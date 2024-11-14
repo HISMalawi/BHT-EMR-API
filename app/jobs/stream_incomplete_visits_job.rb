@@ -1,13 +1,12 @@
 class StreamingIncompleteVisitsJob
   def perform
     date = (Date.today - 1)
-    
     program_incomplete_visits(date:).each { |patient_id|  
       QueuePatientForStreamingJob.perform_later(
           patient_id:,
           program_id:,
           date: date.strtotime('%Y-%m-%d'),
-          complete: true
+          complete: false
         )
       }
   end
