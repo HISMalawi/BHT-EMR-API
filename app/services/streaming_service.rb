@@ -1,56 +1,18 @@
 # frozen_string_literal: true
 
 class StreamingService
-  attr_accessor :patient, :program_id, :date, :client
+  attr_accessor :patient, :program_id, :date, :client, :complete
 
-  def initialize(patient_id:, program_id:, date:)
+  def initialize(patient_id:, program_id:, date:, complete:)
     setup_remote_config
     @patient = Patient.find(patient_id)
     @program_id = program_id
     @date = date
+    @complete = complete
   end
 
   def generate_visit_data
     patient.generate_visit_data(program_id:, date:)
-  end
-
-  def stream_complete_visit
-    puts "Running stream complete visit for patient: #{@patient.name}"
-    stream_patient("complete")
-  end
-
-  # complete | incomplete
-  
-  def stream_incomplete_visits
-    stream('incomplete')
-  end
-  
-  def stream_missed_visits
-    complete = engine.visit_complete?
-    return stream('incomplete') unless complete
-
-    stream('com')
-
-  def stream_incomplete_visits
-    program_incomplete_visits = {
-      1 => ->() { 
-        res = ArtService::DataCleaningTool.new(@date, @date, 'INCOMPLETE VISITS').results
-        res.keys
-      }
-    }
-
-    patient_ids = program_incomplete_visits.fetch(@program_id, nil)
-
-    if patient_ids
-      patient_ids.call().map { |patient_id| { 
-        patient_id: patient_id,
-        program_id: @program_id,
-        complete: false,
-        date: @date
-      }}
-    else
-      []
-    end
   end
 
   private_class_method def setup_remote_config
@@ -65,15 +27,18 @@ class StreamingService
     @client = RestClient::Resource.new(
       config['url'],
       user: config['usernae'],
-      password: config['password']
+      password: config['password'],
+      headers: { 'Content-Type' => 'application/json' }
     )
   end
   
-  private_class_method def stream_patient(status:)
+  def stream_patient
+    raise 'Invalid visit status' unless [true, false].include?(complete)
+
     payload = to_compressed_json(
       generate_visit_data\
         .merge(
-          { status: }
+          { complete: }
         ) 
     )
     client.post(payload)
