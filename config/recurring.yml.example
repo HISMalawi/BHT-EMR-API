@@ -9,6 +9,16 @@ default: &default
     queue: incomplete_visits
     schedule: at 1am every day
     priority: 1
+  stream_missed_visits:
+    class: StreamMissedVisitsJob
+    queue: finished
+    schedule: at 1am every day
+    priority: 10
+  clear_finished:
+    class: ClearFinishedJob
+    queue: finished
+    schedule: at 1am every day
+    priority: 10
 
 development: 
   <<: *default

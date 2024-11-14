@@ -35,4 +35,6 @@ class StreamingService
   def stream_patient; end
 
   def stream_incomplete_visits; end
+
+  def stream_missed_visits; end
 end
