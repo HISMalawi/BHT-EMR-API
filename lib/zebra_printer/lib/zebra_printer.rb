@@ -181,7 +181,7 @@ module ZebraPrinter # :nodoc:
       def draw_text(data, x, y, r = 0, font_selection = 1, horizontal_multiplier = 1, vertical_multiplier = 1,
                     reverse = false)
         data = begin
-          data.gsub("'", "\\\\'")
+          data#.gsub("'", "\\\\'")
         rescue StandardError
           data
         end
@@ -190,7 +190,7 @@ module ZebraPrinter # :nodoc:
 
       # Word wrapping, column wrapping, label wrapping text code, see draw_text for more information
       def draw_multi_text(data, options = {})
-        data = data.gsub("'", "\\\\'")
+        # data = data.gsub("'", "\\\\'")
         @font_size = options[:font_size] unless options[:font_size].nil?
         unless options[:font_horizontal_multiplier].nil?
           @font_horizontal_multiplier = options[:font_horizontal_multiplier]
