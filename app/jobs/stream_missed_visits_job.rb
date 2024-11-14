@@ -11,7 +11,7 @@ class StreamMissedVisitsJob
             patient_id:,
             program_id: @program_id,
             date: @date.strftime('%Y-%m-%d'),
-            complete: engine.visit_complete?
+            complete: engine(patient_id).visit_complete?
           )
     end
   end
@@ -33,10 +33,10 @@ class StreamMissedVisitsJob
     end
   end
 
-  def engine
+  def engine (patient_id) 
     WorkflowService.new(
       program_id: @program_id, 
-      patient_id: nil, 
+      patient_id:, 
       date: @date.strftime('%Y-%m-%d')
     )
   end
