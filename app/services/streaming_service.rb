@@ -46,12 +46,4 @@ class StreamingService
     Rails.logger.error("Failed to send stream data", e.message)
     raise e.response
   end
-
-  private_class_method def engine
-    WorkflowService.new(
-      program_id:, 
-      patient_id:, 
-      date:
-    )
-  end
 end
