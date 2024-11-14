@@ -30,6 +30,27 @@ class StreamingService
     return stream('incomplete') unless complete
 
     stream('com')
+
+  def stream_incomplete_visits
+    program_incomplete_visits = {
+      1 => ->() { 
+        res = ArtService::DataCleaningTool.new(@date, @date, 'INCOMPLETE VISITS').results
+        res.keys
+      }
+    }
+
+    patient_ids = program_incomplete_visits.fetch(@program_id, nil)
+
+    if patient_ids
+      patient_ids.call().map { |patient_id| { 
+        patient_id: patient_id,
+        program_id: @program_id,
+        complete: false,
+        date: @date
+      }}
+    else
+      []
+    end
   end
 
   private_class_method def setup_remote_config
