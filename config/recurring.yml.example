@@ -5,7 +5,7 @@ default: &default
     schedule: every minute
     priority: 1
   stream_incomplete_visits:
-    class: StreamingIncompleteVisitsJob
+    class: StreamIncompleteVisitsJob
     queue: incomplete_visits
     schedule: at 1am every day
     priority: 1

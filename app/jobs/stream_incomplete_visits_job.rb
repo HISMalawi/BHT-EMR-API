@@ -1,4 +1,4 @@
-class StreamingIncompleteVisitsJob
+class StreamIncompleteVisitsJob < ApplicationJob
   def perform
     date = (Date.today - 1)
     program_incomplete_visits(date:).each { |patient_id|  

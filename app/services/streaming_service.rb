@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class StreamingService
-  attr_accessor :patient, :program_id, :date, :client, :complete
+  attr_accessor :patient, :program_id, :date, :client, :complete, :config
+  include Utils::JsonUtils
 
   def initialize(patient_id:, program_id:, date:, complete:)
     setup_remote_config
@@ -15,7 +16,7 @@ class StreamingService
     patient.generate_visit_data(program_id:, date:)
   end
 
-  private_class_method def setup_remote_config
+  def setup_remote_config
     @config = YAML.safe_load(
       File.read('config/application.yml'), aliases: true
     )['cdr']
@@ -33,14 +34,17 @@ class StreamingService
   end
   
   def stream_patient
-    raise 'Invalid visit status' unless [true, false].include?(complete)
+    raise 'Invalid visit status' unless [true, false].include?(@complete)
 
-    payload = to_compressed_json(
-      generate_visit_data\
-        .merge(
-          { complete: }
-        ) 
-    )
+    payload = 
+    # to_compressed_json(
+      {
+        complete:,
+        patient: patient,
+        visit_data: generate_visit_data.to_a,
+        location: Location.current
+      }
+    # )
     client.post(payload)
   rescue RestClient::ExceptionWithResponse => e
     Rails.logger.error("Failed to send stream data", e.message)

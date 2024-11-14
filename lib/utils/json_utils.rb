@@ -1,10 +1,9 @@
 require 'zlib'
 
-module JsonUtils
-  class << self
+module Utils
+  module JsonUtils
     def to_compressed_json(obj)
-      json_data = obj.to_json
-      Zlib::Deflate.deflate(json_data)
+      Zlib::Deflate.deflate(obj)
     end
   end
 end

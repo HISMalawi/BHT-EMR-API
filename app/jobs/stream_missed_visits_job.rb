@@ -1,6 +1,6 @@
-class StreamMissedVisitsJob
+class StreamMissedVisitsJob < ApplicationJob
   def perform
-    @date = Date.today
+    @date = Date.today - 1
     @program_id = 1
     
     missed_patients = queued_visits - todays_emr_visits
