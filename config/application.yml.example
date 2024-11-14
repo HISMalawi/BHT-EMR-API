@@ -1,7 +1,7 @@
-kafka:
-  url: localhost:9092
-  client_id: cdr
-  secret: e85418687ab33131edacd932aff40eed20b42e08a62b6436d3882d6ee5e1c56d
+cdr:
+  url: http://localhost:3001/api/v1/stream
+  username: admin
+  password: password
 
 
 # Comment out parameter below to enable syncing with lims through the REST API.

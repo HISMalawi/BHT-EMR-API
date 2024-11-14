@@ -11,20 +11,7 @@ class StreamingService
   end
 
   def generate_visit_data
-    Encounter.where(patient_id: @patient.patient_id, program_id: @program_id)\
-            .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
-            .includes(
-              %i[type location program observations],
-              patient: [
-                :patient_identifiers, 
-                person: %i[
-                  names 
-                  person_attributes
-                ]
-              ],
-              provider: [:names],
-              orders: [:drug_order]
-            )
+    patient.generate_visit_data(program_id:, date:)
   end
 
   def stream_complete_visit
@@ -42,7 +29,7 @@ class StreamingService
     complete = engine.visit_complete?
     return stream('incomplete') unless complete
 
-    stream('complete')
+    stream('com')
   end
 
   private_class_method def setup_remote_config
@@ -55,7 +42,7 @@ class StreamingService
     if config.empty?
 
     @client = RestClient::Resource.new(
-      ['stream_user'],
+      config['url'],
       user: config['usernae'],
       password: config['password']
     )

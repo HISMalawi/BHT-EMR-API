@@ -185,4 +185,22 @@ result['auto_expire_date']&.to_date || nil if result.present?
     ArtService::Reports::Pepfar::TptStatus.new(start_date: Date.today - 6.months, end_date: Date.today,
                                                patient_id: id).find_report
   end
+
+
+  def generate_visit_data(program_id:, date:)
+    Encounter.where(patient_id:, program_id:)\
+            .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+            .includes(
+              %i[type location program observations],
+              patient: [
+                :patient_identifiers, 
+                person: %i[
+                  names 
+                  person_attributes
+                ]
+              ],
+              provider: [:names],
+              orders: [:drug_order]
+            )
+  end
 end
