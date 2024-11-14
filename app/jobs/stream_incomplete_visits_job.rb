@@ -1,13 +1,23 @@
 class StreamingIncompleteVisitsJob
   def perform
-    # TODO: waiting for andrew
-
-    QueuePatientForStreamingJob
-        .perform_later(
-          patient_id: self.patient_id,
-          program_id: self.program_id,
-          date: self.encounter_datetime.strftime('%Y-%m-%d'),
+    date = (Date.today - 1)
+    
+    program_incomplete_visits(date:).each { |patient_id|  
+      QueuePatientForStreamingJob.perform_later(
+          patient_id:,
+          program_id:,
+          date: date.strtotime('%Y-%m-%d'),
           complete: true
         )
+      }
+  end
+    
+  # TODO: make this dynamic for all programs
+  def program_incomplete_visits(date:)
+    ArtService::DataCleaningTool.new(
+      start_date: date.beginning_of_day,
+      end_date: date.end_of_day,
+      tool_name: 'INCOMPLETE VISITS'
+    ).results&.keys
   end
 end

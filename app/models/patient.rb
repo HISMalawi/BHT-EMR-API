@@ -189,7 +189,7 @@ result['auto_expire_date']&.to_date || nil if result.present?
 
   def generate_visit_data(program_id:, date:)
     Encounter.where(patient_id:, program_id:)\
-            .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+            .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
             .includes(
               %i[type location program observations],
               patient: [
