@@ -41,11 +41,11 @@ class StreamingService
       {
         complete:,
         patient: patient,
-        visit_data: generate_visit_data.to_a,
+        visit_data: generate_visit_data.as_json,
         location: Location.current
       }
     # )
-    client.post(payload)
+    client.post({ payload: })
   rescue RestClient::ExceptionWithResponse => e
     Rails.logger.error("Failed to send stream data", e.message)
     raise e.response
