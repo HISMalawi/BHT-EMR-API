@@ -300,17 +300,15 @@ module AncService
       }
 
       @drugs = {}
-      @patient.encounters.where(["(encounter_type = ? OR encounter_type = ?) AND encounter_datetime >= ? AND encounter_datetime <= ?
-            AND program_id = ?", EncounterType.find_by_name("TREATMENT").id, EncounterType.find_by_name("DISPENSING").id,
-                                 @current_range[0]["START"], @current_range[0]["END"], PROGRAM.id]).order("encounter_datetime DESC").each { |e|
-        @drugs[e.encounter_datetime.strftime("%d/%b/%Y")] = {} if !@drugs[e.encounter_datetime.strftime("%d/%b/%Y")]
-        
-        e.orders.each { |o|
-        
-          @drugs[e.encounter_datetime.strftime("%d/%b/%Y")][o.drug_order.drug.name[0,
-                                                                                     o.drug_order.drug.name.index(" ")]] = o.drug_order.quantity
-        }
-      }
+      orders = @patient.orders.where(start_date: @current_range[0]["START"]..@current_range[0]["END"])
+      encounter_date = orders&.first.encounter.encounter_datetime.strftime("%d/%b/%Y") if orders.present?
+      orders.each do |o|
+        drug_order = o.drug_order
+        struct = drug_order.dosage_struct
+        @drugs[encounter_date] ||= {}
+        @drugs[encounter_date][struct[:drug_name]] = drug_order&.quantity
+      end
+      
 
       label = ZebraPrinter::Lib::StandardLabel.new
 
@@ -350,7 +348,6 @@ module AncService
         encounter = encounters[element]
         @i = @i + 1
         visit = {}
-
         if element == @date.to_date.strftime("%d/%b/%Y")
           td = (@drugs[element]["TD"] > 0 ? 1 : "") rescue ""
 
