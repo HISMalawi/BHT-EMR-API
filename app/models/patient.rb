@@ -176,7 +176,7 @@ class Patient < VoidableRecord
       order by orders.auto_expire_date desc
       limit 1
     SQL
-result['auto_expire_date']&.to_date || nil if result.present?
+    result['auto_expire_date']&.to_date || nil if result.present?
   end
 
   def tpt_status
@@ -186,21 +186,19 @@ result['auto_expire_date']&.to_date || nil if result.present?
                                                patient_id: id).find_report
   end
 
-
-  def generate_visit_data(program_id:, date:)
+  def visit_data(program_id:, date:)
     Encounter.where(patient_id:, program_id:)\
-            .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
-            .includes(
-              %i[type location program observations],
-              patient: [
-                :patient_identifiers, 
-                person: %i[
-                  names 
-                  person_attributes
-                ]
-              ],
-              provider: [:names],
-              orders: [:drug_order]
-            )
+             .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
+             .as_json(
+               ignore: true,
+               include: {
+                 observations: {},
+                 orders: {
+                   include: {
+                     drug_order: {}
+                   }
+                 }
+               }
+             )
   end
 end

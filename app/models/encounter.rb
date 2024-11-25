@@ -30,6 +30,12 @@ class Encounter < VoidableRecord
   #             conditions: 'DATE(encounter.encounter_datetime) = CURRENT_DATE()')
 
   def as_json(options = {})
+    if options[:ignore]
+      options.delete(:ignore)
+
+      return super(options)
+    end
+
     super(options.merge(
       include: {
         type: {},

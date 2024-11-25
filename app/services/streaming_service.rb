@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
+require 'socket'
+
 class StreamingService
   attr_accessor :patient, :program_id, :date, :client, :complete, :config
+
   include Utils::JsonUtils
 
   def initialize(patient_id:, program_id:, date:, complete:)
@@ -12,18 +15,15 @@ class StreamingService
     @complete = complete
   end
 
-  def generate_visit_data
-    patient.generate_visit_data(program_id:, date:)
-  end
-
   def setup_remote_config
     @config = YAML.safe_load(
       File.read('config/application.yml'), aliases: true
     )['cdr']
-    
-    raise 'Streaming config not found or not properly set, 
-           please refer to the application.yml.example'\
+
     if config.empty?
+      raise 'Streaming config not found or not properly set,
+             please refer to the application.yml.example'
+    end
 
     @client = RestClient::Resource.new(
       config['url'],
@@ -32,22 +32,31 @@ class StreamingService
       headers: { 'Content-Type' => 'application/json' }
     )
   end
-  
+
   def stream_patient
     raise 'Invalid visit status' unless [true, false].include?(@complete)
 
-    payload = 
-    # to_compressed_json(
+    payload = to_compressed_json(
       {
-        complete:,
-        patient: patient,
-        visit_data: generate_visit_data.as_json,
-        location: Location.current
+        meta: {
+          program_id:,
+          ip_address:,
+          location_id: Location.current.location_id
+        },
+        payload: {
+          complete:,
+          patient: patient.as_json,
+          visit: patient.visit_data(program_id:, date:)
+        }
       }
-    # )
+    )
     client.post({ payload: })
   rescue RestClient::ExceptionWithResponse => e
-    Rails.logger.error("Failed to send stream data", e.message)
+    Rails.logger.error('Failed to send stream data', e.message)
     raise e.response
+  end
+
+  def ip_address
+    Socket.ip_address_list.detect(&:ipv4_private?)&.ip_address
   end
 end
