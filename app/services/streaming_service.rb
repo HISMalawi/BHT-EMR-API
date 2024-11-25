@@ -46,7 +46,7 @@ class StreamingService
         payload: {
           complete:,
           patient: patient.as_json,
-          visit: patient.visit_data(program_id:, date:)
+          encounters: patient.visit_data(program_id:, date:)
         }
       }
     )
