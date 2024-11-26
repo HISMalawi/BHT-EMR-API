@@ -186,19 +186,36 @@ class Patient < VoidableRecord
                                                patient_id: id).find_report
   end
 
+  def current_program(program_id:)
+    PatientProgram\
+      .where(patient_id:, program_id:)\
+      .as_json(
+      include: {
+        ignore: true,
+        patient_states: {}
+      }
+    )
+  end
+
   def visit_data(program_id:, date:)
     Encounter.where(patient_id:, program_id:)\
              .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))\
              .as_json(
                ignore: true,
                include: {
+                 provider: {
+                  include: {
+                    names: {}
+                  }
+                 },
                  observations: {},
                  orders: {
                    include: {
+                     lims_acknowledgement_status: {},
                      drug_order: {}
                    }
                  }
-               }
+               },
              )
   end
 end
