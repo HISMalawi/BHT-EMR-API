@@ -16,13 +16,6 @@ class ApplicationController < ActionController::API
 
   def authenticate
     authentication_token = request.headers['Authorization']
-    site_id = request.headers['site_id']
-
-    unless site_id
-      errors = ['Site id required in header']
-      render json: { errors: }, status: :unauthorized
-      return false
-    end
 
     unless authentication_token
       errors = ['Authorization token required']
@@ -38,7 +31,7 @@ class ApplicationController < ActionController::API
     end
 
     User.current = user
-    Location.current = Location.find(site_id)
+    Location.current = user.location
     true
   end
 
