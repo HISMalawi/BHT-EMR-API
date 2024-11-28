@@ -5,6 +5,7 @@ class User < RetirableRecord
   self.primary_key = :user_id
 
   belongs_to :person, foreign_key: :person_id
+  belongs_to :location, foreign_key: :site_id
 
   has_many :notification_alert_recipients, class_name: 'NotificationAlertRecipient', foreign_key: :user_id
   has_many :properties, class_name: 'UserProperty', foreign_key: :user_id
@@ -30,10 +31,15 @@ class User < RetirableRecord
     Thread.current['current_user'] = user
   end
 
+  def current_location
+    Location.current
+  end
+
   def as_json(options = {})
     super(options.merge(
       except: %i[password salt secret_question secret_answer
                  authentication_token token_expiry_time],
+      methods: %i[current_location],
       include: {
         roles: { include: {} },
         programs: {},

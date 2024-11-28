@@ -4,7 +4,6 @@ require 'require_params'
 require 'user_service'
 
 class ApplicationController < ActionController::API
-  before_action :check_location
   before_action :authenticate
 
   protected
@@ -17,6 +16,14 @@ class ApplicationController < ActionController::API
 
   def authenticate
     authentication_token = request.headers['Authorization']
+    site_id = request.headers['site_id']
+
+    unless site_id
+      errors = ['Site id required in header']
+      render json: { errors: }, status: :unauthorized
+      return false
+    end
+
     unless authentication_token
       errors = ['Authorization token required']
       render json: { errors: }, status: :unauthorized
@@ -31,19 +38,20 @@ class ApplicationController < ActionController::API
     end
 
     User.current = user
+    Location.current = Location.find(site_id)
     true
   end
 
-  def check_location
-    location_id = GlobalProperty.where(property: CURRENT_LOCATION_PROPERTY).first.property_value
-    unless location_id
-      render json: { errors: ['Current location not set'] }, status: :service_unavailable
-      return false
-    end
+  # def check_location
+  #   location_id = GlobalProperty.where(property: CURRENT_LOCATION_PROPERTY).first.property_value
+  #   unless location_id
+  #     render json: { errors: ['Current location not set'] }, status: :service_unavailable
+  #     return false
+  #   end
 
-    Location.current = Location.find(location_id)
-    true
-  end
+  #   Location.current = Location.find(location_id)
+  #   true
+  # end
 
   def paginate(queryset)
     params.permit(:paginate, :page, :page_size)
