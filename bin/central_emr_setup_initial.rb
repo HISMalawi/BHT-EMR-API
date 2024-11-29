@@ -26,17 +26,18 @@ end
 metadata = File.join(Rails.root, 'db', 'sql', 'openmrs_metadata_1_7.sql')
 load_sql(metadata)
 
+
 Dir[Rails.root.join('db/migrate/*.rb')].each do |file|
   begin
     next unless file.end_with?('.rb')
-
+    
     version = File.basename(file).split('_').first.to_i
     puts "Running migration: #{file}"
-
+    
     migration = ActiveRecord::MigrationContext.new(
       Rails.root.join('db/migrate'), 
       ActiveRecord::Base.connection.schema_migration
-    )
+      )
 
     migration.migrate(version)
   rescue => e
@@ -45,7 +46,9 @@ Dir[Rails.root.join('db/migrate/*.rb')].each do |file|
   end
 end
 
-
+User.first.update_attributes(
+  site_id: 1
+)&.save!
 
 
 
