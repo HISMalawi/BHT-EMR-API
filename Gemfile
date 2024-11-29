@@ -6,7 +6,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby '~> 3.2.0'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 7.0.6'
+gem 'rails', '~> 8.0.0'
 # Use sqlite3 as the database for Active Record
 gem 'mysql2'
 # Use Puma as the app server
@@ -37,7 +37,6 @@ gem 'bootsnap', '>= 1.1.0', require: false
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 gem 'rack-cors'
 
-gem 'composite_primary_keys'
 gem 'rest-client'
 
 gem 'test-unit'
@@ -49,9 +48,9 @@ gem 'rswag-ui'
 # gem 'his_emr_api_lab', '~> 1.1.30'
 # gem 'his_emr_api_radiology', '~> 0.0.8'
 
-gem 'emr_ohsp_interface', '~> 2.2.3'
+# gem 'emr_ohsp_interface', '~> 2.2.3'
 
-gem 'his_emr_api_lab', '~> 2.0.4'
+gem 'his_emr_api_lab', git: 'https://github.com/EGPAFMalawiHIS/his_emr_api_lab.git', branch: 'streaming'
 
 # gem 'his_emr_api_radiology', '~> 1.0.9'
 

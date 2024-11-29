@@ -1,10 +1,7 @@
 # frozen_string_literal: true
-
-require 'composite_primary_keys'
-
 class DrugIngredient < ActiveRecord::Base
   self.table_name = 'drug_ingredient'
-  self.primary_keys = %i[ingredient_id concept_id]
+  self.primary_key = %i[ingredient_id concept_id]
 
   belongs_to :concept, foreign_key: :concept_id
   belongs_to :ingredient, foreign_key: :ingredient_id, class_name: 'Concept'
