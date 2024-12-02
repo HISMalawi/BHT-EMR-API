@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Relationship < VoidableRecord
+  include Locatable
   self.table_name = :relationship
   self.primary_key = :relationship_id
 

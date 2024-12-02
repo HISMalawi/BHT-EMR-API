@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class UserRole < ApplicationRecord
+  include Locatable
   self.table_name = :user_role
   self.primary_key = :role, :user_id
 

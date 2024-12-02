@@ -31,10 +31,6 @@ class Location < RetirableRecord
     city_village
   end
 
-  def site_id
-    Location.current_health_center.location_id.to_s
-  end
-
   def related_locations_including_self
     if parent
       parent.children + [self]

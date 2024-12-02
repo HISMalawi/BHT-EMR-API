@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Observation < VoidableRecord
+  include Locatable
   ORDER_SERIALIZE_OPTIONS = { drug_order: {} }.freeze
   CONCEPT_SERIALIZE_OPTIONS = { concept_names: {} }.freeze
   DRUG_SERIALIZE_OPTIONS = { drug_cms: {} }.freeze

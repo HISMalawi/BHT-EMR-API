@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class PersonName < VoidableRecord
+  include Locatable
   self.table_name = 'person_name'
   self.primary_key = 'person_name_id'
 

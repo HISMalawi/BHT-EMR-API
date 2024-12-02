@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class DrugOrder < ApplicationRecord
+  include Locatable
   self.table_name = :drug_order
   self.primary_key = :order_id
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Order < VoidableRecord
+  include Locatable
   self.table_name = :orders
   self.primary_key = :order_id
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class PatientIdentifier < VoidableRecord
+  include Locatable
   self.table_name = :patient_identifier
   self.primary_key = :patient_identifier_id
 

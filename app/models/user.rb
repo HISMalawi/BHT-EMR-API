@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 class User < RetirableRecord
+  include Locatable
+  
   self.table_name = :users
   self.primary_key = :user_id
 
   belongs_to :person, foreign_key: :person_id
-  belongs_to :location, foreign_key: :site_id
+  belongs_to :location, foreign_key: :site_id, primary_key: :location_id
 
   has_many :notification_alert_recipients, class_name: 'NotificationAlertRecipient', foreign_key: :user_id
   has_many :properties, class_name: 'UserProperty', foreign_key: :user_id
@@ -32,7 +34,7 @@ class User < RetirableRecord
   end
 
   def current_location
-    Location.current
+    self.location
   end
 
   def as_json(options = {})

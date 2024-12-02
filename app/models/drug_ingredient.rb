@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 class DrugIngredient < ActiveRecord::Base
+  include Locatable
   self.table_name = 'drug_ingredient'
   self.primary_key = %i[ingredient_id concept_id]
 

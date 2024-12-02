@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Patient < VoidableRecord
+  include Locatable
   include ModelUtils
 
   after_void :void_related_models

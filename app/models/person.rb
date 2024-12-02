@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Person < VoidableRecord
+  include Locatable
   after_void :void_related_models
 
   self.table_name = 'person'

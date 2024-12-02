@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class PatientState < VoidableRecord
+  include Locatable
   self.table_name = 'patient_state'
   self.primary_key = 'patient_state_id'
 
