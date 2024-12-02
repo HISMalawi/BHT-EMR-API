@@ -41,7 +41,7 @@ class StreamingService
         meta: {
           program_id:,
           ip_address:,
-          location_id: Location.current.location_id
+          location_id: Location.current_health_center&.id
         },
         payload: {
           complete:,
@@ -51,10 +51,13 @@ class StreamingService
         }
       }
     )
-    client.post({ payload: })
+
+    Rails.logger.info("Sending stream data for #{patient.name}")
+
+    client.post(payload)
   rescue RestClient::ExceptionWithResponse => e
-    Rails.logger.error('Failed to send stream data', e.message)
-    raise e.response
+    Rails.logger.error("Failed to send stream data #{e}")
+    raise e.message
   end
 
   def ip_address
