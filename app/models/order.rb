@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
 class Order < VoidableRecord
-  include Locatable
   self.table_name = :orders
   self.primary_key = :order_id
-
+  
   after_void :void_records
-
+  
+  include Locatable
+  
   belongs_to :order_type
   belongs_to :concept
   belongs_to :encounter

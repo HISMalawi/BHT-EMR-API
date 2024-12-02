@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 class Relationship < VoidableRecord
-  include Locatable
   self.table_name = :relationship
   self.primary_key = :relationship_id
-
+  
+  include Locatable
+  
   belongs_to :person, class_name: 'Person', foreign_key: :person_a,
                       optional: true
   belongs_to :relation, class_name: 'Person', foreign_key: :person_b,

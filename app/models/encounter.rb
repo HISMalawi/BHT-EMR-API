@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 class Encounter < VoidableRecord
-  include Locatable
   self.table_name = :encounter
   self.primary_key = :encounter_id
+  
+  include Locatable
 
   # before_save :before_save
   after_create :after_create
