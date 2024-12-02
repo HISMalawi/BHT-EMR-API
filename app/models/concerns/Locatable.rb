@@ -11,9 +11,14 @@ module Locatable
   included do
     default_scope { where(site_id: current_location_id) } if has_site_id_column?
     
-    validates :site_id, presence: true
+    validates :site_id, presence: true if has_site_id_column?
+
+    before_save :set_site_id
   end
-  
+
+  def set_site_id
+    self.site_id ||= current_location_id
+  end
   
   class_methods do
     
