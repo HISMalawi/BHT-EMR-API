@@ -9,11 +9,15 @@ module Locatable
   extend ActiveSupport::Concern
   
   included do
-    default_scope { where(site_id: current_location_id) } if has_site_id_column?
     
-    validates :site_id, presence: true if has_site_id_column?
+    if has_site_id_column?
 
-    before_save :set_site_id
+      default_scope { where(site_id: current_location_id) }
+      validates :site_id, presence: true 
+      before_save :set_site_id
+      
+    end
+
   end
 
   def set_site_id

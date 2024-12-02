@@ -19,7 +19,7 @@ class AppendSiteIdToTransactionalTables < ActiveRecord::Migration[7.0]
   end
 
   def current_health_center_id
-    GlobalProperty.find_by_property('current_health_center_id')&.property_value  
+    Location.current_health_center&.id  
   end
 end
 
