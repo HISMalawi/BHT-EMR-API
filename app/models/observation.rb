@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class Observation < VoidableRecord
-  include Locatable
   ORDER_SERIALIZE_OPTIONS = { drug_order: {} }.freeze
   CONCEPT_SERIALIZE_OPTIONS = { concept_names: {} }.freeze
   DRUG_SERIALIZE_OPTIONS = { drug_cms: {} }.freeze
@@ -19,12 +18,14 @@ class Observation < VoidableRecord
       }
     }
   }.freeze
-
+  
   after_void :after_void
-
+  
   self.table_name = :obs
   self.primary_key = :obs_id
-
+  
+  include Locatable
+  
   belongs_to :encounter, optional: true
   belongs_to :order, optional: true
   belongs_to :concept
