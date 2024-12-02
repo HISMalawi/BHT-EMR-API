@@ -3,4 +3,7 @@
 require_relative "../config/environment"
 require "solid_queue/cli"
 
+# Keep using single Rails.logger for everything, but for this instance of Ruby env set log level INFO in dev 
+Rails.logger.level = Logger::INFO if Rails.env.local?
+
 SolidQueue::Cli.start(ARGV)

@@ -81,4 +81,4 @@ gem 'whenever', '~> 1.0'
 # gems for reading excel and csv files
 gem 'roo', '~> 2.8'
 
-gem "solid_queue", "1.0.1"
+gem "solid_queue", "1.0.2"
