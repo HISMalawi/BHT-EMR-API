@@ -1,3 +1,4 @@
+# rubocop:disable Style/Documentation, Metrics/AbcSize, Metrics/MethodLength
 module PasswordPolicy
   extend ActiveSupport::Concern
 
@@ -12,7 +13,7 @@ module PasswordPolicy
   def user_last_used_passwords_props(user:)
     UserProperty
       .where(user_id: user.id)
-      .where("property like ?", ["last_used_password_%"])
+      .where('property like ?', ['last_used_password_%'])
   end
 
   def passwords_match?(saved_password:, password_input:)
@@ -21,15 +22,13 @@ module PasswordPolicy
   end
 
   def password_valid?(user:, password_input:)
-    if password_input.length < 6
-      raise UserUpdateError, "Password must be at least 6 characters in length"
-    end
+    raise UserUpdateError, 'Password must be at least 6 characters in length' if password_input.length < 6
 
     # check if password is same as any of the last used passwords
     if user_last_used_passwords_props(user:).any?\
        { |up| passwords_match?(saved_password: up.property_value, password_input:) }
-       
-      raise UserUpdateError, "Password cannot be the same as previously used passwords"
+
+      raise UserUpdateError, 'Password cannot be the same as previously used passwords'
     end
 
     true
@@ -38,15 +37,15 @@ module PasswordPolicy
   def add_password_to_user_props(user:)
     pass_count = 1
     random = Random.rand(1..6)
-    passwords_properties = self.user_last_used_passwords_props(user:).pluck("property")
+    passwords_properties = user_last_used_passwords_props(user:).pluck('property')
 
-    if (passwords_properties.length >= 6)
+    if passwords_properties.length >= 6
       # delete random saved password
       UserProperty
         .where(user_id: user.id)
-        .where("property = ?", "last_used_password_#{random}")
+        .where('property = ?', "last_used_password_#{random}")
         .delete_all
-        
+
       passwords_properties.delete("last_used_password_#{random}")
     end
 
@@ -56,7 +55,7 @@ module PasswordPolicy
           .create(
             user_id: user.id,
             property: "last_used_password_#{pass_count}",
-            property_value: Digest::SHA512.hexdigest("#{params[:password]}#{user.salt}"),
+            property_value: Digest::SHA512.hexdigest("#{params[:password]}#{user.salt}")
           )
         break
       else
@@ -75,3 +74,5 @@ module PasswordPolicy
     end
   end
 end
+
+# rubocop:enable Style/Documentation, Metrics/AbcSize, Metrics/MethodLength
