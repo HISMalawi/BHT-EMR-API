@@ -57,6 +57,7 @@ module ArtService
       'TX_NEW' => ArtService::Reports::Pepfar::TxNew,
       'MATERNAL_STATUS' => ArtService::Reports::MaternalStatus,
       'NID_CUMULATIVE_REPORT' => ArtService::Reports::Clinic::NidCumulativeReport,
+      'TX_HIV_HTN' => ArtService::Reports::Pepfar::TxHivHtn
     }.freeze
 
     def generate_report(type:, **kwargs)
