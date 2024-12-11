@@ -52,6 +52,10 @@ class Person < VoidableRecord
     ))
   end
 
+  def cell_phone_number
+    person_attributes.find_by(type: 12)&.value
+  end
+
   def void_related_models(reason)
     names.each { |name| name.void(reason) if name['voided'].zero? }
     addresses.each { |address| address.void(reason) if address['voided'].zero? }

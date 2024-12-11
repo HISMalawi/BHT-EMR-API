@@ -19,6 +19,7 @@ class StreamMissedVisitsJob < ApplicationJob
   def todays_emr_visits
     Patient.distinct.joins(:encounters)
            .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
+           .where('encounter.encounter_type IN (?)', 1)\
            .pluck(:patient_id)
   end
 

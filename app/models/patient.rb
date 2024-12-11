@@ -26,6 +26,8 @@ class Patient < VoidableRecord
   end
 
   def as_json(options = {})
+    return super(options) if options.fetch(:ignore, false)
+
     super(options.merge(
       include: {
         person: {

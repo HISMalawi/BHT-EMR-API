@@ -13,6 +13,14 @@ class HtnWorkflow
                       description: 'HTN temporary encounter'
   end
 
+  def htn_client?(patient, date)
+    date = date.to_date
+    htn_min_age = global_property('htn.screening.age.threshold')&.property_value&.to_i
+    htn_min_age ||= HTN_SCREENING_MIN_AGE
+    age = patient.age(today: date)
+    htn_min_age <= (age.nil? ? 0 : age) || patient.programs.collect(&:name).include?('HYPERTENSION PROGRAM')
+  end
+
   private
 
   def check_htn_workflow(patient, task, date)
@@ -160,12 +168,5 @@ class HtnWorkflow
       end
     end
     false
-  end
-
-  def htn_client?(patient, date)
-    htn_min_age = global_property('htn.screening.age.threshold')&.property_value&.to_i
-    htn_min_age ||= HTN_SCREENING_MIN_AGE
-    age = patient.age(today: date)
-    htn_min_age <= (age.nil? ? 0 : age) || patient.programs.collect(&:name).include?('HYPERTENSION PROGRAM')
   end
 end
