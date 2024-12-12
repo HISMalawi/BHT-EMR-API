@@ -70,7 +70,7 @@ module OpdService
                    .joins('INNER JOIN patient_identifier i ON i.patient_id = person.person_id
         RIGHT JOIN person_address a ON a.person_id = person.person_id
         RIGHT JOIN person_name n ON n.person_id = person.person_id')\
-                   .where(n: { date_created: start_date..end_date })
+                   .where(n: { date_created: start_date&.to_date.beginning_of_day..end_date&.to_date.end_of_day })
                    .select('person.*, a.state_province district, i.identifier nid,
         a.township_division ta, a.city_village village,
         n.given_name, n.family_name').order('n.date_created DESC')
