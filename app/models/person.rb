@@ -13,6 +13,7 @@ class Person < VoidableRecord
   has_many :addresses, class_name: 'PersonAddress', foreign_key: :person_id
   has_many :relationships, class_name: 'Relationship', foreign_key: :person_a
   has_many :person_attributes, class_name: 'PersonAttribute', foreign_key: :person_id
+  has_many :identifiers, class_name: 'PatientIdentifier', foreign_key: :patient_id
   has_many :observations, class_name: 'Observation', foreign_key: :person_id do
     def find_by_concept_name(name)
       concept_name = ConceptName.find_by_name(name)
@@ -50,6 +51,10 @@ class Person < VoidableRecord
         person_attributes: { methods: %i[type] }
       }
     ))
+  end
+
+  def preferred_address
+    addresses.where(preferred: true).first || addresses.max_by(&:date_created)
   end
 
   def cell_phone_number

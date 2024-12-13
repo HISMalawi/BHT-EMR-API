@@ -12,6 +12,10 @@ class PatientIdentifier < VoidableRecord
     super(options.merge(methods: %i[type]))
   end
 
+  def identifier_type_name
+    type.name
+  end
+
   def self.calculate_checkdigit(number)
     # This is Luhn's algorithm for checksums
     # http://en.wikipedia.org/wiki/Luhn_algorithm

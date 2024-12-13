@@ -5,7 +5,7 @@ module ArtService
     include ModelUtils
     include Reports::Pepfar::Utils
     attr_reader :report, :patient_id, :program_id, :date, :complete, :end_date
-    
+
     def initialize(patient_id:, program_id:, date:)
       @program_id = program_id
       @date = date.to_date
@@ -18,7 +18,7 @@ module ArtService
       patient = patient_data
       visit_data = visit_breakdown
 
-      report.table&.merge(patient)&.to_json
+      report.table&.merge(patient)
     end
 
     private
@@ -38,14 +38,14 @@ module ArtService
     def visit
       hash = OpenStruct.new
       hash.visit_date = date
-      hash.initial_visit = obs_value('Type of patient') == 'New patient'
+      hash.initial_visit = obs_value("Type of patient") == "New patient"
       hash.transfer_in = patient_history.transfer_in
       hash.outcome = patient_visit.outcome
       hash.outcome_date = patient_visit.outcome_date
       hash.date_enrolled = PatientsEngine.new(program: Program.find(program_id)).find_patient_earliest_start_date(Patient.find(patient_id))
       hash.date_completed = PatientProgram.find_by(patient_id: patient_id, program_id: program_id)&.date_completed
 
-      report['visit'] = hash.table
+      report["visit"] = hash.table
     end
 
     def htn_management
@@ -56,7 +56,7 @@ module ArtService
       hash.risk_factors = []
       hash.htn_drugs = PatientService.new.current_htn_drugs_summary(Patient.find(patient_id), date)
 
-      report['htn_management'] = hash.table
+      report["htn_management"] = hash.table
     end
 
     def vitals
@@ -67,8 +67,8 @@ module ArtService
       hash.bmi = patient_visit.bmi
       hash.systolic_bp = obs_value("Systolic blood pressure")
       hash.diastolic_bp = obs_value("Diastolic blood pressure")
-      
-      report['vitals'] = hash.table
+
+      report["vitals"] = hash.table
     end
 
     def staging
@@ -82,8 +82,8 @@ module ArtService
       hash.cd4_count = obs_value("CD4 count")
       hash.cd4_count_date = obs_value("Cd4 count datetime")
       hash.cd4_test_location = obs_value("CD4 count location")
-      
-      report['staging'] = hash.table
+
+      report["staging"] = hash.table
     end
 
     def consultation
@@ -101,8 +101,8 @@ module ArtService
       # hash.allegic_to_cotrimoxazole = obs_value("Allegic to cotrimoxazole")
       hash.medication_prescribed = RegimenEngine.new(program: program("HIV program")).find_dosages(patient: Patient.find(patient_id), date:)
       hash.medication_ordered = hash.medication_prescribed
-      
-      report['consultation'] = hash.table
+
+      report["consultation"] = hash.table
     end
 
     def medication_and_adherence
@@ -113,14 +113,14 @@ module ArtService
       hash.doses_missed = calculate_doses_missed
       hash.reason_for_poor_adherence = obs_value("Reason for poor treatment adherence")
       hash.agree_with_adherence = hash.reason_for_poor_adherence.present? ? "No" : "Yes"
-      
-      report['medication_and_adherence'] = hash.table
+
+      report["medication_and_adherence"] = hash.table
     end
 
     def lab_orders
       hash = OpenStruct.new
       hash.previous_lab_orders = Lab::OrdersSearchService.find_orders(patient_id:)
-      report['lab_orders'] = hash.table
+      report["lab_orders"] = hash.table
     end
 
     def reception
@@ -133,7 +133,7 @@ module ArtService
       hash.visit_type = obs_value("Visit type")
       hash.arv_number = patient_history.arv_number
 
-      report['reception'] = hash.table
+      report["reception"] = hash.table
     end
 
     def clinic_registration
@@ -146,7 +146,7 @@ module ArtService
       hash.location_of_confirmatory_hiv_test = obs_value("Confirmatory HIV test location")
       hash.date_of_confirmatory_hiv_test = obs_value("Confirmatory HIV test date")
 
-      report['clinic_registration'] = hash.table
+      report["clinic_registration"] = hash.table
     end
 
     def guardian_relationship_type
@@ -185,33 +185,32 @@ module ArtService
               date_created
             ],
             include: {
-              addresses: {
-                only: %w[
-                  state_province city_village township_division
-                  address2 neighborhood_cell county_district
-                ],
-              },
               names: {
                 only: [
                   :family_name, :given_name, :middle_name,
                 ],
               },
+              identifiers: {
+                methods: [:identifier_type_name],
+                only: [:identifier, :identifier_type],
+              },
             },
-            methods: [:cell_phone_number],
+            methods: [:preferred_address, :cell_phone_number],
           },
         },
       )
 
-      patient["person"]["addresses"] = patient["person"]["addresses"]&.map do |address|
-        {
-          "current_district": address.delete("state_province"),
-          "current_village": address.delete("city_village"),
-          "current_traditional_authority": address.delete("township_division"),
-          "home_district": address.delete("address2"),
-          "home_village": address.delete("neighborhood_cell"),
-          "home_traditional_authority": address.delete("county_district"),
-        }.as_json
-      end
+      patient['address'] ||= {}
+      address = patient['person'].delete('preferred_address')
+
+      patient['name'] = patient['person'].delete('names')&.first
+
+      patient["address"]["current_district"] =  address["state_province"]
+      patient["address"]["current_village"] = address["city_village"]
+      patient["address"]["current_traditional_authority"] = address["township_division"]
+      patient["address"]["home_district"] = address["address2"]
+      patient["address"]["home_village"] = address["neighborhood_cell"]
+      patient["address"]["home_traditional_authority"] = address["county_district"]
 
       patient["guardian"] = patient_history.guardian
 

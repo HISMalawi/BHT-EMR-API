@@ -48,7 +48,7 @@ class StreamingService
           patient: patient.as_json,
           encounters: patient.visit_data(program_id:, date:),
           current_program: patient.current_program(program_id:),
-          ids: IdsBuilder.new(patient_id: patient.id, program_id:, date:).build
+          ids: ArtService::IdsBuilder.new(patient_id: patient.id, program_id:, date:).build
         }
       }
     )
