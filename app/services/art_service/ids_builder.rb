@@ -4,7 +4,7 @@ module ArtService
   class IdsBuilder
     include ModelUtils
     include Reports::Pepfar::Utils
-    attr_reader :report, :patient_id, :program_id, :date, :complete, :end_date
+    attr_reader :report, :patient_id, :program_id, :site_id, :date, :complete, :end_date
 
     def initialize(patient_id:, program_id:, date:)
       @program_id = program_id
@@ -12,166 +12,535 @@ module ArtService
       @patient_id = patient_id
       @end_date = date
       @report = OpenStruct.new
+      @site_id = Location.current_health_center&.id
     end
 
     def build
       patient = patient_data
       visit_data = visit_breakdown
 
-      report.table&.merge(patient)
+      report.table.merge(patient).as_json
     end
 
     private
 
     def visit_breakdown
-      visit
-      reception
-      clinic_registration
-      vitals
-      staging
-      consultation
-      medication_and_adherence
+      appointments
+      clinic_visits
+      family_plannings
+      hiv_reception
+      hypertension_management
+      identifiers
+      initial_clinical_registration
       lab_orders
-      htn_management
+      lab_test_results
+      medication_adherences
+      medication_dispensations
+      outcomes
+      screening
+      side_effects
+      treatment
+      vitals
     end
 
-    def visit
-      hash = OpenStruct.new
-      hash.visit_date = date
-      hash.initial_visit = obs_value("Type of patient") == "New patient"
-      hash.transfer_in = patient_history.transfer_in
-      hash.outcome = patient_visit.outcome
-      hash.outcome_date = patient_visit.outcome_date
-      hash.date_enrolled = PatientsEngine.new(program: Program.find(program_id)).find_patient_earliest_start_date(Patient.find(patient_id))
-      hash.date_completed = PatientProgram.find_by(patient_id: patient_id, program_id: program_id)&.date_completed
+    def appointments
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+            ob.person_id as patient_id,
+            #{site_id} as site_id,
+            ob.encounter_id,
+            coalesce(ob.value_datetime , '1900-01-01 00:00:00') as appointment_date,
+            ob.date_created,
+            ob.voided,
+            date(ob.date_voided) as voided_date,
+            ob.concept_id,
+            cn.name concept_name
+          from
+            obs ob
+          join encounter en
+              on
+            ob.encounter_id = en.encounter_id
+            join concept_name cn on ob.concept_id = cn.concept_id
+          where
+            en.encounter_type = #{EncounterType.find_by_name("APPOINTMENT").id}
+            and patient_id = #{patient_id}
+            and DATE(encounter_datetime) = '#{date}'
+      SQL
 
-      report["visit"] = hash.table
+      report.appointments = query&.as_json
     end
 
-    def htn_management
-      hash = OpenStruct.new
-      hash.htn_client = HtnWorkflow.new.htn_client?(Patient.find(patient_id), date)
-      hash.patient_has_hp = obs_value("Patient has hypertension")
-      hash.date_diagnosed_hp = obs_value("Hypertension diagnosis date")
-      hash.risk_factors = []
-      hash.htn_drugs = PatientService.new.current_htn_drugs_summary(Patient.find(patient_id), date)
+    def clinic_visits
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        select e.encounter_type,
+               e.encounter_id,
+               e.program_id,
+               e.patient_id,
+               #{site_id} as site_id, 
+               e.encounter_datetime,
+               e.date_created,e.voided,
+               e.date_voided 
+        from encounter e 
+          where e.voided =0
+          and patient_id = #{patient_id}
+          and DATE(encounter_datetime) = '#{date}' 
+      SQL
 
-      report["htn_management"] = hash.table
+      report.clinic_visits = query&.as_json
+    end
+    def family_plannings
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        select
+          ob.person_id patient_id,
+          #{site_id} as site_id,
+          ob.encounter_id,
+          ob.concept_id,
+          cn.name concept_name,
+          ob.value_coded,
+          cn2.name value,
+          ob.voided,
+          ob.date_voided as voided_date
+      from obs ob 
+        join person p on ob.person_id = p.person_id 
+        join concept_name cn on ob.concept_id = cn.concept_id
+        left join concept_name cn2 on ob.value_coded = cn2.concept_id
+      where cn.name like '%family%'
+        and ob.person_id = #{patient_id}
+        and DATE(ob.obs_datetime) = '#{date}'
+        and p.gender is not null
+      SQL
+
+      report.family_plannings = query&.as_json
     end
 
-    def vitals
-      hash = OpenStruct.new
-      hash.height = patient_visit.height
-      hash.weight = patient_visit.weight
-      hash.temp = obs_value("Temperature")
-      hash.bmi = patient_visit.bmi
-      hash.systolic_bp = obs_value("Systolic blood pressure")
-      hash.diastolic_bp = obs_value("Diastolic blood pressure")
+    def hiv_reception
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        select x.patient_id, x.encounter_id, x.obs_id, x.program_id,
+               x.visit_date, x.patient_present, 
+               x.guardian_present,x.voided, x.date_voided, x.site_id  
+        from
+        (
+        WITH reception_data AS
+        (
+          SELECT e.patient_id, e.encounter_id, o.obs_id, e.program_id, e.encounter_datetime,
+            cn.concept_id, cn.name AS concept_name, o.concept_id AS obs_concept_id,
+            o.value_coded, cn2.name AS value_coded_value, o.value_coded_name_id,
+            o.value_drug, o.value_datetime, o.value_modifier, o.value_numeric, o.value_text, e.voided, e.date_voided
+          FROM encounter e
+            JOIN obs o ON e.encounter_id = o.encounter_id
+            AND e.patient_id = #{patient_id}
+            and DATE(encounter_datetime) = '#{date}' 
+            LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id
+            LEFT JOIN concept_name cn2 ON o.value_coded = cn2.concept_id
+          WHERE e.encounter_type = #{EncounterType.find_by_name("HIV RECEPTION").id}
+        )
+          SELECT rd.patient_id, rd.encounter_id, rd.obs_id, rd.program_id, DATE(rd.encounter_datetime) visit_date,
+          case when rd.concept_id=1805 then rd.value_coded_value end patient_present,
+          rd1.value_coded_value guardian_present, rd.voided, rd.date_voided,
+          #{site_id} as site_id
+          from reception_data rd
+          LEFT JOIN reception_data rd1 ON rd.patient_id = rd1.patient_id AND rd.encounter_id = rd1.encounter_id AND rd1.concept_id = 2122
+          group by rd.patient_id, rd.encounter_id
+        ) x
+      SQL
 
-      report["vitals"] = hash.table
+      report.hiv_reception = query&.as_json
+    end
+    def hypertension_management
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        select e.patient_id, e.encounter_id,o.obs_id,
+        e.program_id, e.encounter_datetime, o.concept_id,cn.name concept_name, o.order_id,
+        o.value_modifier ,o.value_numeric , o.value_coded ,o.value_text , o.value_datetime,
+        #{site_id} as site_id, e.voided, e.date_voided
+        from encounter e
+        join obs o on e.encounter_id=o.encounter_id
+        LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id
+        where e.encounter_type = 48
+        and patient_id = #{patient_id}
+        and DATE(encounter_datetime) = '#{date}' 
+      SQL
+
+      report.hypertension_management = query&.as_json
     end
 
-    def staging
-      hash = OpenStruct.new
-      hash.patient_pregnant = patient_history.pregnant
-      hash.patient_breastfeeding = obs_value("Breast feeding?")
-      hash.who_stages_presented = patient_history.who_clinical_conditions
-      hash.who_stage = obs_value("WHO stage")
-      hash.reason_for_starting_art = obs_value("Reason for ART eligibility")
-      hash.recent_cd4_results_available = obs_value("CD4 count")&.present?
-      hash.cd4_count = obs_value("CD4 count")
-      hash.cd4_count_date = obs_value("Cd4 count datetime")
-      hash.cd4_test_location = obs_value("CD4 count location")
+    def identifiers
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        select
+          patient_id as person_id,
+          #{site_id} as site_id,
+          identifier,
+          identifier_type,
+          voided,
+          date_voided as voided_date
+        from
+          patient_identifier pi2
+        where pi2.patient_id = #{patient_id}
+      SQL
 
-      report["staging"] = hash.table
+      report.identifiers = query&.as_json
     end
+    
+    def initial_clinical_registration
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        select 
+          patient_id, encounter_id, obs_id, program_id, follow_up_agreement, ever_received_art, confirmatory_test_type, confirmatory_test_location, confirmatory_test_date, date_art_last_taken, taken_arvs_last_2_weeks, taken_arvs_last_2_months, ever_registered_at_art_clinic, location_of_art_initiation, art_start_date, start_date_estimated, date_enrolled_at_facility, age_at_initiation, age_in_days_at_initiation, art_number_at_previous_location, hts_linkage_number, has_transfer_letter, cd4_count, site_id
+          from 
+          (
+          WITH registration_data AS
+          (
+            SELECT e.patient_id, e.encounter_id, o.obs_id, e.program_id, e.encounter_datetime,
+            cn.concept_id, cn.name AS concept_name, o.concept_id AS obs_concept_id,
+            o.value_coded, cn2.name AS value_coded_value, o.value_coded_name_id,
+            o.value_drug, o.value_datetime, o.value_modifier, o.value_numeric, o.value_text
+            FROM encounter e
+            JOIN obs o ON e.encounter_id = o.encounter_id
+            LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id
+            LEFT JOIN concept_name cn2 ON o.value_coded = cn2.concept_id
+            WHERE e.encounter_type = 9
+            AND e.patient_id = #{patient_id}
+            AND DATE(e.encounter_datetime) = '#{date}'
+          ),
+          init_data AS
+          (
+          SELECT
+          p.patient_id,
+          CAST(patient_date_enrolled(p.patient_id) AS DATE) AS date_enrolled,
+          date_antiretrovirals_started(p.patient_id, MIN(s.start_date)) AS earliest_start_date,
+          TIMESTAMPDIFF(YEAR, pe.birthdate, MIN(s.start_date)) AS age_at_initiation,
+          TIMESTAMPDIFF(DAY, pe.birthdate, MIN(s.start_date)) AS age_in_days_at_initiation
+          FROM
+          patient_program p
+          LEFT JOIN person pe ON pe.person_id = p.patient_id
+          LEFT JOIN patient_state s ON p.patient_program_id = s.patient_program_id
+          WHERE p.program_id = 1
+          AND p.patient_id = #{patient_id}
+          AND DATE(s.start_date) >= '1900-01-01'
+          GROUP BY
+          p.patient_id
+          HAVING
+          date_enrolled IS NOT NULL
+          )
+          SELECT rd.patient_id, rd.encounter_id, rd.obs_id, rd.program_id,
+          CASE WHEN rd.concept_id = 2552 THEN rd.value_coded_value else '' END AS follow_up_agreement,
+          rd1.value_coded_value AS ever_received_art,
+          rd2.value_coded_value AS confirmatory_test_type,
+          rd3.value_text AS confirmatory_test_location,
+          CAST(rd4.value_datetime AS DATE) AS confirmatory_test_date,
+          CAST(rd5.value_datetime AS DATE) AS date_art_last_taken,
+          rd6.value_coded_value AS taken_arvs_last_2_weeks,
+          rd7.value_coded_value AS taken_arvs_last_2_months,
+          rd8.value_coded_value AS ever_registered_at_art_clinic,
+          rd9.value_text AS location_of_art_initiation,
+          CAST(rd10.value_datetime AS DATE) AS art_start_date,
+          id.earliest_start_date start_date_estimated,
+          id.date_enrolled  date_enrolled_at_facility,
+          id.age_at_initiation, id.age_in_days_at_initiation,     
+          rd11.value_text art_number_at_previous_location,                     
+          rd12.value_text hts_linkage_number,
+          rd13.value_coded_value has_transfer_letter,    
+          concat(' ',rd14.value_modifier,rd14.value_numeric) cd4_count,
+          #{site_id} site_id  
+          FROM registration_data rd
+          LEFT JOIN registration_data rd1 ON rd.patient_id = rd1.patient_id AND rd.encounter_id = rd1.encounter_id AND rd1.concept_id = 7754
+          LEFT JOIN registration_data rd2 ON rd.patient_id = rd2.patient_id AND rd.encounter_id = rd2.encounter_id AND rd2.concept_id = 7880
+          LEFT JOIN registration_data rd3 ON rd.patient_id = rd3.patient_id AND rd.encounter_id = rd3.encounter_id AND rd3.concept_id = 7881
+          LEFT JOIN registration_data rd4 ON rd.patient_id = rd4.patient_id AND rd.encounter_id = rd4.encounter_id AND rd4.concept_id = 7882
+          LEFT JOIN registration_data rd5 ON rd.patient_id = rd5.patient_id AND rd.encounter_id = rd5.encounter_id AND rd5.obs_concept_id = 7751
+          LEFT JOIN registration_data rd6 ON rd.patient_id = rd6.patient_id AND rd.encounter_id = rd6.encounter_id AND rd6.obs_concept_id = 6394
+          LEFT JOIN registration_data rd7 ON rd.patient_id = rd7.patient_id AND rd.encounter_id = rd7.encounter_id AND rd7.obs_concept_id = 7752
+          LEFT JOIN registration_data rd8 ON rd.patient_id = rd8.patient_id AND rd.encounter_id = rd8.encounter_id AND rd8.obs_concept_id = 7937
+          LEFT JOIN registration_data rd9 ON rd.patient_id = rd9.patient_id AND rd.encounter_id = rd9.encounter_id AND rd9.obs_concept_id = 7750
+          LEFT JOIN registration_data rd10 ON rd.patient_id = rd10.patient_id AND rd.encounter_id = rd10.encounter_id AND rd10.obs_concept_id = 2516
+          LEFT JOIN registration_data rd11 ON rd.patient_id = rd11.patient_id AND rd.encounter_id = rd11.encounter_id AND rd11.obs_concept_id = 6981
+          LEFT JOIN registration_data rd12 ON rd.patient_id = rd12.patient_id AND rd.encounter_id = rd12.encounter_id AND rd12.obs_concept_id = 7879
+          LEFT JOIN registration_data rd13 ON rd.patient_id = rd13.patient_id AND rd.encounter_id = rd13.encounter_id AND rd13.obs_concept_id = 6393
+          LEFT JOIN registration_data rd14 ON rd.patient_id = rd14.patient_id AND rd.encounter_id = rd14.encounter_id AND rd14.obs_concept_id = 5497
+          LEFT JOIN init_data id on rd.patient_id=id.patient_id
+          GROUP BY rd.patient_id, rd.encounter_id
+          ) x
+      SQL
 
-    def consultation
-      hash = OpenStruct.new
-      hash.family_planning_method = obs_value("Family planning method")
-      hash.family_planning_today = obs_value("Family planning, action to take")
-      hash.reason_for_not_using_family_planning = obs_value("Why does the woman not use birth control")
-      hash.side_effects = patient_visit.side_effects
-      hash.on_tb_treatment = patient_on_tb_treatment?(patient_id)
-      hash.tb_status = patient_visit.tb_status
-      hash.date_started_tb_treatment = obs_value("TB treatment start date")
-      hash.months_on_tb_treatment = obs_value("TB treatment period")
-      hash.tpt_history = obs_value("Previous TB treatment history")
-      hash.routine_tb_screening = obs_value("Routine TB screening")
-      # hash.allegic_to_cotrimoxazole = obs_value("Allegic to cotrimoxazole")
-      hash.medication_prescribed = RegimenEngine.new(program: program("HIV program")).find_dosages(patient: Patient.find(patient_id), date:)
-      hash.medication_ordered = hash.medication_prescribed
-
-      report["consultation"] = hash.table
-    end
-
-    def medication_and_adherence
-      hash = OpenStruct.new
-      hash.regimen_category = patient_summary.current_regimen
-      hash.next_appointment = patient_visit.next_appointment
-      hash.pills_brought_to_clinic = patient_visit.pills_brought
-      hash.doses_missed = calculate_doses_missed
-      hash.reason_for_poor_adherence = obs_value("Reason for poor treatment adherence")
-      hash.agree_with_adherence = hash.reason_for_poor_adherence.present? ? "No" : "Yes"
-
-      report["medication_and_adherence"] = hash.table
+      report.initial_clinical_registration = query&.as_json
     end
 
     def lab_orders
-      hash = OpenStruct.new
-      hash.previous_lab_orders = Lab::OrdersSearchService.find_orders(patient_id:)
-      report["lab_orders"] = hash.table
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        select e.patient_id,
+          #{site_id} site_id,
+          o.order_id,      
+          o.accession_number tracking_number,
+          o.start_date order_date,
+          o.encounter_id,
+          e.voided,
+          e.date_voided voided_date,
+          o.concept_id,
+          ob.value_text reason_for_testing
+        from orders o 
+        join encounter e on o.encounter_id = e.encounter_id 
+        join obs ob on e.encounter_id = ob.encounter_id
+        where order_type_id = 4 
+        and ob.concept_id in (2429,10110)
+        AND DATE(e.encounter_datetime) = '#{date}'
+        AND e.patient_id = #{patient_id}
+        GROUP BY o.order_id
+      SQL
+
+      report.lab_orders = query&.as_json
+    end
+    
+    def lab_test_results
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        select
+          lab_order_id, patient_id, site_id, '', test_type, sample_type, test_measure, test_result_date, test_result, voided, date_voided, sending_facility, test_result_id
+          from 
+          (
+          with test_types as
+          (SELECT
+          concept_id
+          , encounter_id
+          , order_id lab_order_id
+          , value_coded test_type
+          FROM obs
+          WHERE concept_id in (9737) )
+          select ob.order_id lab_order_id,
+          ob.person_id patient_id,
+          #{site_id} site_id,
+          tt.test_type,
+          '' sample_type,
+          '' test_measure,
+          ob.obs_datetime test_result_date,
+          concat('',ob.value_modifier, coalesce(ob.value_numeric,ob.value_text)) test_result,
+          ob.voided ,
+          ob.date_voided ,
+          '' sending_facility,
+          ob.obs_id test_result_id
+          from obs ob join test_types tt on ob.concept_id = tt.test_type and ob.order_id = tt.lab_order_id
+          and ob.encounter_id = tt.encounter_id
+          where ob.voided=0
+          AND DATE(ob.obs_datetime) = '#{date}'
+          AND ob.person_id = #{patient_id}
+          ) x
+      SQL
+
+      report.lab_test_results = query&.as_json
     end
 
-    def reception
-      hash = OpenStruct.new
+    def medication_adherences
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        select distinct encounter_id, site_id, obs_id, order_id, drug_id, adherence, pills_brought_to_clinic, pills_remaining_at_home, voided, voided_date, patient_id from
+          (
+            with con as
+            (
+            SELECT DISTINCT concept_id FROM drug d UNION SELECT 2540 concept_id
+            ),
+            drug_inventory as
+            (
+            SELECT o.order_id, drug_inventory_id FROM orders o JOIN drug_order do ON o.order_id = do.order_id
+            ),
+            pillcount as
+            (
+            SELECT ob.order_id,
+            con.concept_id,
+            di.drug_inventory_id,
+            (COALESCE(SUM(ob.value_numeric),0) + COALESCE(SUM(ob.value_text),0)) pillcount
+            FROM obs ob
+            JOIN drug_inventory di
+            ON ob.order_id = di.order_id
+            JOIN con ON ob.concept_id = con.concept_id
+            WHERE ob.person_id = #{patient_id}
+            GROUP BY ob.person_id,ob.order_id,di.drug_inventory_id
+            ORDER BY order_id
+            )
+            SELECT
+            e.encounter_id,
+            #{site_id} site_id,
+            o.obs_id,
+            o.order_id,
+            p.drug_inventory_id drug_id,
+            COALESCE(o.value_numeric,o.value_text) adherence,
+            case when p.concept_id = 2540 then p.pillcount else NULL end pills_brought_to_clinic,
+            case when p.concept_id <> 2540 then p.pillcount else NULL end pills_remaining_at_home,
+            o.voided,
+            o.date_voided voided_date,
+            e.patient_id
+            FROM obs o join person p on o.person_id = p.person_id
+            AND p.person_id = #{patient_id}
+            left join pillcount p on o.order_id = p.order_id
+            join encounter e on o.encounter_id = e.encounter_id
+            WHERE o.concept_id = 6987 and p.gender is not null
+          ) x
+      SQL
 
-      hash.type_of_patient = obs_value("Type of patient")
-      hash.guardian_relationship_type = guardian_relationship_type
-      hash.patient_present = obs_value("Patient present")
-      hash.guardian_present = obs_value("Guardian present")
-      hash.visit_type = obs_value("Visit type")
-      hash.arv_number = patient_history.arv_number
-
-      report["reception"] = hash.table
+      report.medication_adherences = query&.as_json
     end
 
-    def clinic_registration
-      hash = OpenStruct.new
+    def medication_dispensations
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+            ob.person_id
+            , #{site_id} site_id
+            , ob.obs_id
+            , o.order_id
+            , ob.value_numeric quantity
+            , ob.voided
+            , ob.date_voided voided_date
+            , ob.encounter_id
+            , e.encounter_datetime date_dispensed
+        FROM encounter e
+        JOIN obs ob
+        ON e.encounter_id = ob.encounter_id
+        JOIN orders o ON ob.order_id = o.order_id
+        WHERE e.encounter_type = 54 and e.voided =0 and ob.voided=0 and o.voided=0
+        AND DATE(e.encounter_datetime) = '#{date}'
+        AND ob.person_id = #{patient_id}
+      SQL
 
-      hash.agrees_to_followup = obs_value("Agrees to followup")
-      hash.has_hts_linkage_number = obs_value("HTC Serial number")
-      hash.ever_received_arv = obs_value("Ever received ART")
-      hash.confirmatory_hiv_test = obs_value("Confirmatory hiv test type")
-      hash.location_of_confirmatory_hiv_test = obs_value("Confirmatory HIV test location")
-      hash.date_of_confirmatory_hiv_test = obs_value("Confirmatory HIV test date")
+      report.medication_dispensations = query&.as_json
+    end
+    
+    def outcomes
+      patient_outcome = PatientStateService.new.find_patient_state(program('HIV program').id, Patient.find_by_patient_id(patient_id), date)
+      concept_id = ProgramWorkflowState.find(patient_outcome.state).concept_id
+      outcome_reason = obs_value("Reason for ART eligibility")
 
-      report["clinic_registration"] = hash.table
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        select distinct 
+          pp.patient_id,
+          #{site_id} as site_id,
+          #{concept_id} as concept_id,
+          '#{outcome_reason}' as outcome_reason,
+          pp.program_id as outcome_source,
+          ps.voided,
+          ps.date_voided as voided_date,
+          ps.start_date,
+          ps.end_date
+        from
+          patient_state ps
+        join program_workflow_state pws
+        on
+          ps.state = pws.program_workflow_state_id
+        join patient_program pp
+        on
+          ps.patient_program_id = pp.patient_program_id
+        where pp.patient_id = #{patient_id}
+        LIMIT 1
+      SQL
+
+      report.outcomes = query&.as_json
+    end
+    def screening
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        select e.patient_id, e.encounter_id,o.obs_id, e.program_id, e.encounter_datetime, o.concept_id, cn.name concept_name,o.value_coded,
+          COALESCE(cn2.name, o.value_datetime, o.value_text) value, 
+          e.voided,e.date_voided,
+          #{site_id} site_id
+          from encounter e
+          join obs o on e.encounter_id=o.encounter_id
+          join concept_name cn on o.concept_id = cn.concept_id
+          left join concept_name cn2 on o.value_coded = cn2.concept_id
+          AND e.patient_id = #{patient_id}
+          AND DATE(encounter_datetime) = '#{date}'
+          GROUP BY o.concept_id
+      SQL
+      report.screening = query&.as_json
+    end
+    def side_effects
+      malawi_art_side_effects_concept_id = ConceptName.find_by_name("Malawi ART side effects").concept_id
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT distinct 
+          en.patient_id,
+          #{site_id} site_id,
+          ob.obs_id
+          , ob.encounter_id
+          , ob.concept_id
+          , ob.value_coded
+          , ob.voided
+          , ob.date_voided voided_date
+      FROM obs ob
+        JOIN concept_name cn
+          on ob.concept_id = cn.concept_id
+          JOIN encounter en
+              ON ob.encounter_id = en.encounter_id
+      WHERE cn.name IN (select distinct cn.name
+      from obs o inner join concept_name cn on cn.concept_id  = o.value_coded
+      where o.concept_id in (#{malawi_art_side_effects_concept_id})
+      and o.person_id = #{patient_id}
+      AND DATE(en.encounter_datetime) = '#{date}'
+      )
+      AND ob.value_coded = 1065
+      SQL
+
+      report.side_effects = query&.as_json
     end
 
-    def guardian_relationship_type
-      Relationship.where(
-        person_a: patient_id,
-      ).last&.type&.b_is_to_a
+    def treatment
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+          select patient_id, site_id, order_id, drug_id, encounter_id, start_date, end_date, instructions, voided, voided_date, pillcount, equivalent_daily_dose, quantity from
+      (   
+      with con as
+        (
+        SELECT DISTINCT concept_id FROM drug d UNION SELECT 2540 concept_id
+        ),
+        drug_inventory as
+        (
+        SELECT o.order_id, drug_inventory_id FROM orders o JOIN drug_order do ON o.order_id = do.order_id
+        ),
+        pillcount as
+        (
+        SELECT ob.order_id,
+        (COALESCE(SUM(ob.value_numeric),0) + COALESCE(SUM(ob.value_text),0)) pillcount
+        FROM obs ob
+        JOIN drug_inventory di
+        ON ob.order_id = di.order_id
+        JOIN con ON ob.concept_id = con.concept_id
+        AND ob.person_id = #{patient_id}
+        AND DATE(ob.obs_datetime) = '#{date}'
+        GROUP BY ob.person_id,ob.order_id,di.drug_inventory_id
+        ORDER BY order_id
+        )
+          SELECT DISTINCT
+          o.patient_id,
+          #{site_id} site_id,
+          o.order_id,
+          d.drug_inventory_id drug_id,
+        o.encounter_id,
+          o.start_date,
+          o.auto_expire_date end_date,
+        o.instructions,
+          o.voided,  
+        o.date_voided voided_date,
+        COALESCE(pillcount.pillcount,0) pillcount,
+        IF(LENGTH(IF(d.equivalent_daily_dose = 0, 1,d.equivalent_daily_dose)) IS NULL,1,(IF(d.equivalent_daily_dose = 0, 1,d.equivalent_daily_dose))) equivalent_daily_dose,
+        IF(LENGTH(IF(d.quantity = 0, 1,d.quantity)) IS NULL,1,(IF(d.quantity = 0, 1,d.quantity))) quantity
+          FROM orders o
+          JOIN drug_order d
+        ON o.order_id = d.order_id
+          LEFT JOIN pillcount
+          ON (o.order_id = pillcount.order_id)
+          JOIN encounter e on o.encounter_id = e.encounter_id
+          WHERE o.order_type_id = 1
+          AND o.patient_id = #{patient_id}
+          AND DATE(e.encounter_datetime) = '#{date}'
+          AND d.drug_inventory_id <= 1057 and e.voided =0 and o.voided=0
+        ) x
+      SQL
+      report.treatment = query&.as_json
     end
 
-    def obs_children
-      Observation
-        .where("obs_datetime BETWEEN ? AND ?", date.to_date.beginning_of_day, date.to_date.end_of_day)
-        .where(
-          person_id: patient_id,
-        )&.last&.children
-    end
+    def vitals
+      query = ActiveRecord::Base.connection.select_all <<~SQL
+        select e.patient_id, e.encounter_id,o.obs_id, e.program_id, e.encounter_datetime, o.concept_id, cn.name concept_name,o.value_numeric ,o.value_text ,e.voided,e.date_voided,
+        #{site_id} site_id
+        from encounter e
+        join obs o on e.encounter_id=o.encounter_id 
+        join concept_name cn on o.concept_id = cn.concept_id
+        where e.encounter_type =6
+        AND e.patient_id = #{patient_id}
+        AND DATE(encounter_datetime) = '#{date}'
+        GROUP BY o.concept_id
+      SQL
 
-    def obs_value(indicator)
-      concept_id = concept(indicator).concept_id
-
-      Observation
-        .where("obs_datetime BETWEEN ? AND ?", date.to_date.beginning_of_day, date.to_date.end_of_day)
-        .where(
-          person_id: patient_id,
-          concept_id:,
-        )&.last&.answer_string&.squish
+      report.vitals = query&.as_json
     end
 
     def patient_data
@@ -181,7 +550,7 @@ module ArtService
         include: {
           person: {
             only: %w[
-              birthdate gender birthdate_estimated dead death_date cause_of_death
+              person_id birthdate gender birthdate_estimated dead death_date cause_of_death
               date_created
             ],
             include: {
@@ -200,53 +569,32 @@ module ArtService
         },
       )
 
-      patient['address'] ||= {}
-      address = patient['person'].delete('preferred_address')
+      patient['person']["address"] ||= {}
+      address = patient["person"].delete("preferred_address")
 
-      patient['name'] = patient['person'].delete('names')&.first
+      patient["name"] = patient["person"].delete("names")&.first
 
-      patient["address"]["current_district"] =  address["state_province"]
-      patient["address"]["current_village"] = address["city_village"]
-      patient["address"]["current_traditional_authority"] = address["township_division"]
-      patient["address"]["home_district"] = address["address2"]
-      patient["address"]["home_village"] = address["neighborhood_cell"]
-      patient["address"]["home_traditional_authority"] = address["county_district"]
+      patient['person']["address"]["current_district"] = address["state_province"]
+      patient['person']["address"]["current_village"] = address["city_village"]
+      patient['person']["address"]["current_traditional_authority"] = address["township_division"]
+      patient['person']["address"]["home_district"] = address["address2"]
+      patient['person']["address"]["home_village"] = address["neighborhood_cell"]
+      patient['person']["address"]["home_traditional_authority"] = address["county_district"]
 
-      patient["guardian"] = patient_history.guardian
+      # patient["guardian"] = patient_history.guardian
 
       patient
     end
 
-    def patient_visit
-      PatientVisit.new(Patient.find(patient_id), date)
-    end
+    def obs_value(indicator)
+      concept_id = concept(indicator).concept_id
 
-    def patient_history
-      PatientHistory.new(Patient.find(patient_id), date)
-    end
-
-    def mastercard
-      PatientMastercard.new(Patient.find(patient_id), date)
-    end
-
-    def patient_summary
-      PatientSummary.new(Patient.find(patient_id), date)
-    end
-
-    def calculate_doses_missed
-      last_visit = PatientService.new.fetch_previous_visit(date, patient_id, program_id)
-
-      return 0 unless last_visit
-
-      prev_pills = PatientVisit.new(Patient.find(patient_id), last_visit).pills_dispensed
-
-      # const timeUnit = d.frequency === "QW" ? "week" : "day"
-      # const daysGone = calcTimeElapsed(d.order.start_date, timeUnit)
-      # (d.quantity - (daysGone * d.equivalent_daily_dose))
-    end
-
-    def fetch_patient_orders
-      LabTestsEngine.new(program: program("HIV program")).find_orders_by_patient(patient_id)
+      Observation
+        .where("obs_datetime BETWEEN ? AND ?", date.to_date.beginning_of_day, date.to_date.end_of_day)
+        .where(
+          person_id: patient_id,
+          concept_id:,
+        )&.last&.answer_string&.squish
     end
   end
 end
