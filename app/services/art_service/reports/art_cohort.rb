@@ -7,7 +7,7 @@ module ArtService
     # This class only provides one public method (start_build_report) besides
     # the constructor. This method must be called to build report and save
     # it to database.
-    class ArtCohort
+    class ArtCohort < CachedReport
       include ConcurrencyUtils
       include CommonSqlQueryUtils
       include ModelUtils
@@ -15,9 +15,8 @@ module ArtService
       LOCK_FILE = 'art_service/reports/cohort.lock'
 
       def initialize(name:, type:, start_date:, end_date:, **kwargs)
+        super(start_date:, end_date:, definition: type, **kwargs)
         @name = name
-        @start_date = start_date
-        @end_date = end_date
         @type = type
         @cohort_builder = CohortBuilder.new
         @cohort_struct = CohortStruct.new
@@ -44,8 +43,7 @@ module ArtService
 
       def defaulter_list(pepfar)
         report_type = (pepfar ? 'pepfar' : 'moh')
-        ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type)
-                                          .init_temporary_tables(@start_date, @end_date, @occupation)
+       
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
             e.patient_id person_id, i.identifier arv_number, e.birthdate,

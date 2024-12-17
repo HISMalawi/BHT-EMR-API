@@ -185,9 +185,9 @@ module ArtService
                            .clients_due
     end
 
-    def vl_results(start_date, end_date)
+    def vl_results(start_date, end_date, **kwargs)
       REPORTS['VIRAL_LOAD'].new(start_date: start_date.to_date,
-                                end_date: end_date.to_date).vl_results
+                                end_date: end_date.to_date, **kwargs).vl_results
     end
 
     def external_consultation_clients(start_date, end_date, **kwargs)

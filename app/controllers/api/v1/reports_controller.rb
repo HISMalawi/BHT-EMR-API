@@ -130,7 +130,7 @@ module Api
 
       def missed_appointments
         start_date, end_date = params.require %i[start_date end_date]
-        stats = service.missed_appointments(start_date, end_date, occupation: params[:occupation])
+        stats = service.missed_appointments(start_date, end_date, occupation: params[:occupation], dsd: params[:dsd])
 
         render json: stats
       end
@@ -215,33 +215,33 @@ module Api
 
       def patient_outcome_list
         render json: service.patient_outcome_list(params[:start_date],
-                                                  params[:end_date], params[:outcome], occupation: params[:occupation])
+                                                  params[:end_date], params[:outcome], occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def clients_due_vl
-        render json: service.clients_due_vl(params[:start_date], params[:end_date], occupation: params[:occupation])
+        render json: service.clients_due_vl(params[:start_date], params[:end_date], occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def vl_results
-        render json: service.vl_results(params[:start_date], params[:end_date])
+        render json: service.vl_results(params[:start_date], params[:end_date], dsd: params[:dsd])
       end
 
       def samples_drawn
-        render json: service.samples_drawn(params[:start_date], params[:end_date])
+        render json: service.samples_drawn(params[:start_date], params[:end_date], dsd: params[:dsd])
       end
 
       def lab_test_results
-        render json: service.lab_test_results(params[:start_date], params[:end_date], occupation: params[:occupation])
+        render json: service.lab_test_results(params[:start_date], params[:end_date], occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def orders_made
         render json: service.orders_made(params[:start_date],
-                                         params[:end_date], params[:status])
+                                         params[:end_date], params[:status], dsd: params[:dsd])
       end
 
       def external_consultation_clients
         render json: service.external_consultation_clients(params[:start_date], params[:end_date],
-                                                           occupation: params[:occupation])
+                                                           occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def cxca_reports
