@@ -76,10 +76,10 @@ module ArtService
       cohort.disaggregated(quarter, age_group)
     end
 
-    def cohort_survival_analysis(quarter, age_group, regenerate, occupation)
+    def cohort_survival_analysis(quarter, age_group, regenerate, occupation, dsd)
       cohort = REPORTS['COHORT_SURVIVAL_ANALYSIS'].new(type: 'survival_analysis',
                                                        name: 'survival_analysis', start_date: Date.today,
-                                                       end_date: Date.today, regenerate:, occupation:)
+                                                       end_date: Date.today, regenerate:, occupation:, dsd:)
       cohort.survival_analysis(quarter, age_group)
     end
 
@@ -210,9 +210,9 @@ module ArtService
                                     end_date: end_date.to_date, **kwargs).latest_regimen_dispensed(rebuild_outcome)
     end
 
-    def sc_arvdisp(start_date, end_date, rebuild_outcome)
+    def sc_arvdisp(start_date, end_date, rebuild_outcome, dsd)
       REPORTS['SC_ARVDISP'].new(start_date: start_date.to_date,
-                                end_date: end_date.to_date, rebuild_outcome:).report
+                                end_date: end_date.to_date, rebuild_outcome:, dsd:).report
     end
 
     private
