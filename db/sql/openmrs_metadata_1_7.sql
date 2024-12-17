@@ -1,8 +1,8 @@
 -- MySQL dump 10.13  Distrib 8.0.35, for Linux (x86_64)
 --
--- Host: 10.44.0.94    Database: openmrs
+-- Host: localhost    Database: kanjedza
 -- ------------------------------------------------------
--- Server version	5.6.16-1~exp1
+-- Server version	8.0.35
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -23,21 +23,21 @@ DROP TABLE IF EXISTS `concept`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept` (
-  `concept_id` int(11) NOT NULL AUTO_INCREMENT,
-  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `concept_id` int NOT NULL AUTO_INCREMENT,
+  `retired` smallint NOT NULL DEFAULT '0',
   `short_name` varchar(255) DEFAULT NULL,
   `description` text,
   `form_text` text,
-  `datatype_id` int(11) NOT NULL DEFAULT '0',
-  `class_id` int(11) NOT NULL DEFAULT '0',
-  `is_set` smallint(6) NOT NULL DEFAULT '0',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `datatype_id` int NOT NULL DEFAULT '0',
+  `class_id` int NOT NULL DEFAULT '0',
+  `is_set` smallint NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `default_charge` int(11) DEFAULT NULL,
+  `default_charge` int DEFAULT NULL,
   `version` varchar(50) DEFAULT NULL,
-  `changed_by` int(11) DEFAULT NULL,
+  `changed_by` int DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
-  `retired_by` int(11) DEFAULT NULL,
+  `retired_by` int DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE `concept` (
   CONSTRAINT `concept_datatypes` FOREIGN KEY (`datatype_id`) REFERENCES `concept_datatype` (`concept_datatype_id`),
   CONSTRAINT `user_who_changed_concept` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_concept` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11884 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=11884 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -75,19 +75,19 @@ DROP TABLE IF EXISTS `concept_name`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_name` (
-  `concept_id` int(11) DEFAULT NULL,
+  `concept_id` int DEFAULT NULL,
   `name` varchar(255) NOT NULL DEFAULT '',
   `locale` varchar(50) NOT NULL DEFAULT '',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `concept_name_id` int(11) NOT NULL AUTO_INCREMENT,
-  `voided` smallint(6) NOT NULL DEFAULT '0',
-  `voided_by` int(11) DEFAULT NULL,
+  `concept_name_id` int NOT NULL AUTO_INCREMENT,
+  `voided` smallint NOT NULL DEFAULT '0',
+  `voided_by` int DEFAULT NULL,
   `date_voided` datetime DEFAULT NULL,
   `void_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   `concept_name_type` varchar(50) DEFAULT NULL,
-  `locale_preferred` smallint(6) DEFAULT '0',
+  `locale_preferred` smallint DEFAULT '0',
   PRIMARY KEY (`concept_name_id`),
   UNIQUE KEY `concept_name_id` (`concept_name_id`),
   UNIQUE KEY `concept_name_uuid_index` (`uuid`),
@@ -97,7 +97,7 @@ CREATE TABLE `concept_name` (
   KEY `user_who_voided_name` (`voided_by`),
   CONSTRAINT `user_who_created_name` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_voided_this_name` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=107499 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=107499 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -119,11 +119,11 @@ DROP TABLE IF EXISTS `concept_set`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_set` (
-  `concept_set_id` int(11) NOT NULL AUTO_INCREMENT,
-  `concept_id` int(11) NOT NULL DEFAULT '0',
-  `concept_set` int(11) NOT NULL DEFAULT '0',
+  `concept_set_id` int NOT NULL AUTO_INCREMENT,
+  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_set` int NOT NULL DEFAULT '0',
   `sort_weight` double DEFAULT NULL,
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`concept_set_id`),
@@ -134,7 +134,7 @@ CREATE TABLE `concept_set` (
   CONSTRAINT `has_a` FOREIGN KEY (`concept_set`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `is_a` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `user_who_created` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5388 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=5388 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,11 +155,11 @@ DROP TABLE IF EXISTS `concept_answer`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_answer` (
-  `concept_answer_id` int(11) NOT NULL AUTO_INCREMENT,
-  `concept_id` int(11) NOT NULL DEFAULT '0',
-  `answer_concept` int(11) DEFAULT NULL,
-  `answer_drug` int(11) DEFAULT NULL,
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `concept_answer_id` int NOT NULL AUTO_INCREMENT,
+  `concept_id` int NOT NULL DEFAULT '0',
+  `answer_concept` int DEFAULT NULL,
+  `answer_drug` int DEFAULT NULL,
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `uuid` char(38) NOT NULL,
   `sort_weight` double DEFAULT NULL,
@@ -169,9 +169,9 @@ CREATE TABLE `concept_answer` (
   KEY `answer` (`answer_concept`),
   KEY `answers_for_concept` (`concept_id`),
   CONSTRAINT `answer` FOREIGN KEY (`answer_concept`) REFERENCES `concept` (`concept_id`),
-  CONSTRAINT `answers_for_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
-  CONSTRAINT `answer_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10319 DEFAULT CHARSET=utf8;
+  CONSTRAINT `answer_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
+  CONSTRAINT `answers_for_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10319 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -192,13 +192,13 @@ DROP TABLE IF EXISTS `concept_class`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_class` (
-  `concept_class_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_class_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `description` varchar(255) NOT NULL DEFAULT '',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint(6) NOT NULL DEFAULT '0',
-  `retired_by` int(11) DEFAULT NULL,
+  `retired` smallint NOT NULL DEFAULT '0',
+  `retired_by` int DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -209,7 +209,7 @@ CREATE TABLE `concept_class` (
   KEY `concept_class_retired_status` (`retired`),
   CONSTRAINT `concept_class_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_concept_class` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -230,14 +230,14 @@ DROP TABLE IF EXISTS `concept_datatype`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_datatype` (
-  `concept_datatype_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_datatype_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `hl7_abbreviation` varchar(3) DEFAULT NULL,
   `description` varchar(255) NOT NULL DEFAULT '',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint(6) NOT NULL DEFAULT '0',
-  `retired_by` int(11) DEFAULT NULL,
+  `retired` smallint NOT NULL DEFAULT '0',
+  `retired_by` int DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -248,7 +248,7 @@ CREATE TABLE `concept_datatype` (
   KEY `concept_datatype_retired_status` (`retired`),
   CONSTRAINT `concept_datatype_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_concept_datatype` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -269,14 +269,14 @@ DROP TABLE IF EXISTS `concept_derived`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_derived` (
-  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `concept_id` int NOT NULL DEFAULT '0',
   `rule` mediumtext,
   `compile_date` datetime DEFAULT NULL,
   `compile_status` varchar(255) DEFAULT NULL,
   `class_name` varchar(1024) DEFAULT NULL,
   PRIMARY KEY (`concept_id`),
   CONSTRAINT `derived_attributes` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -296,13 +296,13 @@ DROP TABLE IF EXISTS `concept_description`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_description` (
-  `concept_description_id` int(11) NOT NULL AUTO_INCREMENT,
-  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `concept_description_id` int NOT NULL AUTO_INCREMENT,
+  `concept_id` int NOT NULL DEFAULT '0',
   `description` text NOT NULL,
   `locale` varchar(50) NOT NULL DEFAULT '',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int(11) DEFAULT NULL,
+  `changed_by` int DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`concept_description_id`),
@@ -313,7 +313,7 @@ CREATE TABLE `concept_description` (
   CONSTRAINT `description_for_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `user_who_changed_description` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_created_description` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7361 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=7361 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -335,13 +335,13 @@ DROP TABLE IF EXISTS `concept_map`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_map` (
-  `concept_map_id` int(11) NOT NULL AUTO_INCREMENT,
-  `source` int(11) DEFAULT NULL,
+  `concept_map_id` int NOT NULL AUTO_INCREMENT,
+  `source` int DEFAULT NULL,
   `source_code` varchar(255) DEFAULT NULL,
   `comment` varchar(255) DEFAULT NULL,
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `concept_id` int NOT NULL DEFAULT '0',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`concept_map_id`),
   UNIQUE KEY `concept_map_uuid_index` (`uuid`),
@@ -351,7 +351,7 @@ CREATE TABLE `concept_map` (
   CONSTRAINT `map_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `map_for_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `map_source` FOREIGN KEY (`source`) REFERENCES `concept_source` (`concept_source_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1843 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1843 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -372,13 +372,13 @@ DROP TABLE IF EXISTS `concept_name_tag`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_name_tag` (
-  `concept_name_tag_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_name_tag_id` int NOT NULL AUTO_INCREMENT,
   `tag` varchar(50) NOT NULL,
   `description` text NOT NULL,
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `voided` smallint(6) NOT NULL DEFAULT '0',
-  `voided_by` int(11) DEFAULT NULL,
+  `voided` smallint NOT NULL DEFAULT '0',
+  `voided_by` int DEFAULT NULL,
   `date_voided` datetime DEFAULT NULL,
   `void_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -389,7 +389,7 @@ CREATE TABLE `concept_name_tag` (
   UNIQUE KEY `concept_name_tag_uuid_index` (`uuid`),
   KEY `user_who_created_name_tag` (`creator`),
   KEY `user_who_voided_name_tag` (`voided_by`)
-) ENGINE=InnoDB AUTO_INCREMENT=399 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=399 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -410,13 +410,13 @@ DROP TABLE IF EXISTS `concept_name_tag_map`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_name_tag_map` (
-  `concept_name_id` int(11) NOT NULL,
-  `concept_name_tag_id` int(11) NOT NULL,
+  `concept_name_id` int NOT NULL,
+  `concept_name_tag_id` int NOT NULL,
   KEY `map_name` (`concept_name_id`),
   KEY `map_name_tag` (`concept_name_tag_id`),
   CONSTRAINT `mapped_concept_name` FOREIGN KEY (`concept_name_id`) REFERENCES `concept_name` (`concept_name_id`),
   CONSTRAINT `mapped_concept_name_tag` FOREIGN KEY (`concept_name_tag_id`) REFERENCES `concept_name_tag` (`concept_name_tag_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -437,7 +437,7 @@ DROP TABLE IF EXISTS `concept_numeric`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_numeric` (
-  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `concept_id` int NOT NULL DEFAULT '0',
   `hi_absolute` double DEFAULT NULL,
   `hi_critical` double DEFAULT NULL,
   `hi_normal` double DEFAULT NULL,
@@ -445,10 +445,10 @@ CREATE TABLE `concept_numeric` (
   `low_critical` double DEFAULT NULL,
   `low_normal` double DEFAULT NULL,
   `units` varchar(50) DEFAULT NULL,
-  `precise` smallint(6) NOT NULL DEFAULT '0',
+  `precise` smallint NOT NULL DEFAULT '0',
   PRIMARY KEY (`concept_id`),
   CONSTRAINT `numeric_attributes` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -469,18 +469,18 @@ DROP TABLE IF EXISTS `concept_proposal`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_proposal` (
-  `concept_proposal_id` int(11) NOT NULL AUTO_INCREMENT,
-  `concept_id` int(11) DEFAULT NULL,
-  `encounter_id` int(11) DEFAULT NULL,
+  `concept_proposal_id` int NOT NULL AUTO_INCREMENT,
+  `concept_id` int DEFAULT NULL,
+  `encounter_id` int DEFAULT NULL,
   `original_text` varchar(255) NOT NULL DEFAULT '',
   `final_text` varchar(255) DEFAULT NULL,
-  `obs_id` int(11) DEFAULT NULL,
-  `obs_concept_id` int(11) DEFAULT NULL,
+  `obs_id` int DEFAULT NULL,
+  `obs_concept_id` int DEFAULT NULL,
   `state` varchar(32) NOT NULL DEFAULT 'UNMAPPED' COMMENT 'Valid values are: UNMAPPED, SYNONYM, CONCEPT, REJECT',
   `comments` varchar(255) DEFAULT NULL COMMENT 'Comment from concept admin/mapper',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int(11) DEFAULT NULL,
+  `changed_by` int DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
   `locale` varchar(50) NOT NULL DEFAULT '',
   `uuid` char(38) NOT NULL,
@@ -498,7 +498,7 @@ CREATE TABLE `concept_proposal` (
   CONSTRAINT `proposal_obs_id` FOREIGN KEY (`obs_id`) REFERENCES `obs` (`obs_id`),
   CONSTRAINT `user_who_changed_proposal` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_created_proposal` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -519,13 +519,13 @@ DROP TABLE IF EXISTS `concept_proposal_tag_map`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_proposal_tag_map` (
-  `concept_proposal_id` int(11) NOT NULL,
-  `concept_name_tag_id` int(11) NOT NULL,
+  `concept_proposal_id` int NOT NULL,
+  `concept_name_tag_id` int NOT NULL,
   KEY `map_proposal` (`concept_proposal_id`),
   KEY `map_name_tag` (`concept_name_tag_id`),
   CONSTRAINT `mapped_concept_proposal` FOREIGN KEY (`concept_proposal_id`) REFERENCES `concept_proposal` (`concept_proposal_id`),
   CONSTRAINT `mapped_concept_proposal_tag` FOREIGN KEY (`concept_name_tag_id`) REFERENCES `concept_name_tag` (`concept_name_tag_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -545,11 +545,11 @@ DROP TABLE IF EXISTS `concept_set_derived`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_set_derived` (
-  `concept_id` int(11) NOT NULL DEFAULT '0',
-  `concept_set` int(11) NOT NULL DEFAULT '0',
+  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_set` int NOT NULL DEFAULT '0',
   `sort_weight` double DEFAULT NULL,
   PRIMARY KEY (`concept_id`,`concept_set`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -570,14 +570,14 @@ DROP TABLE IF EXISTS `concept_source`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_source` (
-  `concept_source_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_source_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '',
   `description` text NOT NULL,
   `hl7_code` varchar(50) DEFAULT NULL,
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `retired` tinyint(1) NOT NULL,
-  `retired_by` int(11) DEFAULT NULL,
+  `retired_by` int DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -588,7 +588,7 @@ CREATE TABLE `concept_source` (
   KEY `unique_hl7_code` (`hl7_code`,`retired`),
   CONSTRAINT `concept_source_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_concept_source` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -609,10 +609,10 @@ DROP TABLE IF EXISTS `concept_state_conversion`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_state_conversion` (
-  `concept_state_conversion_id` int(11) NOT NULL AUTO_INCREMENT,
-  `concept_id` int(11) DEFAULT '0',
-  `program_workflow_id` int(11) DEFAULT '0',
-  `program_workflow_state_id` int(11) DEFAULT '0',
+  `concept_state_conversion_id` int NOT NULL AUTO_INCREMENT,
+  `concept_id` int DEFAULT '0',
+  `program_workflow_id` int DEFAULT '0',
+  `program_workflow_state_id` int DEFAULT '0',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`concept_state_conversion_id`),
   UNIQUE KEY `concept_state_conversion_uuid_index` (`uuid`),
@@ -623,7 +623,7 @@ CREATE TABLE `concept_state_conversion` (
   CONSTRAINT `concept_triggers_conversion` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `conversion_involves_workflow` FOREIGN KEY (`program_workflow_id`) REFERENCES `program_workflow` (`program_workflow_id`),
   CONSTRAINT `conversion_to_state` FOREIGN KEY (`program_workflow_state_id`) REFERENCES `program_workflow_state` (`program_workflow_state_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -643,17 +643,17 @@ DROP TABLE IF EXISTS `concept_synonym`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_synonym` (
-  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `concept_id` int NOT NULL DEFAULT '0',
   `synonym` varchar(255) NOT NULL DEFAULT '',
   `locale` varchar(255) DEFAULT NULL,
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`synonym`,`concept_id`),
   KEY `synonym_for` (`concept_id`),
   KEY `synonym_creator` (`creator`),
   CONSTRAINT `synonym_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `synonym_for` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -674,17 +674,17 @@ DROP TABLE IF EXISTS `concept_word`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `concept_word` (
-  `concept_word_id` int(11) NOT NULL AUTO_INCREMENT,
-  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `concept_word_id` int NOT NULL AUTO_INCREMENT,
+  `concept_id` int NOT NULL DEFAULT '0',
   `word` varchar(50) NOT NULL DEFAULT '',
   `locale` varchar(20) NOT NULL DEFAULT '',
-  `concept_name_id` int(11) NOT NULL,
+  `concept_name_id` int NOT NULL,
   PRIMARY KEY (`concept_word_id`),
   KEY `word_in_concept_name` (`word`),
   KEY `word_for_name` (`concept_name_id`),
   KEY `concept_word_concept_idx` (`concept_id`),
   CONSTRAINT `word_for` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=36127 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=36127 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -706,13 +706,13 @@ DROP TABLE IF EXISTS `encounter_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `encounter_type` (
-  `encounter_type_id` int(11) NOT NULL AUTO_INCREMENT,
+  `encounter_type_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '',
   `description` text,
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint(6) NOT NULL DEFAULT '0',
-  `retired_by` int(11) DEFAULT NULL,
+  `retired` smallint NOT NULL DEFAULT '0',
+  `retired_by` int DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -723,7 +723,7 @@ CREATE TABLE `encounter_type` (
   KEY `retired_status` (`retired`),
   CONSTRAINT `user_who_created_type` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_encounter_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=204 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=204 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -744,18 +744,18 @@ DROP TABLE IF EXISTS `patient_identifier_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `patient_identifier_type` (
-  `patient_identifier_type_id` int(11) NOT NULL AUTO_INCREMENT,
+  `patient_identifier_type_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '',
   `description` text NOT NULL,
   `format` varchar(50) DEFAULT NULL,
-  `check_digit` smallint(6) NOT NULL DEFAULT '0',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `check_digit` smallint NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `required` smallint(6) NOT NULL DEFAULT '0',
+  `required` smallint NOT NULL DEFAULT '0',
   `format_description` varchar(255) DEFAULT NULL,
   `validator` varchar(200) DEFAULT NULL,
-  `retired` smallint(6) NOT NULL DEFAULT '0',
-  `retired_by` int(11) DEFAULT NULL,
+  `retired` smallint NOT NULL DEFAULT '0',
+  `retired_by` int DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -766,7 +766,7 @@ CREATE TABLE `patient_identifier_type` (
   KEY `retired_status` (`retired`),
   CONSTRAINT `type_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_patient_identifier_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -787,13 +787,13 @@ DROP TABLE IF EXISTS `order_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `order_type` (
-  `order_type_id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_type_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `description` varchar(255) NOT NULL DEFAULT '',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint(6) NOT NULL DEFAULT '0',
-  `retired_by` int(11) DEFAULT NULL,
+  `retired` smallint NOT NULL DEFAULT '0',
+  `retired_by` int DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -805,7 +805,7 @@ CREATE TABLE `order_type` (
   KEY `index_order_type_on_name` (`name`),
   CONSTRAINT `type_created_by` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_order_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -826,18 +826,18 @@ DROP TABLE IF EXISTS `person_attribute_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `person_attribute_type` (
-  `person_attribute_type_id` int(11) NOT NULL AUTO_INCREMENT,
+  `person_attribute_type_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '',
   `description` text NOT NULL,
   `format` varchar(50) DEFAULT NULL,
-  `foreign_key` int(11) DEFAULT NULL,
-  `searchable` smallint(6) NOT NULL DEFAULT '0',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `foreign_key` int DEFAULT NULL,
+  `searchable` smallint NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int(11) DEFAULT NULL,
+  `changed_by` int DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
-  `retired` smallint(6) NOT NULL DEFAULT '0',
-  `retired_by` int(11) DEFAULT NULL,
+  `retired` smallint NOT NULL DEFAULT '0',
+  `retired_by` int DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `edit_privilege` varchar(255) DEFAULT NULL,
@@ -856,7 +856,7 @@ CREATE TABLE `person_attribute_type` (
   CONSTRAINT `attribute_type_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `privilege_which_can_edit` FOREIGN KEY (`edit_privilege`) REFERENCES `privilege` (`privilege`),
   CONSTRAINT `user_who_retired_person_attribute_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -877,13 +877,13 @@ DROP TABLE IF EXISTS `program`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `program` (
-  `program_id` int(11) NOT NULL AUTO_INCREMENT,
-  `concept_id` int(11) NOT NULL DEFAULT '0',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `program_id` int NOT NULL AUTO_INCREMENT,
+  `concept_id` int NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int(11) DEFAULT NULL,
+  `changed_by` int DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
-  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired` smallint NOT NULL DEFAULT '0',
   `name` varchar(50) NOT NULL,
   `description` varchar(500) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -895,7 +895,7 @@ CREATE TABLE `program` (
   CONSTRAINT `program_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `program_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_changed_program` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -916,13 +916,13 @@ DROP TABLE IF EXISTS `program_workflow`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `program_workflow` (
-  `program_workflow_id` int(11) NOT NULL AUTO_INCREMENT,
-  `program_id` int(11) NOT NULL DEFAULT '0',
-  `concept_id` int(11) NOT NULL DEFAULT '0',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `program_workflow_id` int NOT NULL AUTO_INCREMENT,
+  `program_id` int NOT NULL DEFAULT '0',
+  `concept_id` int NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint(6) NOT NULL DEFAULT '0',
-  `changed_by` int(11) DEFAULT NULL,
+  `retired` smallint NOT NULL DEFAULT '0',
+  `changed_by` int DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`program_workflow_id`),
@@ -935,7 +935,7 @@ CREATE TABLE `program_workflow` (
   CONSTRAINT `workflow_changed_by` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `workflow_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `workflow_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -944,7 +944,7 @@ CREATE TABLE `program_workflow` (
 
 LOCK TABLES `program_workflow` WRITE;
 /*!40000 ALTER TABLE `program_workflow` DISABLE KEYS */;
-INSERT INTO `program_workflow` VALUES (1,1,1484,1,'2007-12-19 11:59:17',0,1,'2012-02-06 18:05:08','ba3e150a-8d80-11d8-abbb-0024217bb78e'),(5,4,3627,1,'2008-09-17 22:12:18',0,1,'2013-01-10 17:10:10','ba3e1a0a-8d80-11d8-abbb-0024217bb78e'),(9,6,1484,1,'2008-09-28 08:49:39',0,1,'2011-12-09 14:49:33','ba3e1b04-8d80-11d8-abbb-0024217bb78e'),(10,7,1846,1,'2008-10-21 10:38:54',0,1,'2011-12-09 14:49:09','ba3e344a-8d80-11d8-abbb-0024217bb78e'),(11,8,1484,1,'2009-04-02 03:47:00',0,1,'2011-12-09 14:49:06','ba3e353a-8d80-11d8-abbb-0024217bb78e'),(12,9,3627,1,'2009-04-02 03:47:43',0,1,'2011-12-09 14:48:50','ba3e3620-8d80-11d8-abbb-0024217bb78e'),(15,3,6368,1,'2009-11-03 16:24:50',0,1,'2009-11-03 16:27:34','ba3e3706-8d80-11d8-abbb-0024217bb78e'),(16,10,7375,1,'2010-10-11 19:29:08',0,1,'2002-11-26 22:00:43','ba3e37e2-8d80-11d8-abbb-0024217bb78e'),(17,2,1484,1,'2011-08-30 21:03:54',0,1,'2002-09-04 04:55:19','ba3e38be-8d80-11d8-abbb-0024217bb78e'),(18,5,1484,1,'2011-08-30 21:10:48',0,1,'2011-08-30 21:14:29','ba3e399a-8d80-11d8-abbb-0024217bb78e'),(19,11,1484,1,'2011-08-30 21:15:48',0,1,'2011-12-09 14:49:21','ba3e3a80-8d80-11d8-abbb-0024217bb78e'),(20,12,1484,1,'2011-08-30 21:20:34',0,1,'2012-02-23 17:11:48','ba3e3b5c-8d80-11d8-abbb-0024217bb78e'),(21,13,1484,1,'2011-12-02 10:25:03',0,1,'2011-12-12 17:44:22','ba3e3c38-8d80-11d8-abbb-0024217bb78e'),(22,14,1484,1,'2012-01-09 16:18:55',0,1,'2012-08-01 12:49:49','ba3e3d14-8d80-11d8-abbb-0024217bb78e'),(23,15,1484,1,'2012-01-09 16:20:26',0,1,'2002-10-09 16:18:00','ba3e3dfa-8d80-11d8-abbb-0024217bb78e'),(24,16,8886,1,'2013-01-11 11:42:38',0,1,'2013-01-11 11:43:55','ba3e3ed6-8d80-11d8-abbb-0024217bb78e'),(25,17,3000,1,'2002-05-30 13:09:29',1,1,'2002-05-30 13:36:07','ba3e3fb2-8d80-11d8-abbb-0024217bb78e'),(26,17,9127,1,'2002-05-30 13:09:29',1,1,'2002-05-30 13:36:07','ba3e408e-8d80-11d8-abbb-0024217bb78e'),(27,17,9126,1,'2002-05-30 13:09:29',1,1,'2002-05-30 13:36:07','ba3e4174-8d80-11d8-abbb-0024217bb78e'),(28,17,1742,1,'2002-05-30 13:09:29',1,1,'2002-05-30 13:36:07','ba3e4250-8d80-11d8-abbb-0024217bb78e'),(29,17,9125,1,'2002-05-30 13:35:21',0,1,'2002-05-30 13:36:07','ba3e432c-8d80-11d8-abbb-0024217bb78e'),(30,18,9420,1,'2003-11-27 17:20:08',0,NULL,NULL,'ba3e4408-8d80-11d8-abbb-0024217bb78e'),(31,18,9418,1,'2003-11-27 17:20:08',0,NULL,NULL,'ba3e44ee-8d80-11d8-abbb-0024217bb78e'),(32,18,9419,1,'2003-11-27 17:20:08',0,NULL,NULL,'ba3e4bd8-8d80-11d8-abbb-0024217bb78e'),(33,18,9422,1,'2003-11-27 17:20:08',0,NULL,NULL,'ba3e4cb4-8d80-11d8-abbb-0024217bb78e'),(34,18,9423,1,'2003-11-27 17:20:08',0,NULL,NULL,'ba3e4d9a-8d80-11d8-abbb-0024217bb78e'),(35,18,7399,1,'2003-11-27 17:20:08',0,NULL,NULL,'ba3e4e76-8d80-11d8-abbb-0024217bb78e'),(36,19,9441,1,'2004-01-07 22:24:48',0,1,'2004-01-08 17:21:02','ba3e4f52-8d80-11d8-abbb-0024217bb78e'),(37,20,3501,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e502e-8d80-11d8-abbb-0024217bb78e'),(38,20,2458,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e5114-8d80-11d8-abbb-0024217bb78e'),(39,20,1742,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e51e6-8d80-11d8-abbb-0024217bb78e'),(40,20,1579,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e52cc-8d80-11d8-abbb-0024217bb78e'),(41,20,1744,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e539e-8d80-11d8-abbb-0024217bb78e'),(42,20,1743,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e54d4-8d80-11d8-abbb-0024217bb78e'),(43,20,2895,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e55ba-8d80-11d8-abbb-0024217bb78e'),(44,20,1484,1,'2004-01-14 15:59:59',0,1,'2004-01-24 20:57:26','ba3e5696-8d80-11d8-abbb-0024217bb78e'),(45,21,3000,1,'2019-04-30 14:12:34',0,NULL,NULL,'2aa8c414-08af-449c-a336-ae4eb91eff8f'),(46,21,1742,1,'2019-04-30 14:12:34',0,NULL,NULL,'e27462b9-5767-4d2f-9b62-ccee1797dfb2'),(47,21,7445,1,'2019-04-30 14:12:34',0,NULL,NULL,'3a80c45a-c02c-42c5-9b5d-54b4bd3b8c69'),(48,21,7376,1,'2019-04-30 14:12:34',0,NULL,NULL,'d809f273-ae6a-4970-b1d4-7fb34da40588'),(49,22,9941,1,'2002-01-07 01:12:56',0,1,'2002-01-07 01:13:34','cc05efbf-8994-4c25-93d7-e23dd80c3ace'),(50,2,987,1,'2002-03-26 08:34:21',0,1,'2002-09-04 04:55:19','ca74f217-b1a6-42dc-9e21-679dcd7b3887'),(51,2,9947,1,'2002-03-29 03:17:53',0,1,'2002-09-04 04:55:19','b9b6151f-c0a2-429f-9132-d39f2f9f225c'),(52,2,9978,1,'2002-06-17 01:20:34',0,1,'2002-09-04 04:55:19','ba44fa3f-2c1b-4b93-8316-29f1482d3762'),(53,23,1484,1,'2021-03-26 10:30:05',0,1,'2021-03-26 10:30:05','5298fd67-282d-4dbb-82f6-46ad43dd5169'),(54,24,1484,1,'2021-03-26 10:30:07',0,1,'2021-03-26 10:30:07','8aca2c63-8688-476a-858b-7f212d8d02e2'),(55,25,1484,1,'2021-03-27 09:39:56',0,1,'2021-03-27 09:39:56','8d00507c-c85d-49a4-a957-9723c16149e7'),(56,26,1484,1,'2021-03-27 09:39:57',0,1,'2021-03-27 09:39:57','d3ccf504-e3ea-4e41-822a-e0a0133bf1ca'),(57,27,1484,1,'2021-09-27 17:27:20',0,1,'2021-09-27 18:26:30','50af9d56-66d8-4068-9af6-632dd21facd5');
+INSERT INTO `program_workflow` VALUES (1,1,1484,1,'2007-12-19 11:59:17',0,1,'2012-02-06 18:05:08','ba3e150a-8d80-11d8-abbb-0024217bb78e'),(5,4,3627,1,'2008-09-17 22:12:18',0,1,'2013-01-10 17:10:10','ba3e1a0a-8d80-11d8-abbb-0024217bb78e'),(9,6,1484,1,'2008-09-28 08:49:39',0,1,'2011-12-09 14:49:33','ba3e1b04-8d80-11d8-abbb-0024217bb78e'),(10,7,1846,1,'2008-10-21 10:38:54',0,1,'2011-12-09 14:49:09','ba3e344a-8d80-11d8-abbb-0024217bb78e'),(11,8,1484,1,'2009-04-02 03:47:00',0,1,'2011-12-09 14:49:06','ba3e353a-8d80-11d8-abbb-0024217bb78e'),(12,9,3627,1,'2009-04-02 03:47:43',0,1,'2011-12-09 14:48:50','ba3e3620-8d80-11d8-abbb-0024217bb78e'),(15,3,6368,1,'2009-11-03 16:24:50',0,1,'2009-11-03 16:27:34','ba3e3706-8d80-11d8-abbb-0024217bb78e'),(16,10,7375,1,'2010-10-11 19:29:08',0,1,'2002-11-26 22:00:43','ba3e37e2-8d80-11d8-abbb-0024217bb78e'),(17,2,1484,1,'2011-08-30 21:03:54',0,1,'2002-09-04 04:55:19','ba3e38be-8d80-11d8-abbb-0024217bb78e'),(18,5,1484,1,'2011-08-30 21:10:48',0,1,'2011-08-30 21:14:29','ba3e399a-8d80-11d8-abbb-0024217bb78e'),(19,11,1484,1,'2011-08-30 21:15:48',0,1,'2011-12-09 14:49:21','ba3e3a80-8d80-11d8-abbb-0024217bb78e'),(20,12,1484,1,'2011-08-30 21:20:34',0,1,'2012-02-23 17:11:48','ba3e3b5c-8d80-11d8-abbb-0024217bb78e'),(21,13,1484,1,'2011-12-02 10:25:03',0,1,'2011-12-12 17:44:22','ba3e3c38-8d80-11d8-abbb-0024217bb78e'),(22,14,1484,1,'2012-01-09 16:18:55',0,1,'2012-08-01 12:49:49','ba3e3d14-8d80-11d8-abbb-0024217bb78e'),(23,15,1484,1,'2012-01-09 16:20:26',0,1,'2002-10-09 16:18:00','ba3e3dfa-8d80-11d8-abbb-0024217bb78e'),(24,16,8886,1,'2013-01-11 11:42:38',0,1,'2013-01-11 11:43:55','ba3e3ed6-8d80-11d8-abbb-0024217bb78e'),(25,17,3000,1,'2002-05-30 13:09:29',1,1,'2002-05-30 13:36:07','ba3e3fb2-8d80-11d8-abbb-0024217bb78e'),(26,17,9127,1,'2002-05-30 13:09:29',1,1,'2002-05-30 13:36:07','ba3e408e-8d80-11d8-abbb-0024217bb78e'),(27,17,9126,1,'2002-05-30 13:09:29',1,1,'2002-05-30 13:36:07','ba3e4174-8d80-11d8-abbb-0024217bb78e'),(28,17,1742,1,'2002-05-30 13:09:29',1,1,'2002-05-30 13:36:07','ba3e4250-8d80-11d8-abbb-0024217bb78e'),(29,17,9125,1,'2002-05-30 13:35:21',0,1,'2002-05-30 13:36:07','ba3e432c-8d80-11d8-abbb-0024217bb78e'),(30,18,9420,1,'2003-11-27 17:20:08',0,NULL,NULL,'ba3e4408-8d80-11d8-abbb-0024217bb78e'),(31,18,9418,1,'2003-11-27 17:20:08',0,NULL,NULL,'ba3e44ee-8d80-11d8-abbb-0024217bb78e'),(32,18,9419,1,'2003-11-27 17:20:08',0,NULL,NULL,'ba3e4bd8-8d80-11d8-abbb-0024217bb78e'),(33,18,9422,1,'2003-11-27 17:20:08',0,NULL,NULL,'ba3e4cb4-8d80-11d8-abbb-0024217bb78e'),(34,18,9423,1,'2003-11-27 17:20:08',0,NULL,NULL,'ba3e4d9a-8d80-11d8-abbb-0024217bb78e'),(35,18,7399,1,'2003-11-27 17:20:08',0,NULL,NULL,'ba3e4e76-8d80-11d8-abbb-0024217bb78e'),(36,19,9441,1,'2004-01-07 22:24:48',0,1,'2004-01-08 17:21:02','ba3e4f52-8d80-11d8-abbb-0024217bb78e'),(37,20,3501,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e502e-8d80-11d8-abbb-0024217bb78e'),(38,20,2458,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e5114-8d80-11d8-abbb-0024217bb78e'),(39,20,1742,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e51e6-8d80-11d8-abbb-0024217bb78e'),(40,20,1579,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e52cc-8d80-11d8-abbb-0024217bb78e'),(41,20,1744,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e539e-8d80-11d8-abbb-0024217bb78e'),(42,20,1743,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e54d4-8d80-11d8-abbb-0024217bb78e'),(43,20,2895,1,'2004-01-14 15:58:41',1,1,'2004-01-24 20:57:26','ba3e55ba-8d80-11d8-abbb-0024217bb78e'),(44,20,1484,1,'2004-01-14 15:59:59',0,1,'2004-01-24 20:57:26','ba3e5696-8d80-11d8-abbb-0024217bb78e'),(45,21,3000,1,'2019-04-30 14:12:34',0,NULL,NULL,'2aa8c414-08af-449c-a336-ae4eb91eff8f'),(46,21,1742,1,'2019-04-30 14:12:34',0,NULL,NULL,'e27462b9-5767-4d2f-9b62-ccee1797dfb2'),(47,21,7445,1,'2019-04-30 14:12:34',0,NULL,NULL,'3a80c45a-c02c-42c5-9b5d-54b4bd3b8c69'),(48,21,7376,1,'2019-04-30 14:12:34',0,NULL,NULL,'d809f273-ae6a-4970-b1d4-7fb34da40588'),(49,22,9941,1,'2002-01-07 01:12:56',0,1,'2002-01-07 01:13:34','cc05efbf-8994-4c25-93d7-e23dd80c3ace'),(50,2,987,1,'2002-03-26 08:34:21',0,1,'2002-09-04 04:55:19','ca74f217-b1a6-42dc-9e21-679dcd7b3887'),(51,2,9947,1,'2002-03-29 03:17:53',0,1,'2002-09-04 04:55:19','b9b6151f-c0a2-429f-9132-d39f2f9f225c'),(52,2,9978,1,'2002-06-17 01:20:34',0,1,'2002-09-04 04:55:19','ba44fa3f-2c1b-4b93-8316-29f1482d3762'),(53,23,1484,1,'2021-03-26 10:30:05',0,1,'2021-03-26 10:30:05','5298fd67-282d-4dbb-82f6-46ad43dd5169'),(54,24,1484,1,'2021-03-26 10:30:07',0,1,'2021-03-26 10:30:07','8aca2c63-8688-476a-858b-7f212d8d02e2'),(55,25,1484,1,'2021-03-27 09:39:56',0,1,'2021-03-27 09:39:56','8d00507c-c85d-49a4-a957-9723c16149e7'),(56,26,1484,1,'2021-03-27 09:39:57',0,1,'2021-03-27 09:39:57','d3ccf504-e3ea-4e41-822a-e0a0133bf1ca'),(57,27,1484,1,'2021-09-27 17:27:20',0,1,'2021-09-27 18:26:30','50af9d56-66d8-4068-9af6-632dd21facd5'),(58,34,11883,1,'2024-12-17 08:45:19',0,1,'2024-12-17 08:45:19','7b268727-bc42-11ef-ba8a-201e88d10416');
 /*!40000 ALTER TABLE `program_workflow` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -956,15 +956,15 @@ DROP TABLE IF EXISTS `program_workflow_state`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `program_workflow_state` (
-  `program_workflow_state_id` int(11) NOT NULL AUTO_INCREMENT,
-  `program_workflow_id` int(11) NOT NULL DEFAULT '0',
-  `concept_id` int(11) NOT NULL DEFAULT '0',
-  `initial` smallint(6) NOT NULL DEFAULT '0',
-  `terminal` smallint(6) NOT NULL DEFAULT '0',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `program_workflow_state_id` int NOT NULL AUTO_INCREMENT,
+  `program_workflow_id` int NOT NULL DEFAULT '0',
+  `concept_id` int NOT NULL DEFAULT '0',
+  `initial` smallint NOT NULL DEFAULT '0',
+  `terminal` smallint NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint(6) NOT NULL DEFAULT '0',
-  `changed_by` int(11) DEFAULT NULL,
+  `retired` smallint NOT NULL DEFAULT '0',
+  `changed_by` int DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`program_workflow_state_id`),
@@ -977,7 +977,7 @@ CREATE TABLE `program_workflow_state` (
   CONSTRAINT `state_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `state_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `workflow_for_state` FOREIGN KEY (`program_workflow_id`) REFERENCES `program_workflow` (`program_workflow_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=201 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=215 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -986,7 +986,7 @@ CREATE TABLE `program_workflow_state` (
 
 LOCK TABLES `program_workflow_state` WRITE;
 /*!40000 ALTER TABLE `program_workflow_state` DISABLE KEYS */;
-INSERT INTO `program_workflow_state` VALUES (1,1,1490,1,0,1,'2007-12-19 12:09:08',0,1,'2012-02-06 18:05:08','ba3ee372-8d80-11d8-abbb-0024217bb78e'),(2,1,1744,0,1,1,'2007-12-19 12:09:08',0,1,'2012-02-06 18:05:08','ba3ee570-8d80-11d8-abbb-0024217bb78e'),(3,1,1742,0,1,1,'2007-12-19 12:09:08',0,1,'2012-02-06 18:05:08','ba3ee674-8d80-11d8-abbb-0024217bb78e'),(4,1,1713,0,0,1,'2007-12-19 12:09:08',1,1,'2012-02-06 18:05:08','ba3ee778-8d80-11d8-abbb-0024217bb78e'),(5,1,1483,0,0,1,'2007-12-19 12:09:08',1,1,'2012-02-06 18:05:08','ba3ee868-8d80-11d8-abbb-0024217bb78e'),(6,1,1579,0,1,1,'2007-12-19 12:09:08',0,1,'2012-02-06 18:05:08','ba3f0ece-8d80-11d8-abbb-0024217bb78e'),(7,1,1577,1,0,1,'2007-12-19 12:09:08',0,1,'2012-02-06 18:05:08','ba3f0fdc-8d80-11d8-abbb-0024217bb78e'),(8,1,1574,0,1,1,'2007-12-19 12:09:08',0,1,'2012-02-06 18:05:08','ba3f10d6-8d80-11d8-abbb-0024217bb78e'),(9,1,1485,1,0,1,'2007-12-19 12:09:08',1,1,'2012-02-06 18:05:08','ba3f11d0-8d80-11d8-abbb-0024217bb78e'),(10,1,1708,1,0,1,'2007-12-19 12:09:08',1,1,'2012-02-06 18:05:08','ba3f12c0-8d80-11d8-abbb-0024217bb78e'),(11,1,1710,1,0,1,'2007-12-19 12:09:08',1,1,'2012-02-06 18:05:08','ba3f13ba-8d80-11d8-abbb-0024217bb78e'),(12,1,1743,0,1,1,'2007-12-19 12:09:08',1,1,'2012-02-06 18:05:08','ba3f14aa-8d80-11d8-abbb-0024217bb78e'),(27,5,1490,1,0,1,'2008-09-17 22:13:53',0,1,'2013-01-10 17:10:10','ba3f15a4-8d80-11d8-abbb-0024217bb78e'),(28,5,3626,0,1,1,'2008-09-17 22:13:53',0,1,'2013-01-10 17:10:10','ba3f1694-8d80-11d8-abbb-0024217bb78e'),(29,5,1577,0,1,1,'2008-09-17 22:13:53',0,1,'2013-01-10 17:10:10','ba3f178e-8d80-11d8-abbb-0024217bb78e'),(30,5,1743,0,1,1,'2008-09-17 22:13:53',0,1,'2013-01-10 17:10:10','ba3f187e-8d80-11d8-abbb-0024217bb78e'),(31,5,1744,0,1,1,'2008-09-17 22:13:53',0,1,'2013-01-10 17:10:10','ba3f1928-8d80-11d8-abbb-0024217bb78e'),(32,5,1742,0,1,1,'2008-09-17 22:13:53',0,1,'2013-01-10 17:10:10','ba3f19dc-8d80-11d8-abbb-0024217bb78e'),(33,5,3644,0,0,1,'2008-09-23 21:13:58',0,1,'2013-01-10 17:10:10','ba3f1a7c-8d80-11d8-abbb-0024217bb78e'),(34,5,3643,0,0,1,'2008-09-23 21:13:58',0,1,'2013-01-10 17:10:10','ba3f1b26-8d80-11d8-abbb-0024217bb78e'),(50,9,3501,1,0,1,'2008-09-28 08:50:35',0,1,'2011-12-09 14:49:33','ba3f1bd0-8d80-11d8-abbb-0024217bb78e'),(51,9,3626,0,1,1,'2008-09-28 08:50:35',0,1,'2011-12-09 14:49:33','ba3f1c70-8d80-11d8-abbb-0024217bb78e'),(52,9,1743,0,1,1,'2008-09-28 08:50:35',0,1,'2011-12-09 14:49:33','ba3f1d1a-8d80-11d8-abbb-0024217bb78e'),(53,9,1744,0,1,1,'2008-09-28 08:50:35',0,1,'2011-12-09 14:49:33','ba3f1dc4-8d80-11d8-abbb-0024217bb78e'),(54,9,1742,0,1,1,'2008-09-28 08:50:35',0,1,'2011-12-09 14:49:33','ba3f1e6e-8d80-11d8-abbb-0024217bb78e'),(55,9,1714,0,1,1,'2008-09-28 12:26:17',0,1,'2011-12-09 14:49:33','ba3f1f18-8d80-11d8-abbb-0024217bb78e'),(56,9,1713,0,0,1,'2008-10-05 12:21:26',0,1,'2011-12-09 14:49:33','ba3f1fb8-8d80-11d8-abbb-0024217bb78e'),(57,9,1579,0,0,1,'2008-10-05 12:21:26',0,1,'2011-12-09 14:49:33','ba3f2062-8d80-11d8-abbb-0024217bb78e'),(58,9,1490,1,0,1,'2008-10-06 16:42:27',0,1,'2011-12-09 14:49:33','ba3f210c-8d80-11d8-abbb-0024217bb78e'),(59,1,3490,0,1,1,'2009-02-03 15:52:51',1,1,'2012-02-06 18:05:08','ba3f21b6-8d80-11d8-abbb-0024217bb78e'),(60,1,5240,0,1,1,'2009-06-02 09:38:28',1,1,'2012-02-06 18:05:08','ba3f361a-8d80-11d8-abbb-0024217bb78e'),(67,15,6370,1,0,1,'2009-11-03 16:27:34',0,NULL,NULL,'ba3f36c4-8d80-11d8-abbb-0024217bb78e'),(68,15,6369,0,1,1,'2009-11-03 16:27:34',0,NULL,NULL,'ba3f3778-8d80-11d8-abbb-0024217bb78e'),(69,15,1742,0,1,1,'2009-11-03 16:27:34',0,NULL,NULL,'ba3f3822-8d80-11d8-abbb-0024217bb78e'),(70,11,1577,1,0,1,'2009-12-11 10:01:14',0,1,'2011-12-09 14:49:06','ba3f38d6-8d80-11d8-abbb-0024217bb78e'),(71,11,1742,0,1,1,'2009-12-11 10:01:14',0,1,'2011-12-09 14:49:06','ba3f3976-8d80-11d8-abbb-0024217bb78e'),(72,11,1744,0,1,1,'2009-12-11 10:01:14',0,1,'2011-12-09 14:49:06','ba3f3a20-8d80-11d8-abbb-0024217bb78e'),(73,11,5240,0,1,1,'2009-12-11 10:01:14',0,1,'2011-12-09 14:49:06','ba3f3aca-8d80-11d8-abbb-0024217bb78e'),(74,11,1579,0,0,1,'2009-12-11 10:01:14',0,1,'2011-12-09 14:49:06','ba3f3b74-8d80-11d8-abbb-0024217bb78e'),(75,11,3490,0,1,1,'2009-12-11 10:01:14',0,1,'2011-12-09 14:49:06','ba3f3c1e-8d80-11d8-abbb-0024217bb78e'),(76,12,1490,1,0,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f3cbe-8d80-11d8-abbb-0024217bb78e'),(77,12,1577,0,1,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f3d68-8d80-11d8-abbb-0024217bb78e'),(78,12,1742,0,1,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f3e12-8d80-11d8-abbb-0024217bb78e'),(79,12,1744,0,1,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f3eb2-8d80-11d8-abbb-0024217bb78e'),(80,12,5240,0,1,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f3f5c-8d80-11d8-abbb-0024217bb78e'),(81,12,1579,0,0,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f4006-8d80-11d8-abbb-0024217bb78e'),(82,12,3490,0,1,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f40b0-8d80-11d8-abbb-0024217bb78e'),(83,16,3501,1,0,1,'2010-10-11 19:33:04',0,1,'2002-11-26 22:00:43','ba3f415a-8d80-11d8-abbb-0024217bb78e'),(84,16,1744,0,1,1,'2010-10-11 19:33:04',0,1,'2002-11-26 22:00:43','ba3f41fa-8d80-11d8-abbb-0024217bb78e'),(85,16,1742,0,1,1,'2010-10-11 19:33:04',0,1,'2002-11-26 22:00:43','ba3f42a4-8d80-11d8-abbb-0024217bb78e'),(86,16,3626,0,1,1,'2010-10-11 19:33:04',0,1,'2002-11-26 22:00:43','ba3f434e-8d80-11d8-abbb-0024217bb78e'),(87,1,7373,0,0,1,'2010-10-11 19:43:38',0,1,'2012-02-06 18:05:08','ba3f43f8-8d80-11d8-abbb-0024217bb78e'),(91,17,1067,1,0,1,'2011-08-30 21:08:42',1,1,'2002-09-04 04:55:19','ba3f4498-8d80-11d8-abbb-0024217bb78e'),(92,17,1432,1,0,1,'2011-08-30 21:08:42',0,1,'2002-09-04 04:55:19','ba3f4542-8d80-11d8-abbb-0024217bb78e'),(93,17,1714,0,1,1,'2011-08-30 21:08:42',0,1,'2002-09-04 04:55:19','ba3f45ec-8d80-11d8-abbb-0024217bb78e'),(94,17,1742,0,1,1,'2011-08-30 21:08:42',0,1,'2002-09-04 04:55:19','ba3f5776-8d80-11d8-abbb-0024217bb78e'),(95,17,1744,0,0,1,'2011-08-30 21:08:42',0,1,'2002-09-04 04:55:19','ba3f5820-8d80-11d8-abbb-0024217bb78e'),(96,17,1743,0,0,1,'2011-08-30 21:08:42',1,1,'2002-09-04 04:55:19','ba3f58ca-8d80-11d8-abbb-0024217bb78e'),(97,17,1746,0,1,1,'2011-08-30 21:08:42',0,1,'2002-09-04 04:55:19','ba3f5974-8d80-11d8-abbb-0024217bb78e'),(98,17,2458,0,0,1,'2011-08-30 21:08:42',1,1,'2002-09-04 04:55:19','ba3f5a1e-8d80-11d8-abbb-0024217bb78e'),(99,17,843,0,1,1,'2011-08-30 21:08:42',0,1,'2002-09-04 04:55:19','ba3f5abe-8d80-11d8-abbb-0024217bb78e'),(100,18,1432,1,0,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5b68-8d80-11d8-abbb-0024217bb78e'),(101,18,3500,0,1,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5c12-8d80-11d8-abbb-0024217bb78e'),(102,18,3499,1,0,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5cbc-8d80-11d8-abbb-0024217bb78e'),(103,18,1714,0,1,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5d5c-8d80-11d8-abbb-0024217bb78e'),(104,18,1742,0,1,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5e06-8d80-11d8-abbb-0024217bb78e'),(105,18,1743,0,1,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5eb0-8d80-11d8-abbb-0024217bb78e'),(106,18,1744,0,1,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5f50-8d80-11d8-abbb-0024217bb78e'),(107,18,7373,0,1,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5ffa-8d80-11d8-abbb-0024217bb78e'),(108,17,7373,0,0,1,'2011-08-30 21:15:05',1,1,'2002-09-04 04:55:19','ba3f60a4-8d80-11d8-abbb-0024217bb78e'),(109,19,7376,1,0,1,'2011-08-30 21:17:18',0,1,'2011-12-09 14:49:21','ba3f614e-8d80-11d8-abbb-0024217bb78e'),(110,19,6539,0,1,1,'2011-08-30 21:17:18',0,1,'2011-12-09 14:49:21','ba3f61f8-8d80-11d8-abbb-0024217bb78e'),(111,19,7377,0,1,1,'2011-08-30 21:17:18',0,1,'2011-12-09 14:49:21','ba3f62b6-8d80-11d8-abbb-0024217bb78e'),(112,19,3626,0,1,1,'2011-08-30 21:17:18',0,1,'2011-12-09 14:49:21','ba3f636a-8d80-11d8-abbb-0024217bb78e'),(113,19,1742,0,1,1,'2011-08-30 21:17:18',0,1,'2011-12-09 14:49:21','ba3f6414-8d80-11d8-abbb-0024217bb78e'),(114,20,7376,0,0,1,'2011-08-30 21:21:47',0,1,'2012-02-23 17:11:48','ba3f64be-8d80-11d8-abbb-0024217bb78e'),(115,20,6541,0,1,1,'2011-08-30 21:21:47',0,1,'2012-02-23 17:11:48','ba3f6568-8d80-11d8-abbb-0024217bb78e'),(116,20,1742,0,1,1,'2011-08-30 21:25:19',0,1,'2012-02-23 17:11:48','ba3f6612-8d80-11d8-abbb-0024217bb78e'),(117,20,6539,0,1,1,'2011-08-30 21:25:19',0,1,'2012-02-23 17:11:48','ba3f66bc-8d80-11d8-abbb-0024217bb78e'),(118,20,1432,0,0,1,'2011-08-30 21:25:19',0,1,'2012-02-23 17:11:48','ba3f6766-8d80-11d8-abbb-0024217bb78e'),(119,1,8016,0,1,1,'2011-09-07 16:19:10',0,1,'2012-02-06 18:05:08','ba3f795e-8d80-11d8-abbb-0024217bb78e'),(120,1,8017,1,0,1,'2011-09-07 16:19:10',0,1,'2012-02-06 18:05:08','ba3f7a12-8d80-11d8-abbb-0024217bb78e'),(121,21,8265,1,0,1,'2011-12-02 10:33:54',0,1,'2011-12-12 17:44:22','ba3f7ac6-8d80-11d8-abbb-0024217bb78e'),(122,21,3501,0,0,1,'2011-12-02 10:33:54',0,1,'2011-12-12 17:44:22','ba3f7b70-8d80-11d8-abbb-0024217bb78e'),(123,21,1579,0,1,1,'2011-12-02 10:33:54',0,1,'2011-12-12 17:44:22','ba3f7c1a-8d80-11d8-abbb-0024217bb78e'),(124,21,1742,0,1,1,'2011-12-02 10:33:54',0,1,'2011-12-12 17:44:22','ba3f7cce-8d80-11d8-abbb-0024217bb78e'),(125,21,1744,0,1,1,'2011-12-02 10:33:54',0,1,'2011-12-12 17:44:22','ba3f7d78-8d80-11d8-abbb-0024217bb78e'),(126,22,8321,1,0,1,'2012-01-09 16:19:25',0,1,'2012-08-01 12:49:49','ba3f826e-8d80-11d8-abbb-0024217bb78e'),(127,22,1742,0,1,1,'2012-01-09 16:19:25',0,1,'2012-08-01 12:49:49','ba3f8322-8d80-11d8-abbb-0024217bb78e'),(128,23,7376,1,0,1,'2012-01-09 16:21:25',0,1,'2002-10-09 16:18:00','ba3f83cc-8d80-11d8-abbb-0024217bb78e'),(129,23,3626,0,1,1,'2012-01-09 16:21:25',0,1,'2002-10-09 16:18:00','ba3f8480-8d80-11d8-abbb-0024217bb78e'),(130,23,6539,0,1,1,'2012-01-09 16:21:25',0,1,'2002-10-09 16:18:00','ba3f852a-8d80-11d8-abbb-0024217bb78e'),(131,23,1742,0,1,1,'2012-01-09 16:21:25',0,1,'2002-10-09 16:18:00','ba3f85d4-8d80-11d8-abbb-0024217bb78e'),(134,23,1744,0,0,1,'2012-02-02 14:10:57',0,1,'2002-10-09 16:18:00','ba3f867e-8d80-11d8-abbb-0024217bb78e'),(135,23,7373,0,0,1,'2012-02-02 14:10:57',0,1,'2002-10-09 16:18:00','ba3f8728-8d80-11d8-abbb-0024217bb78e'),(136,1,8365,1,0,1,'2012-02-06 18:05:08',0,NULL,NULL,'ba3f87d2-8d80-11d8-abbb-0024217bb78e'),(137,20,6259,0,0,1,'2012-02-23 15:34:18',0,1,'2012-02-23 17:11:48','ba3f8886-8d80-11d8-abbb-0024217bb78e'),(138,20,8374,0,0,1,'2012-02-23 15:44:43',0,1,'2012-02-23 17:11:48','ba3f8930-8d80-11d8-abbb-0024217bb78e'),(139,20,8321,1,0,1,'2012-02-23 17:11:48',0,NULL,NULL,'ba3f89e4-8d80-11d8-abbb-0024217bb78e'),(140,22,1744,0,1,1,'2012-07-25 10:34:58',0,1,'2012-08-01 12:49:49','ba3f8a8e-8d80-11d8-abbb-0024217bb78e'),(141,22,8441,0,0,1,'2012-08-01 12:49:49',0,NULL,NULL,'ba3f8b38-8d80-11d8-abbb-0024217bb78e'),(142,24,1742,0,1,1,'2013-01-11 11:43:55',0,NULL,NULL,'ba3f8cdc-8d80-11d8-abbb-0024217bb78e'),(143,24,2484,1,0,1,'2013-01-11 11:43:55',0,NULL,NULL,'ba3f8d9a-8d80-11d8-abbb-0024217bb78e'),(144,25,3000,0,1,1,'2002-05-30 13:34:27',0,1,'2002-05-30 13:36:07','ba3f8e4e-8d80-11d8-abbb-0024217bb78e'),(145,25,9126,1,0,1,'2002-05-30 13:34:27',0,1,'2002-05-30 13:36:07','ba3f8f20-8d80-11d8-abbb-0024217bb78e'),(146,25,9127,0,1,1,'2002-05-30 13:34:27',0,1,'2002-05-30 13:36:07','ba3fa064-8d80-11d8-abbb-0024217bb78e'),(147,25,1742,0,1,1,'2002-05-30 13:34:27',0,1,'2002-05-30 13:36:07','ba3fa122-8d80-11d8-abbb-0024217bb78e'),(148,29,9126,1,0,1,'2002-05-30 13:36:07',0,NULL,NULL,'ba3fa1e0-8d80-11d8-abbb-0024217bb78e'),(149,29,9127,0,1,1,'2002-05-30 13:36:07',0,NULL,NULL,'ba3fa29e-8d80-11d8-abbb-0024217bb78e'),(150,29,1742,0,1,1,'2002-05-30 13:36:07',0,NULL,NULL,'ba3fa352-8d80-11d8-abbb-0024217bb78e'),(151,29,3000,0,1,1,'2002-05-30 13:36:07',0,NULL,NULL,'ba3fa410-8d80-11d8-abbb-0024217bb78e'),(152,23,9174,0,1,1,'2013-06-06 09:10:40',0,1,'2002-10-09 16:18:00','ba3fa4c4-8d80-11d8-abbb-0024217bb78e'),(153,23,9176,0,1,1,'2013-06-06 09:10:40',0,1,'2002-10-09 16:18:00','ba3fa582-8d80-11d8-abbb-0024217bb78e'),(154,16,1743,0,1,1,'2013-06-06 14:57:41',0,1,'2002-11-26 22:00:43','ba3fa640-8d80-11d8-abbb-0024217bb78e'),(155,23,9230,0,1,1,'2002-10-01 23:03:00',0,1,'2002-10-09 16:18:00','ba3fa6f4-8d80-11d8-abbb-0024217bb78e'),(156,23,9231,1,0,1,'2002-10-01 23:03:00',0,1,'2002-10-09 16:18:00','ba3fa7b2-8d80-11d8-abbb-0024217bb78e'),(157,16,2895,1,0,1,'2002-11-26 21:59:44',0,1,'2002-11-26 22:00:43','ba3fa866-8d80-11d8-abbb-0024217bb78e'),(158,16,1579,0,1,1,'2002-11-26 22:00:43',0,NULL,NULL,'ba3fa924-8d80-11d8-abbb-0024217bb78e'),(159,36,9441,0,0,1,'2004-01-07 22:28:42',0,1,'2004-01-08 17:21:02','ba3fa9d8-8d80-11d8-abbb-0024217bb78e'),(160,44,2895,1,0,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3faa96-8d80-11d8-abbb-0024217bb78e'),(161,44,1579,0,1,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3fab4a-8d80-11d8-abbb-0024217bb78e'),(162,44,3501,1,0,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3fac08-8d80-11d8-abbb-0024217bb78e'),(163,44,1744,0,1,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3facc6-8d80-11d8-abbb-0024217bb78e'),(164,44,1742,0,1,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3fad7a-8d80-11d8-abbb-0024217bb78e'),(165,44,1743,0,1,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3fae38-8d80-11d8-abbb-0024217bb78e'),(166,44,2458,1,0,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3faeec-8d80-11d8-abbb-0024217bb78e'),(167,44,9466,1,0,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3fafaa-8d80-11d8-abbb-0024217bb78e'),(168,17,9814,1,0,1,'2019-07-15 09:12:20',1,1,'2002-09-04 04:55:19','6bb61214-4771-4243-86e5-e706d4cc20ee'),(169,17,9860,0,1,1,'2019-10-22 09:23:10',0,1,'2002-09-04 04:55:19','95986252-b651-4e64-9331-3d0ac47a40a8'),(170,17,9861,0,1,1,'2019-10-22 09:24:25',1,1,'2002-09-04 04:55:19','8e5de9c6-e004-412d-8302-15d2c9ac3b14'),(171,49,1432,1,0,1,'2002-01-07 01:13:34',0,NULL,NULL,'d0107139-bc3b-49e7-87ed-59ea61724944'),(172,49,1714,0,1,1,'2002-01-07 01:13:34',0,NULL,NULL,'670322fa-2d9a-43f3-90ef-d792b8b01df5'),(173,17,9947,0,1,1,'2002-03-29 03:19:33',0,1,'2002-09-04 04:55:19','be28ff33-a216-44c7-a75a-2b2bf7945392'),(174,17,9978,0,0,1,'2002-04-03 02:40:40',0,1,'2002-09-04 04:55:19','408c50e9-5451-49c5-a4d3-70d02bc03dc5'),(176,53,3388,1,1,1,'2021-03-26 10:30:05',0,NULL,'2021-03-26 10:30:05','1a13ffda-66c3-4bd6-818a-a4a84ad51e3d'),(178,54,8882,0,0,1,'2021-03-26 10:30:07',0,NULL,'2021-03-26 10:30:07','d2fa7f1e-9353-461c-9345-1f5f69800b4f'),(180,54,9053,0,0,1,'2021-03-26 10:30:07',0,NULL,'2021-03-26 10:30:07','f32f1ea2-08f9-4e36-b34d-acc1ae875c88'),(183,54,1742,0,1,1,'2021-03-26 10:30:07',0,NULL,'2021-03-26 10:30:07','a366b166-cfe5-4eee-8957-204f8bcc2252'),(186,55,3388,1,1,1,'2021-03-27 09:39:56',0,NULL,'2021-03-27 09:39:56','b078738f-3601-4f21-aa4b-3ee9a5bd4ac6'),(187,56,10006,1,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','9bcab30a-2529-4075-976c-62ef2493e013'),(188,56,10001,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','a27c58f7-3900-4195-bd5c-fcf18fee014d'),(189,56,10002,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','717bbd53-7784-4e9c-adcf-ee8672c9b0d8'),(190,56,10003,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','ec3c7a3d-d608-4d4a-a01e-02c897f87191'),(191,56,10004,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','6e56644c-108d-43b9-b83b-cfed5a1a9ee9'),(192,56,6537,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','3c651fa2-aa10-4b51-b7a4-5f95a2ef755e'),(193,56,1742,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','6bf06664-a0ea-4a34-8116-159dedc1f74c'),(194,56,1714,0,1,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','286c5d9a-bfd4-4a37-a64d-406f8bc47529'),(195,56,10016,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','e3f64a1e-7bad-4691-bd10-2c2e99cd348a'),(196,57,8321,1,0,1,'2021-09-27 18:26:11',0,1,'2021-09-27 18:26:30','c6dbdf5c-9136-46db-9d78-358b139e03c4'),(197,57,1742,0,1,1,'2021-09-27 18:26:11',0,1,'2021-09-27 18:26:30','e2b27c48-8085-4313-a483-b5140ae093e2'),(198,57,1744,0,1,1,'2021-09-27 18:26:11',0,1,'2021-09-27 18:26:30','d7b25dcd-0484-4532-adf0-37ac04e0fe74'),(199,57,8441,0,0,1,'2021-09-27 18:26:11',0,1,'2021-09-27 18:26:30','8cad161b-942e-4dd5-b8b1-719619de7d9f'),(200,54,10559,0,0,1,'2022-02-22 17:00:00',0,NULL,'2022-02-22 17:00:00','bde8f024-e533-4ae2-b968-44c77c5bfab9');
+INSERT INTO `program_workflow_state` VALUES (1,1,1490,1,0,1,'2007-12-19 12:09:08',0,1,'2012-02-06 18:05:08','ba3ee372-8d80-11d8-abbb-0024217bb78e'),(2,1,1744,0,1,1,'2007-12-19 12:09:08',0,1,'2012-02-06 18:05:08','ba3ee570-8d80-11d8-abbb-0024217bb78e'),(3,1,1742,0,1,1,'2007-12-19 12:09:08',0,1,'2012-02-06 18:05:08','ba3ee674-8d80-11d8-abbb-0024217bb78e'),(4,1,1713,0,0,1,'2007-12-19 12:09:08',1,1,'2012-02-06 18:05:08','ba3ee778-8d80-11d8-abbb-0024217bb78e'),(5,1,1483,0,0,1,'2007-12-19 12:09:08',1,1,'2012-02-06 18:05:08','ba3ee868-8d80-11d8-abbb-0024217bb78e'),(6,1,1579,0,1,1,'2007-12-19 12:09:08',0,1,'2012-02-06 18:05:08','ba3f0ece-8d80-11d8-abbb-0024217bb78e'),(7,1,1577,1,0,1,'2007-12-19 12:09:08',0,1,'2012-02-06 18:05:08','ba3f0fdc-8d80-11d8-abbb-0024217bb78e'),(8,1,1574,0,1,1,'2007-12-19 12:09:08',0,1,'2012-02-06 18:05:08','ba3f10d6-8d80-11d8-abbb-0024217bb78e'),(9,1,1485,1,0,1,'2007-12-19 12:09:08',1,1,'2012-02-06 18:05:08','ba3f11d0-8d80-11d8-abbb-0024217bb78e'),(10,1,1708,1,0,1,'2007-12-19 12:09:08',1,1,'2012-02-06 18:05:08','ba3f12c0-8d80-11d8-abbb-0024217bb78e'),(11,1,1710,1,0,1,'2007-12-19 12:09:08',1,1,'2012-02-06 18:05:08','ba3f13ba-8d80-11d8-abbb-0024217bb78e'),(12,1,1743,0,1,1,'2007-12-19 12:09:08',1,1,'2012-02-06 18:05:08','ba3f14aa-8d80-11d8-abbb-0024217bb78e'),(27,5,1490,1,0,1,'2008-09-17 22:13:53',0,1,'2013-01-10 17:10:10','ba3f15a4-8d80-11d8-abbb-0024217bb78e'),(28,5,3626,0,1,1,'2008-09-17 22:13:53',0,1,'2013-01-10 17:10:10','ba3f1694-8d80-11d8-abbb-0024217bb78e'),(29,5,1577,0,1,1,'2008-09-17 22:13:53',0,1,'2013-01-10 17:10:10','ba3f178e-8d80-11d8-abbb-0024217bb78e'),(30,5,1743,0,1,1,'2008-09-17 22:13:53',0,1,'2013-01-10 17:10:10','ba3f187e-8d80-11d8-abbb-0024217bb78e'),(31,5,1744,0,1,1,'2008-09-17 22:13:53',0,1,'2013-01-10 17:10:10','ba3f1928-8d80-11d8-abbb-0024217bb78e'),(32,5,1742,0,1,1,'2008-09-17 22:13:53',0,1,'2013-01-10 17:10:10','ba3f19dc-8d80-11d8-abbb-0024217bb78e'),(33,5,3644,0,0,1,'2008-09-23 21:13:58',0,1,'2013-01-10 17:10:10','ba3f1a7c-8d80-11d8-abbb-0024217bb78e'),(34,5,3643,0,0,1,'2008-09-23 21:13:58',0,1,'2013-01-10 17:10:10','ba3f1b26-8d80-11d8-abbb-0024217bb78e'),(50,9,3501,1,0,1,'2008-09-28 08:50:35',0,1,'2011-12-09 14:49:33','ba3f1bd0-8d80-11d8-abbb-0024217bb78e'),(51,9,3626,0,1,1,'2008-09-28 08:50:35',0,1,'2011-12-09 14:49:33','ba3f1c70-8d80-11d8-abbb-0024217bb78e'),(52,9,1743,0,1,1,'2008-09-28 08:50:35',0,1,'2011-12-09 14:49:33','ba3f1d1a-8d80-11d8-abbb-0024217bb78e'),(53,9,1744,0,1,1,'2008-09-28 08:50:35',0,1,'2011-12-09 14:49:33','ba3f1dc4-8d80-11d8-abbb-0024217bb78e'),(54,9,1742,0,1,1,'2008-09-28 08:50:35',0,1,'2011-12-09 14:49:33','ba3f1e6e-8d80-11d8-abbb-0024217bb78e'),(55,9,1714,0,1,1,'2008-09-28 12:26:17',0,1,'2011-12-09 14:49:33','ba3f1f18-8d80-11d8-abbb-0024217bb78e'),(56,9,1713,0,0,1,'2008-10-05 12:21:26',0,1,'2011-12-09 14:49:33','ba3f1fb8-8d80-11d8-abbb-0024217bb78e'),(57,9,1579,0,0,1,'2008-10-05 12:21:26',0,1,'2011-12-09 14:49:33','ba3f2062-8d80-11d8-abbb-0024217bb78e'),(58,9,1490,1,0,1,'2008-10-06 16:42:27',0,1,'2011-12-09 14:49:33','ba3f210c-8d80-11d8-abbb-0024217bb78e'),(59,1,3490,0,1,1,'2009-02-03 15:52:51',1,1,'2012-02-06 18:05:08','ba3f21b6-8d80-11d8-abbb-0024217bb78e'),(60,1,5240,0,1,1,'2009-06-02 09:38:28',1,1,'2012-02-06 18:05:08','ba3f361a-8d80-11d8-abbb-0024217bb78e'),(67,15,6370,1,0,1,'2009-11-03 16:27:34',0,NULL,NULL,'ba3f36c4-8d80-11d8-abbb-0024217bb78e'),(68,15,6369,0,1,1,'2009-11-03 16:27:34',0,NULL,NULL,'ba3f3778-8d80-11d8-abbb-0024217bb78e'),(69,15,1742,0,1,1,'2009-11-03 16:27:34',0,NULL,NULL,'ba3f3822-8d80-11d8-abbb-0024217bb78e'),(70,11,1577,1,0,1,'2009-12-11 10:01:14',0,1,'2011-12-09 14:49:06','ba3f38d6-8d80-11d8-abbb-0024217bb78e'),(71,11,1742,0,1,1,'2009-12-11 10:01:14',0,1,'2011-12-09 14:49:06','ba3f3976-8d80-11d8-abbb-0024217bb78e'),(72,11,1744,0,1,1,'2009-12-11 10:01:14',0,1,'2011-12-09 14:49:06','ba3f3a20-8d80-11d8-abbb-0024217bb78e'),(73,11,5240,0,1,1,'2009-12-11 10:01:14',0,1,'2011-12-09 14:49:06','ba3f3aca-8d80-11d8-abbb-0024217bb78e'),(74,11,1579,0,0,1,'2009-12-11 10:01:14',0,1,'2011-12-09 14:49:06','ba3f3b74-8d80-11d8-abbb-0024217bb78e'),(75,11,3490,0,1,1,'2009-12-11 10:01:14',0,1,'2011-12-09 14:49:06','ba3f3c1e-8d80-11d8-abbb-0024217bb78e'),(76,12,1490,1,0,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f3cbe-8d80-11d8-abbb-0024217bb78e'),(77,12,1577,0,1,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f3d68-8d80-11d8-abbb-0024217bb78e'),(78,12,1742,0,1,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f3e12-8d80-11d8-abbb-0024217bb78e'),(79,12,1744,0,1,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f3eb2-8d80-11d8-abbb-0024217bb78e'),(80,12,5240,0,1,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f3f5c-8d80-11d8-abbb-0024217bb78e'),(81,12,1579,0,0,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f4006-8d80-11d8-abbb-0024217bb78e'),(82,12,3490,0,1,1,'2009-12-11 10:12:07',0,1,'2011-12-09 14:48:50','ba3f40b0-8d80-11d8-abbb-0024217bb78e'),(83,16,3501,1,0,1,'2010-10-11 19:33:04',0,1,'2002-11-26 22:00:43','ba3f415a-8d80-11d8-abbb-0024217bb78e'),(84,16,1744,0,1,1,'2010-10-11 19:33:04',0,1,'2002-11-26 22:00:43','ba3f41fa-8d80-11d8-abbb-0024217bb78e'),(85,16,1742,0,1,1,'2010-10-11 19:33:04',0,1,'2002-11-26 22:00:43','ba3f42a4-8d80-11d8-abbb-0024217bb78e'),(86,16,3626,0,1,1,'2010-10-11 19:33:04',0,1,'2002-11-26 22:00:43','ba3f434e-8d80-11d8-abbb-0024217bb78e'),(87,1,7373,0,0,1,'2010-10-11 19:43:38',0,1,'2012-02-06 18:05:08','ba3f43f8-8d80-11d8-abbb-0024217bb78e'),(91,17,1067,1,0,1,'2011-08-30 21:08:42',1,1,'2002-09-04 04:55:19','ba3f4498-8d80-11d8-abbb-0024217bb78e'),(92,17,1432,1,0,1,'2011-08-30 21:08:42',0,1,'2002-09-04 04:55:19','ba3f4542-8d80-11d8-abbb-0024217bb78e'),(93,17,1714,0,1,1,'2011-08-30 21:08:42',0,1,'2002-09-04 04:55:19','ba3f45ec-8d80-11d8-abbb-0024217bb78e'),(94,17,1742,0,1,1,'2011-08-30 21:08:42',0,1,'2002-09-04 04:55:19','ba3f5776-8d80-11d8-abbb-0024217bb78e'),(95,17,1744,0,0,1,'2011-08-30 21:08:42',0,1,'2002-09-04 04:55:19','ba3f5820-8d80-11d8-abbb-0024217bb78e'),(96,17,1743,0,0,1,'2011-08-30 21:08:42',1,1,'2002-09-04 04:55:19','ba3f58ca-8d80-11d8-abbb-0024217bb78e'),(97,17,1746,0,1,1,'2011-08-30 21:08:42',0,1,'2002-09-04 04:55:19','ba3f5974-8d80-11d8-abbb-0024217bb78e'),(98,17,2458,0,0,1,'2011-08-30 21:08:42',1,1,'2002-09-04 04:55:19','ba3f5a1e-8d80-11d8-abbb-0024217bb78e'),(99,17,843,0,1,1,'2011-08-30 21:08:42',0,1,'2002-09-04 04:55:19','ba3f5abe-8d80-11d8-abbb-0024217bb78e'),(100,18,1432,1,0,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5b68-8d80-11d8-abbb-0024217bb78e'),(101,18,3500,0,1,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5c12-8d80-11d8-abbb-0024217bb78e'),(102,18,3499,1,0,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5cbc-8d80-11d8-abbb-0024217bb78e'),(103,18,1714,0,1,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5d5c-8d80-11d8-abbb-0024217bb78e'),(104,18,1742,0,1,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5e06-8d80-11d8-abbb-0024217bb78e'),(105,18,1743,0,1,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5eb0-8d80-11d8-abbb-0024217bb78e'),(106,18,1744,0,1,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5f50-8d80-11d8-abbb-0024217bb78e'),(107,18,7373,0,1,1,'2011-08-30 21:14:12',0,1,'2011-08-30 21:14:29','ba3f5ffa-8d80-11d8-abbb-0024217bb78e'),(108,17,7373,0,0,1,'2011-08-30 21:15:05',1,1,'2002-09-04 04:55:19','ba3f60a4-8d80-11d8-abbb-0024217bb78e'),(109,19,7376,1,0,1,'2011-08-30 21:17:18',0,1,'2011-12-09 14:49:21','ba3f614e-8d80-11d8-abbb-0024217bb78e'),(110,19,6539,0,1,1,'2011-08-30 21:17:18',0,1,'2011-12-09 14:49:21','ba3f61f8-8d80-11d8-abbb-0024217bb78e'),(111,19,7377,0,1,1,'2011-08-30 21:17:18',0,1,'2011-12-09 14:49:21','ba3f62b6-8d80-11d8-abbb-0024217bb78e'),(112,19,3626,0,1,1,'2011-08-30 21:17:18',0,1,'2011-12-09 14:49:21','ba3f636a-8d80-11d8-abbb-0024217bb78e'),(113,19,1742,0,1,1,'2011-08-30 21:17:18',0,1,'2011-12-09 14:49:21','ba3f6414-8d80-11d8-abbb-0024217bb78e'),(114,20,7376,0,0,1,'2011-08-30 21:21:47',0,1,'2012-02-23 17:11:48','ba3f64be-8d80-11d8-abbb-0024217bb78e'),(115,20,6541,0,1,1,'2011-08-30 21:21:47',0,1,'2012-02-23 17:11:48','ba3f6568-8d80-11d8-abbb-0024217bb78e'),(116,20,1742,0,1,1,'2011-08-30 21:25:19',0,1,'2012-02-23 17:11:48','ba3f6612-8d80-11d8-abbb-0024217bb78e'),(117,20,6539,0,1,1,'2011-08-30 21:25:19',0,1,'2012-02-23 17:11:48','ba3f66bc-8d80-11d8-abbb-0024217bb78e'),(118,20,1432,0,0,1,'2011-08-30 21:25:19',0,1,'2012-02-23 17:11:48','ba3f6766-8d80-11d8-abbb-0024217bb78e'),(119,1,8016,0,1,1,'2011-09-07 16:19:10',0,1,'2012-02-06 18:05:08','ba3f795e-8d80-11d8-abbb-0024217bb78e'),(120,1,8017,1,0,1,'2011-09-07 16:19:10',0,1,'2012-02-06 18:05:08','ba3f7a12-8d80-11d8-abbb-0024217bb78e'),(121,21,8265,1,0,1,'2011-12-02 10:33:54',0,1,'2011-12-12 17:44:22','ba3f7ac6-8d80-11d8-abbb-0024217bb78e'),(122,21,3501,0,0,1,'2011-12-02 10:33:54',0,1,'2011-12-12 17:44:22','ba3f7b70-8d80-11d8-abbb-0024217bb78e'),(123,21,1579,0,1,1,'2011-12-02 10:33:54',0,1,'2011-12-12 17:44:22','ba3f7c1a-8d80-11d8-abbb-0024217bb78e'),(124,21,1742,0,1,1,'2011-12-02 10:33:54',0,1,'2011-12-12 17:44:22','ba3f7cce-8d80-11d8-abbb-0024217bb78e'),(125,21,1744,0,1,1,'2011-12-02 10:33:54',0,1,'2011-12-12 17:44:22','ba3f7d78-8d80-11d8-abbb-0024217bb78e'),(126,22,8321,1,0,1,'2012-01-09 16:19:25',0,1,'2012-08-01 12:49:49','ba3f826e-8d80-11d8-abbb-0024217bb78e'),(127,22,1742,0,1,1,'2012-01-09 16:19:25',0,1,'2012-08-01 12:49:49','ba3f8322-8d80-11d8-abbb-0024217bb78e'),(128,23,7376,1,0,1,'2012-01-09 16:21:25',0,1,'2002-10-09 16:18:00','ba3f83cc-8d80-11d8-abbb-0024217bb78e'),(129,23,3626,0,1,1,'2012-01-09 16:21:25',0,1,'2002-10-09 16:18:00','ba3f8480-8d80-11d8-abbb-0024217bb78e'),(130,23,6539,0,1,1,'2012-01-09 16:21:25',0,1,'2002-10-09 16:18:00','ba3f852a-8d80-11d8-abbb-0024217bb78e'),(131,23,1742,0,1,1,'2012-01-09 16:21:25',0,1,'2002-10-09 16:18:00','ba3f85d4-8d80-11d8-abbb-0024217bb78e'),(134,23,1744,0,0,1,'2012-02-02 14:10:57',0,1,'2002-10-09 16:18:00','ba3f867e-8d80-11d8-abbb-0024217bb78e'),(135,23,7373,0,0,1,'2012-02-02 14:10:57',0,1,'2002-10-09 16:18:00','ba3f8728-8d80-11d8-abbb-0024217bb78e'),(136,1,8365,1,0,1,'2012-02-06 18:05:08',0,NULL,NULL,'ba3f87d2-8d80-11d8-abbb-0024217bb78e'),(137,20,6259,0,0,1,'2012-02-23 15:34:18',0,1,'2012-02-23 17:11:48','ba3f8886-8d80-11d8-abbb-0024217bb78e'),(138,20,8374,0,0,1,'2012-02-23 15:44:43',0,1,'2012-02-23 17:11:48','ba3f8930-8d80-11d8-abbb-0024217bb78e'),(139,20,8321,1,0,1,'2012-02-23 17:11:48',0,NULL,NULL,'ba3f89e4-8d80-11d8-abbb-0024217bb78e'),(140,22,1744,0,1,1,'2012-07-25 10:34:58',0,1,'2012-08-01 12:49:49','ba3f8a8e-8d80-11d8-abbb-0024217bb78e'),(141,22,8441,0,0,1,'2012-08-01 12:49:49',0,NULL,NULL,'ba3f8b38-8d80-11d8-abbb-0024217bb78e'),(142,24,1742,0,1,1,'2013-01-11 11:43:55',0,NULL,NULL,'ba3f8cdc-8d80-11d8-abbb-0024217bb78e'),(143,24,2484,1,0,1,'2013-01-11 11:43:55',0,NULL,NULL,'ba3f8d9a-8d80-11d8-abbb-0024217bb78e'),(144,25,3000,0,1,1,'2002-05-30 13:34:27',0,1,'2002-05-30 13:36:07','ba3f8e4e-8d80-11d8-abbb-0024217bb78e'),(145,25,9126,1,0,1,'2002-05-30 13:34:27',0,1,'2002-05-30 13:36:07','ba3f8f20-8d80-11d8-abbb-0024217bb78e'),(146,25,9127,0,1,1,'2002-05-30 13:34:27',0,1,'2002-05-30 13:36:07','ba3fa064-8d80-11d8-abbb-0024217bb78e'),(147,25,1742,0,1,1,'2002-05-30 13:34:27',0,1,'2002-05-30 13:36:07','ba3fa122-8d80-11d8-abbb-0024217bb78e'),(148,29,9126,1,0,1,'2002-05-30 13:36:07',0,NULL,NULL,'ba3fa1e0-8d80-11d8-abbb-0024217bb78e'),(149,29,9127,0,1,1,'2002-05-30 13:36:07',0,NULL,NULL,'ba3fa29e-8d80-11d8-abbb-0024217bb78e'),(150,29,1742,0,1,1,'2002-05-30 13:36:07',0,NULL,NULL,'ba3fa352-8d80-11d8-abbb-0024217bb78e'),(151,29,3000,0,1,1,'2002-05-30 13:36:07',0,NULL,NULL,'ba3fa410-8d80-11d8-abbb-0024217bb78e'),(152,23,9174,0,1,1,'2013-06-06 09:10:40',0,1,'2002-10-09 16:18:00','ba3fa4c4-8d80-11d8-abbb-0024217bb78e'),(153,23,9176,0,1,1,'2013-06-06 09:10:40',0,1,'2002-10-09 16:18:00','ba3fa582-8d80-11d8-abbb-0024217bb78e'),(154,16,1743,0,1,1,'2013-06-06 14:57:41',0,1,'2002-11-26 22:00:43','ba3fa640-8d80-11d8-abbb-0024217bb78e'),(155,23,9230,0,1,1,'2002-10-01 23:03:00',0,1,'2002-10-09 16:18:00','ba3fa6f4-8d80-11d8-abbb-0024217bb78e'),(156,23,9231,1,0,1,'2002-10-01 23:03:00',0,1,'2002-10-09 16:18:00','ba3fa7b2-8d80-11d8-abbb-0024217bb78e'),(157,16,2895,1,0,1,'2002-11-26 21:59:44',0,1,'2002-11-26 22:00:43','ba3fa866-8d80-11d8-abbb-0024217bb78e'),(158,16,1579,0,1,1,'2002-11-26 22:00:43',0,NULL,NULL,'ba3fa924-8d80-11d8-abbb-0024217bb78e'),(159,36,9441,0,0,1,'2004-01-07 22:28:42',0,1,'2004-01-08 17:21:02','ba3fa9d8-8d80-11d8-abbb-0024217bb78e'),(160,44,2895,1,0,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3faa96-8d80-11d8-abbb-0024217bb78e'),(161,44,1579,0,1,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3fab4a-8d80-11d8-abbb-0024217bb78e'),(162,44,3501,1,0,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3fac08-8d80-11d8-abbb-0024217bb78e'),(163,44,1744,0,1,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3facc6-8d80-11d8-abbb-0024217bb78e'),(164,44,1742,0,1,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3fad7a-8d80-11d8-abbb-0024217bb78e'),(165,44,1743,0,1,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3fae38-8d80-11d8-abbb-0024217bb78e'),(166,44,2458,1,0,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3faeec-8d80-11d8-abbb-0024217bb78e'),(167,44,9466,1,0,1,'2004-01-14 16:10:27',0,1,'2004-01-24 20:57:26','ba3fafaa-8d80-11d8-abbb-0024217bb78e'),(168,17,9814,1,0,1,'2019-07-15 09:12:20',1,1,'2002-09-04 04:55:19','6bb61214-4771-4243-86e5-e706d4cc20ee'),(169,17,9860,0,1,1,'2019-10-22 09:23:10',0,1,'2002-09-04 04:55:19','95986252-b651-4e64-9331-3d0ac47a40a8'),(170,17,9861,0,1,1,'2019-10-22 09:24:25',1,1,'2002-09-04 04:55:19','8e5de9c6-e004-412d-8302-15d2c9ac3b14'),(171,49,1432,1,0,1,'2002-01-07 01:13:34',0,NULL,NULL,'d0107139-bc3b-49e7-87ed-59ea61724944'),(172,49,1714,0,1,1,'2002-01-07 01:13:34',0,NULL,NULL,'670322fa-2d9a-43f3-90ef-d792b8b01df5'),(173,17,9947,0,1,1,'2002-03-29 03:19:33',0,1,'2002-09-04 04:55:19','be28ff33-a216-44c7-a75a-2b2bf7945392'),(174,17,9978,0,0,1,'2002-04-03 02:40:40',0,1,'2002-09-04 04:55:19','408c50e9-5451-49c5-a4d3-70d02bc03dc5'),(176,53,3388,1,1,1,'2021-03-26 10:30:05',0,NULL,'2021-03-26 10:30:05','1a13ffda-66c3-4bd6-818a-a4a84ad51e3d'),(178,54,8882,0,0,1,'2021-03-26 10:30:07',0,NULL,'2021-03-26 10:30:07','d2fa7f1e-9353-461c-9345-1f5f69800b4f'),(180,54,9053,0,0,1,'2021-03-26 10:30:07',0,NULL,'2021-03-26 10:30:07','f32f1ea2-08f9-4e36-b34d-acc1ae875c88'),(183,54,1742,0,1,1,'2021-03-26 10:30:07',0,NULL,'2021-03-26 10:30:07','a366b166-cfe5-4eee-8957-204f8bcc2252'),(186,55,3388,1,1,1,'2021-03-27 09:39:56',0,NULL,'2021-03-27 09:39:56','b078738f-3601-4f21-aa4b-3ee9a5bd4ac6'),(187,56,10006,1,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','9bcab30a-2529-4075-976c-62ef2493e013'),(188,56,10001,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','a27c58f7-3900-4195-bd5c-fcf18fee014d'),(189,56,10002,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','717bbd53-7784-4e9c-adcf-ee8672c9b0d8'),(190,56,10003,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','ec3c7a3d-d608-4d4a-a01e-02c897f87191'),(191,56,10004,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','6e56644c-108d-43b9-b83b-cfed5a1a9ee9'),(192,56,6537,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','3c651fa2-aa10-4b51-b7a4-5f95a2ef755e'),(193,56,1742,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','6bf06664-a0ea-4a34-8116-159dedc1f74c'),(194,56,1714,0,1,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','286c5d9a-bfd4-4a37-a64d-406f8bc47529'),(195,56,10016,0,0,1,'2021-03-27 09:39:57',0,NULL,'2021-03-27 09:39:57','e3f64a1e-7bad-4691-bd10-2c2e99cd348a'),(196,57,8321,1,0,1,'2021-09-27 18:26:11',0,1,'2021-09-27 18:26:30','c6dbdf5c-9136-46db-9d78-358b139e03c4'),(197,57,1742,0,1,1,'2021-09-27 18:26:11',0,1,'2021-09-27 18:26:30','e2b27c48-8085-4313-a483-b5140ae093e2'),(198,57,1744,0,1,1,'2021-09-27 18:26:11',0,1,'2021-09-27 18:26:30','d7b25dcd-0484-4532-adf0-37ac04e0fe74'),(199,57,8441,0,0,1,'2021-09-27 18:26:11',0,1,'2021-09-27 18:26:30','8cad161b-942e-4dd5-b8b1-719619de7d9f'),(200,54,10559,0,0,1,'2022-02-22 17:00:00',0,NULL,'2022-02-22 17:00:00','bde8f024-e533-4ae2-b968-44c77c5bfab9'),(201,58,11882,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','19e453d4-bc43-11ef-ba8a-201e88d10416'),(202,58,11881,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','1fec2590-bc43-11ef-ba8a-201e88d10416'),(203,58,11880,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','247d1900-bc43-11ef-ba8a-201e88d10416'),(204,58,11879,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','2a4902df-bc43-11ef-ba8a-201e88d10416'),(205,58,11878,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','2d8ea3d7-bc43-11ef-ba8a-201e88d10416'),(206,58,11877,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','3099b711-bc43-11ef-ba8a-201e88d10416'),(207,58,11876,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','3399f3fd-bc43-11ef-ba8a-201e88d10416'),(208,58,11875,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','2a4902df-bc43-11ef-ba8a-201e88d10417'),(209,58,11874,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','247d1900-bc43-11ef-ba8a-201e88d10417'),(210,58,11873,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','2d8ea3d7-bc43-11ef-ba8a-201e88d10417'),(211,58,11872,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','3099b711-bc43-11ef-ba8a-201e88d10417'),(212,58,11871,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','3399f3fd-bc43-11ef-ba8a-201e88d10417'),(213,58,11870,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','2a4902df-bc43-11ef-ba8a-201e88d10418'),(214,58,11869,0,0,1,'2024-12-17 08:49:06',0,1,'2024-12-17 08:49:06','247d1900-bc43-11ef-ba8a-201e88d10418');
 /*!40000 ALTER TABLE `program_workflow_state` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -998,17 +998,17 @@ DROP TABLE IF EXISTS `relationship_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `relationship_type` (
-  `relationship_type_id` int(11) NOT NULL AUTO_INCREMENT,
+  `relationship_type_id` int NOT NULL AUTO_INCREMENT,
   `a_is_to_b` varchar(50) NOT NULL,
   `b_is_to_a` varchar(50) NOT NULL,
-  `preferred` int(1) NOT NULL DEFAULT '0',
-  `weight` int(11) NOT NULL DEFAULT '0',
+  `preferred` int NOT NULL DEFAULT '0',
+  `weight` int NOT NULL DEFAULT '0',
   `description` varchar(255) NOT NULL DEFAULT '',
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `uuid` char(38) NOT NULL,
   `retired` tinyint(1) NOT NULL DEFAULT '0',
-  `retired_by` int(11) DEFAULT NULL,
+  `retired_by` int DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`relationship_type_id`),
@@ -1017,7 +1017,7 @@ CREATE TABLE `relationship_type` (
   KEY `user_who_retired_relationship_type` (`retired_by`),
   CONSTRAINT `user_who_created_rel` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_relationship_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1038,20 +1038,20 @@ DROP TABLE IF EXISTS `drug`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `drug` (
-  `drug_id` int(11) NOT NULL AUTO_INCREMENT,
-  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `drug_id` int NOT NULL AUTO_INCREMENT,
+  `concept_id` int NOT NULL DEFAULT '0',
   `name` text,
-  `combination` smallint(6) NOT NULL DEFAULT '0',
-  `dosage_form` int(11) DEFAULT NULL,
+  `combination` smallint NOT NULL DEFAULT '0',
+  `dosage_form` int DEFAULT NULL,
   `dose_strength` double DEFAULT NULL,
   `maximum_daily_dose` double DEFAULT NULL,
   `minimum_daily_dose` double DEFAULT NULL,
-  `route` int(11) DEFAULT NULL,
+  `route` int DEFAULT NULL,
   `units` varchar(50) DEFAULT NULL,
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint(6) NOT NULL DEFAULT '0',
-  `retired_by` int(11) DEFAULT NULL,
+  `retired` smallint NOT NULL DEFAULT '0',
+  `retired_by` int DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -1067,7 +1067,7 @@ CREATE TABLE `drug` (
   CONSTRAINT `drug_retired_by` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `primary_drug_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `route_concept` FOREIGN KEY (`route`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1339 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1339 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1093,7 +1093,7 @@ CREATE TABLE `privilege` (
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`privilege`),
   UNIQUE KEY `privilege_uuid_index` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1114,7 +1114,7 @@ DROP TABLE IF EXISTS `location`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `location` (
-  `location_id` int(11) NOT NULL AUTO_INCREMENT,
+  `location_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `description` varchar(255) DEFAULT NULL,
   `address1` varchar(50) DEFAULT NULL,
@@ -1125,7 +1125,7 @@ CREATE TABLE `location` (
   `country` varchar(50) DEFAULT NULL,
   `latitude` varchar(50) DEFAULT NULL,
   `longitude` varchar(50) DEFAULT NULL,
-  `creator` int(11) NOT NULL DEFAULT '0',
+  `creator` int NOT NULL DEFAULT '0',
   `date_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `county_district` varchar(50) DEFAULT NULL,
   `neighborhood_cell` varchar(50) DEFAULT NULL,
@@ -1133,11 +1133,11 @@ CREATE TABLE `location` (
   `subregion` varchar(50) DEFAULT NULL,
   `township_division` varchar(50) DEFAULT NULL,
   `retired` tinyint(1) NOT NULL DEFAULT '0',
-  `retired_by` int(11) DEFAULT NULL,
+  `retired_by` int DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
-  `location_type_id` int(11) DEFAULT NULL,
-  `parent_location` int(11) DEFAULT NULL,
+  `location_type_id` int DEFAULT NULL,
+  `parent_location` int DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`location_id`),
   UNIQUE KEY `location_uuid_index` (`uuid`),
@@ -1151,7 +1151,7 @@ CREATE TABLE `location` (
   CONSTRAINT `parent_location` FOREIGN KEY (`parent_location`) REFERENCES `location` (`location_id`),
   CONSTRAINT `user_who_created_location` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_location` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1136 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1136 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1177,7 +1177,7 @@ CREATE TABLE `role` (
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`role`),
   UNIQUE KEY `role_uuid_index` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1199,4 +1199,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-10 10:12:43
+-- Dump completed on 2024-12-17  8:53:18
