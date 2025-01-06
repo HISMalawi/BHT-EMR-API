@@ -21,7 +21,7 @@ module ArtService
 
         DRUG_MAPPING = {
           'Hydrochlorothiazide (25mg tablet)' => :hydrochlorothiazide_25mg,
-          'HCZ (25mg tablet)' => :hydrochlorothiazide_25mg,
+          'HCTZ (25mg tablet)' => :hydrochlorothiazide_25mg,
           'Hctz (25mg)' => :hydrochlorothiazide_25mg,
           'Amlodipine (5mg tablet)' => :amlodipine_5mg,
           'Amlodipine 5mg' => :amlodipine_5mg,
