@@ -1,4 +1,4 @@
-require "set"
+# frozen_string_literal: true
 
 module ArtService
   class IdsBuilder
@@ -15,15 +15,23 @@ module ArtService
       @site_id = Location.current_health_center&.id
     end
 
+    # Builds the report data for a patient.
+    #
+    # This method fetches data for a patient, including demographics, appointments,
+    # clinic visits, family planning, and lab orders. It returns a hash with the
+    # patient's demographics and an array of visit data.
     def build
       patient = patient_data
-      visit_data = visit_breakdown
+      visit_breakdown
 
       report.table.merge(patient).as_json
     end
 
     private
 
+    # @note This method calls all the individual methods that are used to fetch
+    #       different types of data for a patient. It is called by the build
+    #       method and is used to populate the report OpenStruct.
     def visit_breakdown
       appointments
       clinic_visits
@@ -45,26 +53,23 @@ module ArtService
 
     def appointments
       query = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT
-            ob.person_id as patient_id,
-            #{site_id} as site_id,
-            ob.encounter_id,
-            coalesce(ob.value_datetime , '1900-01-01 00:00:00') as appointment_date,
-            ob.date_created,
-            ob.voided,
-            date(ob.date_voided) as voided_date,
-            ob.concept_id,
-            cn.name concept_name
-          from
-            obs ob
-          join encounter en
-              on
-            ob.encounter_id = en.encounter_id
-            join concept_name cn on ob.concept_id = cn.concept_id
-          where
-            en.encounter_type = #{EncounterType.find_by_name("APPOINTMENT").id}
-            and patient_id = #{patient_id}
-            and DATE(encounter_datetime) = '#{date}'
+        SELECT
+        ob.person_id AS patient_id,
+        #{site_id} AS site_id,
+        ob.encounter_id,
+        COALESCE(ob.value_datetime, '1900-01-01 00:00:00') AS appointment_date,
+        ob.date_created,
+        ob.voided,
+        DATE(ob.date_voided) AS voided_date,
+        ob.concept_id,
+        cn.name AS concept_name
+        FROM obs ob
+        JOIN encounter en ON ob.encounter_id = en.encounter_id
+        JOIN concept_name cn ON ob.concept_id = cn.concept_id
+        WHERE en.encounter_type = #{EncounterType.find_by_name('APPOINTMENT').id}
+        AND ob.person_id = #{patient_id}
+        AND DATE(en.encounter_datetime) = '#{date}'
+        GROUP BY ob.person_id, site_id, ob.encounter_id, appointment_date, ob.date_created, ob.voided, voided_date, ob.concept_id, cn.name
       SQL
 
       report.appointments = query&.as_json
@@ -72,42 +77,45 @@ module ArtService
 
     def clinic_visits
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        select e.encounter_type,
-               e.encounter_id,
-               e.program_id,
-               e.patient_id,
-               #{site_id} as site_id, 
-               e.encounter_datetime,
-               e.date_created,e.voided,
-               e.date_voided 
-        from encounter e 
-          where e.voided =0
-          and patient_id = #{patient_id}
-          and DATE(encounter_datetime) = '#{date}' 
+        SELECT#{' '}
+          e.encounter_type AS clinical_interaction_type,
+          e.encounter_id AS visit_id,
+          e.program_id,
+          e.patient_id,
+          #{site_id} AS site_id,
+          DATE(e.encounter_datetime) AS visit_date,
+          e.date_created,
+          e.voided,
+          e.date_voided
+        FROM encounter e
+        WHERE e.voided = 0
+          AND e.patient_id = #{patient_id}
+          AND DATE(e.encounter_datetime) = '#{date}'
       SQL
 
       report.clinic_visits = query&.as_json
     end
+
     def family_plannings
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        select
-          ob.person_id patient_id,
-          #{site_id} as site_id,
+        SELECT
+          ob.person_id AS patient_id,
+          #{site_id} AS site_id,
           ob.encounter_id,
           ob.concept_id,
-          cn.name concept_name,
+          cn.name AS concept_name,
           ob.value_coded,
-          cn2.name value,
+          cn2.name AS value,
           ob.voided,
-          ob.date_voided as voided_date
-      from obs ob 
-        join person p on ob.person_id = p.person_id 
-        join concept_name cn on ob.concept_id = cn.concept_id
-        left join concept_name cn2 on ob.value_coded = cn2.concept_id
-      where cn.name like '%family%'
-        and ob.person_id = #{patient_id}
-        and DATE(ob.obs_datetime) = '#{date}'
-        and p.gender is not null
+          ob.date_voided AS voided_date
+        FROM obs ob
+        JOIN person p ON ob.person_id = p.person_id
+        JOIN concept_name cn ON ob.concept_id = cn.concept_id
+        LEFT JOIN concept_name cn2 ON ob.value_coded = cn2.concept_id
+        WHERE cn.name LIKE '%family%'
+          AND ob.person_id = #{patient_id}
+          AND DATE(ob.obs_datetime) = '#{date}'
+          AND p.gender IS NOT NULL
       SQL
 
       report.family_plannings = query&.as_json
@@ -116,8 +124,8 @@ module ArtService
     def hiv_reception
       query = ActiveRecord::Base.connection.select_all <<~SQL
         select x.patient_id, x.encounter_id, x.obs_id, x.program_id,
-               x.visit_date, x.patient_present, 
-               x.guardian_present,x.voided, x.date_voided, x.site_id  
+               x.visit_date, x.patient_present,#{' '}
+               x.guardian_present,x.voided, x.date_voided, x.site_id#{'  '}
         from
         (
         WITH reception_data AS
@@ -129,10 +137,10 @@ module ArtService
           FROM encounter e
             JOIN obs o ON e.encounter_id = o.encounter_id
             AND e.patient_id = #{patient_id}
-            and DATE(encounter_datetime) = '#{date}' 
+            and DATE(encounter_datetime) = '#{date}'#{' '}
             LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id
             LEFT JOIN concept_name cn2 ON o.value_coded = cn2.concept_id
-          WHERE e.encounter_type = #{EncounterType.find_by_name("HIV RECEPTION").id}
+          WHERE e.encounter_type = #{EncounterType.find_by_name('HIV RECEPTION').id}
         )
           SELECT rd.patient_id, rd.encounter_id, rd.obs_id, rd.program_id, DATE(rd.encounter_datetime) visit_date,
           case when rd.concept_id=1805 then rd.value_coded_value end patient_present,
@@ -146,6 +154,7 @@ module ArtService
 
       report.hiv_reception = query&.as_json
     end
+
     def hypertension_management
       query = ActiveRecord::Base.connection.select_all <<~SQL
         select e.patient_id, e.encounter_id,o.obs_id,
@@ -157,7 +166,7 @@ module ArtService
         LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id
         where e.encounter_type = 48
         and patient_id = #{patient_id}
-        and DATE(encounter_datetime) = '#{date}' 
+        and DATE(encounter_datetime) = '#{date}'#{' '}
       SQL
 
       report.hypertension_management = query&.as_json
@@ -179,12 +188,12 @@ module ArtService
 
       report.identifiers = query&.as_json
     end
-    
+
     def initial_clinical_registration
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        select 
+        select#{' '}
           patient_id, encounter_id, obs_id, program_id, follow_up_agreement, ever_received_art, confirmatory_test_type, confirmatory_test_location, confirmatory_test_date, date_art_last_taken, taken_arvs_last_2_weeks, taken_arvs_last_2_months, ever_registered_at_art_clinic, location_of_art_initiation, art_start_date, start_date_estimated, date_enrolled_at_facility, age_at_initiation, age_in_days_at_initiation, art_number_at_previous_location, hts_linkage_number, has_transfer_letter, cd4_count, site_id
-          from 
+          from#{' '}
           (
           WITH registration_data AS
           (
@@ -234,12 +243,12 @@ module ArtService
           CAST(rd10.value_datetime AS DATE) AS art_start_date,
           id.earliest_start_date start_date_estimated,
           id.date_enrolled  date_enrolled_at_facility,
-          id.age_at_initiation, id.age_in_days_at_initiation,     
-          rd11.value_text art_number_at_previous_location,                     
+          id.age_at_initiation, id.age_in_days_at_initiation,#{'     '}
+          rd11.value_text art_number_at_previous_location,#{'                     '}
           rd12.value_text hts_linkage_number,
-          rd13.value_coded_value has_transfer_letter,    
+          rd13.value_coded_value has_transfer_letter,#{'    '}
           concat(' ',rd14.value_modifier,rd14.value_numeric) cd4_count,
-          #{site_id} site_id  
+          #{site_id} site_id#{'  '}
           FROM registration_data rd
           LEFT JOIN registration_data rd1 ON rd.patient_id = rd1.patient_id AND rd.encounter_id = rd1.encounter_id AND rd1.concept_id = 7754
           LEFT JOIN registration_data rd2 ON rd.patient_id = rd2.patient_id AND rd.encounter_id = rd2.encounter_id AND rd2.concept_id = 7880
@@ -267,7 +276,7 @@ module ArtService
       query = ActiveRecord::Base.connection.select_all <<~SQL
         select e.patient_id,
           #{site_id} site_id,
-          o.order_id,      
+          o.order_id lab_order_id,#{'      '}
           o.accession_number tracking_number,
           o.start_date order_date,
           o.encounter_id,
@@ -275,10 +284,10 @@ module ArtService
           e.date_voided voided_date,
           o.concept_id,
           ob.value_text reason_for_testing
-        from orders o 
-        join encounter e on o.encounter_id = e.encounter_id 
+        from orders o#{' '}
+        join encounter e on o.encounter_id = e.encounter_id#{' '}
         join obs ob on e.encounter_id = ob.encounter_id
-        where order_type_id = 4 
+        where order_type_id = 4#{' '}
         and ob.concept_id in (2429,10110)
         AND DATE(e.encounter_datetime) = '#{date}'
         AND e.patient_id = #{patient_id}
@@ -287,12 +296,12 @@ module ArtService
 
       report.lab_orders = query&.as_json
     end
-    
+
     def lab_test_results
       query = ActiveRecord::Base.connection.select_all <<~SQL
         select
           lab_order_id, patient_id, site_id, '', test_type, sample_type, test_measure, test_result_date, test_result, voided, date_voided, sending_facility, test_result_id
-          from 
+          from#{' '}
           (
           with test_types as
           (SELECT
@@ -377,7 +386,7 @@ module ArtService
     def medication_dispensations
       query = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
-            ob.person_id
+            ob.person_id patient_id
             , #{site_id} site_id
             , ob.obs_id
             , o.order_id
@@ -397,14 +406,15 @@ module ArtService
 
       report.medication_dispensations = query&.as_json
     end
-    
+
     def outcomes
-      patient_outcome = PatientStateService.new.find_patient_state(program('HIV program').id, Patient.find_by_patient_id(patient_id), date)
+      patient_outcome = PatientStateService.new.find_patient_state(program('HIV program').id,
+                                                                   Patient.find_by_patient_id(patient_id), date)
       concept_id = ProgramWorkflowState.find(patient_outcome.state).concept_id
-      outcome_reason = obs_value("Reason for ART eligibility")
+      outcome_reason = obs_value('Reason for ART eligibility')
 
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        select distinct 
+        select distinct#{' '}
           pp.patient_id,
           #{site_id} as site_id,
           #{concept_id} as concept_id,
@@ -428,46 +438,48 @@ module ArtService
 
       report.outcomes = query&.as_json
     end
+
     def screening
       query = ActiveRecord::Base.connection.select_all <<~SQL
         select e.patient_id, e.encounter_id,o.obs_id, e.program_id, e.encounter_datetime, o.concept_id, cn.name concept_name,o.value_coded,
-          COALESCE(cn2.name, o.value_datetime, o.value_text) value, 
+          COALESCE(cn2.name, o.value_datetime, o.value_text) value,#{' '}
           e.voided,e.date_voided,
           #{site_id} site_id
           from encounter e
-          join obs o on e.encounter_id=o.encounter_id
+          inner join obs o on e.encounter_id=o.encounter_id
           join concept_name cn on o.concept_id = cn.concept_id
           left join concept_name cn2 on o.value_coded = cn2.concept_id
-          AND e.patient_id = #{patient_id}
           AND DATE(encounter_datetime) = '#{date}'
+          WHERE e.patient_id = #{patient_id}
           GROUP BY o.concept_id
       SQL
       report.screening = query&.as_json
     end
+
     def side_effects
-      malawi_art_side_effects_concept_id = ConceptName.find_by_name("Malawi ART side effects").concept_id
+      malawi_art_side_effects_concept_id = ConceptName.find_by_name('Malawi ART side effects').concept_id
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT distinct 
-          en.patient_id,
-          #{site_id} site_id,
-          ob.obs_id
-          , ob.encounter_id
-          , ob.concept_id
-          , ob.value_coded
-          , ob.voided
-          , ob.date_voided voided_date
-      FROM obs ob
-        JOIN concept_name cn
-          on ob.concept_id = cn.concept_id
-          JOIN encounter en
-              ON ob.encounter_id = en.encounter_id
-      WHERE cn.name IN (select distinct cn.name
-      from obs o inner join concept_name cn on cn.concept_id  = o.value_coded
-      where o.concept_id in (#{malawi_art_side_effects_concept_id})
-      and o.person_id = #{patient_id}
-      AND DATE(en.encounter_datetime) = '#{date}'
-      )
-      AND ob.value_coded = 1065
+          SELECT distinct#{' '}
+            en.patient_id,
+            #{site_id} site_id,
+            ob.obs_id
+            , ob.encounter_id
+            , ob.concept_id
+            , ob.value_coded
+            , ob.voided
+            , ob.date_voided voided_date
+        FROM obs ob
+          JOIN concept_name cn
+            on ob.concept_id = cn.concept_id
+            JOIN encounter en
+                ON ob.encounter_id = en.encounter_id
+        WHERE cn.name IN (select distinct cn.name
+        from obs o inner join concept_name cn on cn.concept_id  = o.value_coded
+        where o.concept_id in (#{malawi_art_side_effects_concept_id})
+        and o.person_id = #{patient_id}
+        AND DATE(en.encounter_datetime) = '#{date}'
+        )
+        AND ob.value_coded = 1065
       SQL
 
       report.side_effects = query&.as_json
@@ -475,54 +487,54 @@ module ArtService
 
     def treatment
       query = ActiveRecord::Base.connection.select_all <<~SQL
-          select patient_id, site_id, order_id, drug_id, encounter_id, start_date, end_date, instructions, voided, voided_date, pillcount, equivalent_daily_dose, quantity from
-      (   
-      with con as
-        (
-        SELECT DISTINCT concept_id FROM drug d UNION SELECT 2540 concept_id
-        ),
-        drug_inventory as
-        (
-        SELECT o.order_id, drug_inventory_id FROM orders o JOIN drug_order do ON o.order_id = do.order_id
-        ),
-        pillcount as
-        (
-        SELECT ob.order_id,
-        (COALESCE(SUM(ob.value_numeric),0) + COALESCE(SUM(ob.value_text),0)) pillcount
-        FROM obs ob
-        JOIN drug_inventory di
-        ON ob.order_id = di.order_id
-        JOIN con ON ob.concept_id = con.concept_id
-        AND ob.person_id = #{patient_id}
-        AND DATE(ob.obs_datetime) = '#{date}'
-        GROUP BY ob.person_id,ob.order_id,di.drug_inventory_id
-        ORDER BY order_id
-        )
-          SELECT DISTINCT
-          o.patient_id,
-          #{site_id} site_id,
-          o.order_id,
-          d.drug_inventory_id drug_id,
-        o.encounter_id,
-          o.start_date,
-          o.auto_expire_date end_date,
-        o.instructions,
-          o.voided,  
-        o.date_voided voided_date,
-        COALESCE(pillcount.pillcount,0) pillcount,
-        IF(LENGTH(IF(d.equivalent_daily_dose = 0, 1,d.equivalent_daily_dose)) IS NULL,1,(IF(d.equivalent_daily_dose = 0, 1,d.equivalent_daily_dose))) equivalent_daily_dose,
-        IF(LENGTH(IF(d.quantity = 0, 1,d.quantity)) IS NULL,1,(IF(d.quantity = 0, 1,d.quantity))) quantity
-          FROM orders o
-          JOIN drug_order d
-        ON o.order_id = d.order_id
-          LEFT JOIN pillcount
-          ON (o.order_id = pillcount.order_id)
-          JOIN encounter e on o.encounter_id = e.encounter_id
-          WHERE o.order_type_id = 1
-          AND o.patient_id = #{patient_id}
-          AND DATE(e.encounter_datetime) = '#{date}'
-          AND d.drug_inventory_id <= 1057 and e.voided =0 and o.voided=0
-        ) x
+            select patient_id, site_id, order_id, drug_id, encounter_id, start_date, end_date, instructions, voided, voided_date, pillcount, equivalent_daily_dose, quantity from
+        (#{'   '}
+        with con as
+          (
+          SELECT DISTINCT concept_id FROM drug d UNION SELECT 2540 concept_id
+          ),
+          drug_inventory as
+          (
+          SELECT o.order_id, drug_inventory_id FROM orders o JOIN drug_order do ON o.order_id = do.order_id
+          ),
+          pillcount as
+          (
+          SELECT ob.order_id,
+          (COALESCE(SUM(ob.value_numeric),0) + COALESCE(SUM(ob.value_text),0)) pillcount
+          FROM obs ob
+          JOIN drug_inventory di
+          ON ob.order_id = di.order_id
+          JOIN con ON ob.concept_id = con.concept_id
+          AND ob.person_id = #{patient_id}
+          AND DATE(ob.obs_datetime) = '#{date}'
+          GROUP BY ob.person_id,ob.order_id,di.drug_inventory_id
+          ORDER BY order_id
+          )
+            SELECT DISTINCT
+            o.patient_id,
+            #{site_id} site_id,
+            o.order_id,
+            d.drug_inventory_id drug_id,
+          o.encounter_id,
+            o.start_date,
+            o.auto_expire_date end_date,
+          o.instructions,
+            o.voided,#{'  '}
+          o.date_voided voided_date,
+          COALESCE(pillcount.pillcount,0) pillcount,
+          IF(LENGTH(IF(d.equivalent_daily_dose = 0, 1,d.equivalent_daily_dose)) IS NULL,1,(IF(d.equivalent_daily_dose = 0, 1,d.equivalent_daily_dose))) equivalent_daily_dose,
+          IF(LENGTH(IF(d.quantity = 0, 1,d.quantity)) IS NULL,1,(IF(d.quantity = 0, 1,d.quantity))) quantity
+            FROM orders o
+            JOIN drug_order d
+          ON o.order_id = d.order_id
+            LEFT JOIN pillcount
+            ON (o.order_id = pillcount.order_id)
+            JOIN encounter e on o.encounter_id = e.encounter_id
+            WHERE o.order_type_id = 1
+            AND o.patient_id = #{patient_id}
+            AND DATE(e.encounter_datetime) = '#{date}'
+            AND d.drug_inventory_id <= 1057 and e.voided =0 and o.voided=0
+          ) x
       SQL
       report.treatment = query&.as_json
     end
@@ -532,7 +544,7 @@ module ArtService
         select e.patient_id, e.encounter_id,o.obs_id, e.program_id, e.encounter_datetime, o.concept_id, cn.name concept_name,o.value_numeric ,o.value_text ,e.voided,e.date_voided,
         #{site_id} site_id
         from encounter e
-        join obs o on e.encounter_id=o.encounter_id 
+        join obs o on e.encounter_id=o.encounter_id#{' '}
         join concept_name cn on o.concept_id = cn.concept_id
         where e.encounter_type =6
         AND e.patient_id = #{patient_id}
@@ -554,46 +566,46 @@ module ArtService
               date_created
             ],
             include: {
-              names: {
-                only: [
-                  :family_name, :given_name, :middle_name,
-                ],
-              },
               identifiers: {
                 methods: [:identifier_type_name],
-                only: [:identifier, :identifier_type],
-              },
+                only: %i[identifier identifier_type]
+              }
             },
-            methods: [:preferred_address, :cell_phone_number],
-          },
-        },
+            methods: %i[preferred_address cell_phone_number]
+          }
+        }
       )
 
-      patient['person']["address"] ||= {}
-      address = patient["person"].delete("preferred_address")
+      patient['person']['address'] ||= {}
+      address = patient['person'].delete('preferred_address')
 
-      patient["name"] = patient["person"].delete("names")&.first
+      patient['name'] = patient['person'].delete('names')&.first
 
-      patient['person']["address"]["current_district"] = address["state_province"]
-      patient['person']["address"]["current_village"] = address["city_village"]
-      patient['person']["address"]["current_traditional_authority"] = address["township_division"]
-      patient['person']["address"]["home_district"] = address["address2"]
-      patient['person']["address"]["home_village"] = address["neighborhood_cell"]
-      patient['person']["address"]["home_traditional_authority"] = address["county_district"]
+      patient['person']['address']['current_district'] = address['state_province']
+      patient['person']['address']['current_village'] = address['city_village']
+      patient['person']['address']['current_traditional_authority'] = address['township_division']
+      patient['person']['address']['home_district'] = address['address2']
+      patient['person']['address']['home_village'] = address['neighborhood_cell']
+      patient['person']['address']['home_traditional_authority'] = address['county_district']
 
       # patient["guardian"] = patient_history.guardian
 
       patient
     end
 
+    # Retrieve an observation value for an indicator, from the most recent observation
+    # (within the given date range)
+    #
+    # @param indicator [String] A concept name or short name
+    # @return [String, nil] The observation value, or nil if no matching observation
     def obs_value(indicator)
       concept_id = concept(indicator).concept_id
 
       Observation
-        .where("obs_datetime BETWEEN ? AND ?", date.to_date.beginning_of_day, date.to_date.end_of_day)
+        .where('obs_datetime BETWEEN ? AND ?', date.to_date.beginning_of_day, date.to_date.end_of_day)
         .where(
           person_id: patient_id,
-          concept_id:,
+          concept_id:
         )&.last&.answer_string&.squish
     end
   end

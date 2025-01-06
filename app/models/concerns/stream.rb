@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Stream
   extend ActiveSupport::Concern
 
@@ -6,19 +8,17 @@ module Stream
   )[Rails.env]['queue']['processing_delay_time'] || 300
 
   included do
-    after_commit  :stream, on: %i[create update]
+    after_commit :stream, on: %i[create update]
   end
 
   def stream
-    visit_complete = service.visit_complete?
-
-    if visit_complete
+    if eligible_fo_streaming?
       QueuePatientForStreamingJob
         .set(wait: WAIT_TIME.seconds)
         .perform_later(
-          patient_id: self.patient_id,
-          program_id: self.program_id,
-          date: self.encounter_datetime.strftime('%Y-%m-%d'),
+          patient_id:,
+          program_id:,
+          date: encounter_datetime.strftime('%Y-%m-%d'),
           complete: true
         )
     end
@@ -26,11 +26,19 @@ module Stream
     Rails.logger.error("Error streaming: #{e.message}")
   end
 
+  def lab_result_encounter?
+    encounter_type.name == 'LAB RESULTS'
+  end
+
+  def eligible_fo_streaming?
+    service.visit_complete? || lab_result_encounter?
+  end
+
   def service
     WorkflowService.new(
-      program_id: self.program_id, 
-      patient_id: self.patient_id, 
-      date: self.encounter_datetime.strftime('%Y-%m-%d')
+      program_id:,
+      patient_id:,
+      date: encounter_datetime.strftime('%Y-%m-%d')
     )
   end
 end
