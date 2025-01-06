@@ -15,6 +15,7 @@ module ArtService
                                            &.property_value
                                            &.casecmp?('true')
         @occupation = kwargs[:occupation]
+        @dsd = kwargs[:dsd]
       end
 
       def clients_due
@@ -112,6 +113,7 @@ module ArtService
             ON patient_program.program_id = encounter.program_id
             AND patient_program.patient_id = encounter.patient_id
             AND patient_program.voided = 0
+          #{dsd_query(dsd: @dsd, model: 'patient_program') if @dsd}
           INNER JOIN patient_state
             ON patient_state.patient_program_id = patient_program.patient_program_id
             AND patient_state.voided = 0

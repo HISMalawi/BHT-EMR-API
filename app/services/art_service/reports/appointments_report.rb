@@ -24,6 +24,7 @@ module ArtService
         @start_date = start_date
         @end_date = end_date
         @occupation = kwargs[:occupation]
+        @dsd = kwargs[:dsd]
       end
 
       # rubocop:disable Metrics/MethodLength
@@ -40,6 +41,8 @@ module ArtService
                                   .where(occupation_filter(occupation: @occupation, field_name: 'value',
                                                            table_name: 'a', include_clause: false).to_s)
                                   .group(:person_id)
+
+        appointments = appointments.joins(dsd_query(dsd: @dsd, model: 'encounter')) if @dsd
 
         appointments.each_with_object([]) do |appointment, patients|
           patient = missed_appointment?(appointment)

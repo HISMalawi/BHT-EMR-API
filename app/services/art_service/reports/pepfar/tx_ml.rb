@@ -11,6 +11,7 @@ module ArtService
 
         def initialize(start_date:, end_date:, **kwargs)
           super(start_date:, end_date:, **kwargs)
+          @dsd = kwargs[:dsd]
         end
 
         def data
@@ -19,8 +20,18 @@ module ArtService
 
         private
 
+        def report_fmt
+          pepfar_age_groups.each_with_object({}) do |age_group, report|
+            genders = %i[M F]
+            genders.each do |gender|
+              report[age_group] ||= {}
+              report[age_group][gender] = [[], [], [], [], [], []]
+            end
+          end
+        end
+
         def process_data
-          data = {}
+          data = report_fmt
           (process_tx_ml_clients || []).each do |pat|
             patient_id = pat['patient_id'].to_i
             outcome = pat['outcome']
@@ -74,6 +85,7 @@ module ArtService
               disaggregated_age_group(e.birthdate, DATE('#{end_date}')) age_group,
               o.pepfar_cum_outcome outcome
             FROM temp_earliest_start_date e
+            #{dsd_query(dsd: @dsd, model: 'e') if @dsd}
             INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id AND o.pepfar_cum_outcome IN ('Defaulted', 'Patient died', 'Treatment stopped', 'Patient transferred out')
             LEFT JOIN (#{current_occupation_query}) a ON a.person_id = e.patient_id
             WHERE e.patient_id IN (SELECT patient_id FROM temp_patient_outcomes_start WHERE pepfar_cum_outcome = 'On antiretrovirals')
@@ -95,6 +107,7 @@ module ArtService
               disaggregated_age_group(e.birthdate, DATE('#{end_date}')) age_group,
               o.pepfar_cum_outcome outcome
             FROM temp_earliest_start_date e
+            #{dsd_query(dsd: @dsd, model: 'e') if @dsd}
             INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id AND o.pepfar_cum_outcome IN ('Defaulted', 'Patient died', 'Treatment stopped', 'Patient transferred out')
             LEFT JOIN (#{current_occupation_query}) a ON a.person_id = e.patient_id
             WHERE e.earliest_start_date BETWEEN DATE('#{start_date}') AND DATE('#{end_date}')

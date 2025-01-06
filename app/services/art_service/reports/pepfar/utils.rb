@@ -87,6 +87,22 @@ module ArtService
           end
         end
 
+        # Filters the query to only include
+        # patients for which the given `concept_id (DSD)` is the value of the
+        # (DSD) the patient is enrolled in.
+        #
+        #@param concept_id [Integer]
+        #
+        # Returns an SQL fragment that
+        def dsd_filter(concept_id:)
+          <<~SQL
+            INNER JOIN obs dsd ON dsd.person_id = p.patient_id
+              AND dsd.concept_id = #{concept('').concept_id}
+              AND dsd.voided = 0
+              AND value_coded = #{concept_id}
+          SQL
+        end
+
         # this just gives all clients who are truly external or drug refill
         # rubocop:disable Metrics/MethodLength
         # rubocop:disable Metrics/AbcSize

@@ -20,16 +20,16 @@ module LaboratoryService
       report_class.new(**kwargs).read
     end
 
-    def samples_drawn(start_date, end_date)
-      REPORTS['SAMPLES_DRAWN'].new(start_date:, end_date:).samples_drawn
+    def samples_drawn(start_date, end_date, **kwargs)
+      REPORTS['SAMPLES_DRAWN'].new(start_date:, end_date:, **kwargs).samples_drawn
     end
 
     def test_results(start_date, end_date, **kwargs)
       REPORTS['SAMPLES_DRAWN'].new(start_date:, end_date:, **kwargs).test_results
     end
 
-    def orders_made(start_date, end_date, status)
-      REPORTS['SAMPLES_DRAWN'].new(start_date:, end_date:).orders_made(status)
+    def orders_made(start_date, end_date, status, **kwargs)
+      REPORTS['SAMPLES_DRAWN'].new(start_date:, end_date:, **kwargs).orders_made(status)
     end
   end
 end

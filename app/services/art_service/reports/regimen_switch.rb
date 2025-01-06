@@ -3,10 +3,12 @@
 module ArtService
   module Reports
     class RegimenSwitch
+      include CommonSqlQueryUtils
       def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date
         @end_date = end_date
         @occupation = kwargs[:occupation]
+        @dsd = kwargs[:dsd]
       end
 
       def regimen_switch(pepfar)
@@ -15,7 +17,7 @@ module ArtService
 
       def regimen_report(type)
         ArtService::Reports::RegimenDispensationData.new(type:, start_date: @start_date,
-                                                         end_date: @end_date, occupation: @occupation)
+                                                         end_date: @end_date, occupation: @occupation, dsd: @dsd)
                                                     .find_report
       end
 
@@ -45,6 +47,7 @@ module ArtService
           INNER JOIN arv_drug On arv_drug.drug_id = drug.drug_id
           INNER JOIN temp_patient_outcomes t ON o.patient_id = t.patient_id AND t.moh_cum_outcome = 'On antiretrovirals'
           INNER JOIN person ON person.person_id = o.patient_id AND person.voided = 0
+          #{dsd_query(dsd: @dsd, model: 'o') if @dsd}
           INNER JOIN (
             SELECT MAX(o.start_date) start_date, o.patient_id
             FROM orders o

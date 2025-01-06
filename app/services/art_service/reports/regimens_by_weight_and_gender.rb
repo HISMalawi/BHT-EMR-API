@@ -4,6 +4,7 @@ module ArtService
   module Reports
     class RegimensByWeightAndGender
       include ConcurrencyUtils
+      include CommonSqlQueryUtils
 
       attr_reader :start_date, :end_date, :rebuild
 
@@ -12,6 +13,7 @@ module ArtService
         @end_date = end_date
         @rebuild = kwargs[:rebuild]&.casecmp?('true')
         @occupation = kwargs[:occupation]
+        @dsd = kwargs[:dsd]
       end
 
       def find_report
@@ -72,10 +74,12 @@ module ArtService
         date = ActiveRecord::Base.connection.quote(end_date)
 
         query = TempPatientOutcome.joins('INNER JOIN temp_earliest_start_date USING (patient_id)')
-                                  .select("patient_current_regimen(patient_id, #{date}) as regimen, count(*) AS count")
+                                  .select("patient_current_regimen(pp.patient_id, #{date}) as regimen, count(*) AS count")
                                   .where(patient_id: patients_in_weight_band(start_weight, end_weight))
                                   .where(moh_cum_outcome: 'On Antiretrovirals')
                                   .group(:regimen)
+        
+        query = query.joins(dsd_query(dsd: @dsd, model: 'temp_earliest_start_date'))  if @dsd
 
         query = gender ? query.where('gender LIKE ?', "#{gender}%") : query.where('gender IS NULL')
 

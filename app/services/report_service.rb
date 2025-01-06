@@ -76,8 +76,8 @@ class ReportService
     engine(@program).dispensation(start_date, end_date)
   end
 
-  def cohort_survival_analysis(quarter, age_group, regenerate, occupation)
-    engine(@program).cohort_survival_analysis(quarter, age_group, regenerate, occupation)
+  def cohort_survival_analysis(quarter, age_group, regenerate, occupation, dsd)
+    engine(@program).cohort_survival_analysis(quarter, age_group, regenerate, occupation, dsd)
   end
 
   def defaulter_list(start_date, end_date, pepfar, **kwargs)
@@ -210,8 +210,8 @@ class ReportService
     engine(@program).latest_regimen_dispensed(start_date.to_date, end_date.to_date, rebuild_outcome, **kwargs)
   end
 
-  def sc_arvdisp(start_date, end_date, rebuild_outcome)
-    engine(@program).sc_arvdisp(start_date, end_date, rebuild_outcome)
+  def sc_arvdisp(start_date, end_date, rebuild_outcome, dsd)
+    engine(@program).sc_arvdisp(start_date, end_date, rebuild_outcome, dsd)
   end
 
   private
