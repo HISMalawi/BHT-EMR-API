@@ -74,7 +74,7 @@ module ArtService
         date = ActiveRecord::Base.connection.quote(end_date)
 
         query = TempPatientOutcome.joins('INNER JOIN temp_earliest_start_date USING (patient_id)')
-                                  .select("patient_current_regimen(pp.patient_id, #{date}) as regimen, count(*) AS count")
+                                  .select("patient_current_regimen(temp_earliest_start_date.patient_id, #{date}) as regimen, count(*) AS count")
                                   .where(patient_id: patients_in_weight_band(start_weight, end_weight))
                                   .where(moh_cum_outcome: 'On Antiretrovirals')
                                   .group(:regimen)
