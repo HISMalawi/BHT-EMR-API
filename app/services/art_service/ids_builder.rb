@@ -56,20 +56,20 @@ module ArtService
         SELECT
         ob.person_id AS patient_id,
         #{site_id} AS site_id,
-        ob.encounter_id,
+        ob.encounter_id visit_identifier,
         COALESCE(ob.value_datetime, '1900-01-01 00:00:00') AS appointment_date,
         ob.date_created,
-        ob.voided,
-        DATE(ob.date_voided) AS voided_date,
-        ob.concept_id,
-        cn.name AS concept_name
+        ob.voided is_voided,
+        DATE(ob.date_voided) AS when_voided,
+        ob.concept_id concept_identifier,
+        cn.name AS concept_label
         FROM obs ob
         JOIN encounter en ON ob.encounter_id = en.encounter_id
         JOIN concept_name cn ON ob.concept_id = cn.concept_id
         WHERE en.encounter_type = #{EncounterType.find_by_name('APPOINTMENT').id}
         AND ob.person_id = #{patient_id}
         AND DATE(en.encounter_datetime) = '#{date}'
-        GROUP BY ob.person_id, site_id, ob.encounter_id, appointment_date, ob.date_created, ob.voided, voided_date, ob.concept_id, cn.name
+        GROUP BY ob.person_id, site_id, ob.encounter_id, appointment_date, ob.date_created, is_voided, when_voided, ob.concept_id, cn.name
       SQL
 
       report.appointments = query&.as_json
@@ -85,8 +85,8 @@ module ArtService
           #{site_id} AS site_id,
           DATE(e.encounter_datetime) AS visit_date,
           e.date_created,
-          e.voided,
-          e.date_voided
+          e.voided AS is_voided,
+          e.date_voided AS when_voided
         FROM encounter e
         WHERE e.voided = 0
           AND e.patient_id = #{patient_id}
@@ -101,13 +101,13 @@ module ArtService
         SELECT
           ob.person_id AS patient_id,
           #{site_id} AS site_id,
-          ob.encounter_id,
-          ob.concept_id,
-          cn.name AS concept_name,
-          ob.value_coded,
+          ob.encounter_id AS visit_identifier,
+          ob.concept_id AS concept_identifier,
+          cn.name AS concept_label,
+          ob.value_coded AS coded_value,
           cn2.name AS value,
-          ob.voided,
-          ob.date_voided AS voided_date
+          ob.voided AS is_voided,
+          ob.date_voided AS when_voided
         FROM obs ob
         JOIN person p ON ob.person_id = p.person_id
         JOIN concept_name cn ON ob.concept_id = cn.concept_id
@@ -123,9 +123,9 @@ module ArtService
 
     def hiv_reception
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        select x.patient_id, x.encounter_id, x.obs_id, x.program_id,
+        select x.patient_id, x.encounter_id AS visit_identifier, x.obs_id AS observation_identifier, x.program_id,
                x.visit_date, x.patient_present,#{' '}
-               x.guardian_present,x.voided, x.date_voided, x.site_id#{'  '}
+               x.guardian_present,x.voided AS is_voided, x.date_voided AS when_voided, x.site_id#{'  '}
         from
         (
         WITH reception_data AS
@@ -157,10 +157,11 @@ module ArtService
 
     def hypertension_management
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        select e.patient_id, e.encounter_id,o.obs_id,
-        e.program_id, e.encounter_datetime, o.concept_id,cn.name concept_name, o.order_id,
-        o.value_modifier ,o.value_numeric , o.value_coded ,o.value_text , o.value_datetime,
-        #{site_id} as site_id, e.voided, e.date_voided
+        select e.patient_id, e.encounter_id AS visit_identifier, o.obs_id AS observation_identifier,
+        e.program_id, e.encounter_datetime, o.concept_id AS concept_identifier,cn.name concept_label, 
+        o.order_id transaction_identifier,
+        o.value_modifier adjustment_factor,o.value_numeric numeric_value , o.value_coded coded_value ,o.value_text text_value , o.value_datetime date_value,
+        #{site_id} as site_id, e.voided is_voided, e.date_voided when_voided
         from encounter e
         join obs o on e.encounter_id=o.encounter_id
         LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id
@@ -179,8 +180,8 @@ module ArtService
           #{site_id} as site_id,
           identifier,
           identifier_type,
-          voided,
-          date_voided as voided_date
+          voided as is_voided,
+          date_voided as when_voided
         from
           patient_identifier pi2
         where pi2.patient_id = #{patient_id}
@@ -192,7 +193,7 @@ module ArtService
     def initial_clinical_registration
       query = ActiveRecord::Base.connection.select_all <<~SQL
         select#{' '}
-          patient_id, encounter_id, obs_id, program_id, follow_up_agreement, ever_received_art, confirmatory_test_type, confirmatory_test_location, confirmatory_test_date, date_art_last_taken, taken_arvs_last_2_weeks, taken_arvs_last_2_months, ever_registered_at_art_clinic, location_of_art_initiation, art_start_date, start_date_estimated, date_enrolled_at_facility, age_at_initiation, age_in_days_at_initiation, art_number_at_previous_location, hts_linkage_number, has_transfer_letter, cd4_count, site_id
+          patient_id, encounter_id AS visit_identifier, obs_id AS observation_identifier, program_id, follow_up_agreement, ever_received_art, confirmatory_test_type, confirmatory_test_location, confirmatory_test_date, date_art_last_taken, taken_arvs_last_2_weeks, taken_arvs_last_2_months, ever_registered_at_art_clinic, location_of_art_initiation, art_start_date, start_date_estimated, date_enrolled_at_facility, age_at_initiation, age_in_days_at_initiation, art_number_at_previous_location, hts_linkage_number, has_transfer_letter, cd4_count, site_id
           from#{' '}
           (
           WITH registration_data AS
@@ -279,10 +280,10 @@ module ArtService
           o.order_id lab_order_id,#{'      '}
           o.accession_number tracking_number,
           o.start_date order_date,
-          o.encounter_id,
-          e.voided,
-          e.date_voided voided_date,
-          o.concept_id,
+          o.encounter_id AS visit_identifier,
+          e.voided AS is_voided,
+          e.date_voided AS when_voided,
+          o.concept_id AS concept_identifier,
           ob.value_text reason_for_testing
         from orders o#{' '}
         join encounter e on o.encounter_id = e.encounter_id#{' '}
@@ -300,7 +301,7 @@ module ArtService
     def lab_test_results
       query = ActiveRecord::Base.connection.select_all <<~SQL
         select
-          lab_order_id, patient_id, site_id, '', test_type, sample_type, test_measure, test_result_date, test_result, voided, date_voided, sending_facility, test_result_id
+          lab_order_id, sending_facility AS results_test_facility, patient_id, site_id, '', test_type, sample_type, test_measure, test_result_date, test_result, voided AS is_voided, date_voided AS when_voided, sending_facility, test_result_id
           from#{' '}
           (
           with test_types as
@@ -336,7 +337,7 @@ module ArtService
 
     def medication_adherences
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        select distinct encounter_id, site_id, obs_id, order_id, drug_id, adherence, pills_brought_to_clinic, pills_remaining_at_home, voided, voided_date, patient_id from
+        select distinct encounter_id AS visit_identifier, site_id, obs_id as observation_identifier, order_id as transaction_identifier, drug_id, adherence, pills_brought_to_clinic, pills_remaining_at_home, voided as is_voided, voided_date as when_voided, patient_id from
           (
             with con as
             (
@@ -388,12 +389,12 @@ module ArtService
         SELECT
             ob.person_id patient_id
             , #{site_id} site_id
-            , ob.obs_id
-            , o.order_id
+            , ob.obs_id observation_identifier
+            , o.order_id transaction_identifier
             , ob.value_numeric quantity
-            , ob.voided
-            , ob.date_voided voided_date
-            , ob.encounter_id
+            , ob.voided is_voided
+            , ob.date_voided  when_voided
+            , ob.encounter_id visit_identifier
             , e.encounter_datetime date_dispensed
         FROM encounter e
         JOIN obs ob
@@ -417,11 +418,11 @@ module ArtService
         select distinct#{' '}
           pp.patient_id,
           #{site_id} as site_id,
-          #{concept_id} as concept_id,
+          #{concept_id} as concept_identifier,
           '#{outcome_reason}' as outcome_reason,
           pp.program_id as outcome_source,
-          ps.voided,
-          ps.date_voided as voided_date,
+          ps.voided as is_voided,
+          ps.date_voided as when_voided,
           ps.start_date,
           ps.end_date
         from
@@ -441,9 +442,9 @@ module ArtService
 
     def screening
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        select e.patient_id, e.encounter_id,o.obs_id, e.program_id, e.encounter_datetime, o.concept_id, cn.name concept_name,o.value_coded,
+        select e.patient_id, e.encounter_id as visit_identifier,o.obs_id as observation_identifier, e.program_id, e.encounter_datetime, o.concept_id as concept_identifier, cn.name concept_label,o.value_coded coded_value,
           COALESCE(cn2.name, o.value_datetime, o.value_text) value,#{' '}
-          e.voided,e.date_voided,
+          e.voided is_voided,e.date_voided when_voided,
           #{site_id} site_id
           from encounter e
           inner join obs o on e.encounter_id=o.encounter_id
@@ -462,12 +463,12 @@ module ArtService
           SELECT distinct#{' '}
             en.patient_id,
             #{site_id} site_id,
-            ob.obs_id
-            , ob.encounter_id
-            , ob.concept_id
-            , ob.value_coded
-            , ob.voided
-            , ob.date_voided voided_date
+            ob.obs_id observation_identifier
+            , ob.encounter_id visit_identifier
+            , ob.concept_id concept_identifier
+            , ob.value_coded coded_value
+            , ob.voided is_voided
+            , ob.date_voided  when_voided
         FROM obs ob
           JOIN concept_name cn
             on ob.concept_id = cn.concept_id
@@ -487,7 +488,7 @@ module ArtService
 
     def treatment
       query = ActiveRecord::Base.connection.select_all <<~SQL
-            select patient_id, site_id, order_id, drug_id, encounter_id, start_date, end_date, instructions, voided, voided_date, pillcount, equivalent_daily_dose, quantity from
+            select patient_id, site_id, order_id as transaction_identifier, drug_id, encounter_id visit_identifier, start_date, end_date, instructions, voided is_voided, voided_date as when_voided, pillcount, equivalent_daily_dose, quantity from
         (#{'   '}
         with con as
           (
@@ -541,7 +542,7 @@ module ArtService
 
     def vitals
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        select e.patient_id, e.encounter_id,o.obs_id, e.program_id, e.encounter_datetime, o.concept_id, cn.name concept_name,o.value_numeric ,o.value_text ,e.voided,e.date_voided,
+        select e.patient_id, e.encounter_id visit_identifier,o.obs_id observation_identifier, e.program_id, e.encounter_datetime, o.concept_id concept_identifier, cn.name concept_label,o.value_numeric numeric_value ,o.value_text text_value ,e.voided is_voided,e.date_voided when_voided,
         #{site_id} site_id
         from encounter e
         join obs o on e.encounter_id=o.encounter_id#{' '}
