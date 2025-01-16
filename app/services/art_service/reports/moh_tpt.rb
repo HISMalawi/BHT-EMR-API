@@ -130,7 +130,7 @@ module ArtService
         ActiveRecord::Base.connection.execute <<~SQL
           CREATE TABLE temp_initiated_on_tpt
           SELECT
-            pp.patient_id,
+            pop.patient_id,
             coalesce(tpt_transfer_in_obs.value_datetime, min(tpt_order.start_date)) start_date,
             p.gender, disaggregated_age_group(p.birthdate, DATE('#{raw_end_date}')) age_group,
             patient_outcome(p.person_id, DATE('#{@raw_end_date}')) AS outcome,
