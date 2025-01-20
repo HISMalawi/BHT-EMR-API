@@ -86,6 +86,9 @@ module ArtService
               @report[age_group][gender][:newly_diagnosed_htn] << id 
               @report["All"][maternal_status][:newly_diagnosed_htn] << id
             end
+
+            next unless systolic && diastolic
+            
             if systolic < SYSTOLIC_THRESHOLD && diastolic < DIASTOLIC_THRESHOLD
               @report[age_group][gender][:controlled_htn] << id 
               @report["All"][maternal_status][:controlled_htn] << id
@@ -125,11 +128,11 @@ module ArtService
               AND vitals.voided = 0
               AND vitals.encounter_type = #{encounter_type("VITALS").id}
               AND DATE(vitals.encounter_datetime) BETWEEN DATE('#{start_date - 6.months}') AND DATE('#{end_date}')
-            INNER JOIN obs systolic
+            LEFT JOIN obs systolic
               ON systolic.encounter_id = vitals.encounter_id
               AND systolic.voided = 0
               AND systolic.concept_id = #{concept("Systolic blood pressure").id}
-            INNER JOIN obs diastolic
+            LEFT JOIN obs diastolic
               ON diastolic.encounter_id = vitals.encounter_id
               AND diastolic.voided = 0
               AND diastolic.concept_id = #{concept("Diastolic blood pressure").id}
