@@ -18,6 +18,7 @@ module ArtService
           @cut_off_point = start_date.to_date
           @end_date = ActiveRecord::Base.connection.quote(end_date)
           @occupation = kwargs[:occupation]
+          @dsd = kwargs[:dsd]
         end
 
         def find_report
@@ -154,6 +155,7 @@ module ArtService
                   AND denominator_encounter.voided = 0
                 GROUP BY patient_id
             ) AS denominator_patient ON denominator_patient.patient_id = person.person_id
+             #{dsd_query(dsd: @dsd, model: 'denominator_patient') if @dsd}
             INNER JOIN encounter AS prescription_encounter
               ON prescription_encounter.patient_id = denominator_patient.patient_id
               AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')

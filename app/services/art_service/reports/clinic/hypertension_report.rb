@@ -6,6 +6,8 @@ module ArtService
       # Generates a hypertension report for a clinic
       # rubocop:disable Metrics/ClassLength
       class HypertensionReport
+
+        include CommonSqlQueryUtils
         AGE_GROUPS = [
           '15-19 years', '20-24 years',
           '25-29 years', '30-34 years',
@@ -21,7 +23,7 @@ module ArtService
 
         DRUG_MAPPING = {
           'Hydrochlorothiazide (25mg tablet)' => :hydrochlorothiazide_25mg,
-          'HCZ (25mg tablet)' => :hydrochlorothiazide_25mg,
+          'HCTZ (25mg tablet)' => :hydrochlorothiazide_25mg,
           'Hctz (25mg)' => :hydrochlorothiazide_25mg,
           'Amlodipine (5mg tablet)' => :amlodipine_5mg,
           'Amlodipine 5mg' => :amlodipine_5mg,
@@ -47,6 +49,7 @@ module ArtService
           @start_date = ActiveRecord::Base.connection.quote(start_date)
           @end_date = ActiveRecord::Base.connection.quote(end_date)
           @process_due = kwargs[:process_due] == 'true'
+          @dsd = kwargs[:dsd]
         end
 
         def find_report
@@ -208,6 +211,7 @@ module ArtService
                 AND o.voided = 0 AND o.obs_datetime >= #{@start_date} AND o.obs_datetime < #{@end_date} + INTERVAL 1 DAY
                 GROUP BY o.person_id
             ) AS tpo
+            #{dsd_query(dsd: @dsd, model: 'tpo') if @dsd}
             INNER JOIN obs sys ON sys.concept_id = 5085 AND sys.person_id = tpo.patient_id AND sys.obs_datetime = tpo.obs_date AND sys.voided = 0
             INNER JOIN obs dia ON dia.concept_id = 5086 AND dia.person_id = tpo.patient_id AND dia.obs_datetime = tpo.obs_date AND dia.voided = 0
             INNER JOIN person p ON p.person_id = tpo.patient_id AND p.voided = 0
@@ -248,6 +252,7 @@ module ArtService
               WHERE ps.voided = 0 AND ps.start_date < DATE(#{@start_date}) AND ps.end_date IS NULL
               GROUP BY ps.patient_program_id
             ) latest_state ON latest_state.patient_program_id = pp2.patient_program_id
+            #{dsd_query(dsd: @dsd, model: 'pp2') if @dsd}
             INNER JOIN patient_state ps2 ON ps2.patient_program_id = pp2.patient_program_id AND ps2.voided = 0 AND ps2.start_date = latest_state.start_date AND ps2.end_date IS NULL AND ps2.state = 7 -- ON ART
             LEFT JOIN (
               SELECT MAX(o.obs_datetime) obs_date, o.person_id patient_id

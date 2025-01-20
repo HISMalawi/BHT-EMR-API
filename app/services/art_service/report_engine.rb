@@ -57,7 +57,8 @@ module ArtService
       'TX_NEW' => ArtService::Reports::Pepfar::TxNew,
       'MATERNAL_STATUS' => ArtService::Reports::MaternalStatus,
       'NID_CUMULATIVE_REPORT' => ArtService::Reports::Clinic::NidCumulativeReport,
-      'TX_HIV_HTN' => ArtService::Reports::Pepfar::TxHivHtn
+      'TX_HIV_HTN' => ArtService::Reports::Pepfar::TxHivHtn,
+      'LAB_AUDIT_TRAIL' => ArtService::Reports::Clinic::LabAuditTrailReport
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -76,10 +77,10 @@ module ArtService
       cohort.disaggregated(quarter, age_group)
     end
 
-    def cohort_survival_analysis(quarter, age_group, regenerate, occupation)
+    def cohort_survival_analysis(quarter, age_group, regenerate, occupation, dsd)
       cohort = REPORTS['COHORT_SURVIVAL_ANALYSIS'].new(type: 'survival_analysis',
                                                        name: 'survival_analysis', start_date: Date.today,
-                                                       end_date: Date.today, regenerate:, occupation:)
+                                                       end_date: Date.today, regenerate:, occupation:, dsd:)
       cohort.survival_analysis(quarter, age_group)
     end
 
@@ -185,9 +186,9 @@ module ArtService
                            .clients_due
     end
 
-    def vl_results(start_date, end_date)
+    def vl_results(start_date, end_date, **kwargs)
       REPORTS['VIRAL_LOAD'].new(start_date: start_date.to_date,
-                                end_date: end_date.to_date).vl_results
+                                end_date: end_date.to_date, **kwargs).vl_results
     end
 
     def external_consultation_clients(start_date, end_date, **kwargs)
@@ -210,9 +211,9 @@ module ArtService
                                     end_date: end_date.to_date, **kwargs).latest_regimen_dispensed(rebuild_outcome)
     end
 
-    def sc_arvdisp(start_date, end_date, rebuild_outcome)
+    def sc_arvdisp(start_date, end_date, rebuild_outcome, dsd)
       REPORTS['SC_ARVDISP'].new(start_date: start_date.to_date,
-                                end_date: end_date.to_date, rebuild_outcome:).report
+                                end_date: end_date.to_date, rebuild_outcome:, dsd:).report
     end
 
     private
