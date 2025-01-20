@@ -113,7 +113,9 @@ module ArtService
               DATE(vitals.encounter_datetime) AS date_screened_for_htn,
               IF (diagnosed.patient_id IS NOT NULL, 1, 0) AS diagonised,
               DATE(diagnosed.date_diagonised) AS date_diagnosed,
-              IF (ms.maternal_status IS NOT NULL, ms.maternal_status, 'Male') AS maternal_status
+              IF (ms.maternal_status IS NOT NULL, 
+                ms.maternal_status, 
+                IF (tesd.gender = 'M', 'Male', 'FNP')) AS maternal_status
             FROM temp_earliest_start_date tesd
             INNER JOIN temp_patient_outcomes tpo
               ON tpo.patient_id = tesd.patient_id
