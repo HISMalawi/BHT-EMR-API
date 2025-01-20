@@ -88,7 +88,7 @@ module ArtService
             end
 
             next unless systolic && diastolic
-            
+
             if systolic < SYSTOLIC_THRESHOLD && diastolic < DIASTOLIC_THRESHOLD
               @report[age_group][gender][:controlled_htn] << id 
               @report["All"][maternal_status][:controlled_htn] << id
@@ -123,7 +123,7 @@ module ArtService
             INNER JOIN temp_patient_outcomes tpo
               ON tpo.patient_id = tesd.patient_id
               AND tpo.pepfar_cum_outcome = 'On antiretrovirals'
-            INNER JOIN encounter vitals
+            LEFT JOIN encounter vitals
               ON vitals.patient_id = tesd.patient_id
               AND vitals.voided = 0
               AND vitals.encounter_type = #{encounter_type("VITALS").id}
