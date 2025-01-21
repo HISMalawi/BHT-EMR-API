@@ -36,7 +36,7 @@ pacs_viewer:
 
 # Configuration for DDE
 dde:
-  url: http://localhost:8050
+  url: http://dde4:8050
 
   # This section has DDE username and password for various applications.
   # The application's name must be the same as a program name in the
