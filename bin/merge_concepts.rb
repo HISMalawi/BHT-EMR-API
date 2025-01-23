@@ -17,7 +17,7 @@ to = ARGV[1]
 usage unless from && to
 
 default_db_config = Rails.configuration.database_configuration['development']
-concepts_db_config = Rails.configuration.database_configuration['concepts_merge_db']
+concepts_db_config = Rails.configuration.database_configuration['metadata_server']
 
 unless default_db_config && concepts_db_config
   LOGGER.error('Could not find database configurations')
