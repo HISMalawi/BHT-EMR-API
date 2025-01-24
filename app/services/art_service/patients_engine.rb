@@ -128,13 +128,20 @@ module ArtService
       current_quarter_start = date.beginning_of_quarter
       prev_quarter_start, prev_quarter_end = quarter_dates(current_quarter_start - 1.month)
 
-      PatientIdentifier.where(
+      id = PatientIdentifier.where(
         identifier_type: PatientIdentifierType.find_by_name('ARV Number'),
         date_created: (prev_quarter_start..prev_quarter_end)
       ).order(date_created: :desc)
        &.first
        &.identifier
-       &.gsub("#{current_arv_code}-ARV-", '')&.to_i || 0
+
+      return max_arv_number if id.nil?
+
+      id
+    end
+
+    def max_arv_number
+      PatientIdentifier.where(identifier_type: arv_identifier_type).order(:date_created).last&.identifier
     end
 
     # Returns the next available ARV identifier for the given date,
@@ -143,37 +150,33 @@ module ArtService
     # @param date [Date] date to generate the identifier for
     # @return [Integer] the next available ARV identifier
     def next_available_id_in_current_quarter(date)
+      prefix = current_arv_code
+
       quarter_start, quarter_end = quarter_dates(date)
-      last_available = last_arv_number_from_prev_quarter(date)
+      last_available = last_arv_number_from_prev_quarter(date)&.gsub("#{prefix}-ARV-", '')&.to_i
+
+      next_available = (last_available + 1) rescue 1
 
       # Find all ARV identifiers issued in the current quarter,
       # greater than the last available number from the previous quarter
-      ids_this_qtr = PatientIdentifier.where(
-        identifier_type: arv_identifier_type,
-        date_created: (quarter_start..quarter_end)
-      ).where(Arel.sql("CAST(SUBSTRING_INDEX(identifier, '-', -1) AS UNSIGNED) > #{last_available}"))
+      ids = PatientIdentifier.where(identifier_type: arv_identifier_type)
 
-      next_available = (last_available + 1)
-
-      return next_available unless ids_this_qtr.any?
+      return next_available unless ids.any?
 
       # Map the ARV identifiers to their assigned numbers
-      assigned_numbers_this_qtr = ids_this_qtr.map do |identifier|
-        Regexp.last_match(1).to_i if identifier.identifier =~ /#{current_arv_code}-ARV- *(\d+)/
+      assigned_numbers = ids.map do |identifier|
+        Regexp.last_match(1).to_i if identifier.identifier =~ /#{prefix}-ARV- *(\d+)/
       end.compact
 
       # If there are no assigned numbers, return the next available
       # number in the current quarter.
       # 
       # which is the last available number + 1
-      return next_available unless assigned_numbers_this_qtr.any?
-
+      return next_available unless assigned_numbers.any?
       # Find the lowest number not yet assigned
       # in the current quarter by subtracting the assigned numbers from the possible number range
       # and sorting the resulting array
-      available_numbers_this_qtr = (next_available..possible_number_range).to_a - assigned_numbers_this_qtr
-      
-
+      available_numbers_this_qtr = (next_available..possible_number_range).to_a - assigned_numbers
       # Return the lowest number
       # which is the first element of the sorted array
       available_numbers_this_qtr.sort.first
