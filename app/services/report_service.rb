@@ -141,8 +141,8 @@ class ReportService
     engine(@program).disaggregated_regimen_distribution(start_date, end_date, gender, age_group)
   end
 
-  def tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
-    engine(@program).tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
+  def tx_mmd_client_level_data(start_date, end_date, patient_ids, org, dsd)
+    engine(@program).tx_mmd_client_level_data(start_date, end_date, patient_ids, org, dsd)
   end
 
   def tb_prev(start_date, end_date)
