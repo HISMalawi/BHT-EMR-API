@@ -231,6 +231,7 @@ def populate_patient_encounters(person_id, source_db, new_person_id)
   return if eligible_patient_encounters.blank?
 
   eligible_patient_encounters.each do |data|
+    old_encounter = data.dup
     data.symbolize_keys!
     data.merge!({ site_id: SITE_ID })
     data[:encounter_id] = nil
@@ -242,7 +243,7 @@ def populate_patient_encounters(person_id, source_db, new_person_id)
     new_data = Encounter.new(data)
     ActiveRecord::Base.transaction do
       new_data.save(validate: false)
-      # populate_corresponding_obs(old_encounter.symbolize_keys!, person_id, source_db, new_data)
+      populate_corresponding_obs(old_encounter.symbolize_keys!, person_id, source_db, new_data)
     end
   end
 end
@@ -259,16 +260,15 @@ def populate_corresponding_obs(old_encounter, person_id, source_db, new_encounte
     data.symbolize_keys!
     old_obs = data.dup
     data.merge!({ site_id: SITE_ID })
+    data[:obs_id] = nil
     data[:encounter_id] = new_encounter[:encounter_id]
     data[:person_id] = new_encounter[:patient_id]
     data[:creator] = 1
     data[:voided_by] = nil # will need to update
+    data[:order_id] = populate_corresponding_order(old_obs.symbolize_keys!, source_db, new_encounter) if data[:order_id]
     ActiveRecord::Base.transaction do
       new_data = Observation.new(data)
-      order = populate_corresponding_order(old_obs.symbolize_keys!, source_db, new_data) if data[:order_id]
-      data[:order_id] = order[:order_id]
       new_data.save(validate: false)
-      order.update_all(encounter_id: new_data[:encounter_id], patient_id: new_data[:person_id])
     end
   end
 end
@@ -280,21 +280,21 @@ def populate_corresponding_order(old_obs, source_db, new_obs)
     Order.unscoped.where(uuid: data['uuid']).blank? == true
   end
   return if eligible_patient_orders.blank?
-
-  order = ''
+  order_id = ''
   eligible_patient_orders.each do |data|
     data.symbolize_keys!
     data.merge!({ site_id: SITE_ID })
     data[:order_id] = nil
-    # data[:encounter_id] = new_obs[:encounter_id]
-    data[:patient_id] = new_obs[:person_id]
+    data[:encounter_id] = new_obs[:encounter_id]
+    data[:patient_id] = new_obs[:patient_id]
     data[:creator] = 1
     data[:voided_by] = nil # will need to update
+    data[:orderer] = get_new_user_id(data[:orderer], source_db)
     new_data = Order.new(data)
     new_data.save(validate: false)
-    order = new_data
+    order_id = new_data[:order_id]
   end
-  order
+  order_id
 end
 
 def populate_global_property(source_db)
@@ -309,8 +309,7 @@ def populate_global_property(source_db)
   eligible_properties.each do |property|
     property.symbolize_keys!
     property.merge!({ site_id: SITE_ID })
-    new_attribute = GlobalProperty.new(property)
-    new_attribute.save(validate: false)
+    GlobalProperty.create!(property)
   end
 end
 
