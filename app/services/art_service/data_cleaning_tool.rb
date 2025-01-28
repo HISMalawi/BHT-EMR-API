@@ -19,7 +19,8 @@ module ArtService
       'MISSING VL RESULTS' => 'missing_vl_results',
       'DIFFERENT PREGNANCY VALUE ON SAME DATE' => 'different_pregnancy_value_on_same_date',
       'MISSING ART START DATE' => 'missing_start_date',
-      'MULTIPLE OPEN STATES' => 'multiple_open_states'
+      'MULTIPLE OPEN STATES' => 'multiple_open_states',
+      'ACTIVE CLIENTS WITH ADVERSE OUTCOMES' => 'active_clients_with_adverse_outcomes',
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -32,6 +33,44 @@ module ArtService
       eval(TOOLS[@tool_name.to_s])
     rescue StandardError => e
       "#{e.class}: #{e.message}"
+    end
+
+    def active_clients_with_adverse_outcomes
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT p.patient_id, outcome,
+               outcome_date, DATE(e.encounter_datetime) dispensation_visit_date,
+               pi.identifier arv_number, fn.identifier filling_number
+            FROM patient p
+            LEFT JOIN patient_identifier pi ON p.patient_id = pi.patient_id
+              AND pi.identifier_type = 4
+            LEFT JOIN patient_identifier fn ON p.patient_id = fn.patient_id
+              AND pi.identifier_type = 17
+        INNER JOIN (
+                SELECT pp.patient_id, MAX(DATE(ps.start_date)) outcome_date, cn.name outcome
+                    FROM patient_state ps
+                INNER JOIN patient_program pp ON ps.patient_program_id = pp.patient_program_id
+                        AND pp.voided = 0
+                INNER JOIN program_workflow_state pws ON pws.program_workflow_state_id = ps.state
+                    INNER JOIN concept_name cn ON pws.concept_id = cn.concept_id
+                        AND cn.voided = 0
+                WHERE cn.name IN ('Defaulted', 'Patient died', 'Treatment stopped', 'Patient transferred out')
+                AND ps.end_date IS NULL
+                AND ps.voided = 0
+                AND pp.program_id = 1 # HIV program
+                GROUP BY pp.patient_id
+            ) od ON od.patient_id = p.patient_id
+        INNER JOIN encounter e ON p.patient_id = e.patient_id
+            LEFT JOIN obs ec ON ec.person_id = e.patient_id
+                AND ec.concept_id = 3289 # Type of patient
+            AND ec.value_coded NOT IN (9684, 10522) # No drug refills or external consultations
+            WHERE DATE(e.encounter_datetime) > od.outcome_date
+              AND e.encounter_type = 54
+            AND e.voided = 0
+            AND p.voided = 0
+            AND pi.voided = 0
+            AND patient_outcome(p.patient_id, #{ActiveRecord::Base.connection.quote(@end_date)}) IN ('Defaulted', 'Patient died', 'Treatment stopped', 'Patient transferred out')
+        GROUP BY p.patient_id;
+      SQL
     end
 
     def self.void_duplicate_npid(identifier)
