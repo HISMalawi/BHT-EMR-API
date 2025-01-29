@@ -1,6 +1,8 @@
 require 'active_record'
 require 'json'
 require 'psych'
+User.current = User.first
+NON_RESET_MODELS = %w[Patient DrugOrder].freeze
 
 # Load Database Configuration
 database_config = Psych.load(File.read('config/database.yml'), aliases: true).freeze
@@ -50,14 +52,14 @@ def populate_person(person_data, source_db)
   person_data[:person_id] = nil
 
   [:changed_by, :creator, :voided_by].each do |key|
-    person_data[key] = get_new_user_id(person_data[key], source_db) if person_data[key]
+    person_data[key] = get_new_user_id(person_data[key], source_db) || 1 if person_data[key]
   end
 
   existing_person = Person.unscoped.find_by(uuid: person_data[:uuid])
   return existing_person.person_id if existing_person
 
   new_person = Person.new(person_data)
-  new_person.save!
+  new_person.save!(validate: false)
   new_person.id
 end
 
@@ -72,17 +74,19 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
     end
 
     record[:site_id] = SITE_ID
-    record[target_model.primary_key.to_sym] = nil if target_model.to_s != 'Patient' # Reset primary key for insertion
+    record[target_model.primary_key.to_sym] = nil unless NON_RESET_MODELS.include?(target_model.to_s) # Reset primary key for insertion
 
     # Skip if the record already exists
     if target_model.to_s == 'Patient'
-      next if target_model.unscoped.where(patient_id: record[:patient_id])
+      next if target_model.unscoped.where(patient_id: record[:patient_id]).exists?
+    elsif target_model.to_s == 'DrugOrder'
+      next if target_model.unscoped.where(order_id: record[:order_id]).exists?
     else
       next if target_model.unscoped.where(uuid: record[:uuid]).exists?
     end
 
     new_record = target_model.new(record)
-    new_record.save(validate: false)
+    new_record.save!(validate: false)
   end
 end
 
@@ -132,13 +136,42 @@ def get_person_id(old_person_id, source_db)
   Person.unscoped.find_by_uuid(person_uuid)&.person_id
 end
 
+def get_encounter_id(old_encounter_id, source_db)
+  encounter_uuid = query_with_columns("#{source_db}.encounter", "encounter_id = #{old_encounter_id}").first['uuid']
+  Encounter.unscoped.find_by_uuid(encounter_uuid)&.encounter_id
+end
+
+def get_order_id(old_order_id, source_db)
+  order_uuid = query_with_columns("#{source_db}.orders", "order_id = #{old_order_id}").first['uuid']
+  Order.unscoped.find_by_uuid(order_uuid)&.order_id
+end
+
+def get_obs_id(old_obs_id, source_db)
+  obs_uuid = query_with_columns("#{source_db}.obs", "obs_id = #{old_obs_id}").first['uuid']
+  Observation.unscoped.find_by_uuid(obs_uuid)&.obs_id
+end
+
+def get_program_id(old_program_id, source_db)
+  program_uuid = query_with_columns("#{source_db}.patient_program", "patient_program_id = #{old_program_id}").first['uuid']
+  PatientProgram.unscoped.find_by_uuid(program_uuid)&.patient_program_id
+end
+
+
 # Main Execution
-populate_users(source_db)
-populate_records('person', Person, source_db, {creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('person_name', PersonName, source_db, { person_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('person_address', PersonAddress, source_db, { person_id: :get_person_id, creator: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('person_attribute', PersonAttribute, source_db, { person_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('patient', Patient, source_db, { patient_id: :get_person_id })
-populate_records('patient_identifier', PatientIdentifier, source_db, { patient_id: :get_person_id })
-populate_records('patient_program', PatientProgram, source_db, { patient_id: :get_person_id })
-populate_records('encounter', Encounter, source_db, { patient_id: :get_person_id })
+# populate_users(source_db)
+# populate_records('person', Person, source_db, {creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
+# populate_records('person_name', PersonName, source_db, { person_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
+# populate_records('person_address', PersonAddress, source_db, { person_id: :get_person_id, creator: :get_new_user_id, voided_by: :get_new_user_id })
+# populate_records('person_attribute', PersonAttribute, source_db, { person_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
+# populate_records('patient', Patient, source_db, { patient_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
+# populate_records('patient_identifier', PatientIdentifier, source_db, { patient_id: :get_person_id,creator: :get_new_user_id, voided_by: :get_new_user_id })
+# populate_records('patient_program', PatientProgram, source_db, { patient_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
+# populate_records('patient_state', PatientState, source_db, { patient_program_id: :get_program_id, creator: :get_new_user_id,
+#                                                             changed_by: :get_new_user_id, voided_by: :get_new_user_id})
+# populate_records('encounter', Encounter, source_db, { patient_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
+# populate_records('orders', Order, source_db, { encounter_id: :get_encounter_id, patient_id: :get_person_id, creator: :get_new_user_id, orderer: :get_new_user_id, voided_by: :get_new_user_id })
+# populate_records('obs', Observation, source_db, { encounter_id: :get_encounter_id, 
+#                                                   order_id: :get_order_id, creator: :get_new_user_id, 
+#                                                   voided_by: :get_new_user_id, person_id: :get_person_id,
+#                                                    obs_group_id: :get_obs_id})
+populate_records('drug_order', DrugOrder, source_db, { order_id: :get_order_id, })
