@@ -1,8 +1,9 @@
 require 'active_record'
 require 'json'
 require 'psych'
-User.current = User.first
-NON_RESET_MODELS = %w[Patient DrugOrder].freeze
+user = User.first
+
+NON_RESET_MODELS = %w[Patient DrugOrder GlobalProperty UserRole].freeze
 
 # Load Database Configuration
 database_config = Psych.load(File.read('config/database.yml'), aliases: true).freeze
@@ -12,6 +13,8 @@ SITE_ID = ActiveRecord::Base.connection.select_one("SELECT property_value
   WHERE property = 'current_health_center_id'")['property_value'].to_i
 SITE_USER_MAPPING = Rails.root.join('log', "users_mapping_#{SITE_ID}.json")
 File.write(SITE_USER_MAPPING, '{}') unless File.exist?(SITE_USER_MAPPING)
+user['site_id'] =  SITE_ID
+User.current = user
 
 # Query Helper
 def query_with_columns(table_name, where_clause = nil, limit = nil, offset = nil)
@@ -24,7 +27,7 @@ def query_with_columns(table_name, where_clause = nil, limit = nil, offset = nil
 end
 
 # Process in Batches with Percentage Tracking
-def process_in_batches(source_db, table_name, batch_size = 1000, &block)
+def process_in_batches(source_db, table_name, batch_size = 1_000, &block)
   total_records = ActiveRecord::Base.connection.select_one("SELECT COUNT(*) AS count FROM #{source_db}.#{table_name}")['count'].to_i
   processed_records = 0
 
@@ -33,9 +36,7 @@ def process_in_batches(source_db, table_name, batch_size = 1000, &block)
     records = query_with_columns("#{source_db}.#{table_name}", nil, batch_size, offset)
     break if records.blank?
 
-    records.each do |record|
-      yield(record)
-    end
+    yield(records)
 
     processed_records += records.size
     percentage = ((processed_records.to_f / total_records) * 100).round(2)
@@ -65,56 +66,67 @@ end
 
 # Generic Populate Function with Percentage Tracking
 def populate_records(source_table, target_model, source_db, foreign_keys = {})
-  process_in_batches(source_db, source_table) do |record|
-    record.symbolize_keys!
+  process_in_batches(source_db, source_table) do |records|
+    insertable_records = records.map do |record|
+      record.symbolize_keys!
+      # Update foreign key mappings
+      foreign_keys.each do |foreign_key, mapping_method|
+        record[foreign_key] = send(mapping_method, record[foreign_key], source_db) if record[foreign_key]
+      end
 
-    # Update foreign key mappings
-    foreign_keys.each do |foreign_key, mapping_method|
-      record[foreign_key] = send(mapping_method, record[foreign_key], source_db) if record[foreign_key]
+      record[:site_id] = SITE_ID
+      record[target_model.primary_key.to_sym] = nil unless NON_RESET_MODELS.include?(target_model.to_s) # Reset primary key for insertion
+      record
+
+      # Skip if the record already exists
+      if target_model.to_s == 'Patient'
+        next if target_model.unscoped.where(patient_id: record[:patient_id]).exists?
+      elsif target_model.to_s == 'DrugOrder'
+        next if target_model.unscoped.where(order_id: record[:order_id]).exists?
+      elsif target_model.to_s == 'UserRole'
+        next if target_model.unscoped.where(user_id: record[:user_id], role: record[:role], site_id: SITE_ID)
+      else
+        next if target_model.unscoped.where(uuid: record[:uuid]).exists?
+      end
     end
+    return if insertable_records.compact.blank?
 
-    record[:site_id] = SITE_ID
-    record[target_model.primary_key.to_sym] = nil unless NON_RESET_MODELS.include?(target_model.to_s) # Reset primary key for insertion
-
-    # Skip if the record already exists
-    if target_model.to_s == 'Patient'
-      next if target_model.unscoped.where(patient_id: record[:patient_id]).exists?
-    elsif target_model.to_s == 'DrugOrder'
-      next if target_model.unscoped.where(order_id: record[:order_id]).exists?
-    else
-      next if target_model.unscoped.where(uuid: record[:uuid]).exists?
-    end
-
-    new_record = target_model.new(record)
-    new_record.save!(validate: false)
+    target_model.insert_all!(insertable_records)
   end
 end
 
 # User Migration with Percentage Tracking
 def populate_users(source_db)
   site_users = JSON.parse(File.read(SITE_USER_MAPPING))
+  insertable_records = []
+  process_in_batches(source_db, 'users') do |users|
+    insertable_records = users.map do |user|
+      user.symbolize_keys!
 
-  process_in_batches(source_db, 'users') do |user|
-    user.symbolize_keys!
-    old_user_id = user[:user_id]
+      old_user_id = user[:user_id]
 
-    next if User.unscoped.exists?(uuid: user[:uuid])
+      next if User.unscoped.exists?(uuid: user[:uuid])
 
-    user[:site_id] = SITE_ID
-    user[:user_id] = nil
+      user[:site_id] = SITE_ID
+      user[:user_id] = nil
 
-    [:changed_by, :creator].each do |key|
-      user[key] = get_new_user_id(user[key], source_db) if user[key]
+      [:changed_by, :creator].each do |key|
+        user[key] = get_new_user_id(user[key], source_db) || 1 if user[key]
+      end
+
+      user[:person_id] = create_user_person(user, source_db)
+
+      # new_user = User.new(user)
+
+      # if new_user.save!(validate: false)
+      #   site_users[old_user_id] = new_user.id
+      #   File.write(SITE_USER_MAPPING, JSON.dump(site_users))
+      # end
+      user
     end
+    return if insertable_records.compact.blank?
 
-    user[:person_id] = create_user_person(user, source_db)
-
-    new_user = User.new(user)
-
-    if new_user.save!(validate: false)
-      site_users[old_user_id] = new_user.id
-      File.write(SITE_USER_MAPPING, JSON.dump(site_users))
-    end
+    User.insert_all!(insertable_records)
   end
 end
 
@@ -159,6 +171,8 @@ end
 
 # Main Execution
 populate_users(source_db)
+populate_records('user_role', UserRole, source_db)
+populate_records('global_property', GlobalProperty, source_db)
 populate_records('person', Person, source_db, {creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
 populate_records('person_name', PersonName, source_db, { person_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
 populate_records('person_address', PersonAddress, source_db, { person_id: :get_person_id, creator: :get_new_user_id, voided_by: :get_new_user_id })
@@ -175,3 +189,4 @@ populate_records('obs', Observation, source_db, { encounter_id: :get_encounter_i
                                                   voided_by: :get_new_user_id, person_id: :get_person_id,
                                                    obs_group_id: :get_obs_id})
 populate_records('drug_order', DrugOrder, source_db, { order_id: :get_order_id, })
+# populate_records('report_object', )
