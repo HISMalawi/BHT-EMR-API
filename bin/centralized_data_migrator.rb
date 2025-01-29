@@ -158,20 +158,20 @@ end
 
 
 # Main Execution
-# populate_users(source_db)
-# populate_records('person', Person, source_db, {creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-# populate_records('person_name', PersonName, source_db, { person_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-# populate_records('person_address', PersonAddress, source_db, { person_id: :get_person_id, creator: :get_new_user_id, voided_by: :get_new_user_id })
-# populate_records('person_attribute', PersonAttribute, source_db, { person_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-# populate_records('patient', Patient, source_db, { patient_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-# populate_records('patient_identifier', PatientIdentifier, source_db, { patient_id: :get_person_id,creator: :get_new_user_id, voided_by: :get_new_user_id })
-# populate_records('patient_program', PatientProgram, source_db, { patient_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-# populate_records('patient_state', PatientState, source_db, { patient_program_id: :get_program_id, creator: :get_new_user_id,
-#                                                             changed_by: :get_new_user_id, voided_by: :get_new_user_id})
-# populate_records('encounter', Encounter, source_db, { patient_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-# populate_records('orders', Order, source_db, { encounter_id: :get_encounter_id, patient_id: :get_person_id, creator: :get_new_user_id, orderer: :get_new_user_id, voided_by: :get_new_user_id })
-# populate_records('obs', Observation, source_db, { encounter_id: :get_encounter_id, 
-#                                                   order_id: :get_order_id, creator: :get_new_user_id, 
-#                                                   voided_by: :get_new_user_id, person_id: :get_person_id,
-#                                                    obs_group_id: :get_obs_id})
+populate_users(source_db)
+populate_records('person', Person, source_db, {creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
+populate_records('person_name', PersonName, source_db, { person_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
+populate_records('person_address', PersonAddress, source_db, { person_id: :get_person_id, creator: :get_new_user_id, voided_by: :get_new_user_id })
+populate_records('person_attribute', PersonAttribute, source_db, { person_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
+populate_records('patient', Patient, source_db, { patient_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
+populate_records('patient_identifier', PatientIdentifier, source_db, { patient_id: :get_person_id,creator: :get_new_user_id, voided_by: :get_new_user_id })
+populate_records('patient_program', PatientProgram, source_db, { patient_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
+populate_records('patient_state', PatientState, source_db, { patient_program_id: :get_program_id, creator: :get_new_user_id,
+                                                            changed_by: :get_new_user_id, voided_by: :get_new_user_id})
+populate_records('encounter', Encounter, source_db, { patient_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
+populate_records('orders', Order, source_db, { encounter_id: :get_encounter_id, patient_id: :get_person_id, creator: :get_new_user_id, orderer: :get_new_user_id, voided_by: :get_new_user_id })
+populate_records('obs', Observation, source_db, { encounter_id: :get_encounter_id, 
+                                                  order_id: :get_order_id, creator: :get_new_user_id, 
+                                                  voided_by: :get_new_user_id, person_id: :get_person_id,
+                                                   obs_group_id: :get_obs_id})
 populate_records('drug_order', DrugOrder, source_db, { order_id: :get_order_id, })
