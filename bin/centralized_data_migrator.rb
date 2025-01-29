@@ -22,7 +22,7 @@ def query_with_columns(table_name, where_clause = nil, limit = nil, offset = nil
   query += " WHERE #{where_clause}" if where_clause
   query += " LIMIT #{limit}" if limit
   query += " OFFSET #{offset}" if offset
-
+  
   ActiveRecord::Base.connection.select_all(query).to_a
 end
 
@@ -69,17 +69,12 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
   process_in_batches(source_db, source_table) do |records|
     insertable_records = records.map do |record|
       record.symbolize_keys!
-      # Update foreign key mappings
-      foreign_keys.each do |foreign_key, mapping_method|
-        record[foreign_key] = send(mapping_method, record[foreign_key], source_db) if record[foreign_key]
-      end
 
-      record[:site_id] = SITE_ID
       record[target_model.primary_key.to_sym] = nil unless NON_RESET_MODELS.include?(target_model.to_s) # Reset primary key for insertion
-      record
 
       # Skip if the record already exists
       if target_model.to_s == 'Patient'
+        debugger
         next if target_model.unscoped.where(patient_id: record[:patient_id]).exists?
       elsif target_model.to_s == 'DrugOrder'
         next if target_model.unscoped.where(order_id: record[:order_id]).exists?
@@ -88,10 +83,15 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
       else
         next if target_model.unscoped.where(uuid: record[:uuid]).exists?
       end
+      record
     end
-    return if insertable_records.compact.blank?
+    next if insertable_records.compact.blank?
 
-    target_model.insert_all!(insertable_records)
+    # Update foreign key mappings
+    foreign_keys.each do |foreign_key, mapping_method|
+      records = send(mapping_method, insertable_records, foreign_key, source_db)
+    end
+    target_model.insert_all!(records.compact)
   end
 end
 
@@ -131,62 +131,85 @@ def populate_users(source_db)
 end
 
 # Helper Methods
-def get_new_user_id(old_user_id, source_db)
-  return unless old_user_id
+def fetch_new_ids(records, source_db, table_name, id_column, model, new_id_key)
+  old_ids = records.compact.map { |record| record[new_id_key] }.uniq.compact
+  
+  return records if old_ids.blank?
 
-  user_uuid = query_with_columns("#{source_db}.users", "user_id = #{old_user_id}").first["uuid"]
-  User.unscoped.find_by(uuid: user_uuid)&.id
+  uuid_mapping = query_with_columns(
+    "#{source_db}.#{table_name}",
+    "#{id_column} IN (#{old_ids.join(',')})"
+  ).index_by { |row| row[id_column.to_s] }
+  
+  uuid_map = model.unscoped.where(uuid: uuid_mapping.values.map { |row| row['uuid'] })
+                          .index_by(&:uuid)
+                          .transform_values(&id_column)
+  
+  records.compact.each do |record|
+     next if record[new_id_key].blank?
+    record[new_id_key] = uuid_map[uuid_mapping[record[new_id_key]]['uuid']]
+  end
+  records
 end
 
-def create_user_person(user, source_db)
-  person_data = query_with_columns("#{source_db}.person", "person_id = #{user[:person_id]}").first
-  populate_person(person_data, source_db)
+def get_encounter_ids(records, key, source_db)
+  fetch_new_ids(records, source_db, 'encounter', :encounter_id, Encounter, key)
 end
 
-def get_person_id(old_person_id, source_db)
-  person_uuid = query_with_columns("#{source_db}.person", "person_id = #{old_person_id}").first['uuid']
-  Person.unscoped.find_by_uuid(person_uuid)&.person_id
+def get_new_user_ids(records, key, source_db)
+  fetch_new_ids(records, source_db, 'users', :user_id, User, key)
 end
 
-def get_encounter_id(old_encounter_id, source_db)
-  encounter_uuid = query_with_columns("#{source_db}.encounter", "encounter_id = #{old_encounter_id}").first['uuid']
-  Encounter.unscoped.find_by_uuid(encounter_uuid)&.encounter_id
+def get_person_ids(records, key, source_db)
+  fetch_new_ids(records, source_db, 'person', :person_id, Person, key)
 end
 
-def get_order_id(old_order_id, source_db)
-  order_uuid = query_with_columns("#{source_db}.orders", "order_id = #{old_order_id}").first['uuid']
-  Order.unscoped.find_by_uuid(order_uuid)&.order_id
+def get_order_ids(records, key, source_db)
+  fetch_new_ids(records, source_db, 'orders', :order_id, Order, key)
 end
 
-def get_obs_id(old_obs_id, source_db)
-  obs_uuid = query_with_columns("#{source_db}.obs", "obs_id = #{old_obs_id}").first['uuid']
-  Observation.unscoped.find_by_uuid(obs_uuid)&.obs_id
+def get_obs_ids(records, key, source_db)
+  fetch_new_ids(records, source_db, 'obs', :obs_id, Observation, key)
 end
 
-def get_program_id(old_program_id, source_db)
-  program_uuid = query_with_columns("#{source_db}.patient_program", "patient_program_id = #{old_program_id}").first['uuid']
-  PatientProgram.unscoped.find_by_uuid(program_uuid)&.patient_program_id
+def get_program_ids(records, key, source_db)
+  fetch_new_ids(records, source_db, 'patient_program', :patient_program_id, PatientProgram, key)
 end
 
+def create_users_persons(records, source_db)
+  person_ids = records.map { |record| record[:person_id] }.compact
+  
+  person_data = query_with_columns(
+    "#{source_db}.person",
+    "person_id IN (#{person_ids.join(',')})"
+  ).index_by { |row| row['person_id'] }
+  
+  records.each do |record|
+    record[:person_data] = populate_person(person_data[record[:person_id]], source_db) if person_data[record[:person_id]]
+  end
+  
+  records
+end
 
 # Main Execution
-populate_users(source_db)
+# populate_users(source_db)
 populate_records('user_role', UserRole, source_db)
-populate_records('global_property', GlobalProperty, source_db)
-populate_records('person', Person, source_db, {creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('person_name', PersonName, source_db, { person_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('person_address', PersonAddress, source_db, { person_id: :get_person_id, creator: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('person_attribute', PersonAttribute, source_db, { person_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('patient', Patient, source_db, { patient_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('patient_identifier', PatientIdentifier, source_db, { patient_id: :get_person_id,creator: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('patient_program', PatientProgram, source_db, { patient_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('patient_state', PatientState, source_db, { patient_program_id: :get_program_id, creator: :get_new_user_id,
-                                                            changed_by: :get_new_user_id, voided_by: :get_new_user_id})
-populate_records('encounter', Encounter, source_db, { patient_id: :get_person_id, creator: :get_new_user_id, changed_by: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('orders', Order, source_db, { encounter_id: :get_encounter_id, patient_id: :get_person_id, creator: :get_new_user_id, orderer: :get_new_user_id, voided_by: :get_new_user_id })
-populate_records('obs', Observation, source_db, { encounter_id: :get_encounter_id, 
-                                                  order_id: :get_order_id, creator: :get_new_user_id, 
-                                                  voided_by: :get_new_user_id, person_id: :get_person_id,
-                                                   obs_group_id: :get_obs_id})
-populate_records('drug_order', DrugOrder, source_db, { order_id: :get_order_id, })
+#populate_records('global_property', GlobalProperty, source_db)
+populate_records('person', Person, source_db, {creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('person_name', PersonName, source_db, { person_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('person_address', PersonAddress, source_db, { person_id: :get_person_ids, creator: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('person_attribute', PersonAttribute, source_db, { person_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+# populate_records('patient', Patient, source_db, { patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('patient_identifier', PatientIdentifier, source_db, { patient_id: :get_person_ids,creator: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('patient_program', PatientProgram, source_db, { patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('patient_state', PatientState, source_db, { patient_program_id: :get_program_id, creator: :get_new_user_ids,
+                                                            changed_by: :get_new_user_ids, voided_by: :get_new_user_ids})
+populate_records('encounter', Encounter, source_db, { patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('orders', Order, source_db, { encounter_id: :get_encounter_ids, patient_id: :get_person_ids, creator: :get_new_user_ids, orderer: :get_new_user_ids, voided_by: :get_new_user_ids })
+
+populate_records('obs', Observation, source_db, { encounter_id: :get_encounter_ids, 
+                                                  order_id: :get_order_ids, creator: :get_new_user_ids, 
+                                                  voided_by: :get_new_user_ids, person_id: :get_person_ids,
+                                                   obs_group_id: :get_obs_ids})
+populate_records('drug_order', DrugOrder, source_db, { order_id: :get_order_ids, })
 # populate_records('report_object', )
