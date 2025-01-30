@@ -60,7 +60,7 @@ def populate_person(person_data, source_db)
 
   new_person = Person.new(person_data)
   new_person.save!(validate: false)
-  new_person.id
+  new_person.person_id
 end
 
 # Generic Populate Function with Percentage Tracking
@@ -107,7 +107,7 @@ def populate_users(source_db)
       user[key] = get_new_user_id(user[key], source_db) if user[key]
     end
 
-    user[:person_id] = create_user_person(user, source_db)
+    user[:person_id] = create_user_person(user, source_db) if user[:person_id]
 
     new_user = User.new(user)
 
