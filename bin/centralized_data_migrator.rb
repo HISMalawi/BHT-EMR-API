@@ -27,7 +27,7 @@ def query_with_columns(table_name, where_clause = nil, limit = nil, offset = nil
 end
 
 # Process in Batches with Percentage Tracking
-def process_in_batches(source_db, table_name, batch_size = 2, &block)
+def process_in_batches(source_db, table_name, batch_size = 1_000, &block)
   total_records = ActiveRecord::Base.connection.select_one("SELECT COUNT(*) AS count FROM #{source_db}.#{table_name}")['count'].to_i
   processed_records = 0
 
@@ -141,13 +141,13 @@ def populate_users(source_db)
         user[key] = get_new_user_id(user[key], source_db) || 1 if user[key]
       end
 
-      user[:person_id] = create_user_person(user, source_db)
+      user[:person_id] = create_user_person(user, source_db) if user[:person_id]
 
       user
     end
     return if insertable_records.compact.blank?
 
-    User.insert_all!(insertable_records)
+    User.insert_all!(insertable_records.compact)
   end
 end
 
@@ -178,6 +178,11 @@ def get_new_user_id(old_user_id, source_db)
 
   user_uuid = query_with_columns("#{source_db}.users", "user_id = #{old_user_id}").first["uuid"]
   User.unscoped.find_by(uuid: user_uuid)&.id
+end
+
+def create_user_person(user, source_db)
+  person_data = query_with_columns("#{source_db}.person", "person_id = #{user[:person_id]}").first
+  populate_person(person_data, source_db)
 end
 
 def get_encounter_ids(records, key, source_db)
@@ -227,10 +232,10 @@ populate_records('person', Person, source_db, {creator: :get_new_user_ids, chang
 populate_records('person_name', PersonName, source_db, { person_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
 populate_records('person_address', PersonAddress, source_db, { person_id: :get_person_ids, creator: :get_new_user_ids, voided_by: :get_new_user_ids })
 populate_records('person_attribute', PersonAttribute, source_db, { person_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
-# populate_records('patient', Patient, source_db, { patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('patient', Patient, source_db, { patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
 populate_records('patient_identifier', PatientIdentifier, source_db, { patient_id: :get_person_ids,creator: :get_new_user_ids, voided_by: :get_new_user_ids })
 populate_records('patient_program', PatientProgram, source_db, { patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('patient_state', PatientState, source_db, { patient_program_id: :get_program_id, creator: :get_new_user_ids,
+populate_records('patient_state', PatientState, source_db, { patient_program_id: :get_program_ids, creator: :get_new_user_ids,
                                                             changed_by: :get_new_user_ids, voided_by: :get_new_user_ids})
 populate_records('encounter', Encounter, source_db, { patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
 populate_records('orders', Order, source_db, { encounter_id: :get_encounter_ids, patient_id: :get_person_ids, creator: :get_new_user_ids, orderer: :get_new_user_ids, voided_by: :get_new_user_ids })
