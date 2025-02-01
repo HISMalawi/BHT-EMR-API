@@ -27,7 +27,7 @@ def query_with_columns(table_name, where_clause = nil, limit = nil, offset = nil
 end
 
 # Process in Batches with Percentage Tracking
-def process_in_batches(source_db, table_name, batch_size = 1_000, &block)
+def process_in_batches(source_db, table_name, batch_size = 2, &block)
   total_records = ActiveRecord::Base.connection.select_one("SELECT COUNT(*) AS count FROM #{source_db}.#{table_name}")['count'].to_i
   processed_records = 0
 
@@ -67,33 +67,60 @@ end
 # Generic Populate Function with Percentage Tracking
 def populate_records(source_table, target_model, source_db, foreign_keys = {})
   process_in_batches(source_db, source_table) do |records|
-    insertable_records = records.map do |record|
-      record.symbolize_keys!
+    records.each { |record| record.symbolize_keys! }
 
-      record[target_model.primary_key.to_sym] = nil unless NON_RESET_MODELS.include?(target_model.to_s) # Reset primary key for insertion
+    # Fetch only the records that exist in the current batch
+    record_keys = case target_model.to_s
+                  when 'Patient'
+                    records.map { |r| r[:patient_id] }
+                  when 'DrugOrder'
+                    records.map { |r| r[:order_id] }
+                  when 'UserRole'
+                    records.map { |r| [r[:user_id], r[:role]] }
+                  else
+                    records.map { |r| r[:uuid] }
+                  end
 
-      # Skip if the record already exists
-      if target_model.to_s == 'Patient'
-        debugger
-        next if target_model.unscoped.where(patient_id: record[:patient_id]).exists?
-      elsif target_model.to_s == 'DrugOrder'
-        next if target_model.unscoped.where(order_id: record[:order_id]).exists?
-      elsif target_model.to_s == 'UserRole'
-        next if target_model.unscoped.where(user_id: record[:user_id], role: record[:role], site_id: SITE_ID)
+    existing_keys = case target_model.to_s
+                    when 'Patient'
+                      target_model.unscoped.where(patient_id: record_keys).pluck(:patient_id).to_set
+                    when 'DrugOrder'
+                      target_model.unscoped.where(order_id: record_keys).pluck(:order_id).to_set
+                    when 'UserRole'
+                      target_model.unscoped.where(user_id: record_keys.map(&:first), role: record_keys.map(&:last), site_id: SITE_ID).pluck(:user_id, :role).to_set
+                    else
+                      target_model.unscoped.where(uuid: record_keys).pluck(:uuid).to_set
+                    end
+
+    insertable_records = records.reject do |record|
+      case target_model.to_s
+      when 'Patient'
+        existing_keys.include?(record[:patient_id])
+      when 'DrugOrder'
+        existing_keys.include?(record[:order_id])
+      when 'UserRole'
+        existing_keys.include?([record[:user_id], record[:role]])
       else
-        next if target_model.unscoped.where(uuid: record[:uuid]).exists?
+        existing_keys.include?(record[:uuid])
       end
-      record
     end
-    next if insertable_records.compact.blank?
+
+    next if insertable_records.blank?
+
+    # Reset primary key if necessary
+    insertable_records.each do |record|
+      record[target_model.primary_key.to_sym] = nil unless NON_RESET_MODELS.include?(target_model.to_s)
+    end
 
     # Update foreign key mappings
     foreign_keys.each do |foreign_key, mapping_method|
-      records = send(mapping_method, insertable_records, foreign_key, source_db)
+      insertable_records = send(mapping_method, insertable_records, foreign_key, source_db)
     end
-    target_model.insert_all!(records.compact)
+    
+    target_model.insert_all!(insertable_records.compact)
   end
 end
+
 
 # User Migration with Percentage Tracking
 def populate_users(source_db)
@@ -116,12 +143,6 @@ def populate_users(source_db)
 
       user[:person_id] = create_user_person(user, source_db)
 
-      # new_user = User.new(user)
-
-      # if new_user.save!(validate: false)
-      #   site_users[old_user_id] = new_user.id
-      #   File.write(SITE_USER_MAPPING, JSON.dump(site_users))
-      # end
       user
     end
     return if insertable_records.compact.blank?
@@ -146,7 +167,7 @@ def fetch_new_ids(records, source_db, table_name, id_column, model, new_id_key)
                           .transform_values(&id_column)
   
   records.compact.each do |record|
-     next if record[new_id_key].blank?
+    next if record[new_id_key].blank?
     record[new_id_key] = uuid_map[uuid_mapping[record[new_id_key]]['uuid']]
   end
   records
@@ -192,8 +213,8 @@ def create_users_persons(records, source_db)
 end
 
 # Main Execution
-# populate_users(source_db)
-populate_records('user_role', UserRole, source_db)
+populate_users(source_db)
+# populate_records('user_role', UserRole, source_db)
 #populate_records('global_property', GlobalProperty, source_db)
 populate_records('person', Person, source_db, {creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
 populate_records('person_name', PersonName, source_db, { person_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
