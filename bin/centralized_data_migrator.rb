@@ -173,6 +173,13 @@ def fetch_new_ids(records, source_db, table_name, id_column, model, new_id_key)
   records
 end
 
+def get_new_user_id(old_user_id, source_db)
+  return unless old_user_id
+
+  user_uuid = query_with_columns("#{source_db}.users", "user_id = #{old_user_id}").first["uuid"]
+  User.unscoped.find_by(uuid: user_uuid)&.id
+end
+
 def get_encounter_ids(records, key, source_db)
   fetch_new_ids(records, source_db, 'encounter', :encounter_id, Encounter, key)
 end
