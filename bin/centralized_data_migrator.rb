@@ -67,14 +67,20 @@ end
 # Generic Populate Function with Percentage Tracking
 def populate_records(source_table, target_model, source_db, foreign_keys = {})
   process_in_batches(source_db, source_table) do |records|
-    records.each { |record| record.symbolize_keys! }
+    records.each(&:symbolize_keys!)
 
     # Fetch only the records that exist in the current batch
     record_keys = case target_model.to_s
                   when 'Patient'
-                    records.map { |r| r[:patient_id] }
+                    patient_ids = records.map { |r| r[:patient_id] }
+                    uuids = query_with_columns("#{source_db}.person",
+                                               "person_id in (#{patient_ids.join(', ')})").pluck('uuid')
+                    Person.unscoped.where(uuid: uuids).pluck(:person_id)
                   when 'DrugOrder'
-                    records.map { |r| r[:order_id] }
+                    order_ids = records.map { |r| r[:order_id] }
+                    uuids = query_with_columns("#{source_db}.orders",
+                                               "order_id in (#{order_ids.join(', ')})").pluck('uuid')
+                    Order.unscoped.where(uuid: uuids).pluck(:order_id)
                   when 'UserRole'
                     records.map { |r| [r[:user_id], r[:role]] }
                   else
@@ -87,10 +93,15 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
                     when 'DrugOrder'
                       target_model.unscoped.where(order_id: record_keys).pluck(:order_id).to_set
                     when 'UserRole'
-                      target_model.unscoped.where(user_id: record_keys.map(&:first), role: record_keys.map(&:last), site_id: SITE_ID).pluck(:user_id, :role).to_set
+                      target_model.unscoped.where(user_id: record_keys.map(&:first), role: record_keys.map(&:last),
+                                                  site_id: SITE_ID).pluck(:user_id, :role).to_set
                     else
                       target_model.unscoped.where(uuid: record_keys).pluck(:uuid).to_set
                     end
+    # Update foreign key mappings
+    foreign_keys.each do |foreign_key, mapping_method|
+      records = send(mapping_method, records, foreign_key, source_db)
+    end
 
     insertable_records = records.reject do |record|
       case target_model.to_s
@@ -112,11 +123,6 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
       record[target_model.primary_key.to_sym] = nil unless NON_RESET_MODELS.include?(target_model.to_s)
     end
 
-    # Update foreign key mappings
-    foreign_keys.each do |foreign_key, mapping_method|
-      insertable_records = send(mapping_method, insertable_records, foreign_key, source_db)
-    end
-    
     target_model.insert_all!(insertable_records.compact)
   end
 end
@@ -218,7 +224,8 @@ def create_users_persons(records, source_db)
   ).index_by { |row| row['person_id'] }
   
   records.each do |record|
-    record[:person_data] = populate_person(person_data[record[:person_id]], source_db) if person_data[record[:person_id]]
+    record[:person_data] = 
+populate_person(person_data[record[:person_id]], source_db) if person_data[record[:person_id]]
   end
   
   records
@@ -228,17 +235,26 @@ end
 populate_users(source_db)
 # populate_records('user_role', UserRole, source_db)
 #populate_records('global_property', GlobalProperty, source_db)
-populate_records('person', Person, source_db, {creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('person_name', PersonName, source_db, { person_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('person_address', PersonAddress, source_db, { person_id: :get_person_ids, creator: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('person_attribute', PersonAttribute, source_db, { person_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('patient', Patient, source_db, { patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('patient_identifier', PatientIdentifier, source_db, { patient_id: :get_person_ids,creator: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('patient_program', PatientProgram, source_db, { patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('person', Person, source_db, 
+{creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('person_name', PersonName, source_db, 
+{ person_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('person_address', PersonAddress, source_db, 
+{ person_id: :get_person_ids, creator: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('person_attribute', PersonAttribute, source_db, 
+{ person_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('patient', Patient, source_db, 
+{ patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('patient_identifier', PatientIdentifier, source_db, 
+{ patient_id: :get_person_ids,creator: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('patient_program', PatientProgram, source_db, 
+{ patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
 populate_records('patient_state', PatientState, source_db, { patient_program_id: :get_program_ids, creator: :get_new_user_ids,
                                                             changed_by: :get_new_user_ids, voided_by: :get_new_user_ids})
-populate_records('encounter', Encounter, source_db, { patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('orders', Order, source_db, { encounter_id: :get_encounter_ids, patient_id: :get_person_ids, creator: :get_new_user_ids, orderer: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('encounter', Encounter, source_db, 
+{ patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+populate_records('orders', Order, source_db, 
+{ encounter_id: :get_encounter_ids, patient_id: :get_person_ids, creator: :get_new_user_ids, orderer: :get_new_user_ids, voided_by: :get_new_user_ids })
 
 populate_records('obs', Observation, source_db, { encounter_id: :get_encounter_ids, 
                                                   order_id: :get_order_ids, creator: :get_new_user_ids, 
