@@ -83,6 +83,8 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
                     Order.unscoped.where(uuid: uuids).pluck(:order_id)
                   when 'UserRole'
                     records.map { |r| [r[:user_id], r[:role]] }
+                  when 'GlobalProperty'
+                    records.map { |r| [r[:property]] }
                   else
                     records.map { |r| r[:uuid] }
                   end
@@ -95,6 +97,9 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
                     when 'UserRole'
                       target_model.unscoped.where(user_id: record_keys.map(&:first), role: record_keys.map(&:last),
                                                   site_id: SITE_ID).pluck(:user_id, :role).to_set
+                    when 'GlobalProperty'
+                      target_model.unscoped.where(property: record_keys.map(&:first),
+                                                  site_id: SITE_ID).pluck(:property, :site_id).to_set
                     else
                       target_model.unscoped.where(uuid: record_keys).pluck(:uuid).to_set
                     end
@@ -111,6 +116,8 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
         existing_keys.include?(record[:order_id])
       when 'UserRole'
         existing_keys.include?([record[:user_id], record[:role]])
+      when 'GlobalProperty'
+        existing_keys.include?([record[:property], SITE_ID])
       else
         existing_keys.include?(record[:uuid])
       end
@@ -131,6 +138,7 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
     else
       insertable_records.each do |record|
         record[target_model.primary_key.to_sym] = nil unless NON_RESET_MODELS.include?(target_model.to_s)
+        record.delete(:id) if target_model.to_s == 'GlobalProperty'
       end
     end
     target_model.insert_all!(insertable_records.compact)
@@ -241,7 +249,7 @@ end
 # Main Execution
 populate_users(source_db)
 # populate_records('user_role', UserRole, source_db)
-# populate_records('global_property', GlobalProperty, source_db)
+populate_records('global_property', GlobalProperty, source_db)
 populate_records('person', Person, source_db, 
 {creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
 populate_records('person_name', PersonName, source_db, 
@@ -261,7 +269,7 @@ populate_records('patient_state', PatientState, source_db, { patient_program_id:
 populate_records('encounter', Encounter, source_db, 
 { patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids, provider_id: :get_person_ids })
 populate_records('orders', Order, source_db, 
-{ encounter_id: :get_encounter_ids, patient_id: :get_person_ids, creator: :get_new_user_ids, orderer: :get_new_user_ids, voided_by: :get_new_user_ids })
+{ encounter_id: :get_encounter_ids, patient_id: :get_person_ids, creator: :get_new_user_ids, orderer: :get_new_user_ids, voided_by: :get_new_user_ids, obs_id: :get_obs_ids })
 
 populate_records('obs', Observation, source_db, { encounter_id: :get_encounter_ids, 
                                                   order_id: :get_order_ids, creator: :get_new_user_ids, 
