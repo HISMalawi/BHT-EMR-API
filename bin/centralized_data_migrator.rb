@@ -72,7 +72,7 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
     Parallel.each(records, in_threads: Parallel.processor_count) do |record|
       record.symbolize_keys!
     end
-
+  
     # Fetch only the records that exist in the current batch
     record_keys = case target_model.to_s
                   when 'Patient'
