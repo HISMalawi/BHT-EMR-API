@@ -1,6 +1,8 @@
 require 'active_record'
 require 'json'
 require 'psych'
+require 'parallel'
+
 user = User.first
 
 NON_RESET_MODELS = %w[Patient DrugOrder GlobalProperty UserRole].freeze
@@ -27,7 +29,7 @@ def query_with_columns(table_name, where_clause = nil, limit = nil, offset = nil
 end
 
 # Process in Batches with Percentage Tracking
-def process_in_batches(source_db, table_name, batch_size = 1_000, &block)
+def process_in_batches(source_db, table_name, batch_size = 25_000, &block)
   total_records = ActiveRecord::Base.connection.select_one("SELECT COUNT(*) AS count FROM #{source_db}.#{table_name}")['count'].to_i
   processed_records = 0
 
@@ -249,31 +251,108 @@ end
 # Main Execution
 populate_users(source_db)
 # populate_records('user_role', UserRole, source_db)
-populate_records('global_property', GlobalProperty, source_db)
-populate_records('person', Person, source_db, 
-{creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('person_name', PersonName, source_db, 
-{ person_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('person_address', PersonAddress, source_db, 
-{ person_id: :get_person_ids, creator: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('person_attribute', PersonAttribute, source_db, 
-{ person_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('patient', Patient, source_db, 
-{ patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('patient_identifier', PatientIdentifier, source_db, 
-{ patient_id: :get_person_ids,creator: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('patient_program', PatientProgram, source_db, 
-{ patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
-populate_records('patient_state', PatientState, source_db, { patient_program_id: :get_program_ids, creator: :get_new_user_ids,
-                                                            changed_by: :get_new_user_ids, voided_by: :get_new_user_ids})
-populate_records('encounter', Encounter, source_db, 
-{ patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids, provider_id: :get_person_ids })
-populate_records('orders', Order, source_db, 
-{ encounter_id: :get_encounter_ids, patient_id: :get_person_ids, creator: :get_new_user_ids, orderer: :get_new_user_ids, voided_by: :get_new_user_ids, obs_id: :get_obs_ids })
+def populate_group(group)
+  Parallel.each(group) do |(table, model, source_db, dependencies)|
+    populate_records(table, model, source_db, dependencies)
+  end
+end
 
-populate_records('obs', Observation, source_db, { encounter_id: :get_encounter_ids, 
-                                                  order_id: :get_order_ids, creator: :get_new_user_ids, 
-                                                  voided_by: :get_new_user_ids, person_id: :get_person_ids,
-                                                   obs_group_id: :get_obs_ids})
-populate_records('drug_order', DrugOrder, source_db, { order_id: :get_order_ids, })
+if __FILE__ == $0
+  group1_models = {
+    global_property: [GlobalProperty, {}],
+    person: [Person, {
+      creator: :get_new_user_ids,
+      changed_by: :get_new_user_ids,
+      voided_by: :get_new_user_ids
+    }]
+  }
+
+  group2_models = {
+    person_name: [PersonName, {
+      person_id: :get_person_ids,
+      creator: :get_new_user_ids,
+      changed_by: :get_new_user_ids,
+      voided_by: :get_new_user_ids
+    }],
+    person_address: [PersonAddress, {
+      person_id: :get_person_ids,
+      creator: :get_new_user_ids,
+      voided_by: :get_new_user_ids
+    }],
+    person_attribute: [PersonAttribute, {
+      person_id: :get_person_ids,
+      creator: :get_new_user_ids,
+      changed_by: :get_new_user_ids,
+      voided_by: :get_new_user_ids
+    }],
+    patient: [Patient, {
+      patient_id: :get_person_ids,
+      creator: :get_new_user_ids,
+      changed_by: :get_new_user_ids,
+      voided_by: :get_new_user_ids
+    }]
+  }
+
+  group3_models = {
+    patient_identifier: [PatientIdentifier, {
+      patient_id: :get_person_ids,
+      creator: :get_new_user_ids,
+      voided_by: :get_new_user_ids
+    }],
+    patient_program: [PatientProgram, {
+      patient_id: :get_person_ids,
+      creator: :get_new_user_ids,
+      changed_by: :get_new_user_ids,
+      voided_by: :get_new_user_ids
+    }],
+    encounter: [Encounter, {
+      patient_id: :get_person_ids,
+      creator: :get_new_user_ids,
+      changed_by: :get_new_user_ids,
+      voided_by: :get_new_user_ids,
+      provider_id: :get_person_ids
+    }]
+  }
+
+  group4_models = {
+    orders: [Order, {
+      encounter_id: :get_encounter_ids,
+      patient_id: :get_person_ids,
+      creator: :get_new_user_ids,
+      orderer: :get_new_user_ids,
+      voided_by: :get_new_user_ids,
+      obs_id: :get_obs_ids
+    }],
+    patient_state: [PatientState, {
+        patient_program_id: :get_program_ids,
+        creator: :get_new_user_ids,
+        changed_by: :get_new_user_ids,
+        voided_by: :get_new_user_ids
+      }]
+  }
+
+  group5_models = {
+    obs: [Observation, {
+      encounter_id: :get_encounter_ids,
+      order_id: :get_order_ids,
+      creator: :get_new_user_ids,
+      voided_by: :get_new_user_ids,
+      person_id: :get_person_ids,
+      obs_group_id: :get_obs_ids
+    }]
+  }
+
+  group6_models = {
+    drug_order: [DrugOrder, {
+      order_id: :get_order_ids
+    }]
+  }
+
+  groups = [group1_models, group2_models, group3_models, group4_models, group5_models, group6_models]
+  
+  groups.each do |group|
+    populate_group(group.map { |table, (model, dependencies)| [table, model, source_db, dependencies] })
+  end
+end
+
 # populate_records('report_object', )
