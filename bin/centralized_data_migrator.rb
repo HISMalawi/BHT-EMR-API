@@ -52,7 +52,7 @@ def populate_person(person_data, source_db)
   person_data[:site_id] = SITE_ID
   person_data[:person_id] = nil
 
-  [:changed_by, :creator, :voided_by].each do |key|
+  %i[changed_by creator voided_by].each do |key|
     person_data[key] = get_new_user_id(person_data[key], source_db) || 1 if person_data[key]
   end
 
@@ -119,10 +119,20 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
     next if insertable_records.blank?
 
     # Reset primary key if necessary
-    insertable_records.each do |record|
-      record[target_model.primary_key.to_sym] = nil unless NON_RESET_MODELS.include?(target_model.to_s)
+    if insertable_records.first.keys.include?(:date_created)
+      insertable_records.each do |record|
+        record[target_model.primary_key.to_sym] = nil unless NON_RESET_MODELS.include?(target_model.to_s)
+         record[:date_created] = begin
+           record[:date_created].to_datetime
+         rescue StandardError
+           '1900-01-01 00:00:00'
+         end
+      end
+    else
+      insertable_records.each do |record|
+        record[target_model.primary_key.to_sym] = nil unless NON_RESET_MODELS.include?(target_model.to_s)
+      end
     end
-
     target_model.insert_all!(insertable_records.compact)
   end
 end
@@ -130,20 +140,17 @@ end
 
 # User Migration with Percentage Tracking
 def populate_users(source_db)
-  site_users = JSON.parse(File.read(SITE_USER_MAPPING))
   insertable_records = []
   process_in_batches(source_db, 'users') do |users|
     insertable_records = users.map do |user|
       user.symbolize_keys!
-
-      old_user_id = user[:user_id]
 
       next if User.unscoped.exists?(uuid: user[:uuid])
 
       user[:site_id] = SITE_ID
       user[:user_id] = nil
 
-      [:changed_by, :creator].each do |key|
+      %i[changed_by creator].each do |key|
         user[key] = get_new_user_id(user[key], source_db) || 1 if user[key]
       end
 
@@ -234,7 +241,7 @@ end
 # Main Execution
 populate_users(source_db)
 # populate_records('user_role', UserRole, source_db)
-#populate_records('global_property', GlobalProperty, source_db)
+# populate_records('global_property', GlobalProperty, source_db)
 populate_records('person', Person, source_db, 
 {creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
 populate_records('person_name', PersonName, source_db, 
@@ -252,7 +259,7 @@ populate_records('patient_program', PatientProgram, source_db,
 populate_records('patient_state', PatientState, source_db, { patient_program_id: :get_program_ids, creator: :get_new_user_ids,
                                                             changed_by: :get_new_user_ids, voided_by: :get_new_user_ids})
 populate_records('encounter', Encounter, source_db, 
-{ patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids })
+{ patient_id: :get_person_ids, creator: :get_new_user_ids, changed_by: :get_new_user_ids, voided_by: :get_new_user_ids, provider_id: :get_person_ids })
 populate_records('orders', Order, source_db, 
 { encounter_id: :get_encounter_ids, patient_id: :get_person_ids, creator: :get_new_user_ids, orderer: :get_new_user_ids, voided_by: :get_new_user_ids })
 
