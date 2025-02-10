@@ -29,7 +29,7 @@ def query_with_columns(table_name, where_clause = nil, limit = nil, offset = nil
 end
 
 # Process in Batches with Percentage Tracking
-def process_in_batches(source_db, table_name, batch_size = 25_000, &block)
+def process_in_batches(source_db, table_name, batch_size = 1_000, &block)
   total_records = ActiveRecord::Base.connection.select_one("SELECT COUNT(*) AS count FROM #{source_db}.#{table_name}")['count'].to_i
   processed_records = 0
 
@@ -69,7 +69,9 @@ end
 # Generic Populate Function with Percentage Tracking
 def populate_records(source_table, target_model, source_db, foreign_keys = {})
   process_in_batches(source_db, source_table) do |records|
-    records.each(&:symbolize_keys!)
+    Parallel.each(records, in_threads: Parallel.processor_count) do |record|
+      record.symbolize_keys!
+    end
 
     # Fetch only the records that exist in the current batch
     record_keys = case target_model.to_s
