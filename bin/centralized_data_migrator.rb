@@ -68,7 +68,14 @@ end
 
 # Generic Populate Function with Percentage Tracking
 def populate_records(source_table, target_model, source_db, foreign_keys = {})
-  process_in_batches(source_db, source_table) do |records|
+  # Convert process_in_batches into an enumerator
+  batch_enumerator = Enumerator.new do |yielder|
+    process_in_batches(source_db, source_table) do |records|
+      yielder << records
+    end
+  end
+
+  Parallel.each(batch_enumerator, in_processes: 6) do |records|
     records.each(&:symbolize_keys!)
 
     # Fetch only the records that exist in the current batch
