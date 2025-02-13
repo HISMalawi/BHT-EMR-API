@@ -2,6 +2,12 @@ require 'active_record'
 require 'json'
 require 'psych'
 require 'parallel'
+require 'sys/proctable'
+require 'sys/cpu'
+require 'sys/filesystem'
+require 'sys/memory'
+
+include Sys
 
 user = User.first
 
@@ -30,7 +36,41 @@ def query_with_columns(table_name, where_clause = nil, limit = nil, offset = nil
   ActiveRecord::Base.connection.select_all(query).to_a
 end
 
-# Process in Batches with Percentage Tracking
+# Dynamically determine optimal thread count based on system load
+def optimal_threads
+  memory_stats = Sys::Memory
+  free_memory = memory_stats.total - memory_stats.used
+  free_memory_gb = free_memory.to_f / (1024**3)
+  memory_usage = (memory_stats.used.to_f / memory_stats.total) * 100
+
+  num_cores = Parallel.processor_count
+  max_threads = num_cores * 2
+
+  # Use load_avg as a fallback
+  cpu_usage = Sys::CPU.load_avg[0] / num_cores * 100
+
+  disk_usage = Sys::Filesystem.stat('/').percent_used
+
+  thread_boost = [(free_memory / (memory_stats.total * 0.1)).to_i, 4].min
+  dynamic_max_threads = num_cores + thread_boost
+  min_threads = [(num_cores * 0.25).to_i, 2].max
+
+  thread_count = if cpu_usage < 70 && free_memory > (memory_stats.total * 0.1)
+                 [max_threads, dynamic_max_threads].min
+               elsif cpu_usage > 80 || free_memory < (memory_stats.total * 0.05)
+                 min_threads
+               else
+                 num_cores
+               end
+
+  puts "Using #{thread_count} threads | CPU: #{cpu_usage.round(2)}% | RAM: #{memory_usage.round(2)}% | Free RAM: #{free_memory_gb.round(2)} GB | Disk: #{disk_usage.round(2)}%"
+
+  thread_count
+end
+
+
+
+# Process in Batches with Dynamic Threads and Percentage Tracking
 def process_in_batches(source_db, table_name, batch_size = 100_000, &block)
   column_name = ActiveRecord::Base.connection.columns(table_name).first.name
   min_max = ActiveRecord::Base.connection.select_one("SELECT MIN(#{column_name}) AS min_id, 
@@ -38,13 +78,15 @@ def process_in_batches(source_db, table_name, batch_size = 100_000, &block)
                                                       AS max_id FROM #{source_db}.#{table_name}")
   min_id = min_max['min_id'].to_i
   max_id = min_max['max_id'].to_i
-  num_threads = Parallel.processor_count
   batch_ranges = (min_id..max_id).each_slice(batch_size).to_a
 
   processed_records = 0
   total_records = ActiveRecord::Base.connection.select_one("SELECT COUNT(*) AS count 
                                                             FROM #{source_db}.#{table_name}")['count'].to_i
 
+  num_threads = optimal_threads
+  puts "Using #{num_threads} threads for processing #{table_name}..."
+  
   Parallel.each(batch_ranges, in_threads: num_threads) do |batch_range|
     records = query_with_columns("#{source_db}.#{table_name}", "#{column_name} >= #{batch_range.first} 
                                   AND #{column_name} <= #{batch_range.last}")
@@ -221,7 +263,7 @@ def fetch_new_ids(records, source_db, table_name, id_column, model, new_id_key)
       if %i[creator voided_by].include?(new_id_key)
         record[new_id_key] = uuid_map.values.first
       elsif new_id_key == :order_id
-         @orphaned_order_id << record[:obs_id]
+        records.delete(record)
       else
         puts new_id_key
         puts uuid_map
@@ -362,11 +404,11 @@ if __FILE__ == $0
       obs_id: :get_obs_ids
     }],
     patient_state: [PatientState, {
-        patient_program_id: :get_program_ids,
-        creator: :get_new_user_ids,
-        changed_by: :get_new_user_ids,
-        voided_by: :get_new_user_ids
-      }]
+      patient_program_id: :get_program_ids,
+      creator: :get_new_user_ids,
+      changed_by: :get_new_user_ids,
+      voided_by: :get_new_user_ids
+    }]
   }
 
   group5_models = {
@@ -391,7 +433,7 @@ if __FILE__ == $0
   groups.each do |group|
     populate_group(group.map { |table, (model, dependencies)| [table, model, source_db, dependencies] })
   end
-  puts "Writing Orphans to file ..."
+  puts 'Writing Orphans to file ...'
   `echo #{@orphaned_order_id.to_json} > log/migration_error.log`
 end
 

@@ -79,3 +79,9 @@ gem 'whenever', '~> 1.0'
 
 # gems for reading excel and csv files
 gem 'roo', '~> 2.8'
+
+# gems for centralized migration
+gem 'sys-cpu'
+gem 'sys-filesystem'
+gem 'sys-memory'
+gem 'sys-proctable'
