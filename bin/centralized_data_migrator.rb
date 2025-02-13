@@ -72,24 +72,33 @@ end
 
 # Process in Batches with Dynamic Threads and Percentage Tracking
 def process_in_batches(source_db, table_name, batch_size = 100_000, &block)
-  column_name = ActiveRecord::Base.connection.columns(table_name).first.name
-  min_max = ActiveRecord::Base.connection.select_one("SELECT MIN(#{column_name}) AS min_id, 
-                                                      MAX(#{column_name}) 
-                                                      AS max_id FROM #{source_db}.#{table_name}")
-  min_id = min_max['min_id'].to_i
-  max_id = min_max['max_id'].to_i
-  batch_ranges = (min_id..max_id).each_slice(batch_size).to_a
+
+  if table_name == 'global_property'
+    batch_ranges = [[0, 100_000]]
+  else
+    column_name = ActiveRecord::Base.connection.columns(table_name).first.name
+    min_max = ActiveRecord::Base.connection.select_one("SELECT MIN(#{column_name}) AS min_id, 
+                                                        MAX(#{column_name}) 
+                                                        AS max_id FROM #{source_db}.#{table_name}")
+    min_id = min_max['min_id'].to_i
+    max_id = min_max['max_id'].to_i
+    batch_ranges = (min_id..max_id).each_slice(batch_size).to_a
+  end
 
   processed_records = 0
   total_records = ActiveRecord::Base.connection.select_one("SELECT COUNT(*) AS count 
                                                             FROM #{source_db}.#{table_name}")['count'].to_i
-
   num_threads = optimal_threads
   puts "Using #{num_threads} threads for processing #{table_name}..."
   
   Parallel.each(batch_ranges, in_threads: num_threads) do |batch_range|
-    records = query_with_columns("#{source_db}.#{table_name}", "#{column_name} >= #{batch_range.first} 
-                                  AND #{column_name} <= #{batch_range.last}")
+    records = if table_name == 'global_property'
+                query_with_columns("#{source_db}.#{table_name}")
+              else
+                query_with_columns("#{source_db}.#{table_name}", "#{column_name} >= #{batch_range.first}
+                                            AND #{column_name} <= #{batch_range.last}")
+              end
+    
     next if records.blank?
 
     yield(records)
