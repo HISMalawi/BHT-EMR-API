@@ -32,7 +32,7 @@ def query_with_columns(table_name, where_clause = nil, limit = nil, offset = nil
   query += " WHERE #{where_clause}" if where_clause
   query += " LIMIT #{limit}" if limit
   query += " OFFSET #{offset}" if offset
-  
+
   ActiveRecord::Base.connection.select_all(query).to_a
 end
 
@@ -56,7 +56,7 @@ def optimal_threads
   min_threads = [(num_cores * 0.25).to_i, 2].max
 
   thread_count = if cpu_usage < 70 && free_memory > (memory_stats.total * 0.1)
-                 [max_threads, dynamic_max_threads].min
+                 [max_threads, dynamic_max_threads].max
                elsif cpu_usage > 80 || free_memory < (memory_stats.total * 0.05)
                  min_threads
                else
@@ -77,8 +77,8 @@ def process_in_batches(source_db, table_name, batch_size = 100_000, &block)
     batch_ranges = [[0, 100_000]]
   else
     column_name = ActiveRecord::Base.connection.columns(table_name).first.name
-    min_max = ActiveRecord::Base.connection.select_one("SELECT MIN(#{column_name}) AS min_id, 
-                                                        MAX(#{column_name}) 
+    min_max = ActiveRecord::Base.connection.select_one("SELECT MIN(#{column_name}) AS min_id,
+                                                        MAX(#{column_name})
                                                         AS max_id FROM #{source_db}.#{table_name}")
     min_id = min_max['min_id'].to_i
     max_id = min_max['max_id'].to_i
@@ -86,11 +86,11 @@ def process_in_batches(source_db, table_name, batch_size = 100_000, &block)
   end
 
   processed_records = 0
-  total_records = ActiveRecord::Base.connection.select_one("SELECT COUNT(*) AS count 
+  total_records = ActiveRecord::Base.connection.select_one("SELECT COUNT(*) AS count
                                                             FROM #{source_db}.#{table_name}")['count'].to_i
   num_threads = optimal_threads
   puts "Using #{num_threads} threads for processing #{table_name}..."
-  
+
   Parallel.each(batch_ranges, in_threads: num_threads) do |batch_range|
     records = if table_name == 'global_property'
                 query_with_columns("#{source_db}.#{table_name}")
@@ -98,7 +98,7 @@ def process_in_batches(source_db, table_name, batch_size = 100_000, &block)
                 query_with_columns("#{source_db}.#{table_name}", "#{column_name} >= #{batch_range.first}
                                             AND #{column_name} <= #{batch_range.last}")
               end
-    
+
     next if records.blank?
 
     yield(records)
@@ -238,7 +238,7 @@ def populate_users(source_db)
       user
     end
     next if insertable_records.compact.blank?
-    
+
     User.current = CURRENT_USER
     User.insert_all!(insertable_records.compact)
   end
@@ -247,18 +247,18 @@ end
 # Helper Methods
 def fetch_new_ids(records, source_db, table_name, id_column, model, new_id_key)
   old_ids = records.compact.map { |record| record[new_id_key] }.uniq.compact
-  
+
   return records if old_ids.blank?
 
   uuid_mapping = query_with_columns(
     "#{source_db}.#{table_name}",
     "#{id_column} IN (#{old_ids.join(',')})"
   ).index_by { |row| row[id_column.to_s] }
-  
+
   uuid_map = model.unscoped.where(uuid: uuid_mapping.values.map { |row| row['uuid'] })
                           .index_by(&:uuid)
                           .transform_values(&id_column)
-  
+
   records.compact.each do |record|
     next if record[new_id_key].blank?
 
@@ -321,19 +321,23 @@ def get_program_ids(records, key, source_db)
   fetch_new_ids(records, source_db, 'patient_program', :patient_program_id, PatientProgram, key)
 end
 
+def get_new_report_design_id(records, key, source_db)
+  fetch_new_ids(records, source_db, 'reporting_report_design', :id, Report, key)
+end
+
 def create_users_persons(records, source_db)
   person_ids = records.map { |record| record[:person_id] }.compact
-  
+
   person_data = query_with_columns(
     "#{source_db}.person",
     "person_id IN (#{person_ids.join(',')})"
   ).index_by { |row| row['person_id'] }
-  
+
   records.each do |record|
-    record[:person_data] = 
+    record[:person_data] =
 populate_person(person_data[record[:person_id]], source_db) if person_data[record[:person_id]]
   end
-  
+
   records
 end
 
@@ -353,6 +357,11 @@ if __FILE__ == $0
       creator: :get_new_user_ids,
       changed_by: :get_new_user_ids,
       voided_by: :get_new_user_ids
+    }],
+    reporting_report_design: [Report, {
+      creator: :get_new_user_ids,
+      changed_by: :get_new_user_ids,
+      retired_by: :get_new_user_ids
     }]
   }
 
@@ -379,6 +388,12 @@ if __FILE__ == $0
       creator: :get_new_user_ids,
       changed_by: :get_new_user_ids,
       voided_by: :get_new_user_ids
+    }],
+    reporting_report_design_resource: [ReportingReportDesignResource, {
+      creator: :get_new_user_ids,
+      changed_by: :get_new_user_ids,
+      retired_by: :get_new_user_ids,
+      report_design_id: :get_new_report_design_id
     }]
   }
 
@@ -438,7 +453,7 @@ if __FILE__ == $0
   }
 
   groups = [group1_models, group2_models, group3_models, group4_models, group5_models, group6_models]
-  
+
   groups.each do |group|
     populate_group(group.map { |table, (model, dependencies)| [table, model, source_db, dependencies] })
   end
