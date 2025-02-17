@@ -11,7 +11,7 @@ include Sys
 
 user = User.first
 
-NON_RESET_MODELS = %w[Patient DrugOrder GlobalProperty UserRole].freeze
+NON_RESET_MODELS = %w[Patient DrugOrder GlobalProperty UserRole DrugIngredient].freeze
 @orphaned_order_id = []
 
 # Load Database Configuration
@@ -129,8 +129,6 @@ end
 
 # Generic Populate Function with Percentage Tracking
 def populate_records(source_table, target_model, source_db, foreign_keys = {})
-  ActiveRecord::Base.connection.execute('SET FOREIGN_KEY_CHECKS = 0;')
-  ActiveRecord::Base.connection.execute('SET sql_log_bin = 0;')
   process_in_batches(source_db, source_table) do |records|
     Parallel.each(records, in_threads: Parallel.processor_count) do |record|
       record.symbolize_keys!
@@ -213,7 +211,6 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
     User.current = CURRENT_USER
     target_model.insert_all!(insertable_records.compact)
   end
-  ActiveRecord::Base.connection.execute('SET FOREIGN_KEY_CHECKS = 1;')
 end
 
 
@@ -265,19 +262,12 @@ def fetch_new_ids(records, source_db, table_name, id_column, model, new_id_key)
     begin
       record[new_id_key] = uuid_map[uuid_mapping[record[new_id_key]]['uuid']]
     rescue StandardError => e
-      puts new_id_key.class
-      puts new_id_key == :creator
-      p new_id_key
 
       if %i[creator voided_by].include?(new_id_key)
         record[new_id_key] = uuid_map.values.first
       elsif new_id_key == :order_id
         records.delete(record)
       else
-        puts new_id_key
-        puts uuid_map
-        puts record
-        puts e
         exit
       end
     end
@@ -353,7 +343,7 @@ end
 populate_users(source_db)
 # populate_records('user_role', UserRole, source_db)
 def populate_group(group)
-  Parallel.each(group) do |(table, model, source_db, dependencies)|
+  group.each do |(table, model, source_db, dependencies)|
     populate_records(table, model, source_db, dependencies)
   end
 end
@@ -384,7 +374,8 @@ if __FILE__ == $0
       location_id: :get_location_ids
     }],
     pharmacy_stock_balances: [PharmacyStockBalance, {}],
-    pharmacy_stock_verifications: [PharmacyStockVerification, {}]
+    pharmacy_stock_verifications: [PharmacyStockVerification, {}],
+    drug_ingredient: [DrugIngredient, {}]
   }
 
   group2_models = {
