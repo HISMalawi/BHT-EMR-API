@@ -329,6 +329,10 @@ def get_location_ids(records, key, source_db)
   fetch_new_ids(records, source_db, 'location', :location_id, Location, key)
 end
 
+def get_stock_verification_ids(records, key, source_db)
+  fetch_new_ids(records, source_db, 'pharmacy_stock_verifications', :id, PharmacyStockVerification, key)
+end
+
 def create_users_persons(records, source_db)
   person_ids = records.map { |record| record[:person_id] }.compact
 
@@ -412,6 +416,12 @@ if __FILE__ == $0
       changed_by: :get_new_user_ids,
       retired_by: :get_new_user_ids,
       report_design_id: :get_new_report_design_id
+    }],
+    pharmacy_obs: [Pharmacy, {
+      creator: :get_new_user_ids,
+      voided_by: :get_new_user_ids,
+      dispensation_obs_id: :get_obs_ids,
+      stock_verification_id: :get_stock_verification_ids
     }]
   }
 
