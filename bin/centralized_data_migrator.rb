@@ -325,6 +325,10 @@ def get_new_report_design_id(records, key, source_db)
   fetch_new_ids(records, source_db, 'reporting_report_design', :id, Report, key)
 end
 
+def get_location_ids(records, key, source_db)
+  fetch_new_ids(records, source_db, 'location', :location_id, Location, key)
+end
+
 def create_users_persons(records, source_db)
   person_ids = records.map { |record| record[:person_id] }.compact
 
@@ -362,7 +366,21 @@ if __FILE__ == $0
       creator: :get_new_user_ids,
       changed_by: :get_new_user_ids,
       retired_by: :get_new_user_ids
-    }]
+    }],
+    pharmacies: [Pharmacies, {}],
+    pharmacy_batch_items: [PharmacyBatchItem, {
+      creator: :get_new_user_ids,
+      changed_by: :get_new_user_ids,
+      voided_by: :get_new_user_ids
+    }],
+    pharmacy_batches: [PharmacyBatch,{
+      creator: :get_new_user_ids,
+      changed_by: :get_new_user_ids,
+      voided_by: :get_new_user_ids,
+      location_id: :get_location_ids
+    }],
+    pharmacy_stock_balances: [PharmacyStockBalance, {}],
+    pharmacy_stock_verifications: [PharmacyStockVerification, {}]
   }
 
   group2_models = {
