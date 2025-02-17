@@ -10,15 +10,19 @@ class AddUuidToTables < ActiveRecord::Migration[8.0]
 
   def change
     TABLES.each do |t|
-      add_column t.to_sym, :uuid, :string, limit: 36, if_not_exists: true
+        # Add UUID column if it doesn't exist
+        unless column_exists?(t, :uuid)
+          add_column t, :uuid, :string, limit: 36
+        end
 
-      # populate uuid for existing records
-      execute <<-SQL
-        UPDATE #{t} SET uuid = UUID() WHERE uuid IS NULL;
-      SQL
+        # Set UUID values for existing records  
+        execute("UPDATE #{t} SET uuid = UUID() WHERE uuid IS NULL")
 
-      # alter column to not allow null
-      change_column t.to_sym, :uuid, false, if_exists: true
+        # Make the column non-null after setting values
+        change_column t, :uuid, :string, null: false, limit: 36  
+
+        # Add unique index
+        add_index t, :uuid, unique: true, length: 36
     end
   end
 end
