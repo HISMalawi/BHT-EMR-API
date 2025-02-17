@@ -2,7 +2,7 @@
 
 class AppendSiteIdToTransactionalTables < ActiveRecord::Migration[7.0]
   TRANSACTIONAL_TABLES = %w[users person_name drug_ingredient drug_order encounter orders obs patient_program
-                            patient_state person_address pharmacies pharmacy_batch_items pharmacy_batches 
+                            patient_state person_address pharmacies pharmacy_obs pharmacy_batch_items pharmacy_batches 
                             pharmacy_stock_balances pharmacy_stock_verifications relationship person_attribute
                             global_property patient person patient_identifier 
                             report_object reporting_report_design reporting_report_design_resource user_property user_role].freeze
