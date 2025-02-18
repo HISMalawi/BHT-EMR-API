@@ -29,7 +29,7 @@ CURRENT_USER = User.current
 def prepare_centralized_db
   puts 'Preparing Centralized database for migration...'
 
-  if ActiveRecord::Base.connection.index_exists?(:global_property, :global_property_uuid_index)
+  if ActiveRecord::Base.connection.index_name_exists?(:global_property, :global_property_uuid_index)
     ActiveRecord::Base.connection.execute <<~SQL
       ALTER TABLE global_property DROP INDEX global_property_uuid_index;
     SQL

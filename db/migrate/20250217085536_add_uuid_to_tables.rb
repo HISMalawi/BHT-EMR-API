@@ -8,7 +8,7 @@ class AddUuidToTables < ActiveRecord::Migration[8.0]
     drug_ingredient
     user_role
     user_property
-  )
+  ).freeze
 
   def change
     TABLES.each do |t|
