@@ -110,8 +110,8 @@ end
 # Process in Batches with Dynamic Threads and Percentage Tracking
 def process_in_batches(source_db, table_name, batch_size = 100_000, &block)
 
-  if %w[global_property user_role user_property].include?(table_name)
-    batch_ranges = [[0, 1_000_000]]
+  if %w[global_property user_role user_property].include?(table_name.to_s)
+    batch_ranges = [[0, 100_000]]
   else
     column_name = ActiveRecord::Base.connection.columns(table_name).first.name
     min_max = ActiveRecord::Base.connection.select_one("SELECT MIN(#{column_name}) AS min_id,
@@ -129,7 +129,7 @@ def process_in_batches(source_db, table_name, batch_size = 100_000, &block)
   puts "Using #{num_threads} threads for processing #{table_name}..."
 
   Parallel.each(batch_ranges, in_threads: num_threads) do |batch_range|
-    records = if table_name == 'global_property'
+    records = if %w[global_property user_role user_property].include?(table_name.to_s)
                 query_with_columns("#{source_db}.#{table_name}")
               else
                 query_with_columns("#{source_db}.#{table_name}", "#{column_name} >= #{batch_range.first}
@@ -197,6 +197,7 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
                     else
                       target_model.unscoped.where(uuid: record_keys).pluck(:uuid).to_set
                     end
+    
     # Update foreign key mappings
     foreign_keys.each do |foreign_key, mapping_method|
       records = send(mapping_method, records, foreign_key, source_db)
@@ -208,10 +209,6 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
         existing_keys.include?(record[:patient_id])
       when 'DrugOrder'
         existing_keys.include?(record[:order_id]) || record[:order_id].blank?
-      when 'UserRole'
-        existing_keys.include?([record[:user_id], record[:role]])
-      when 'GlobalProperty'
-        existing_keys.include?([record[:property], SITE_ID])
       else
         existing_keys.include?(record[:uuid])
       end
@@ -396,9 +393,9 @@ end
 
 if __FILE__ == $0
   group1_models = {
-    # user_role: [UserRole, {
-    #   user_id: :get_new_user_ids
-    # }],
+    user_role: [UserRole, {
+      user_id: :get_new_user_ids
+    }],
     user_property: [UserProperty, {
       user_id: :get_new_user_ids
     }],
