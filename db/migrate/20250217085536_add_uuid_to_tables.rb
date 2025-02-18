@@ -6,6 +6,8 @@ class AddUuidToTables < ActiveRecord::Migration[8.0]
     pharmacy_stock_verifications
     pharmacy_obs
     drug_ingredient
+    user_role
+    user_property
   )
 
   def change

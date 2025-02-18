@@ -11,8 +11,8 @@ include Sys
 
 user = User.first
 
-NON_RESET_MODELS = %w[Patient DrugOrder GlobalProperty UserRole DrugIngredient].freeze
-@orphaned_order_id = []
+NON_RESET_MODELS = %w[Patient DrugOrder GlobalProperty UserRole UserProperty DrugIngredient].freeze
+# @orphaned_order_id = []
 
 # Load Database Configuration
 database_config = Psych.load(File.read('config/database.yml'), aliases: true).freeze
@@ -25,6 +25,43 @@ File.write(SITE_USER_MAPPING, '{}') unless File.exist?(SITE_USER_MAPPING)
 user['site_id'] =  SITE_ID
 User.current = user
 CURRENT_USER = User.current
+
+def prepare_centralized_db
+  puts 'Preparing Centralized database for migration...'
+
+  if ActiveRecord::Base.connection.index_exists?(:global_property, :global_property_uuid_index)
+    ActiveRecord::Base.connection.execute <<~SQL
+      ALTER TABLE global_property DROP INDEX global_property_uuid_index;
+    SQL
+  end
+
+  if ActiveRecord::Base.connection.primary_key(:global_property)
+    ActiveRecord::Base.connection.execute <<~SQL
+      ALTER TABLE global_property DROP PRIMARY KEY;
+    SQL
+  end
+
+  foreign_keys = ActiveRecord::Base.connection.foreign_keys(:drug_ingredient).map(&:name)
+
+  if foreign_keys.include?('ingredient')
+    ActiveRecord::Base.connection.execute <<~SQL
+      ALTER TABLE drug_ingredient DROP FOREIGN KEY ingredient;
+    SQL
+  end
+
+  if foreign_keys.include?('combination_drug')
+    ActiveRecord::Base.connection.execute <<~SQL
+      ALTER TABLE drug_ingredient DROP FOREIGN KEY combination_drug;
+    SQL
+  end
+
+  if ActiveRecord::Base.connection.primary_key(:drug_ingredient)
+    ActiveRecord::Base.connection.execute <<~SQL
+      ALTER TABLE drug_ingredient DROP PRIMARY KEY;
+    SQL
+  end
+end
+
 
 # Query Helper
 def query_with_columns(table_name, where_clause = nil, limit = nil, offset = nil)
@@ -43,8 +80,8 @@ def optimal_threads
   free_memory_gb = free_memory.to_f / (1024**3)
   memory_usage = (memory_stats.used.to_f / memory_stats.total) * 100
 
-  num_cores = Parallel.processor_count
-  max_threads = num_cores * 2
+  num_cores = Parallel.physical_processor_count
+  max_threads = num_cores - 1
 
   # Use load_avg as a fallback
   cpu_usage = Sys::CPU.load_avg[0] / num_cores * 100
@@ -55,8 +92,8 @@ def optimal_threads
   dynamic_max_threads = num_cores + thread_boost
   min_threads = [(num_cores * 0.25).to_i, 2].max
 
-  thread_count = if cpu_usage < 70 && free_memory > (memory_stats.total * 0.1)
-                 [max_threads, dynamic_max_threads].max
+  thread_count = if cpu_usage < 70 && free_memory > (memory_stats.total * 0.2)
+                 [max_threads, dynamic_max_threads].min
                elsif cpu_usage > 80 || free_memory < (memory_stats.total * 0.05)
                  min_threads
                else
@@ -73,8 +110,8 @@ end
 # Process in Batches with Dynamic Threads and Percentage Tracking
 def process_in_batches(source_db, table_name, batch_size = 100_000, &block)
 
-  if table_name == 'global_property'
-    batch_ranges = [[0, 100_000]]
+  if %w[global_property user_role user_property].include?(table_name)
+    batch_ranges = [[0, 1_000_000]]
   else
     column_name = ActiveRecord::Base.connection.columns(table_name).first.name
     min_max = ActiveRecord::Base.connection.select_one("SELECT MIN(#{column_name}) AS min_id,
@@ -130,10 +167,7 @@ end
 # Generic Populate Function with Percentage Tracking
 def populate_records(source_table, target_model, source_db, foreign_keys = {})
   process_in_batches(source_db, source_table) do |records|
-    Parallel.each(records, in_threads: Parallel.processor_count) do |record|
-      record.symbolize_keys!
-    end
-
+    records.each(&:symbolize_keys!)
     # Fetch only the records that exist in the current batch
     record_keys = case target_model.to_s
                   when 'Patient'
@@ -146,8 +180,6 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
                     uuids = query_with_columns("#{source_db}.orders",
                                                "order_id in (#{order_ids.join(', ')})").pluck('uuid')
                     Order.unscoped.where(uuid: uuids).pluck(:order_id)
-                  when 'UserRole'
-                    records.map { |r| [r[:user_id], r[:role]] }
                   when 'GlobalProperty'
                     records.map { |r| [r[:property]] }
                   else
@@ -159,9 +191,6 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
                       target_model.unscoped.where(patient_id: record_keys).pluck(:patient_id).to_set
                     when 'DrugOrder'
                       target_model.unscoped.where(order_id: record_keys).pluck(:order_id).to_set
-                    when 'UserRole'
-                      target_model.unscoped.where(user_id: record_keys.map(&:first), role: record_keys.map(&:last),
-                                                  site_id: SITE_ID).pluck(:user_id, :role).to_set
                     when 'GlobalProperty'
                       target_model.unscoped.where(property: record_keys.map(&:first),
                                                   site_id: SITE_ID).pluck(:property, :site_id).to_set
@@ -178,7 +207,7 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
       when 'Patient'
         existing_keys.include?(record[:patient_id])
       when 'DrugOrder'
-        existing_keys.include?(record[:order_id])
+        existing_keys.include?(record[:order_id]) || record[:order_id].blank?
       when 'UserRole'
         existing_keys.include?([record[:user_id], record[:role]])
       when 'GlobalProperty'
@@ -209,7 +238,18 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
       end
     end
     User.current = CURRENT_USER
-    target_model.insert_all!(insertable_records.compact)
+    ActiveRecord::Base.connection_pool.with_connection do
+      ActiveRecord::Base.transaction do
+        ActiveRecord::Base.connection.execute('SET FOREIGN_KEY_CHECKS = 0')
+        begin
+          target_model.insert_all!(insertable_records.compact)
+        rescue StandardError => e
+          puts e.message
+          exit
+        end
+        ActiveRecord::Base.connection.execute('SET FOREIGN_KEY_CHECKS = 1')
+      end
+    end
   end
 end
 
@@ -267,7 +307,14 @@ def fetch_new_ids(records, source_db, table_name, id_column, model, new_id_key)
         record[new_id_key] = uuid_map.values.first
       elsif new_id_key == :order_id
         records.delete(record)
+      elsif new_id_key == :patient_id
+        records.delete(record)
+      elsif new_id_key == :encounter_id
+        records.delete(record)
       else
+        puts record
+        puts e
+        puts new_id_key
         exit
       end
     end
@@ -332,24 +379,29 @@ def create_users_persons(records, source_db)
   ).index_by { |row| row['person_id'] }
 
   records.each do |record|
-    record[:person_data] =
-populate_person(person_data[record[:person_id]], source_db) if person_data[record[:person_id]]
+    record[:person_data] = populate_person(person_data[record[:person_id]], source_db) if person_data[record[:person_id]]
   end
 
   records
 end
 
 # Main Execution
+prepare_centralized_db
 populate_users(source_db)
-# populate_records('user_role', UserRole, source_db)
 def populate_group(group)
-  group.each do |(table, model, source_db, dependencies)|
+  Parallel.each(group) do |(table, model, source_db, dependencies)|
     populate_records(table, model, source_db, dependencies)
   end
 end
 
 if __FILE__ == $0
   group1_models = {
+    # user_role: [UserRole, {
+    #   user_id: :get_new_user_ids
+    # }],
+    user_property: [UserProperty, {
+      user_id: :get_new_user_ids
+    }],
     global_property: [GlobalProperty, {}],
     person: [Person, {
       creator: :get_new_user_ids,
@@ -476,8 +528,8 @@ if __FILE__ == $0
   groups.each do |group|
     populate_group(group.map { |table, (model, dependencies)| [table, model, source_db, dependencies] })
   end
-  puts 'Writing Orphans to file ...'
-  `echo #{@orphaned_order_id.to_json} > log/migration_error.log`
+  # puts 'Writing Orphans to file ...'
+  # `echo #{@orphaned_order_id.to_json} > log/migration_error.log`
 end
 
 # populate_records('report_object', )
