@@ -278,7 +278,7 @@ def populate_users(source_db)
       user[:user_id] = nil
 
       %i[changed_by creator retired_by].each do |key|
-        user[key] = get_new_user_id(user[key], source_db) || admin_user.user_id if user[key]
+        user[key] = get_new_user_id(user[key], source_db) || admin_user['user_id'] if user[key]
       end
 
       user[:person_id] = create_user_person(user, source_db) if user[:person_id]
