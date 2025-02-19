@@ -253,9 +253,23 @@ end
 
 # User Migration with Percentage Tracking
 def populate_users(source_db)
-  insertable_records = []
+ 
+  admin_user = query_with_columns("#{source_db}.users", 'user_id = 1').first
+  if User.unscoped.exists?(uuid: admin_user['uuid'])
+   admin_user = User.unscoped.find_by(uuid: admin_user['uuid'])
+  else
+    next_user_id = User.unscoped.maximum(:user_id) + 1
+    admin_user['user_id'] = next_user_id
+    admin_user['creator'] = next_user_id
+    admin_user['changed_by'] = next_user_id
+    admin_user['person_id'] = create_user_person(admin_user.symbolize_keys, source_db)
+    admin_user['site_id'] = SITE_ID
+    admin_user = User.new(admin_user)
+    admin_user.save!(validate: false)
+  end
+
   process_in_batches(source_db, 'users') do |users|
-    insertable_records = users.map do |user|
+     insertable_records = users.map do |user|
       user.symbolize_keys!
 
       next if User.unscoped.exists?(uuid: user[:uuid])
@@ -263,18 +277,18 @@ def populate_users(source_db)
       user[:site_id] = SITE_ID
       user[:user_id] = nil
 
-      %i[changed_by creator].each do |key|
-        user[key] = get_new_user_id(user[key], source_db) || 1 if user[key]
+      %i[changed_by creator retired_by].each do |key|
+        user[key] = get_new_user_id(user[key], source_db) || admin_user.user_id if user[key]
       end
 
       user[:person_id] = create_user_person(user, source_db) if user[:person_id]
 
       user
     end
-    next if insertable_records.compact.blank?
+     next if insertable_records.compact.blank?
 
-    User.current = CURRENT_USER
-    User.insert_all!(insertable_records.compact)
+     User.current = CURRENT_USER
+     User.insert_all!(insertable_records.compact)
   end
 end
 
