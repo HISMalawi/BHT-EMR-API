@@ -17,7 +17,7 @@ class Location < RetirableRecord
   end
 
   def site_id
-    Location.current_health_center.location_id.to_s
+    Location.current&.site_id
   end
 
   def as_json(options = {})
@@ -25,10 +25,10 @@ class Location < RetirableRecord
   end
 
   def self.current_health_center
-    property = GlobalProperty.find_by_property('current_health_center_id')
+    property = User.current&.location
     raise 'Global property current_health_center not set' unless property
 
-    Location.find(property.property_value)
+    property
   end
 
   def district
