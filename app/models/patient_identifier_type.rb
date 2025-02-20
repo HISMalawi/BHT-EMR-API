@@ -9,14 +9,13 @@ class PatientIdentifierType < RetirableRecord
 
   def next_identifier(options = {})
     return nil unless name == 'National id'
-
     new_national_id = use_moh_national_id ? new_national_id : new_v1_id
-
+    
     patient_identifier = PatientIdentifier.new
     patient_identifier.type = self
     patient_identifier.identifier = new_national_id
     patient_identifier.patient = options[:patient]
-    patient_identifier.location_id = Location.current.location_id
+    patient_identifier.location_id = Location.site_id
     patient_identifier.save if patient_identifier.patient
     patient_identifier
   end
@@ -39,7 +38,7 @@ class PatientIdentifierType < RetirableRecord
 
   def use_moh_national_id
     property = GlobalProperty.find_by_property('use.moh.national.id')
-    property.property_value == 'yes'
+    property&.property_value == 'yes'
   rescue StandardError => e
     Rails.logger.error "Suppressed error: #{e}"
     false
@@ -61,7 +60,7 @@ class PatientIdentifierType < RetirableRecord
   end
 
   def v1_id_prefix
-    health_center_id = Location.current.site_id.rjust 3, '0'
+    health_center_id = Location.site_id.to_s.rjust 3, '0'
     "P1#{health_center_id}"
   end
 

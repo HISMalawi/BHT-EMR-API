@@ -16,8 +16,8 @@ class Location < RetirableRecord
     Thread.current['current_location'] = location
   end
 
-  def site_id
-    Location.current&.site_id
+  def self.site_id
+    Location.current.id
   end
 
   def as_json(options = {})
@@ -25,7 +25,7 @@ class Location < RetirableRecord
   end
 
   def self.current_health_center
-    property = User.current&.location
+    property = Location.current
     raise 'Global property current_health_center not set' unless property
 
     property
