@@ -197,6 +197,7 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
                     else
                       target_model.unscoped.where(uuid: record_keys).pluck(:uuid).to_set
                     end
+      
     
     # Update foreign key mappings
     foreign_keys.each do |foreign_key, mapping_method|
@@ -209,6 +210,8 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
         existing_keys.include?(record[:patient_id])
       when 'DrugOrder'
         existing_keys.include?(record[:order_id]) || record[:order_id].blank?
+      when 'GlobalProperty'
+        existing_keys.include?([record[:property], SITE_ID])
       else
         existing_keys.include?(record[:uuid])
       end
@@ -442,6 +445,12 @@ if __FILE__ == $0
   }
 
   group2_models = {
+    relationship: [Relationship, {
+      creator: :get_new_user_ids,
+      voided_by: :get_new_user_ids,
+      person_a_id: :get_person_ids,
+      person_b_id: :get_person_ids
+    }],
     person_name: [PersonName, {
       person_id: :get_person_ids,
       creator: :get_new_user_ids,
