@@ -6,7 +6,7 @@ require "zebra_printer/init"
 module Api
   module V1
     class LocationsController < ApplicationController
-      skip_before_action :authenticate, only: %i[print_label current_facility]
+      skip_before_action :authenticate, only: %i[print_label current_facility index]
 
       # Retrieve all locations
       #

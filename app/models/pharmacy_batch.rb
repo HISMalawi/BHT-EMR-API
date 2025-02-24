@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class PharmacyBatch < VoidableRecord
+  include Locatable
   has_many :items, class_name: 'PharmacyBatchItem'
 
   after_void :void_items

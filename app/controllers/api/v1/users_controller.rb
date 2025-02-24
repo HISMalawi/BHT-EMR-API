@@ -60,11 +60,15 @@ module Api
       end
 
       def login
-        login_params, error = required_params required: %i[username password]
+        login_params, error = required_params required: %i[username password site_id]
         return render json: login_params, status: :bad_request if error
+        
+        return render json: {error: 'No site_id provided'}, status: :bad_request if login_params[:site_id].nil?
 
         api_key = UserService.login(login_params[:username],
-                                    login_params[:password])
+                                    login_params[:password],
+                                    login_params[:site_id]
+                                    )
         if api_key.nil?
           render json: { errors: ['Invalid user or password'] }, status: :unauthorized
         else

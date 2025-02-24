@@ -3,7 +3,8 @@
 class PatientProgram < VoidableRecord
   self.table_name = 'patient_program'
   self.primary_key = 'patient_program_id'
-
+  
+  include Locatable
   after_void :after_void
 
   belongs_to :patient

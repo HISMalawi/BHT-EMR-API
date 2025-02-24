@@ -16,6 +16,10 @@ class Location < RetirableRecord
     Thread.current['current_location'] = location
   end
 
+  def site_id
+    Location.current_health_center.location_id.to_s
+  end
+
   def as_json(options = {})
     super(options.merge(include: { parent: {} }, methods: %i[district]))
   end
@@ -29,10 +33,6 @@ class Location < RetirableRecord
 
   def district
     city_village
-  end
-
-  def site_id
-    Location.current_health_center.location_id.to_s
   end
 
   def related_locations_including_self

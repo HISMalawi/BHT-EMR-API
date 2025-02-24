@@ -3,7 +3,9 @@
 class PatientState < VoidableRecord
   self.table_name = 'patient_state'
   self.primary_key = 'patient_state_id'
-
+  
+  include Locatable
+  
   belongs_to :patient_program
   belongs_to :program_workflow_state, foreign_key: :state,
                                       class_name: 'ProgramWorkflowState'
