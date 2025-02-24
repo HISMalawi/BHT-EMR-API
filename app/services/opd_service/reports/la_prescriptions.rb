@@ -53,6 +53,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND e.voided = 0
+                AND e.site_id = #{Location.current.location_id}
               GROUP BY do.drug_inventory_id
             SQL
           ).last.total_prescribed_drugs
@@ -78,6 +79,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND obs.concept_id = #{amount_dispensed_concept}
                 AND e.voided = 0
+                AND e.site_id = #{Location.current.location_id}
                GROUP BY d.drug_id
             SQL
           ).last.total_dispensed_drugs
@@ -101,6 +103,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND e.voided=0
+                AND e.site_id = #{Location.current.location_id}
               GROUP BY do.drug_inventory_id
             SQL
           ).last.total_prescribed_drugs
@@ -125,6 +128,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND e.voided = 0
+                AND e.site_id = #{Location.current.location_id}
               GROUP BY d.drug_id
             SQL
           ).last.total_dispensed_drugs
@@ -146,8 +150,10 @@ module OpdService
                 AND do.drug_inventory_id = #{la_three_drug_id}
                 AND o.order_type_id = #{drug_order_type_id}
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
-              AND DATE(e.encounter_datetime) <= '#{end_date}'
-              AND e.voided=0 GROUP BY do.drug_inventory_id
+                AND DATE(e.encounter_datetime) <= '#{end_date}'
+                AND e.voided=0 
+                AND e.site_id = #{Location.current.location_id}
+              GROUP BY do.drug_inventory_id
             SQL
           ).last.total_prescribed_drugs
         rescue StandardError
@@ -172,6 +178,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND e.voided = 0
+                AND e.site_id = #{Location.current.location_id}
               GROUP BY d.drug_id
             SQL
           ).last.total_dispensed_drugs
@@ -195,6 +202,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND e.voided = 0
+                AND e.site_id = #{Location.current.location_id}
               GROUP BY do.drug_inventory_id
             SQL
           ).last.total_prescribed_drugs
@@ -220,6 +228,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND e.voided = 0
+                AND e.site_id = #{Location.current.location_id}
               GROUP BY d.drug_id
             SQL
           ).last.total_dispensed_drugs
