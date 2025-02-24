@@ -15,7 +15,7 @@ module OpdService
 
         Encounter.where(Arel.sql("encounter_datetime BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
       AND encounter_type = '#{type.id}' AND value_coded IS NOT NULL
-      AND obs.concept_id = '#{visit_type.concept_id}'"))\
+      AND obs.concept_id = '#{visit_type.concept_id}' AND site_id = '#{Location.current.location_id}'"))\
                  .joins(Arel.sql('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
       INNER JOIN concept_name c ON c.concept_id = obs.value_coded
       INNER JOIN person p ON p.person_id = obs.person_id'))\
@@ -24,7 +24,7 @@ module OpdService
       end
 
       def malaria_report
-        @malaria_data = Observation.where(Arel.sql("obs_datetime BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'  AND c.voided = 0 AND c.name IN ('Amount dispensed', 'MRDT', 'Malaria film', 'Malaria Species', 'Primary diagnosis') AND
+        @malaria_data = Observation.where(Arel.sql("obs_datetime BETWEEN '#{@start_date.to_date.strftime('%Y-%m-%d 00:00:00')}' AND '#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'  AND c.voided = 0 AND site_id = '#{Location.current.location_id}' AND c.name IN ('Amount dispensed', 'MRDT', 'Malaria film', 'Malaria Species', 'Primary diagnosis') AND
           malaria_report(obs.order_id,obs.value_text,obs.value_coded,obs.person_id,DATE(obs_datetime),c.name,p.birthdate,'#{@end_date.to_date}') IS NOT NULL"))\
                        .joins(Arel.sql('INNER JOIN concept_name c ON c.concept_id = obs.concept_id
           INNER JOIN person p ON p.person_id = obs.person_id'))\
