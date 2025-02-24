@@ -69,7 +69,7 @@ module Api
       end
 
       def print_national_health_id_label
-        patient = Patient.find(params[:patient_id])
+        patient = Patient.unscoped.find(params[:patient_id])
         qr_code = if params[:qr_code]
                     params[:qr_code].casecmp?('true') ? true : false
                   else
@@ -315,7 +315,7 @@ module Api
       private
 
       def patient
-        Patient.find(params[:id] || params[:patient_id])
+        Patient.unscoped.find(params[:id] || params[:patient_id])
       end
 
       def generate_national_id_label(patient, qr_code)
