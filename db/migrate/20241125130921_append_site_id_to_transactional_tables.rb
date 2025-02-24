@@ -14,7 +14,7 @@ class AppendSiteIdToTransactionalTables < ActiveRecord::Migration[7.0]
     ActiveRecord::Base.connection.execute <<~SQL
       SET sql_mode = 'ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
     SQL
-
+   
     TRANSACTIONAL_TABLES.each do |t|
       add_column t.to_sym, :site_id, :bigint, default: current_health_center_id unless column_exists?(t, :site_id)
 
