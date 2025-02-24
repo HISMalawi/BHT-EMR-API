@@ -17,12 +17,12 @@ module OpdService
         type = EncounterType.find_by_name 'Outpatient diagnosis'
         Encounter.where("encounter_datetime BETWEEN ? AND ?
       AND encounter_type = ?
-      AND c.name IN(?)",
+      AND c.name IN(?) AND site_id = ?",
                         start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-                        end_date.to_date.strftime('%Y-%m-%d 23:59:59'), type.id, concept_names)\
+                        end_date.to_date.strftime('%Y-%m-%d 23:59:59'), type.id, concept_names, Location.current.location_id)\
                  .joins("INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
       INNER JOIN person p ON p.person_id = encounter.patient_id
-      LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
+      LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0 AND n.site_id = #{Location.current.location_id}
       LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
       RIGHT JOIN person_address a ON a.person_id = encounter.patient_id
       INNER JOIN concept_name c ON c.concept_id = obs.value_coded
