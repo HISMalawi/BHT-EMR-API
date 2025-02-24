@@ -119,7 +119,7 @@ module OpdService
               ELSE i.dose#{' '}
             END AS prescribe_quantity,(
               SELECT GROUP_CONCAT(c.name SEPARATOR ', ') AS names FROM encounter e#{' '}
-              INNER JOIN obs ON obs.encounter_id = e.encounter_id
+              INNER JOIN obs ON obs.encounter_id = e.encounter_id 
               INNER JOIN concept_name c ON c.concept_id = obs.value_coded#{' '}
               WHERE e.`voided` = 0 AND (DATE(encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}'
               AND encounter_type = 8 -- OUTPATIENT DIAGNOSIS
@@ -127,7 +127,8 @@ module OpdService
               AND obs.concept_id IN(6543 -- Secondary diagnosis
                 ,6542 -- Primary diagnosis
                 ))#{' '}
-              AND Date(e.date_created) = DATE(o.date_created)
+              AND Date(e.date_created) = DATE(o.date_created),
+              AND e.site_id = #{Location.current.location_id}
             ) as diagnosis,
             encounter.patient_id, i.quantity as dispense_quantity,given_name, family_name,
             o.date_created as date, drug_id, o.start_date,p.*, d.name drug_name#{' '}
@@ -141,6 +142,7 @@ module OpdService
             AND (DATE(encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}'
             AND encounter_type = 25 -- TREATMENT
             AND program_id = 14 -- OPD Program
+            AND encounter.site_id = #{Location.current.location_id}
           )#{' '}
             GROUP BY n.person_id, o.order_id ORDER BY n.date_created DESC
         SQL
