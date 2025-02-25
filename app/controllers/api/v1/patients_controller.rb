@@ -320,7 +320,6 @@ module Api
 
       def generate_national_id_label(patient, qr_code)
         person = patient.person
-
         national_id = patient.national_id
         return nil unless national_id
 
