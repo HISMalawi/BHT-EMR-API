@@ -20,6 +20,11 @@ module Api
         render json: patient
       end
 
+      def set_location(patient)
+        location = Location.find(patient&.site_id)
+        Location.current = location
+      end
+
       def search_by_npid
         voided = params[:voided]&.casecmp?('true') || false
         render json: paginate(service.find_patients_by_npid(params.require(:npid), voided:))
@@ -69,7 +74,6 @@ module Api
       end
 
       def print_national_health_id_label
-        patient = Patient.unscoped.find(params[:patient_id])
         qr_code = if params[:qr_code]
                     params[:qr_code].casecmp?('true') ? true : false
                   else
@@ -315,7 +319,9 @@ module Api
       private
 
       def patient
-        Patient.unscoped.find(params[:id] || params[:patient_id])
+        patient = Patient.unscoped.find(params[:id] || params[:patient_id])
+        set_location patient
+        patient
       end
 
       def generate_national_id_label(patient, qr_code)
