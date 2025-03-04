@@ -244,7 +244,7 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
       ActiveRecord::Base.transaction do
         ActiveRecord::Base.connection.execute('SET FOREIGN_KEY_CHECKS = 0')
         begin
-          target_model.insert_all!(insertable_records.compact)
+          target_model.unscoped.insert_all!(insertable_records.compact)
         rescue StandardError => e
           puts e.message
           exit
@@ -293,7 +293,7 @@ def populate_users(source_db)
      next if insertable_records.compact.blank?
 
      User.current = CURRENT_USER
-     User.insert_all!(insertable_records.compact)
+     User.unscoped.insert_all!(insertable_records.compact)
   end
 end
 
