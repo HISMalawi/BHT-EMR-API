@@ -9,7 +9,7 @@ require 'sys/memory'
 
 include Sys
 
-user = User.first
+
 
 NON_RESET_MODELS = %w[Patient DrugOrder GlobalProperty UserRole UserProperty DrugIngredient].freeze
 # @orphaned_order_id = []
@@ -22,7 +22,9 @@ SITE_ID = ActiveRecord::Base.connection.select_one("SELECT property_value
   WHERE property = 'current_health_center_id'")['property_value'].to_i
 SITE_USER_MAPPING = Rails.root.join('log', "users_mapping_#{SITE_ID}.json")
 File.write(SITE_USER_MAPPING, '{}') unless File.exist?(SITE_USER_MAPPING)
-user['site_id'] =  SITE_ID
+Location.current = Location.find_by_location_id(SITE_ID)
+user = User.unscoped.first
+user['site_id'] = SITE_ID
 User.current = user
 CURRENT_USER = User.current
 
