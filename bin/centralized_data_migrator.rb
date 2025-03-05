@@ -199,8 +199,8 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
                     else
                       target_model.unscoped.where(uuid: record_keys).pluck(:uuid).to_set
                     end
-      
-    
+
+
     # Update foreign key mappings
     foreign_keys.each do |foreign_key, mapping_method|
       records = send(mapping_method, records, foreign_key, source_db)
@@ -258,7 +258,7 @@ end
 
 # User Migration with Percentage Tracking
 def populate_users(source_db)
- 
+
   admin_user = query_with_columns("#{source_db}.users", 'user_id = 1').first
   if User.unscoped.exists?(uuid: admin_user['uuid'])
    admin_user = User.unscoped.find_by(uuid: admin_user['uuid'])
@@ -307,7 +307,7 @@ def fetch_new_ids(records, source_db, table_name, id_column, model, new_id_key)
     "#{source_db}.#{table_name}",
     "#{id_column} IN (#{old_ids.join(',')})"
   ).index_by { |row| row[id_column.to_s] }
-
+ 
   uuid_map = model.unscoped.where(uuid: uuid_mapping.values.map { |row| row['uuid'] })
                           .index_by(&:uuid)
                           .transform_values(&id_column)
@@ -395,10 +395,41 @@ def create_users_persons(records, source_db)
   ).index_by { |row| row['person_id'] }
 
   records.each do |record|
-    record[:person_data] = populate_person(person_data[record[:person_id]], source_db) if person_data[record[:person_id]]
+    record[:person_data] =
+populate_person(person_data[record[:person_id]], source_db) if person_data[record[:person_id]]
   end
 
   records
+end
+
+def update_group_obs_ids(source_db, foreign_keys = {})
+  # Get source UUIDS
+  offset = 0
+  limit = 100_000
+  total_processed = 0
+  loop do
+    source_obs_grouped = query_with_columns("#{source_db}.obs", 'obs_group_id is not null', limit, offset)
+    break if source_obs_grouped.blank?
+
+    source_obs_grouped.each(&:symbolize_keys!)
+    # Get corresponding obs from centralized
+    # # Update foreign key mappings
+    mapped_records = {}
+    foreign_keys.each do |foreign_key, mapping_method|
+      mapped_records = send(mapping_method, source_obs_grouped, foreign_key, source_db)
+    end
+
+    # Update obs_group_id
+    total_records = source_obs_grouped.size
+    Parallel.each(mapped_records, in_threads: optimal_threads) do |record|
+      Location.current = Location.find_by_location_id(SITE_ID)
+      User.current = CURRENT_USER
+      Observation.unscoped.where(uuid: record[:uuid]).update(obs_group_id: record[:obs_group_id])
+      print "Updating obs_group_id... #{total_processed }/#{total_records} \r"
+      total_processed += 1
+    end
+    offset += limit
+  end
 end
 
 # Main Execution
@@ -556,6 +587,12 @@ if __FILE__ == $0
   groups.each do |group|
     populate_group(group.map { |table, (model, dependencies)| [table, model, source_db, dependencies] })
   end
+  update_group_obs_ids(source_db, encounter_id: :get_encounter_ids,
+                                  order_id: :get_order_ids,
+                                  creator: :get_new_user_ids,
+                                  voided_by: :get_new_user_ids,
+                                  person_id: :get_person_ids,
+                                  obs_group_id: :get_obs_ids)
   # puts 'Writing Orphans to file ...'
   # `echo #{@orphaned_order_id.to_json} > log/migration_error.log`
 end
