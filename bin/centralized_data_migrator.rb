@@ -536,7 +536,13 @@ if __FILE__ == $0
       voided_by: :get_new_user_ids,
       person_id: :get_person_ids,
       obs_group_id: :get_obs_ids
-    }]
+    }],
+    lims_acknowledgement_statuses: [
+      LimsAcknowledgementStatus, {
+        order_id: :get_order_ids,
+        voided_by: :get_new_user_ids
+      }
+    ]
   }
 
   group6_models = {
