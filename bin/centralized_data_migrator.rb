@@ -407,6 +407,9 @@ def update_group_obs_ids(source_db, foreign_keys = {})
   offset = 0
   limit = 100_000
   total_processed = 0
+  total_records = ActiveRecord::Base.connection
+                                    .select_one("SELECT COUNT(*) AS count
+                                    FROM #{source_db}.obs where obs_group_id is not null")['count'].to_i
   loop do
     source_obs_grouped = query_with_columns("#{source_db}.obs", 'obs_group_id is not null', limit, offset)
     break if source_obs_grouped.blank?
@@ -420,12 +423,12 @@ def update_group_obs_ids(source_db, foreign_keys = {})
     end
 
     # Update obs_group_id
-    total_records = source_obs_grouped.size
     Parallel.each(mapped_records, in_threads: optimal_threads) do |record|
       Location.current = Location.find_by_location_id(SITE_ID)
       User.current = CURRENT_USER
       Observation.unscoped.where(uuid: record[:uuid]).update(obs_group_id: record[:obs_group_id])
-      print "Updating obs_group_id... #{total_processed }/#{total_records} \r"
+      percentage = ((total_processed.to_f / total_records) * 100).round(2)
+      print "Updating obs_group_id: #{percentage}% complete  (#{total_processed }/#{total_records}) \r"
       total_processed += 1
     end
     offset += limit
