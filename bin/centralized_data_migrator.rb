@@ -201,6 +201,8 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
                     end
 
 
+
+
     # Update foreign key mappings
     foreign_keys.each do |foreign_key, mapping_method|
       records = send(mapping_method, records, foreign_key, source_db)
