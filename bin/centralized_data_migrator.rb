@@ -11,7 +11,7 @@ include Sys
 
 
 
-NON_RESET_MODELS = %w[Patient DrugOrder GlobalProperty UserRole UserProperty DrugIngredient].freeze
+NON_RESET_MODELS = %w[Patient DrugOrder GlobalProperty UserRole UserProperty DrugIngredient LimsAcknowledgementStatus].freeze
 # @orphaned_order_id = []
 
 # Load Database Configuration
