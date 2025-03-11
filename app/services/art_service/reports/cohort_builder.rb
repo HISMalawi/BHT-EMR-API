@@ -1643,7 +1643,7 @@ module ArtService
       def load_temp_pregnant_obs(start_date, end_date)
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_pregnant_obs
-          SELECT o.person_id,o.value_coded, DATE(o.obs_datetime) obs_datetime
+          SELECT o.person_id,o.value_coded, MIN(DATE(o.obs_datetime)) obs_datetime
           FROM obs o
           WHERE o.concept_id IN (6131,1755,7972,7563)
             AND o.value_coded IN (1065,1755)
