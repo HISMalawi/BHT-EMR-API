@@ -11,7 +11,7 @@ include Sys
 
 
 
-NON_RESET_MODELS = %w[Patient DrugOrder GlobalProperty UserRole UserProperty DrugIngredient].freeze
+NON_RESET_MODELS = %w[Patient DrugOrder GlobalProperty UserRole UserProperty DrugIngredient LimsAcknowledgementStatus].freeze
 # @orphaned_order_id = []
 
 # Load Database Configuration
@@ -201,6 +201,8 @@ def populate_records(source_table, target_model, source_db, foreign_keys = {})
                     end
 
 
+
+
     # Update foreign key mappings
     foreign_keys.each do |foreign_key, mapping_method|
       records = send(mapping_method, records, foreign_key, source_db)
@@ -307,7 +309,7 @@ def fetch_new_ids(records, source_db, table_name, id_column, model, new_id_key)
     "#{source_db}.#{table_name}",
     "#{id_column} IN (#{old_ids.join(',')})"
   ).index_by { |row| row[id_column.to_s] }
- 
+
   uuid_map = model.unscoped.where(uuid: uuid_mapping.values.map { |row| row['uuid'] })
                           .index_by(&:uuid)
                           .transform_values(&id_column)
@@ -403,33 +405,54 @@ populate_person(person_data[record[:person_id]], source_db) if person_data[recor
 end
 
 def update_group_obs_ids(source_db, foreign_keys = {})
-  # Get source UUIDS
-  offset = 0
   limit = 100_000
+  offset = 0
   total_processed = 0
+  total_records = ActiveRecord::Base.connection
+                                    .select_one("SELECT COUNT(*) AS count
+                                    FROM #{source_db}.obs WHERE obs_group_id IS NOT NULL")['count'].to_i
+
+  ActiveRecord::Base.connection.execute(<<-SQL)
+    CREATE TEMPORARY TABLE IF NOT EXISTS temp_obs_update (
+      uuid CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
+      obs_group_id INT
+    );
+  SQL
+
+
   loop do
-    source_obs_grouped = query_with_columns("#{source_db}.obs", 'obs_group_id is not null', limit, offset)
+    source_obs_grouped = query_with_columns("#{source_db}.obs", 'obs_group_id IS NOT NULL', limit, offset)
     break if source_obs_grouped.blank?
 
     source_obs_grouped.each(&:symbolize_keys!)
-    # Get corresponding obs from centralized
-    # # Update foreign key mappings
+
+    # Fetch and map foreign keys in bulk
     mapped_records = {}
     foreign_keys.each do |foreign_key, mapping_method|
       mapped_records = send(mapping_method, source_obs_grouped, foreign_key, source_db)
     end
 
-    # Update obs_group_id
-    total_records = source_obs_grouped.size
-    Parallel.each(mapped_records, in_threads: optimal_threads) do |record|
-      Location.current = Location.find_by_location_id(SITE_ID)
-      User.current = CURRENT_USER
-      Observation.unscoped.where(uuid: record[:uuid]).update(obs_group_id: record[:obs_group_id])
-      print "Updating obs_group_id... #{total_processed }/#{total_records} \r"
-      total_processed += 1
+    # Prepare batch updates
+    updates = mapped_records.map do |record|
+      {
+        uuid: record[:uuid],
+        obs_group_id: record[:obs_group_id]
+      }
     end
+
+    values = updates.map { |r| "('#{r[:uuid]}', #{r[:obs_group_id]})" }.join(", ")
+    ActiveRecord::Base.connection.execute("INSERT INTO temp_obs_update (uuid, obs_group_id) VALUES #{values}")
+
     offset += limit
+    total_processed += updates.size
+    percentage = ((total_processed.to_f / total_records) * 100).round(2)
+    puts "Updating obs_group_id: #{percentage}% complete (#{total_processed}/#{total_records})"
   end
+  ActiveRecord::Base.connection.execute('UPDATE obs o
+      JOIN temp_obs_update t ON o.uuid = t.uuid
+      SET o.obs_group_id = t.obs_group_id;')
+ensure
+  ActiveRecord::Base.connection.execute('DROP TABLE temp_obs_update;')
 end
 
 # Main Execution
@@ -587,14 +610,11 @@ if __FILE__ == $0
   groups.each do |group|
     populate_group(group.map { |table, (model, dependencies)| [table, model, source_db, dependencies] })
   end
-  update_group_obs_ids(source_db, encounter_id: :get_encounter_ids,
+  update_group_obs_ids(source_db, obs_id: :get_obs_ids,
+                                  encounter_id: :get_encounter_ids,
                                   order_id: :get_order_ids,
                                   creator: :get_new_user_ids,
                                   voided_by: :get_new_user_ids,
                                   person_id: :get_person_ids,
                                   obs_group_id: :get_obs_ids)
-  # puts 'Writing Orphans to file ...'
-  # `echo #{@orphaned_order_id.to_json} > log/migration_error.log`
 end
-
-# populate_records('report_object', )
