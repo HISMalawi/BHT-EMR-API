@@ -15,10 +15,12 @@ module ArtService
       def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date.to_s
         @end_date = end_date.to_s
+        @dsd = kwargs[:dsd]
         @use_filing_number = GlobalProperty.find_by(property: 'use.filing.numbers')
                                            &.property_value
                                            &.casecmp?('true')
         @occupation = kwargs[:occupation]
+        @site_id = kwargs[:site_id]
       end
 
       def find_report
@@ -88,6 +90,7 @@ module ArtService
               p.gender gender
             FROM orders initial_orders
             INNER JOIN encounter initial_encounter ON initial_encounter.encounter_id = initial_orders.encounter_id AND initial_encounter.voided = 0 AND initial_encounter.program_id = 1
+            #{dsd_query(dsd: @dsd, model: 'initial_encounter') if @dsd}
             INNER JOIN person p ON p.person_id = initial_orders.patient_id AND p.voided = 0
             LEFT JOIN patient_identifier ON patient_identifier.patient_id = initial_orders.patient_id AND patient_identifier.identifier_type = #{patient_identifier_type_id}
             INNER JOIN (
@@ -101,6 +104,7 @@ module ArtService
             ) last_orders ON initial_orders.patient_id = last_orders.patient_id
             LEFT JOIN (#{current_occupation_query}) a ON a.person_id = initial_orders.patient_id
             WHERE initial_orders.start_date BETWEEN #{as_of} AND #{start_date}
+            AND initial_orders.site_id = #{@site_id}
             AND initial_orders.order_type_id = #{drug_order_type_id} #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
             AND initial_orders.auto_expire_date IS NOT NULL
             AND initial_orders.patient_id NOT IN (
@@ -127,10 +131,12 @@ module ArtService
                    p.gender gender
             FROM orders initial_order
             INNER JOIN encounter initial_encounter ON initial_encounter.encounter_id = initial_order.encounter_id AND initial_encounter.program_id = 1
+            #{dsd_query(dsd: @dsd, model: 'initial_encounter') if @dsd}
             INNER JOIN person p ON p.person_id = initial_encounter.patient_id
             LEFT JOIN patient_identifier ON patient_identifier.patient_id = initial_order.patient_id AND patient_identifier.identifier_type = #{patient_identifier_type_id}
             LEFT JOIN (#{current_occupation_query}) a ON a.person_id = initial_order.patient_id
             WHERE initial_order.start_date BETWEEN #{as_of} AND #{start_date}
+              AND initial_order.site_id = #{@site_id}
               AND initial_order.voided = 0
               AND initial_order.auto_expire_date IS NOT NULL
               AND initial_order.order_type_id = #{drug_order_type_id}

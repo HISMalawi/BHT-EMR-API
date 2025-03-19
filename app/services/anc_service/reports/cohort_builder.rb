@@ -37,7 +37,8 @@ module AncService
 
       include ModelUtils
 
-      def build(cohort_struct, start_date, _end_date)
+      def build(site_id, cohort_struct, start_date, _end_date)
+        @site_id = site_id
         # Monthly date ranges
         @m_start_date = start_date
         @m_end_date = @m_start_date.to_date.end_of_month
@@ -72,17 +73,18 @@ module AncService
         @c_lmp = "(SELECT (max_patient_lmp(encounter.patient_id, '#{c_max_date}', '#{m_min_date}')))"
 
         lmp = '(SELECT DATE(MAX(o.value_datetime)) FROM obs o WHERE o.person_id = enc.patient_id '\
+              "AND o.site_id = #{@site_id} "\
               "AND o.concept_id = #{LMP.concept_id} AND DATE(o.obs_datetime) <= '#{c_max_date}' "\
               "AND DATE(o.obs_datetime) >= '#{c_min_date}')"
 
         visits_query = "SELECT #{lmp} lmp, enc.patient_id patient_id, "\
                         'MAX(ob.value_numeric) form_id FROM encounter enc INNER JOIN obs ob '\
-                        'ON ob.encounter_id = enc.encounter_id WHERE enc.program_id = ? AND '\
+                        'ON ob.encounter_id = enc.encounter_id WHERE enc.site_id = ? AND enc.program_id = ? AND '\
                         'enc.patient_id IN (?) AND enc.encounter_type = ? AND ob.concept_id = ? AND '\
                         "DATE(enc.encounter_datetime) <= ? AND DATE(enc.encounter_datetime) >= #{lmp} "\
                         'GROUP BY enc.patient_id'
 
-        @anc_visits = Encounter.find_by_sql([visits_query, PROGRAM.id, @cohort_patients, ANC_VISIT_TYPE.id,
+        @anc_visits = Encounter.find_by_sql([visits_query, @site_id, PROGRAM.id, @cohort_patients, ANC_VISIT_TYPE.id,
                                              REASON_FOR_VISIT.concept_id, c_max_date]).collect do |e|
           [e.patient_id, e.form_id]
         end
@@ -217,10 +219,11 @@ module AncService
         Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e
               INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
 			        WHERE e.encounter_type = (?)
+              AND e.site_id = ?
 			        AND o.value_drug IN (
                  SELECT drug_id FROM drug WHERE name LIKE '%Cotrimoxazole%'
               ) AND e.patient_id IN (#{positive_patients.join(',')}) AND
-              e.encounter_datetime <= ? GROUP BY e.patient_id", DISPENSING.id, @end_date.to_date\
+              e.encounter_datetime <= ? GROUP BY e.patient_id", DISPENSING.id, @site_id, @end_date.to_date\
               .end_of_month.strftime('%Y-%m-%d 23:59:59')])\
                  .map(&:patient_id)
       end
@@ -231,13 +234,14 @@ module AncService
         Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e
               INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
 			        WHERE e.encounter_type = (?)
+              AND e.site_id = ?
 			        AND o.value_drug IN (
                 SELECT drug_id FROM drug WHERE name LIKE '%Nevirapine%'
                 OR name LIKE '%NVP%'
               )
               AND e.patient_id IN (#{positive_patients.join(',')}) AND
               e.encounter_datetime <= ?
-              GROUP BY e.patient_id", DISPENSING.id, @end_date.to_date\
+              GROUP BY e.patient_id", DISPENSING.id, @site_id, @end_date.to_date\
               .end_of_month.strftime('%Y-%m-%d 23:59:59')])\
                  .map(&:patient_id)
       end
@@ -270,7 +274,7 @@ module AncService
             ) first_visit ON first_visit.patient_id = e.patient_id
             LEFT JOIN temp_earliest_start_date t ON t.patient_id = e.patient_id
               AND t.date_enrolled < '#{@end_date}'
-            WHERE e.patient_id IN(#{patients_on_art.join(',')})
+            WHERE e.site_id=#{@site_id} AND e.patient_id IN(#{patients_on_art.join(',')})
           GROUP BY e.patient_id
         SQL
 
@@ -307,6 +311,7 @@ module AncService
           SELECT person_id AS patient_id
           FROM obs
           WHERE person_id IN (#{positive_patients.join(',')})
+            AND site_id = #{@site_id}
             AND concept_id = #{ON_ART.concept_id}
             AND value_coded = #{YES.concept_id}
             AND voided = 0
@@ -316,6 +321,7 @@ module AncService
           SELECT person_id AS patient_id
           FROM obs
           WHERE person_id IN (#{positive_patients.join(',')})
+            AND site_id = #{@site_id}
             AND concept_id = #{PREV_HIV_TEST.concept_id}
             AND value_coded = #{POSITIVE.concept_id}
             AND voided = 0
@@ -335,18 +341,18 @@ module AncService
       # Get women registered within a specified period
       def registrations(start_dt, end_dt)
         Encounter.joins(['INNER JOIN obs ON obs.person_id = encounter.patient_id'])
-                 .where(['program_id = ? AND encounter_type = ? AND obs.concept_id = ? AND
+                 .where(['obs.site_id = ? AND program_id = ? AND encounter_type = ? AND obs.concept_id = ? AND
               DATE(encounter_datetime) >= ? AND DATE(encounter_datetime) <= ? AND encounter.voided = 0',
-                         PROGRAM.id, CURRENT_PREGNANCY.id, LMP.concept_id, start_dt.to_date, end_dt.to_date]).collect(&:patient_id).uniq
+                        @site_id, PROGRAM.id, CURRENT_PREGNANCY.id, LMP.concept_id, start_dt.to_date, end_dt.to_date]).collect(&:patient_id).uniq
       end
 
       def pregnancy_test_done(_date)
         preg_test = ConceptName.find_by name: 'Pregnancy test'
 
-        Encounter.joins(:observations).where("encounter.program_id = ?
+        Encounter.joins(:observations).where("encounter.site_id = ? AND encounter.program_id = ?
             AND encounter.encounter_type = ? AND obs.concept_id = ?
             AND value_coded = ? AND encounter.patient_id in (?)",
-                                             PROGRAM.id, LAB_RESULTS.id, preg_test.concept_id, YES.concept_id,
+                                             @site_id, PROGRAM.id, LAB_RESULTS.id, preg_test.concept_id, YES.concept_id,
                                              @monthly_patients).collect(&:patient_id).compact.uniq
       end
 
@@ -354,11 +360,11 @@ module AncService
         Encounter.find_by_sql(['SELECT patient_id, MAX(o.value_numeric) wk FROM
               encounter INNER JOIN obs o ON o.encounter_id = encounter.encounter_id
               AND o.concept_id = ? AND encounter.voided = 0
-              WHERE program_id = ? AND DATE(encounter_datetime) BETWEEN
+              WHERE encounter.site_id = ? AND program_id = ? AND DATE(encounter_datetime) BETWEEN
               (SELECT DATE(MIN(lmp)) FROM last_menstraul_period_date
               WHERE person_id IN (?) AND obs_datetime BETWEEN ? and ?)
               AND (?) AND patient_id IN (?) GROUP BY patient_id HAVING wk < 13',
-                               WEEK_OF_FIRST_VISIT.concept_id, PROGRAM.id,
+                               WEEK_OF_FIRST_VISIT.concept_id, @site_id, PROGRAM.id,
                                @patients_done_pregnancy_test,
                                date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
                                date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59'),
@@ -368,9 +374,9 @@ module AncService
       def week_of_first_visit_zero_to_twelve(date)
         Encounter.find_by_sql(["SELECT patient_id, o.value_numeric wk FROM encounter
               INNER JOIN obs o ON o.encounter_id = encounter.encounter_id AND o.concept_id = ?
-              AND encounter.voided = 0 WHERE program_id = ? AND patient_id IN (?)
+              AND encounter.voided = 0 WHERE encounter.site_id = ? AND program_id = ? AND patient_id IN (?)
               AND DATE(encounter_datetime) BETWEEN (?) AND (?) GROUP BY patient_id HAVING wk < 13",
-                               WEEK_OF_FIRST_VISIT.concept_id, PROGRAM.id, @monthly_patients,
+                               WEEK_OF_FIRST_VISIT.concept_id, @site_id, PROGRAM.id, @monthly_patients,
                                date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
                                date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).collect(&:patient_id).uniq
       end
@@ -378,9 +384,9 @@ module AncService
       def week_of_first_visit_plus_thirteen(date)
         Encounter.find_by_sql(["SELECT patient_id, o.value_numeric wk FROM encounter
               INNER JOIN obs o ON o.encounter_id = encounter.encounter_id AND o.concept_id = ?
-              AND encounter.voided = 0 WHERE program_id = ? AND patient_id IN (?) AND DATE(encounter_datetime)
+              AND encounter.voided = 0 WHERE encounter.site_id = ? AND program_id = ? AND patient_id IN (?) AND DATE(encounter_datetime)
               BETWEEN (?) AND (?) GROUP BY patient_id HAVING wk > 12",
-                               WEEK_OF_FIRST_VISIT.concept_id, PROGRAM.id, @monthly_patients,
+                               WEEK_OF_FIRST_VISIT.concept_id, @site_id, PROGRAM.id, @monthly_patients,
                                date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
                                date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).collect(&:patient_id).uniq
       end
@@ -388,9 +394,9 @@ module AncService
       def new_hiv_negative_first_visit(date)
         Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e INNER JOIN obs o ON
             o.encounter_id = e.encounter_id AND e.voided = 0
-            WHERE e.program_id = ? AND o.concept_id = ? AND ((o.value_coded = ?) OR (o.value_text = 'Negative'))
+            WHERE e.site_id = ? AND e.program_id = ? AND o.concept_id = ? AND ((o.value_coded = ?) OR (o.value_text = 'Negative'))
             AND e.patient_id IN (?) AND e.encounter_datetime >= ? AND
-            e.encounter_datetime <= ?", PROGRAM.id, HIV_STATUS.concept_id, NEGATIVE.concept_id,
+            e.encounter_datetime <= ?", @site_id, PROGRAM.id, HIV_STATUS.concept_id, NEGATIVE.concept_id,
                                @monthly_patients, date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
                                date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id).uniq
       end
@@ -398,14 +404,14 @@ module AncService
       def new_hiv_positive_first_visit(date)
         new_pos = Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e
             INNER JOIN obs o ON o.encounter_id = e.encounter_id AND e.voided = 0
-            WHERE e.program_id = ? AND o.concept_id = ? AND ((o.value_coded = ?)
+            WHERE e.site_id = ? AND e.program_id = ? AND o.concept_id = ? AND ((o.value_coded = ?)
               OR (o.value_text = 'Positive')) AND e.patient_id IN (?)
             AND e.encounter_id = (SELECT MAX(encounter.encounter_id) FROM encounter
             INNER JOIN obs ON obs.encounter_id = encounter.encounter_id AND obs.concept_id = ?
             WHERE encounter_type = e.encounter_type AND patient_id = e.patient_id
             AND DATE(encounter.encounter_datetime) <= ?)
             AND (DATE(e.encounter_datetime) <= ?)
-            GROUP BY e.patient_id", PROGRAM.id, HIV_STATUS.concept_id,
+            GROUP BY e.patient_id", @site_id, PROGRAM.id, HIV_STATUS.concept_id,
                                          POSITIVE.concept_id, @monthly_patients, HIV_STATUS.concept_id,
                                          date.to_date.end_of_month, date.to_date.end_of_month]).map(&:patient_id)
 
@@ -415,10 +421,10 @@ module AncService
       def prev_hiv_positive_first_visit(date)
         prev_pos = Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e INNER JOIN obs o ON
                 o.encounter_id = e.encounter_id AND e.voided = 0
-                WHERE e.program_id = ? AND o.concept_id = ?
+                WHERE e.site_id = ? AND e.program_id = ? AND o.concept_id = ?
                 AND ((o.value_coded = ?) OR (o.value_text = 'Negative'))
                 AND e.patient_id IN (?) AND e.encounter_datetime >= ? AND
-                e.encounter_datetime <= ?", PROGRAM.id, PREV_HIV_TEST.concept_id,
+                e.encounter_datetime <= ?", @site_id, PROGRAM.id, PREV_HIV_TEST.concept_id,
                                           POSITIVE.concept_id, @monthly_patients,
                                           date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
                                           date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id)
@@ -429,9 +435,9 @@ module AncService
       def pre_hiv_negative_first_visit(date)
         prev_neg = Encounter.find_by_sql(["SELECT e.patient_id FROM encounter e
                         INNER JOIN obs o ON o.encounter_id = e.encounter_id AND e.voided = 0
-                        WHERE o.concept_id = ? AND ((o.value_coded = ?) OR (o.value_text = 'Negative'))
+                        WHERE o.site_id = ? AND o.concept_id = ? AND ((o.value_coded = ?) OR (o.value_text = 'Negative'))
                         AND e.patient_id IN (?) AND e.encounter_datetime >= ? AND
-                        e.encounter_datetime <= ?", PREV_HIV_TEST.concept_id, NEGATIVE.concept_id,
+                        e.encounter_datetime <= ?", @site_id, PREV_HIV_TEST.concept_id, NEGATIVE.concept_id,
                                           @monthly_patients,
                                           date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00'),
                                           date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id)
@@ -443,7 +449,7 @@ module AncService
                     SELECT e.patient_id
                     FROM encounter e
                     INNER JOIN obs o ON e.encounter_id = o.encounter_id AND o.concept_id = 7882 /*Confirmatory Test date*/
-                    WHERE o.value_datetime < '#{date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00')}'
+                    WHERE e.site_id = #{@site_id} AND o.value_datetime < '#{date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00')}'
                     AND o.voided = 0 AND e.voided = 0
                     AND e.program_id = 1 AND e.encounter_type = 9 /*Clinic registration*/
                     AND e.patient_id IN (?)", @monthly_patients]).map(&:patient_id)
@@ -454,7 +460,7 @@ module AncService
                     SELECT e.patient_id
                     FROM encounter e
                     INNER JOIN obs o ON e.encounter_id = o.encounter_id AND o.concept_id = 7882 /*Confirmatory Test date*/
-                    WHERE o.value_datetime >= '#{date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00')}'
+                    WHERE e.site_id = #{@site_id} AND o.value_datetime >= '#{date.to_date.beginning_of_month.strftime('%Y-%m-%d 00:00:00')}'
                     AND o.voided = 0 AND e.voided = 0
                     AND o.value_datetime <= '#{date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')}'
                     AND e.program_id = 1 AND e.encounter_type = 9 /*Clinic registration*/
@@ -473,11 +479,11 @@ module AncService
           result = begin
             Encounter.find_by_sql(['SELECT e.patient_id FROM encounter e
                                            INNER JOIN obs o on o.encounter_id = e.encounter_id
-                                           WHERE e.voided = 0 AND e.program_id = ? AND e.patient_id IN (?)
+                                           WHERE e.site_id = ? AND e.voided = 0 AND e.program_id = ? AND e.patient_id IN (?)
                                            AND e.encounter_type IN (?) AND o.concept_id IN (?)
                                            AND DATE(e.encounter_datetime) <= ? AND COALESCE(
                                            (SELECT name FROM concept_name WHERE concept_id = o.value_coded LIMIT 1),
-                                           o.value_text) IN (?)', PROGRAM.id,
+                                           o.value_text) IN (?)', @site_id, PROGRAM.id,
                                    ([0] + @monthly_patients), encounter_types, concept_ids, date,
                                    art_answers]).map(&:patient_id)
           rescue StandardError
@@ -497,8 +503,8 @@ module AncService
 
           d = Observation.find_by_sql(['SELECT MAX(value_datetime) as date FROM obs
                     JOIN encounter ON obs.encounter_id = encounter.encounter_id
-                    AND encounter.program_id = ? WHERE encounter.encounter_type = ?
-                    AND person_id = ? AND concept_id = ?', PROGRAM.id,
+                    AND encounter.program_id = ? WHERE obs.site_id = ? AND encounter.encounter_type = ?
+                    AND person_id = ? AND concept_id = ?', PROGRAM.id, @site_id, 
                                        CURRENT_PREGNANCY.id, id, LMP.concept_id])
                          .first.date.strftime('%Y-%m-%d') # rescue nil
 
@@ -539,9 +545,9 @@ module AncService
 
           cpt_ids = Encounter.find_by_sql(["SELECT * FROM encounter e
               INNER JOIN obs o ON e.encounter_id = o.encounter_id AND e.voided = 0
-			        WHERE e.encounter_type = (?)
+			        WHERE e.site_id = ? AND e.encounter_type = (?)
 			        AND o.value_drug IN (?) AND e.patient_id IN (?) AND
-              e.encounter_datetime <= ?", DISPENSING.id, Drug.where(['name LIKE ?', '%Cotrimoxazole%']).map(&:id).join(','),
+              e.encounter_datetime <= ?", @site_id, DISPENSING.id, Drug.where(['name LIKE ?', '%Cotrimoxazole%']).map(&:id).join(','),
                                            patient_ids.join(','),
                                            date.to_date.end_of_month.strftime('%Y-%m-%d 23:59:59')]).map(&:patient_id)
         end
@@ -558,8 +564,8 @@ module AncService
         Observation.find_by_sql(["SELECT o.value_datetime, o.person_id FROM obs o
             JOIN encounter ON o.encounter_id = encounter.encounter_id
             AND encounter.voided = 0 AND encounter.program_id = ?
-            WHERE o.concept_id = ? AND o.person_id IN (?)
-            AND DATE(o.obs_datetime) BETWEEN #{@m_lmp} AND ?", PROGRAM.id, LMP.concept_id,
+            WHERE o.site_id = ? AND o.concept_id = ? AND o.person_id IN (?)
+            AND DATE(o.obs_datetime) BETWEEN #{@m_lmp} AND ?", PROGRAM.id, @site_id, LMP.concept_id,
                                  @total_hiv_positive_first_visit, date.to_date.end_of_month]).collect do |ob|
           ident = ob.person_id
           # raise ident.inspect
@@ -582,8 +588,8 @@ module AncService
         Observation.find_by_sql(["SELECT o.value_datetime, o.person_id FROM obs o
             JOIN encounter ON o.encounter_id = encounter.encounter_id
             AND encounter.voided = 0 AND encounter.program_id = ?
-            WHERE o.concept_id = ? AND o.person_id IN (?)
-            AND DATE(o.obs_datetime) BETWEEN #{@m_lmp} AND ?", PROGRAM.id, LMP.concept_id,
+            WHERE o.site_id = ? AND o.concept_id = ? AND o.person_id IN (?)
+            AND DATE(o.obs_datetime) BETWEEN #{@m_lmp} AND ?", PROGRAM.id, @site_id,  LMP.concept_id,
                                  @total_hiv_positive_first_visit, date.to_date.end_of_month]).collect do |ob|
           ident = ob.person_id
           # raise ident.inspect
@@ -602,10 +608,10 @@ module AncService
 
       def patients_with_pre_eclampsia
         Encounter.joins([:observations])
-                 .where(['program_id = ? AND encounter_type = ?
+                 .where(['encounter.site_id = ? AND program_id = ? AND encounter_type = ?
                           AND concept_id = ? AND value_coded = ? AND DATE(encounter_datetime) '\
               "BETWEEN (#{@c_lmp}) AND (?) AND encounter.patient_id IN (?)",
-                         PROGRAM.id, ANC_EXAMINATION.id, PRE_ECLAMPSIA.concept_id, YES.concept_id,
+                         @site_id, PROGRAM.id, ANC_EXAMINATION.id, PRE_ECLAMPSIA.concept_id, YES.concept_id,
                          (@c_start_date.to_date + @c_pregnant_range),
                          @cohort_patients]).collect(&:patient_id).uniq
       end
@@ -614,9 +620,9 @@ module AncService
         patients = {}
 
         Order.joins([[drug_order: :drug], :encounter])
-             .where(["encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= #{@c_lmp} "\
+             .where(["encounter.site_id = ? AND encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= #{@c_lmp} "\
               'AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?) '\
-              'AND orders.voided = 0', PROGRAM.id, '%TD%',
+              'AND orders.voided = 0', @site_id, PROGRAM.id, '%TD%',
                      ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                      @cohort_patients])
              .group([:patient_id])
@@ -633,9 +639,9 @@ module AncService
         patients = {}
 
         query = Order.joins([[drug_order: :drug], :encounter])
-             .where(["encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= #{@c_lmp}"\
+             .where(["encounter.site_id = ? AND encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= #{@c_lmp}"\
               'AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?) '\
-              'AND orders.voided = 0', PROGRAM.id, '%TD%',
+              'AND orders.voided = 0', @site_id, PROGRAM.id, '%TD%',
                      ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                      @cohort_patients])
              .group([:patient_id])
@@ -650,10 +656,10 @@ module AncService
       end
 
       def patients_given_zero_to_two_sp_doses
-        Order.where('encounter.program_id = ? AND (drug.name = ? OR drug.name = ?) AND DATE(encounter_datetime) <= ? '\
+        Order.where('encounter.site_id = ? AND encounter.program_id = ? AND (drug.name = ? OR drug.name = ?) AND DATE(encounter_datetime) <= ? '\
               'AND encounter.patient_id IN (?)',
                     'Sulphadoxine and Pyrimenthane (25mg tablet)', 'SP (3 tablets)',
-                    PROGRAM.id, ((@c_start_date.to_date + @c_pregnant_range) - 1.day), @cohort_patients)
+                    @site_id, PROGRAM.id, ((@c_start_date.to_date + @c_pregnant_range) - 1.day), @cohort_patients)
              .joins([[drug_order: :drug], :encounter])
              .select(['encounter.patient_id, count(encounter.encounter_id) as count, '\
               'encounter_datetime, drug.name instructions'])
@@ -684,16 +690,17 @@ module AncService
           AND encounter.voided = 0 AND encounter.program_id = #{PROGRAM.id}
           INNER JOIN concept_name ON o.concept_id = concept_name.concept_id AND concept_name.voided = 0 AND concept_name.name = 'Sulfadoxine and Pyrimethamine'
           INNER JOIN drug_order ON o.order_id = drug_order.order_id AND drug_order.quantity > 0
-          WHERE DATE(encounter_datetime) <= '#{@c_start_date.to_date + @c_pregnant_range - 1.day}' AND encounter.patient_id IN (#{@cohort_patients.join(',')})
+          WHERE o.site_id = #{@site_id} 
+          AND DATE(encounter_datetime) <= '#{@c_start_date.to_date + @c_pregnant_range - 1.day}' AND encounter.patient_id IN (#{@cohort_patients.join(',')})
           AND encounter.program_id = #{PROGRAM.id}
           GROUP BY encounter.patient_id
         SQL
       end
 
       def patients_given_at_least_three_sp_doses
-        Order.where('encounter.program_id = ? AND (drug.name = ? OR drug.name = ?) '\
+        Order.where('encounter.site_id = ? AND encounter.program_id = ? AND (drug.name = ? OR drug.name = ?) '\
               'AND DATE(encounter_datetime) <= ? AND encounter.patient_id IN (?)',
-                    PROGRAM.id, 'Sulphadoxine and Pyrimenthane (25mg tablet)', 'SP (3 tablets)',
+                    @site_id, PROGRAM.id, 'Sulphadoxine and Pyrimenthane (25mg tablet)', 'SP (3 tablets)',
                     ((@c_start_date.to_date + @c_pregnant_range) - 1.day), @cohort_patients)
              .joins([[drug_order: :drug], :encounter])
              .select(['encounter.patient_id, count(encounter.encounter_id) as count, '\
@@ -707,8 +714,8 @@ module AncService
         fefol = {}
         plus_120 = []
         Order.joins([[drug_order: :drug], :encounter])
-             .where(["encounter.program_id = ? AND drug.name = ? AND (DATE(encounter_datetime) >= #{@c_lmp}
-                AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)", PROGRAM.id,
+             .where(["encounter.site_id = ? AND encounter.program_id = ? AND drug.name = ? AND (DATE(encounter_datetime) >= #{@c_lmp}
+                AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)", @site_id, PROGRAM.id,
                      'Fefol (1 tablet)', ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                      @cohort_patients])
              .group([:patient_id]).select(["encounter.patient_id, count(*) datetime,
@@ -728,8 +735,8 @@ module AncService
 
       def patients_given_one_albendazole_dose
         Order.joins([[drug_order: :drug], :encounter])
-             .where(["encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= #{@c_lmp}
-                    AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)", PROGRAM.id,
+             .where(["encounter.site_id = ? AND encounter.program_id = ? AND drug.name LIKE ? AND (DATE(encounter_datetime) >= #{@c_lmp}
+                    AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)", @site_id, PROGRAM.id,
                      '%albendazole%', (@c_start_date.to_date + @c_pregnant_range), @cohort_patients])
              .select(["encounter.patient_id, encounter.encounter_id, drug.name instructions,
                     SUM(DATEDIFF(orders.auto_expire_date, orders.start_date)) orderer"])
@@ -744,11 +751,11 @@ module AncService
 
       def patients_given_bed_net
         Encounter.joins([:observations])
-                 .where(["program_id = ? AND encounter_type = ? AND concept_id = ?
+                 .where(["encounter.site_id = ? AND program_id = ? AND encounter_type = ? AND concept_id = ?
                   AND (value_text = 'Yes' OR value_coded = ?
                   OR value_text IN ('Given Today', 'Given during previous ANC visit for current pregnancy'))
                   AND ( DATE(encounter_datetime) >= #{@c_lmp} AND DATE(encounter_datetime) <= ?)
-                  AND encounter.patient_id IN (?)", PROGRAM.id, CURRENT_PREGNANCY.id,
+                  AND encounter.patient_id IN (?)", @site_id, PROGRAM.id, CURRENT_PREGNANCY.id,
                          BED_NET.concept_id, YES.concept_id,
                          (@c_start_date.to_date + @c_pregnant_range), @cohort_patients])
                  .collect(&:patient_id).uniq # rescue []
@@ -756,22 +763,22 @@ module AncService
 
       def patients_have_hb_less_than_7_g_dl
         Encounter.joins([:observations])
-                 .where(["program_id = ? AND encounter_type = ? AND concept_id = ?
+                 .where(["encounter.site_id = ? AND program_id = ? AND encounter_type = ? AND concept_id = ?
                 AND (value_text < 7 OR value_numeric < 7)
                 AND (DATE(encounter_datetime) >= #{@c_lmp}
                 AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)",
-                         PROGRAM.id, LAB_RESULTS.id, HB.concept_id,
+                         @site_id, PROGRAM.id, LAB_RESULTS.id, HB.concept_id,
                          ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                          @cohort_patients]).select(['DISTINCT patient_id']).collect(&:patient_id).uniq
       end
 
       def patients_have_hb_greater_than_6_g_dl
         Encounter.joins([:observations])
-                 .where(["program_id = ? AND encounter_type = ? AND concept_id = ?
+                 .where(["encounter.site_id = ? AND program_id = ? AND encounter_type = ? AND concept_id = ?
                 AND (value_text >= 7 OR value_numeric >= 7)
                 AND (DATE(encounter_datetime) >= #{@c_lmp}
                 AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)",
-                         PROGRAM.id, LAB_RESULTS.id, HB.concept_id,
+                         @site_id, PROGRAM.id, LAB_RESULTS.id, HB.concept_id,
                          ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                          @cohort_patients])
                  .select(['DISTINCT patient_id']).collect(&:patient_id).uniq
@@ -779,11 +786,11 @@ module AncService
 
       def patients_with_negative_syphilis_status
         Encounter.joins([:observations])
-                 .where(["program_id = ? AND encounter_type = ? AND concept_id = ?
+                 .where(["encounter.site_id = ? AND program_id = ? AND encounter_type = ? AND concept_id = ?
                 AND (value_coded = ? OR value_text = ?)
                 AND (DATE(encounter_datetime) >= #{@c_lmp}
                 AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)",
-                         PROGRAM.id, LAB_RESULTS.id, SYPHILIS.concept_id, NEGATIVE.concept_id,
+                         @site_id, PROGRAM.id, LAB_RESULTS.id, SYPHILIS.concept_id, NEGATIVE.concept_id,
                          'Negative', ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                          @cohort_patients])
                  .select(['DISTINCT patient_id']).collect(&:patient_id)
@@ -791,11 +798,11 @@ module AncService
 
       def patients_with_positive_syphilis_status
         Encounter.joins([:observations])
-                 .where(["program_id = ? AND encounter_type = ? AND concept_id = ?
+                 .where(["encounter.site_id = ? AND program_id = ? AND encounter_type = ? AND concept_id = ?
                 AND (value_coded = ? OR value_text = ?)
                 AND (DATE(encounter_datetime) >= #{@c_lmp}
                 AND DATE(encounter_datetime) <= ?) AND encounter.patient_id IN (?)",
-                         PROGRAM.id, LAB_RESULTS.id, SYPHILIS.concept_id, POSITIVE.concept_id,
+                         @site_id, PROGRAM.id, LAB_RESULTS.id, SYPHILIS.concept_id, POSITIVE.concept_id,
                          'Positive', ((@c_start_date.to_date + @c_pregnant_range) - 1.day),
                          @cohort_patients])
                  .select(['DISTINCT patient_id']).collect(&:patient_id)
@@ -827,7 +834,7 @@ module AncService
                       INNER JOIN obs o ON o.person_id = hs.patient_id
                           AND hs.voided = 0
                           AND o.voided = 0
-                          WHERE hs.encounter_type = #{CURRENT_PREGNANCY.id}
+                          WHERE hs.site_id = #{@site_id} AND hs.encounter_type = #{CURRENT_PREGNANCY.id}
                           AND o.concept_id = #{HIV_STATUS.concept_id}
                             AND hs.program_id = #{PROGRAM.id}
                           AND DATE(hs.encounter_datetime) >= DATE('#{@c_start_date}')
@@ -846,7 +853,7 @@ module AncService
                           AND DATE(hs.encounter_datetime) <= DATE('#{@end_date}')
                       GROUP BY hs.patient_id
                   ) as pre_results ON pre_results.patient_id = fv.patient_id
-                  WHERE DATE(fv.encounter_datetime) <= DATE('#{@end_date}')
+                  WHERE fv.site_id = #{@site_id} AND DATE(fv.encounter_datetime) <= DATE('#{@end_date}')
                   AND ob.concept_id = #{WEEK_OF_FIRST_VISIT.concept_id}
                     AND fv.encounter_type = #{LAB_RESULTS.id}
                   AND fv.program_id = #{PROGRAM.id}
@@ -857,7 +864,7 @@ module AncService
                       INNER JOIN obs f on f.encounter_id = e.encounter_id
                          AND e.voided = 0
                          AND f.voided = 0
-                      WHERE f.concept_id = #{HIV_STATUS.concept_id}
+                      WHERE e.site_id = #{@site_id} AND f.concept_id = #{HIV_STATUS.concept_id}
                         AND e.encounter_type = #{LAB_RESULTS.id}
                       AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
                       AND DATE(e.encounter_datetime) >= DATE('#{@c_start_date}')
@@ -868,7 +875,7 @@ module AncService
               AND DATE(e.encounter_datetime) <= DATE('#{@end_date}')
               AND DATE(e.encounter_datetime) >= DATE('#{@c_start_date}')
               AND e.program_id = #{PROGRAM.id}
-              WHERE e.patient_id IN (#{@cohort_patients.join(',')})
+              WHERE e.site_id = #{@site_id} AND e.patient_id IN (#{@cohort_patients.join(',')})
               AND e.voided = 0
           group by e.patient_id
         SQL

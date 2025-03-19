@@ -14,6 +14,8 @@ module LaboratoryService
           @start_date = start_date.to_date
           @end_date = end_date.to_date
           @occupation = kwargs[:occupation]
+          @site_id = kwargs[:site_id]
+          @dsd = kwargs[:dsd]
         end
 
         def read
@@ -45,7 +47,6 @@ module LaboratoryService
         def query
           start_date = ActiveRecord::Base.connection.quote(@start_date)
           end_date = ActiveRecord::Base.connection.quote(@end_date)
-
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT lab_result_obs.obs_id AS result_id,
                    lab_result_obs.obs_datetime AS result_date,
@@ -64,6 +65,7 @@ module LaboratoryService
             INNER JOIN orders
               ON orders.order_id = lab_result_obs.order_id
               AND orders.voided = 0
+            #{dsd_query(dsd: @dsd, model: 'orders') if @dsd}
             INNER JOIN (
               SELECT concept_id, name FROM concept_name INNER JOIN concept USING (concept_id) WHERE concept.retired = 0 GROUP BY concept_id
             ) AS specimen_concept
@@ -97,6 +99,7 @@ module LaboratoryService
             ) AS measure_concept
               ON measure_concept.concept_id = measure.concept_id
             WHERE lab_result_obs.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
+              AND lab_result_obs.site_id = #{@site_id.to_i}
               AND lab_result_obs.obs_datetime >= DATE(#{start_date})
               AND lab_result_obs.obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
             GROUP BY orders.order_id

@@ -4,7 +4,7 @@ include ModelUtils
 
 class TbService::TbQueries::NewPatientsQuery
   NON_TREATMENT_STATES = [173]
-  def initialize(relation = Patient.all)
+  def initialize(relation = Patient.where(site_id: Location.site_id))
     @relation = relation.extending(Scopes)
   end
 

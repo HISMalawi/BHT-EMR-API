@@ -9,6 +9,32 @@ module CommonSqlQueryUtils
                                                                                                   occupation)
   end
 
+  def site_filter(table_name: '', clause: 'AND')
+
+    return '' if table_name.blank?
+
+    site_id = Location.site_id
+
+    "#{clause} #{table_name}.site_id = #{site_id}"
+  end
+
+  def dsd_query(dsd:, model:)
+    <<~SQL 
+      INNER JOIN patient_program pp ON pp.patient_id = #{model}.patient_id
+      AND pp.voided = 0
+      INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id
+      AND ps.voided = 0
+      AND ps.state = (
+        SELECT program_workflow_state_id 
+          FROM program_workflow_state 
+          WHERE program_workflow_id = (
+            SELECT program_id FROM program WHERE name = 'DSD PROGRAM'
+          )
+          AND concept_id = #{dsd}
+      )
+    SQL
+  end
+
   def occupation_filter(occupation:, field_name:, table_name: '', include_clause: true)
     clause = 'WHERE' if include_clause
     table_name = "#{table_name}." unless table_name.blank?
@@ -30,10 +56,12 @@ module CommonSqlQueryUtils
       WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
       AND DATE(obs_datetime) <= #{end_date}
       AND voided = 0
+      #{site_filter(table_name: 'obs')}
       GROUP BY person_id) latest_record
       WHERE obs.person_id = latest_record.person_id
       AND obs.concept_id = latest_record.concept_id
       AND obs.obs_datetime = latest_record.obs_datetime
+      #{site_filter(table_name: 'obs')}
       AND obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name = 'Drug refill' || name = 'External consultation')
       AND obs.voided = 0
     SQL
@@ -47,7 +75,9 @@ module CommonSqlQueryUtils
       ON a.person_attribute_id = b.person_attribute_id
       AND a.date_created < b.date_created
       AND b.voided = 0
+      #{site_filter(table_name: 'b')}
       WHERE b.person_attribute_id IS NULL AND a.person_attribute_type_id = 13 AND a.voided = 0
+      #{site_filter(table_name: 'a')}
     SQL
   end
 end

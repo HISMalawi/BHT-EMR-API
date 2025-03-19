@@ -101,7 +101,8 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
          `encounter`.`void_reason` AS `void_reason`,
          `encounter`.`uuid` AS `uuid`,
          `encounter`.`changed_by` AS `changed_by`,
-         `encounter`.`date_changed` AS `date_changed`
+         `encounter`.`date_changed` AS `date_changed`,
+         `encounter`.`site_id` AS `site_id`
 	FROM `encounter`
 	WHERE (`encounter`.`encounter_type` = 9 AND `encounter`.`voided` = 0);
 
@@ -291,7 +292,8 @@ CREATE OR REPLACE ALGORITHM=UNDEFINED  SQL SECURITY INVOKER
          `obs`.`date_voided` AS `date_voided`,
          `obs`.`void_reason` AS `void_reason`,
          `obs`.`value_complex` AS `value_complex`,
-         `obs`.`uuid` AS `uuid`
+         `obs`.`uuid` AS `uuid`,
+         `obs`.`site_id` AS `site_id`
   FROM `obs`
   WHERE ((`obs`.`concept_id` = 7937) AND (`obs`.`voided` = 0))
   AND (`obs`.`value_coded` = 1065);

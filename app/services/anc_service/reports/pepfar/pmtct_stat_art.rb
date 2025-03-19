@@ -33,9 +33,11 @@ module AncService
         def initialize(start_date:, end_date:, **_kwargs)
           @start_date = start_date
           @end_date = end_date + 1.day
+          @site_id = Location.current.location_id
         end
 
-        def find_report
+        def find_report(site_id:, **kwargs)
+          @site_id = site_id
           report = init_report_structure
           response = []
           process_clients(pmtct_clients, report).each do |key, value|
@@ -72,6 +74,7 @@ module AncService
                          AND ob.concept_id = #{concept('Week of first visit').id}
                          AND e.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'CURRENT PREGNANCY' LIMIT 1)
                          AND e.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
+                         AND e.site_id = #{@site_id}
                      ) first_visit ON first_visit.patient_id = p.person_id
                 INNER JOIN encounter visit ON visit.patient_id = p.person_id
                   AND visit.encounter_type = (SELECT encounter_type_id FROM encounter_type where name = 'Lab results' LIMIT 1)
@@ -79,18 +82,23 @@ module AncService
                   AND visit.encounter_datetime BETWEEN '#{@start_date}' AND '#{@end_date}'
                   AND visit.voided = 0
                   AND p.voided = 0
+                  AND visit.site_id = #{@site_id}
                   AND visit.program_id = (SELECT program_id FROM program WHERE name = 'ANC PROGRAM' LIMIT 1)
                 LEFT JOIN obs prev_test ON prev_test.encounter_id = visit.encounter_id
                   AND prev_test.voided = 0
+                  AND prev_test.site_id = #{@site_id}
                   AND prev_test.concept_id = #{concept('Previous HIV test done').id}
                 LEFT JOIN obs prev_test_result ON prev_test_result.encounter_id = visit.encounter_id
                   AND prev_test_result.voided = 0
+                  AND prev_test_result.site_id = #{@site_id}
                   AND prev_test_result.concept_id = #{concept('Previous HIV test results').id}
                 LEFT JOIN obs current_test_result ON current_test_result.encounter_id = visit.encounter_id
                   AND current_test_result.voided = 0
+                  AND current_test_result.site_id = #{@site_id}
                   AND current_test_result.concept_id = #{concept('HIV status').id}
                 LEFT JOIN obs art_status ON art_status.encounter_id = visit.encounter_id
                   AND art_status.voided = 0
+                  AND art_status.site_id = #{@site_id}
                   AND art_status.concept_id = #{concept('On ART').id}
             GROUP BY p.person_id
           SQL

@@ -177,7 +177,7 @@ class PersonService
 
   # Search people by using the ART 1 & 2 soundex person search algorithm.
   def soundex_person_search(given_name, middle_name, family_name, gender)
-    people = Person.all
+    people = Person.where(site_id: Location.site_id)
     people = people.where('gender like ?', "#{gender}%") unless gender.blank?
 
     if given_name || family_name || middle_name
@@ -198,7 +198,7 @@ class PersonService
 
   # Search for people by matching using MySQL glob.
   def glob_person_search(given_name, middle_name, family_name, gender)
-    people = Person.all
+    people = Person.where(site_id: Location.site_id)
     people = people.where('gender like ?', "#{gender}%") unless gender.blank?
 
     if given_name || family_name

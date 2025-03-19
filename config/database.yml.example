@@ -51,7 +51,7 @@ healthdata:
   host: localhost
   pool: 500
 
-# concepts_merge_db:
+# metadata_server:
 #  adapter: mysql2
 #  username: root
 #  database: openmrs

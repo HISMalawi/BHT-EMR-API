@@ -10,9 +10,9 @@ module OpdService
       end
 
       def triage_registration
-        Observation.where('obs_datetime BETWEEN ? AND ? AND c.name IN(?) AND c.voided = ?',
+        Observation.where('obs_datetime BETWEEN ? AND ? AND c.name IN(?) AND c.voided = ? AND site_id = ?',
                           @start_date.to_date.strftime('%Y-%m-%d 00:00:00'), @end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
-                          'History of COVID-19 contact', 0)\
+                          'History of COVID-19 contact', 0, Location.current.location_id)\
                    .joins('INNER JOIN concept_name c ON c.concept_id = obs.concept_id
     INNER JOIN person p ON p.person_id = obs.person_id')\
                    .group(:person_id).pluck(:gender, :person_id).group_by(&:shift)

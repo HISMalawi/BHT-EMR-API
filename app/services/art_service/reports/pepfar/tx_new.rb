@@ -14,6 +14,7 @@ module ArtService
 
         def initialize(start_date:, end_date:, **kwargs)
           super(start_date:, end_date:, **kwargs)
+          @dsd = kwargs[:dsd]
         end
 
         def find_report
@@ -161,6 +162,7 @@ module ArtService
               preg_or_breast.name AS maternal_status,
               DATE(MIN(pregnant_or_breastfeeding.obs_datetime)) AS maternal_status_date
             FROM temp_earliest_start_date e
+            #{dsd_query(dsd: @dsd, model: 'e') if @dsd}
             LEFT JOIN (
               SELECT max(o.obs_datetime) AS obs_datetime, o.person_id
               FROM obs o
@@ -169,17 +171,21 @@ module ArtService
                   AND pp.program_id = #{program('HIV PROGRAM').id}
                   AND pp.voided = 0
               INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id AND ps.voided = 0 AND ps.state = 7 AND ps.start_date <= DATE('#{end_date}')
+              #{site_filter(table_name: 'o')}
               WHERE o.concept_id = #{concept_name('CD4 count').concept_id} AND o.voided = 0
               AND o.obs_datetime <= '#{end_date}' AND o.obs_datetime >= '#{start_date}'
               GROUP BY o.person_id
             ) current_cd4 ON current_cd4.person_id = e.patient_id
             LEFT JOIN obs o ON o.person_id = e.patient_id AND o.concept_id = #{concept_name('CD4 count').concept_id} AND o.voided = 0 AND o.obs_datetime = current_cd4.obs_datetime
+            #{site_filter(table_name: 'o')}
             LEFT JOIN obs pregnant_or_breastfeeding ON pregnant_or_breastfeeding.person_id = e.patient_id
               AND pregnant_or_breastfeeding.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Breast feeding?', 'Breast feeding', 'Breastfeeding', 'Is patient pregnant?', 'patient pregnant') AND voided = 0)
               AND pregnant_or_breastfeeding.voided = 0
               AND pregnant_or_breastfeeding.value_coded = #{concept_name('Yes').concept_id}
+              #{site_filter(table_name: 'pregnant_or_breastfeeding')}
             LEFT JOIN concept_name preg_or_breast ON preg_or_breast.concept_id = pregnant_or_breastfeeding.concept_id AND preg_or_breast.voided = 0
             WHERE e.date_enrolled <= '#{end_date}' AND e.date_enrolled >= '#{start_date}'
+            #{site_filter(table_name: 'e')}
             GROUP BY e.patient_id
           SQL
         end

@@ -6,7 +6,7 @@ class PatientService
 
   def create_patient(program, person, malawi_national_id = nil)
     ActiveRecord::Base.transaction do
-      patient = Patient.create(patient_id: person.id)
+      patient = Patient.create(patient_id: person.id, site_id: Location.site_id)
       unless patient.errors.empty?
         raise "Could not create patient for person ##{person.id} due to #{patient.errors.as_json}"
       end
@@ -806,7 +806,7 @@ class PatientService
   end
 
   HTN_DRUG_NAMES = [
-    'HCZ (25mg tablet)', 'Amlodipine (5mg tablet)', 'Amlodipine (10mg tablet)',
+    'HCTZ (25mg tablet)', 'Amlodipine (5mg tablet)', 'Amlodipine (10mg tablet)',
     'Enalapril (5mg tablet)', 'Enalapril (10mg tablet)', 'Atenolol (50mg tablet)',
     'Atenolol (100mg tablet)'
   ].freeze
@@ -837,7 +837,7 @@ class PatientService
     result = {}
 
     map = {
-      'HCZ (25mg tablet)' => 'HCZ',
+      'HCTZ (25mg tablet)' => 'HCTZ',
       'Amlodipine (5mg tablet)' => 'Amlodipine',
       'Amlodipine (10mg tablet)' => 'Amlodipine',
       'Enalapril (5mg tablet)' => 'Enalapril',

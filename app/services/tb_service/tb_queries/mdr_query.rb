@@ -4,7 +4,7 @@ class TbService::TbQueries::MdrQuery
   MDR_STATE_ID = 174
   TB_STATE = 92
 
-  def initialize (relation = Patient.all)
+  def initialize (relation = Patient.where(site_id: Location.site_id))
     @relation = relation
     @program = program('TB Program')
   end

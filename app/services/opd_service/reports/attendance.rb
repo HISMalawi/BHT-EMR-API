@@ -15,6 +15,7 @@ module OpdService
       WHERE e.voided = 0 AND encounter_datetime BETWEEN '" + start_date.to_date.strftime('%Y-%m-%d 00:00:00') + "'
         AND '" + end_date.to_date.strftime('%Y-%m-%d 23:59:59') + "'
         AND program_id ='" + programID.program_id.to_s + "'
+        AND site_id = #{Location.current.location_id}
       GROUP BY patient_id,DATE(encounter_datetime)"
         ).map(&:patient_id)
       end

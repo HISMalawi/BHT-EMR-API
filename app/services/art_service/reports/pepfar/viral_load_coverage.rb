@@ -7,6 +7,7 @@ module ArtService
         attr_reader :start_date, :end_date
 
         include Utils
+        include CommonSqlQueryUtils
 
         def initialize(**params)
           @start_date = params[:start_date]&.to_date
@@ -78,6 +79,7 @@ module ArtService
               WHERE concept_id IN (#{pregnant_concepts.to_sql})
                 AND obs_datetime BETWEEN DATE('#{@start_date}') AND DATE('#{@end_date}') + INTERVAL 1 DAY
                 AND obs.voided = 0
+              #{site_filter(table_name: 'obs')}
               GROUP BY person_id
             ) AS max_obs
               ON max_obs.person_id = obs.person_id
@@ -85,6 +87,7 @@ module ArtService
             WHERE obs.concept_id IN (#{pregnant_concepts.to_sql})
               AND obs.voided = 0
               AND obs.person_id IN (#{patient_list.join(',')})
+              #{site_filter(table_name: 'obs')}
             GROUP BY obs.person_id
             HAVING obs.value_coded = 1065
             ORDER BY obs.obs_datetime DESC;
@@ -122,12 +125,14 @@ module ArtService
               AND concept_id IN (#{breastfeeding_concepts.to_sql})
               AND obs.voided = 0
               AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
+              #{site_filter(table_name: 'obs')}
               GROUP BY person_id
             ) AS max_obs
               ON max_obs.person_id = obs.person_id
               AND max_obs.obs_datetime = obs.obs_datetime
             WHERE obs.person_id = e.patient_id
             AND obs.person_id IN (#{patient_list.join(',')})
+            #{site_filter(table_name: 'obs')}
             AND obs.obs_datetime BETWEEN DATE("#{@start_date}") AND DATE("#{@end_date}") + INTERVAL 1 DAY
             AND obs.concept_id IN (#{breastfeeding_concepts.to_sql})
             AND obs.voided = 0
@@ -245,6 +250,7 @@ module ArtService
                 AND concept_name.voided = 0
               WHERE orders.start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
                 AND orders.voided = 0
+                #{site_filter(table_name: 'orders')}
               GROUP BY orders.patient_id
             ) AS latest_patient_order_date
               ON latest_patient_order_date.patient_id = orders.patient_id
@@ -257,7 +263,9 @@ module ArtService
               ON patient_identifier.patient_id = orders.patient_id
               AND patient_identifier.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
               AND patient_identifier.voided = 0
+              #{site_filter(table_name: 'patient_identifier')}
             WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
+            #{site_filter(table_name: 'orders')}
             GROUP BY orders.patient_id
           SQL
         end
@@ -289,7 +297,9 @@ module ArtService
               WHERE orders.start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
                 AND orders.concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)'))
                 AND orders.voided = 0
+                #{site_filter(table_name: 'orders')}
             ) AND patient.earliest_start_date <= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 6 MONTH
+             #{site_filter(table_name: 'patient')}
             GROUP BY patient.patient_id
           SQL
         end
@@ -322,6 +332,7 @@ module ArtService
               ON reason_for_test.order_id = orders.order_id
               AND reason_for_test.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'Reason for test' AND voided = 0)
               AND reason_for_test.voided = 0
+              #{site_filter(table_name: 'reason_for_test')}
             LEFT JOIN concept_name AS reason_for_test_value
               ON reason_for_test_value.concept_id = reason_for_test.value_coded
               AND reason_for_test_value.voided = 0
@@ -330,6 +341,7 @@ module ArtService
               AND result.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'HIV Viral load' AND voided = 0)
               AND result.voided = 0
               AND (result.value_text IS NOT NULL OR result.value_numeric IS NOT NULL)
+               #{site_filter(table_name: 'result')}
             INNER JOIN (
               /* Get the latest order dates for each patient */
               SELECT orders.patient_id, MAX(orders.start_date) AS start_date
@@ -344,6 +356,7 @@ module ArtService
                 AND concept_name.voided = 0
               WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
                 AND orders.voided = 0
+                 #{site_filter(table_name: 'orders')}
               GROUP BY orders.patient_id
             ) AS latest_patient_order_date
               ON latest_patient_order_date.patient_id = orders.patient_id
@@ -356,8 +369,10 @@ module ArtService
               ON patient_identifier.patient_id = orders.patient_id
               AND patient_identifier.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
               AND patient_identifier.voided = 0
+               #{site_filter(table_name: 'patient_identifier')}
             WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
               AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(start_date)})
+              #{site_filter(table_name: 'orders')}
             GROUP BY orders.patient_id
           SQL
         end
@@ -387,6 +402,7 @@ module ArtService
               ON patient_identifier.patient_id = obs.person_id
               AND patient_identifier.voided = 0
               AND patient_identifier.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
+              #{site_filter(table_name: 'patient_identifier')}
             INNER JOIN (
               SELECT obs.person_id, MAX(obs.obs_datetime) AS obs_datetime
               FROM obs
@@ -396,10 +412,12 @@ module ArtService
                 AND obs.obs_datetime > DATE(#{ActiveRecord::Base.connection.quote(start_date)}) - INTERVAL 1 DAY
                 AND obs.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
                 AND obs.voided = 0
+                #{site_filter(table_name: 'obs')}
               GROUP BY obs.person_id
             ) AS latest_results
               ON latest_results.person_id = obs.person_id
               AND latest_results.obs_datetime = obs.obs_datetime
+              #{site_filter(table_name: 'obs')}
             WHERE obs.concept_id IN (#{concept('Viral load').to_sql})
               AND obs.value_numeric IS NOT NULL
               AND obs.voided = 0

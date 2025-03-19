@@ -18,6 +18,8 @@ module ArtService
           @cut_off_point = start_date.to_date
           @end_date = ActiveRecord::Base.connection.quote(end_date)
           @occupation = kwargs[:occupation]
+          @site_id = Location.current.location_id
+          @dsd = kwargs[:dsd]
         end
 
         def find_report
@@ -132,6 +134,7 @@ module ArtService
               ON patient_identifier.patient_id = person.person_id
               AND patient_identifier.voided = 0
               AND patient_identifier.identifier_type IN (SELECT patient_identifier_type_id FROM patient_identifier_type WHERE name = 'ARV Number')
+              #{site_filter(table_name: 'patient_identifier')}
             LEFT JOIN (#{current_occupation_query}) AS current_occupation ON current_occupation.person_id = person.person_id
             INNER JOIN(
                 SELECT denominator_encounter.patient_id AS patient_id, patient_state.start_date AS start_date
@@ -140,6 +143,7 @@ module ArtService
                   ON patient_program.patient_id = person.person_id
                   AND patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
                   AND patient_program.voided = 0
+                  #{site_filter(table_name: 'person')}
                 INNER JOIN patient_state
                   ON patient_state.patient_program_id = patient_program.patient_program_id
                   AND patient_state.state = 7 /* State: 7 == On antiretrovirals */
@@ -152,8 +156,10 @@ module ArtService
                   AND denominator_encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 6 MONTH
                   AND denominator_encounter.encounter_datetime <= DATE(#{start_date})
                   AND denominator_encounter.voided = 0
+                  AND denominator_encounter.site_id = #{@site_id}
                 GROUP BY patient_id
             ) AS denominator_patient ON denominator_patient.patient_id = person.person_id
+             #{dsd_query(dsd: @dsd, model: 'denominator_patient') if @dsd}
             INNER JOIN encounter AS prescription_encounter
               ON prescription_encounter.patient_id = denominator_patient.patient_id
               AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
@@ -161,11 +167,13 @@ module ArtService
               AND prescription_encounter.encounter_datetime >= DATE(#{start_date}) - INTERVAL 6 MONTH
               AND prescription_encounter.encounter_datetime <= DATE(#{end_date})
               AND prescription_encounter.voided = 0
+              AND prescription_encounter.site_id = #{@site_id}
             INNER JOIN orders
               ON orders.encounter_id = prescription_encounter.encounter_id
               AND orders.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
               AND orders.start_date >= DATE(#{start_date}) - INTERVAL 6 MONTH
               AND orders.start_date <= DATE(#{end_date})
+              AND orders.site_id = #{@site_id}
               AND orders.voided = 0
             INNER JOIN concept_name
               ON concept_name.concept_id = orders.concept_id
@@ -174,6 +182,7 @@ module ArtService
               ON drug_order.order_id = orders.order_id
               AND drug_order.quantity > 0
             WHERE person.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'current_occupation', include_clause: false)}
+              #{site_filter(table_name: 'person')}
               AND person.person_id NOT IN (
               /* External consultations */
               SELECT DISTINCT registration_encounter.patient_id
@@ -184,12 +193,14 @@ module ArtService
                 AND registration_encounter.program_id = pp.program_id
                 AND registration_encounter.encounter_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
                 AND registration_encounter.voided = 0
+                #{site_filter(table_name: 'registration_encounter')}
               INNER JOIN (
                 SELECT MAX(encounter.encounter_datetime) AS encounter_datetime, encounter.patient_id
                 FROM encounter
                 INNER JOIN encounter_type
                   ON encounter_type.encounter_type_id = encounter.encounter_type
                   AND encounter_type.name = 'Registration'
+                #{site_filter(table_name: 'encounter')}
                 INNER JOIN program
                   ON program.program_id = encounter.program_id
                   AND program.name = 'HIV Program'
@@ -203,6 +214,8 @@ module ArtService
                 AND patient_type_obs.concept_id IN (SELECT concept_id FROM concept_name WHERE name = 'Type of patient' AND voided = 0)
                 AND patient_type_obs.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('Drug refill', 'External consultation') AND voided = 0)
                 AND patient_type_obs.voided = 0
+                #{site_filter(table_name: 'patient_type_obs')}
+                #{site_filter(table_name: 'person')}
               WHERE pp.voided = 0
             )
             GROUP BY person.person_id
@@ -234,11 +247,13 @@ module ArtService
             INNER JOIN concept_name cn
               ON cn.concept_id = o.concept_id
               AND cn.name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')
+              #{site_filter(table_name: 'o')}
             LEFT JOIN obs tpt_transfer_in_obs
               ON tpt_transfer_in_obs.person_id = o.patient_id
               AND tpt_transfer_in_obs.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').concept_id}
               AND tpt_transfer_in_obs.voided = 0
               AND tpt_transfer_in_obs.value_drug IN (SELECT drug_id FROM drug WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')))
+              #{site_filter(table_name: 'tpt_transfer_in_obs')}
             INNER JOIN drug_order dor
               ON dor.order_id = o.order_id
               AND dor.quantity > 0
@@ -246,6 +261,7 @@ module ArtService
             AND o.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
             AND o.voided = 0
             AND o.patient_id = #{patient_id}
+            AND o.site_id = #{@site_id}
             GROUP BY o.patient_id
           SQL
         end
@@ -286,10 +302,12 @@ module ArtService
               FROM obs o
               WHERE o.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').concept_id}
               AND o.voided = 0
+              AND o.site_id = #{@site_id}
               AND o.value_drug IN (SELECT drug_id FROM drug WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')))
               AND o.person_id = #{patient_id}
               AND o.value_numeric IS NOT NULL
               AND DATE(o.obs_datetime) <= DATE(#{start_date})
+              #{site_filter(table_name: 'o')}
               GROUP BY DATE(o.obs_datetime)
               ORDER BY DATE(o.obs_datetime) DESC
             )
@@ -308,10 +326,12 @@ module ArtService
               INNER JOIN drug_order dor ON dor.order_id = o.order_id AND dor.quantity > 0
               WHERE o.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
               AND o.voided = 0
+              AND o.site_id = #{@site_id}
               AND o.concept_id IN (#{ConceptName.where(name: ['Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine']).select(:concept_id).to_sql})
               AND o.patient_id = #{patient_id}
               AND o.auto_expire_date IS NOT NULL
               AND DATE(o.start_date) <= DATE(#{start_date})
+              #{site_filter(table_name: 'o')}
               GROUP BY DATE(o.start_date)
               ORDER BY DATE(o.start_date) DESC
             )
@@ -333,10 +353,12 @@ module ArtService
               FROM obs o
               WHERE o.concept_id = #{ConceptName.find_by_name('TPT Drugs Received').concept_id}
               AND o.voided = 0
+              AND o.site_id = #{@site_id}
               AND o.value_drug IN (SELECT drug_id FROM drug WHERE concept_id IN (SELECT concept_id FROM concept_name WHERE name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine')))
               AND o.person_id = #{patient_id}
               AND o.value_numeric IS NOT NULL
               AND DATE(o.obs_datetime) BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
+              #{site_filter(table_name: 'o')}
               GROUP BY DATE(o.obs_datetime)
               ORDER BY DATE(o.obs_datetime) DESC
             )
@@ -355,10 +377,12 @@ module ArtService
               INNER JOIN drug_order dor ON dor.order_id = o.order_id AND dor.quantity > 0
               WHERE o.order_type_id IN (SELECT order_type_id FROM order_type WHERE name = 'Drug order')
               AND o.voided = 0
+              AND o.site_id = #{@site_id}
               AND o.concept_id IN (#{ConceptName.where(name: ['Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine']).select(:concept_id).to_sql})
               AND o.patient_id = #{patient_id}
               AND o.auto_expire_date IS NOT NULL
               AND DATE(o.start_date) BETWEEN DATE(#{start_date}) AND DATE(#{end_date})
+              #{site_filter(table_name: 'o')}
               GROUP BY DATE(o.start_date)
               ORDER BY DATE(o.start_date) DESC
             )

@@ -26,8 +26,8 @@ module OpdService
         program_id = Program.find_by_name('OPD Program')&.program_id
         raise 'OPD Program not found in programs table' unless program_id
 
-        la_one_drug_id = begin
-          Drug.find_by_name('Lumefantrine + Arthemether 1 x 6').drug_id
+        la_one_drug_ids = begin
+          Drug.where(name: ['Lumefantrine + Arthemether 1 x 6', 'LA (Lumefantrine + arthemether)']).pluck(:drug_id)
         rescue StandardError
           0
         end
@@ -48,11 +48,12 @@ module OpdService
                 INNER JOIN drug d ON do.drug_inventory_id = d.drug_id
               WHERE e.encounter_type = #{treatment_encounter_type_id}
                 AND e.program_id = #{program_id}
-                AND do.drug_inventory_id = #{la_one_drug_id}
+                AND do.drug_inventory_id IN (#{la_one_drug_ids.join(',')})
                 AND o.order_type_id = #{drug_order_type_id}
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND e.voided = 0
+                AND e.site_id = #{Location.current.location_id}
               GROUP BY do.drug_inventory_id
             SQL
           ).last.total_prescribed_drugs
@@ -78,6 +79,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND obs.concept_id = #{amount_dispensed_concept}
                 AND e.voided = 0
+                AND e.site_id = #{Location.current.location_id}
                GROUP BY d.drug_id
             SQL
           ).last.total_dispensed_drugs
@@ -101,6 +103,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND e.voided=0
+                AND e.site_id = #{Location.current.location_id}
               GROUP BY do.drug_inventory_id
             SQL
           ).last.total_prescribed_drugs
@@ -125,6 +128,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND e.voided = 0
+                AND e.site_id = #{Location.current.location_id}
               GROUP BY d.drug_id
             SQL
           ).last.total_dispensed_drugs
@@ -146,8 +150,10 @@ module OpdService
                 AND do.drug_inventory_id = #{la_three_drug_id}
                 AND o.order_type_id = #{drug_order_type_id}
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
-              AND DATE(e.encounter_datetime) <= '#{end_date}'
-              AND e.voided=0 GROUP BY do.drug_inventory_id
+                AND DATE(e.encounter_datetime) <= '#{end_date}'
+                AND e.voided=0 
+                AND e.site_id = #{Location.current.location_id}
+              GROUP BY do.drug_inventory_id
             SQL
           ).last.total_prescribed_drugs
         rescue StandardError
@@ -172,6 +178,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND e.voided = 0
+                AND e.site_id = #{Location.current.location_id}
               GROUP BY d.drug_id
             SQL
           ).last.total_dispensed_drugs
@@ -195,6 +202,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND e.voided = 0
+                AND e.site_id = #{Location.current.location_id}
               GROUP BY do.drug_inventory_id
             SQL
           ).last.total_prescribed_drugs
@@ -220,6 +228,7 @@ module OpdService
                 AND DATE(e.encounter_datetime) >= '#{start_date}'
                 AND DATE(e.encounter_datetime) <= '#{end_date}'
                 AND e.voided = 0
+                AND e.site_id = #{Location.current.location_id}
               GROUP BY d.drug_id
             SQL
           ).last.total_dispensed_drugs

@@ -65,12 +65,12 @@ module OpdService
     def with_nids(start_date, end_date)
       type = PatientIdentifierType.find_by_name 'Malawi National ID'
 
-      data = Person.where('identifier_type = ? AND identifier != ? AND identifier != ? AND identifier != ?', type.id,
-                          'unknown', 'N/A', '')\
+      data = Person.where('identifier_type = ? AND identifier != ? AND identifier != ? AND identifier != ? AND n.site_id = ?', type.id,
+                          'unknown', 'N/A', '', Location.current.location_id)\
                    .joins('INNER JOIN patient_identifier i ON i.patient_id = person.person_id
-        RIGHT JOIN person_address a ON a.person_id = person.person_id
+        RIGHT JOIN person_address a ON a.person_id = person.person_id AND a.site_id = person.site_id
         RIGHT JOIN person_name n ON n.person_id = person.person_id')\
-                   .where(n: { date_created: start_date..end_date })
+                   .where(n: { date_created: start_date&.to_date.beginning_of_day..end_date&.to_date.end_of_day })
                    .select('person.*, a.state_province district, i.identifier nid,
         a.township_division ta, a.city_village village,
         n.given_name, n.family_name').order('n.date_created DESC')
@@ -100,12 +100,11 @@ module OpdService
 
     def diagnosis_by_address(start_date, end_date)
       type = EncounterType.find_by_name 'Outpatient diagnosis'
-
       data = Encounter.where('encounter_datetime BETWEEN ? AND ?
         AND encounter_type = ? AND value_coded IS NOT NULL
-        AND concept_id IN(6543, 6542)',
+        AND concept_id IN(6543, 6542) AND encounter.site_id = ?',
                              start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-                             end_date.to_date.strftime('%Y-%m-%d 23:59:59'), type.id)\
+                             end_date.to_date.strftime('%Y-%m-%d 23:59:59'), type.id, Location.current.location_id)\
                       .joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
         RIGHT JOIN person_address a ON a.person_id = encounter.patient_id')\
@@ -153,6 +152,7 @@ module OpdService
             encounter.voided = 0
             AND  DATE(encounter_datetime) BETWEEN '#{start_date}' AND '#{end_date}'
             AND encounter.program_id = 14 -- OPD program
+            AND encounter.site_id = #{Location.current.location_id}
         GROUP BY obs.person_id, DATE(encounter_datetime)
         ORDER BY n.date_created DESC;
       SQL
@@ -160,15 +160,16 @@ module OpdService
 
     def malaria_report(start_date, end_date)
       EncounterType.find_by_name 'Outpatient diagnosis'
-      data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        ',
-                             start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-                             end_date.to_date.strftime('%Y-%m-%d 23:59:59'))\
-                      .joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+      data = Encounter.where('encounter_datetime BETWEEN ? AND ? AND site_id = ?',
+                            start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
+                            end_date.to_date.strftime('%Y-%m-%d 23:59:59'), 
+                            Location.current.location_id
+                        )\
+                      .joins("INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
-        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
+        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0 AND n.site_id = #{Location.current.location_id}
         LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
-        RIGHT JOIN person_address a ON a.person_id = encounter.patient_id')\
+        RIGHT JOIN person_address a ON a.person_id = encounter.patient_id")\
                       .select('encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_text, obs.value_coded, p.*,
         a.state_province district, a.township_division ta, a.city_village village, z.value')
 
@@ -252,14 +253,14 @@ module OpdService
       type = EncounterType.find_by_name 'Outpatient diagnosis'
       data = Encounter.where('encounter_datetime BETWEEN ? AND ?
         AND encounter_type = ? AND value_coded IS NOT NULL
-        AND concept_id IN(6543, 6542)',
+        AND concept_id IN(6543, 6542) AND site_id = ?',
                              start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-                             end_date.to_date.strftime('%Y-%m-%d 23:59:59'), type.id)\
-                      .joins('INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
+                             end_date.to_date.strftime('%Y-%m-%d 23:59:59'), type.id, Location.current.location_id)\
+                      .joins("INNER JOIN obs ON obs.encounter_id = encounter.encounter_id
         INNER JOIN person p ON p.person_id = encounter.patient_id
-        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0
+        LEFT JOIN person_name n ON n.person_id = encounter.patient_id AND n.voided = 0 AND n.site_id = #{Location.current.location_id}
         LEFT JOIN person_attribute z ON z.person_id = encounter.patient_id AND z.person_attribute_type_id = 12
-        RIGHT JOIN person_address a ON a.person_id = encounter.patient_id')\
+        RIGHT JOIN person_address a ON a.person_id = encounter.patient_id")\
                       .select('encounter.encounter_type,n.given_name, n.family_name, n.person_id, obs.value_coded, p.*,
         a.state_province district, a.township_division ta, a.city_village village, z.value')
 
@@ -351,9 +352,12 @@ module OpdService
       programID = Program.find_by_name 'OPD Program'
 
       data = Encounter.where('encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND program_id = ?',
+        AND encounter_type = ? AND program_id = ? AND site_id = ?',
                              start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-                             end_date.to_date.strftime('%Y-%m-%d 23:59:59'), type.id, programID.program_id)\
+                             end_date.to_date.strftime('%Y-%m-%d 23:59:59'), 
+                             type.id, programID.program_id, 
+                              Location.current.location_id
+                      )\
                       .joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
         INNER JOIN drug_order i ON i.order_id = o.order_id
         INNER JOIN drug d ON d.drug_id = i.drug_inventory_id')\
@@ -365,9 +369,13 @@ module OpdService
       (data || []).each do |record|
         drug_name = record['drug_name']
         data2 = Encounter.where("encounter_datetime BETWEEN ? AND ?
-        AND encounter_type = ? AND d.name = ? AND program_id = ?",
+        AND encounter_type = ? AND d.name = ? AND program_id = ? AND site_id = ?",
                                 start_date.to_date.strftime('%Y-%m-%d 00:00:00'),
-                                end_date.to_date.strftime('%Y-%m-%d 23:59:59'), type.id, drug_name, programID.program_id)\
+                                end_date.to_date.strftime('%Y-%m-%d 23:59:59'), 
+                                type.id, drug_name, 
+                                programID.program_id,
+                                Location.current.location_id
+                          )\
                          .joins('INNER JOIN orders o ON o.encounter_id = encounter.encounter_id
         INNER JOIN drug_order i ON i.order_id = o.order_id
         INNER JOIN drug d ON d.drug_id = i.drug_inventory_id')\
@@ -536,7 +544,7 @@ module OpdService
       ili_id = ConceptName.find_by_name 'ILI'
       respiratory_id = ConceptName.find_by_name 'Respiratory'
       data = Observation.where(Arel.sql("obs_datetime BETWEEN '#{(@date - 11.month).beginning_of_month}' AND '#{@date}' AND obs.value_text IN('Respiratory', 'ILI') OR
-      obs.value_coded IN (#{ili_id.concept_id},#{respiratory_id.concept_id})")).group('name', 'months')\
+      obs.value_coded IN (#{ili_id.concept_id},#{respiratory_id.concept_id}) AND site_id = '#{Location.current.location_id}'")).group('name', 'months')\
                         .pluck(Arel.sql("
         coalesce(obs.value_text, (select name from concept_name where concept_id = obs.value_coded limit 1)) name,
         DATE_FORMAT(obs.obs_datetime ,'%Y-%m-01') as obs_date,

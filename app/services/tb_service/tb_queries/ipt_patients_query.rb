@@ -3,7 +3,7 @@ include ModelUtils
 class TbService::TbQueries::IptPatientsQuery
   ON_IPT = 173
 
-  def initialize (relation = Patient.all)
+  def initialize (relation = Patient.where(site_id: Location.site_id))
     @relation = relation
     @program = program('TB Program')
   end

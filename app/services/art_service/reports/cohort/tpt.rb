@@ -9,6 +9,7 @@ class ArtService::Reports::Cohort::Tpt
     @start_date = start_date
     @end_date = end_date
     @occupation = kwargs[:occupation]
+    @dsd = kwargs[:dsd]
     return unless @occupation.present?
 
     process_occupation(start_date: @start_date, end_date: @end_date,
@@ -115,6 +116,7 @@ class ArtService::Reports::Cohort::Tpt
         last_tpt_prescription.start_date AS last_tpt_start_date,
         last_tpt_prescription.auto_expire_date AS last_tpt_end_date
       FROM temp_earliest_start_date AS cohort_patients
+      #{dsd_query(dsd: @dsd, model: 'cohort_patients') if @dsd}
       INNER JOIN orders
         ON orders.patient_id = cohort_patients.patient_id
         AND orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)

@@ -88,6 +88,8 @@ module ArtService
             INNER JOIN encounter e ON e.patient_id = o.patient_id AND e.program_id = 1
             WHERE o.voided = 0 AND o.patient_id = #{patient_id}
             AND d.concept_id = 656 AND t.quantity > 0;
+            #{site_filter(table_name: 'orders')}
+            #{site_filter(table_name: 'p')}
           SQL
 
           start_date['date'].to_date

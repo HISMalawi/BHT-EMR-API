@@ -2,17 +2,17 @@ class CachedReport
   include ArtTempTablesUtils
 
   TEMP_TABLES_COLUMN_COUNT = {
-    temp_cohort_members: 12,
-    temp_earliest_start_date: 11,
-    temp_other_patient_types: 1,
-    temp_register_start_date: 2,
-    temp_order_details: 2,
-    temp_art_start_date: 2,
-    temp_patient_tb_status: 2,
-    temp_latest_tb_status: 2,
-    tmp_max_adherence: 2,
-    temp_pregnant_obs: 3,
-    temp_patient_side_effects: 2,
+    temp_cohort_members: 13,
+    temp_earliest_start_date: 12,
+    temp_other_patient_types: 2,
+    temp_register_start_date: 3,
+    temp_order_details: 3,
+    temp_art_start_date: 3,
+    temp_patient_tb_status: 3,
+    temp_latest_tb_status: 3,
+    tmp_max_adherence: 3,
+    temp_pregnant_obs: 4,
+    temp_patient_side_effects: 3,
   }
 
   def initialize(start_date:, end_date:, **kwargs)

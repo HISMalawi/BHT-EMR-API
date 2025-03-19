@@ -3,7 +3,7 @@
 class TbService::TbQueries::PresumptivesQuery
   include ModelUtils
 
-  def initialize(relation = Patient.all)
+  def initialize(relation = Patient.where(site_id: Location.site_id))
     @relation = relation
     @program = program('TB Program')
   end

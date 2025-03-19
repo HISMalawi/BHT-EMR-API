@@ -10,6 +10,7 @@ module ArtService
         @start_date = ActiveRecord::Base.connection.quote(start_date)
         @end_date = ActiveRecord::Base.connection.quote(end_date)
         @occupation = kwargs[:occupation]
+        @site_id = kwargs[:site_id]
       end
 
       def find_report
@@ -145,6 +146,7 @@ module ArtService
             ON patients_with_orders_at_end_of_quarter.patient_id = patient_program.patient_id
           LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = patient_program.patient_id
           WHERE patient_program.program_id = 1
+            AND patient_program.site_id=#{@site_id}
             /* Ensure that the patients retrieved, did not receive ART within 28 days
                before the start of the reporting period */
             AND patient_program.patient_id NOT IN (

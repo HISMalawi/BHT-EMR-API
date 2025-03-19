@@ -11,6 +11,8 @@ module ArtService
         @start_date = start_date.to_date
         @end_date = end_date.to_date
         @occupation = kwargs[:occupation]
+        @site_id = kwargs[:site_id]
+        @dsd = kwargs[:dsd]
       end
 
       def list
@@ -31,6 +33,8 @@ module ArtService
           	p.person_id patient_id, npid.identifier npid, main.value_coded,
           	p.birthdate, p.gender, main.obs_datetime, n.family_name, n.given_name, main.value_coded
           FROM obs main
+          INNER JOIN patient ppp ON ppp.patient_id = main.person_id
+          #{dsd_query(dsd: @dsd, model: 'ppp') if @dsd}
           INNER JOIN person p ON p.person_id = main.person_id
           LEFT JOIN patient_identifier npid ON npid.patient_id = p.person_id
           LEFT JOIN (#{current_occupation_query}) a ON a.person_id = p.person_id
@@ -46,7 +50,7 @@ module ArtService
           ) sub_group ON main.person_id = sub_group.person_id
           AND main.obs_datetime = sub_group.obs_datetime
           AND main.concept_id = sub_group.concept_id
-          WHERE main.value_coded IN (#{ext_consultation_concept_id}, #{drug_refill_concept_id}) #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
+          WHERE main.site_id = #{@site_id} AND main.value_coded IN (#{ext_consultation_concept_id}, #{drug_refill_concept_id}) #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
           ORDER BY n.date_created DESC
         SQL
 

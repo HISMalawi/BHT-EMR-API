@@ -6,7 +6,8 @@ class ReportJob < ApplicationJob
   def perform(clazzname, kwargs)
     logger.debug("Running report job #{clazzname}(#{kwargs})")
 
-    User.current = User.find(kwargs.delete(:user))
+    User.current = User.unscoped.find(kwargs.delete(:user))
+    Location.current = Location.find(User.current.current_location.id)
 
     clazz = clazzname.constantize
     report_engine = clazz.new

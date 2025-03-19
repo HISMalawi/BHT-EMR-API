@@ -3,16 +3,20 @@
 module ArtService
   module Reports
     class CohortDisaggregatedAdditions
+
+      include CommonSqlQueryUtils
+
       COHORT_REGIMENS = %w[
         0P 2P 4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15PP 15PA 16P 17PP 17PA
         4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A 16A 17A
       ].freeze
 
-      def initialize(start_date:, end_date:, gender:, age_group:)
+      def initialize(start_date:, end_date:, gender:, age_group:, **kwargs)
         @start_date = start_date
         @end_date = end_date
         @gender = gender
         @age_group = age_group
+        @site_id = kwargs[:site_id]
       end
 
       def screened_for_tb
@@ -126,6 +130,7 @@ module ArtService
         results = ActiveRecord::Base.connection.select_all(
           "SELECT ods.patient_id FROM orders ods
           INNER JOIN drug_order dos ON ods.order_id = dos.order_id AND ods.voided = 0
+           #{site_filter(table_name: 'ods')}
           WHERE ods.concept_id IN (#{isoniazid_concept_id}, #{pyridoxine_concept_id}, #{isoniazid_rifapentine_concept_id})
           AND dos.quantity IS NOT NULL
           AND ods.patient_id in (#{patient_ids.join(',')})

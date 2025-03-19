@@ -14,6 +14,7 @@ module AncService
 
       def initialize(name:, type:, start_date:, end_date:)
         @name = name
+        @site_id = Location.current.location_id
         @start_date = start_date.to_date.beginning_of_month
         @end_date = end_date.to_date.end_of_month
         @type = type
@@ -23,10 +24,11 @@ module AncService
       end
 
       def build_report
-        @cohort_builder.build(@cohort_struct, @start_date, @end_date)
+        @cohort_builder.build(@site_id, @cohort_struct, @start_date, @end_date)
       end
 
-      def find_report
+      def find_report(site_id:, **kwargs)
+        @site_id = site_id
         build_report
         # Report.where(type: @type, name: @name,
         #             start_date: @start_date, end_date: @end_date)\

@@ -10,6 +10,7 @@ module ArtService
     class ArtCohort
       include ConcurrencyUtils
       include ModelUtils
+      include CommonSqlQueryUtils
 
       LOCK_FILE = 'art_service/reports/cohort.lock'
 
@@ -21,6 +22,7 @@ module ArtService
         @cohort_builder = CohortBuilder.new
         @cohort_struct = CohortStruct.new
         @occupation = kwargs[:occupation]
+        @cached = CachedReport.new(start_date:, end_date:, org: @type, **kwargs)
       end
 
       def build_report
@@ -43,7 +45,7 @@ module ArtService
       def defaulter_list(pepfar)
         report_type = (pepfar ? 'pepfar' : 'moh')
         ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type)
-                                          .init_temporary_tables(@start_date, @end_date, @occupation)
+                                          .init_temporary_tables(@start_date, @end_date, @occupation) unless @cached.all_temp_tables_are_ok?
 
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
@@ -56,18 +58,24 @@ module ArtService
             DATE(appointment.appointment_date) AS appointment_date
           FROM temp_earliest_start_date e
           INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
+          #{site_filter(table_name: 'e')}
+          #{site_filter(table_name: 'o')}
           INNER JOIN (
             SELECT e.patient_id, MAX(o.value_datetime) appointment_date
             FROM encounter e
             INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = 5096 -- appointment date
             WHERE e.encounter_type = 7 -- appointment encounter type
+            #{site_filter(table_name: 'e')}
+            #{site_filter(table_name: 'o')}
             AND e.program_id = 1 -- hiv program
             AND e.patient_id IN (SELECT patient_id FROM temp_patient_outcomes WHERE #{report_type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome = 'Defaulted')
             AND e.encounter_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY
             GROUP BY e.patient_id
           ) appointment ON appointment.patient_id = e.patient_id
           LEFT JOIN patient_identifier i ON i.patient_id = e.patient_id AND i.voided = 0 AND i.identifier_type = 4
+          #{site_filter(table_name: 'i')}
           INNER JOIN person_name n ON n.person_id = e.patient_id AND n.voided = 0
+          #{site_filter(table_name: 'n')}
           LEFT JOIN person_attribute a ON a.person_id = e.patient_id AND a.voided = 0 AND a.person_attribute_type_id = 12
           LEFT JOIN person_attribute landmark ON landmark.person_id = e.patient_id AND landmark.voided = 0 AND landmark.person_attribute_type_id = 19
           LEFT JOIN person_address s ON s.person_id = e.patient_id AND s.voided = 0
@@ -88,11 +96,13 @@ module ArtService
                  outcomes.moh_cum_outcome AS outcome, tesd.earliest_start_date art_start_date
           FROM person p
           INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
+          #{site_filter(table_name: 'p')}
           INNER JOIN temp_patient_outcomes AS outcomes
             ON outcomes.patient_id = c.patient_id
           INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = p.person_id
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
           AND i.voided = 0 AND i.identifier_type = 4
+          #{site_filter(table_name: 'i')}
           LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
           WHERE c.reporting_report_design_resource_id = #{id}
           GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
@@ -154,9 +164,11 @@ module ArtService
         SQL
         ActiveRecord::Base.connection.execute <<~SQL
           DELETE FROM reporting_report_design_resource WHERE report_design_id IN (#{saved_reports.join(',')})
+          #{site_filter(table_name: 'reporting_report_design_resource')}
         SQL
         ActiveRecord::Base.connection.execute <<~SQL
           DELETE FROM reporting_report_design WHERE id IN (#{saved_reports.join(',')})
+          #{site_filter(table_name: 'reporting_report_design')}
         SQL
       end
 

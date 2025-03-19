@@ -20,6 +20,8 @@ module ArtService
         @formulation = formulation
         @regimen = regimen
         @occupation = kwargs[:occupation]
+        @site_id = kwargs[:site_id]
+        @dsd = kwargs[:dsd]
       end
 
       def find_report
@@ -101,26 +103,29 @@ module ArtService
       def patients_with_prescriptions
         return [] if drugs.nil?
 
-        DrugOrder.select('orders.patient_id AS patient_id, MAX(start_date) AS prescription_date')
+        d_orders = DrugOrder.select('orders.patient_id AS patient_id, MAX(orders.start_date) AS prescription_date')
                  .joins(:order)
                  .joins("LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = orders.patient_id")
                  .where(quantity: 1..Float::INFINITY, drug_inventory_id: drugs)
+                 .where(site_id: @site_id)
                  .where(occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a',
                                           include_clause: false).to_s)
                  .merge(treatment_orders)
                  .group('orders.patient_id')
+        d_orders = d_orders.joins(dsd_query(dsd: @dsd, model: 'orders')) if @dsd
+        d_orders
       end
 
       # Returns all orders in treatment encounter of HIV program
       def treatment_orders
-        Order.joins(:encounter)
+        o = Order.joins(:encounter)
              .where(start_date: start_date..end_date)
              .merge(treatment_encounter)
              .or(Order.joins(:encounter)
                       .where(auto_expire_date: start_date..end_date)
                       .merge(treatment_encounter))
              .or(Order.joins(:encounter)
-                      .where('start_date < ? AND auto_expire_date > ?', start_date, end_date)
+                      .where('orders.start_date < ? AND auto_expire_date > ?', start_date, end_date)
                       .merge(treatment_encounter))
       end
 

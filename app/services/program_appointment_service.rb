@@ -2,13 +2,15 @@
 
 class ProgramAppointmentService
   extend ModelUtils
+  extend CommonSqlQueryUtils
 
-  def self.booked_appointments(program_id, date)
+  def self.booked_appointments(program_id, date, site_id, dsd: nil)
     clients = ActiveRecord::Base.connection.select_all("SELECT
     i2.identifier arv_number, i.identifier, p.birthdate, p.gender, n.given_name,
     n.family_name, obs.person_id, p.birthdate_estimated
     FROM obs
     INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
+    #{dsd_query(dsd:, model: 'e') if dsd}
     AND e.voided = 0 AND obs.voided = 0 AND e.program_id = #{program_id}
     AND e.encounter_type = #{encounter_type('APPOINTMENT').id}
     LEFT JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
@@ -19,6 +21,7 @@ class ProgramAppointmentService
     LEFT JOIN patient_identifier i2 ON i2.patient_id = e.patient_id AND i2.voided = 0
     AND i2.identifier_type IN(4)
     WHERE obs.concept_id = #{concept('Appointment date').concept_id}
+    AND obs.site_id = #{site_id}
     AND value_datetime BETWEEN '#{date.strftime('%Y-%m-%d 00:00:00')}'
     AND '#{date.strftime('%Y-%m-%d 23:59:59')}'
     GROUP BY i.identifier, p.birthdate, p.gender,
@@ -46,7 +49,7 @@ class ProgramAppointmentService
 
   # Pretty much exactly like booked appointments above but limits itself to
   # patients with arv_numbers... Lord have mercy...
-  def self.scheduled_appointments(program_id, date)
+  def self.scheduled_appointments(program_id, date, site_id, dsd: nil)
     if program_id != program('HIV Program').program_id
       raise InvalidParameterError, 'Scheduled appointments is limited to HIV Program only'
     end
@@ -58,6 +61,7 @@ class ProgramAppointmentService
       a.township_division village, a.city_village land_mark, patient_outcome(obs.person_id, '#{date.strftime('%Y-%m-%d 23:59:59')}') outcome
     FROM obs
     INNER JOIN encounter e ON e.encounter_id = obs.encounter_id
+    #{dsd_query(dsd:, model: 'e') if dsd}
     AND e.voided = 0 AND obs.voided = 0 AND e.program_id = #{program_id}
     AND e.encounter_type = #{encounter_type('APPOINTMENT').id}
     LEFT JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
@@ -69,6 +73,7 @@ class ProgramAppointmentService
     AND att.person_attribute_type_id = 12
 
     WHERE obs.concept_id = #{concept('Appointment date').concept_id}
+    AND obs.site_id = #{site_id}
     AND value_datetime BETWEEN '#{date.strftime('%Y-%m-%d 00:00:00')}'
     AND '#{date.strftime('%Y-%m-%d 23:59:59')}'
     GROUP BY i.identifier, p.birthdate, p.gender,

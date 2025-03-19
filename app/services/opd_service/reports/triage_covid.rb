@@ -14,9 +14,9 @@ module OpdService
                       'Shortness of breath', 'Diarrhea', 'Vomiting', 'Generalised body Pains', 'Sore throat']
 
         data = Observation.where('obs_datetime BETWEEN ? AND ? AND obs.person_id IN (?) AND obs.value_text IN (?)
-     AND triage_covid_report(DATE(obs_datetime),obs.person_id) is not null',
+     AND triage_covid_report(DATE(obs_datetime),obs.person_id) is not null AND obs.site_id = ?',
                                  @start_date.to_date.strftime('%Y-%m-%d 00:00:00'), @end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
-                                 get_ids(triage_registration.group_by(&:shift)), value_text)\
+                                 get_ids(triage_registration.group_by(&:shift)), value_text, Location.current.location_id)\
                           .joins('INNER JOIN person p ON p.person_id = obs.person_id')\
                           .pluck('obs.value_text', :gender, :person_id)
 
@@ -24,18 +24,18 @@ module OpdService
       end
 
       def triage_registration
-        Observation.where('obs_datetime BETWEEN ? AND ? AND c.name IN(?) AND c.voided = ?',
+        Observation.where('obs_datetime BETWEEN ? AND ? AND c.name IN(?) AND c.voided = ? AND site_id = ?',
                           @start_date.to_date.strftime('%Y-%m-%d 00:00:00'), @end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
-                          'History of COVID-19 contact', 0)\
+                          'History of COVID-19 contact', 0, Location.current.location_id)\
                    .joins('INNER JOIN concept_name c ON c.concept_id = obs.concept_id
       INNER JOIN person p ON p.person_id = obs.person_id').group(:person_id)\
                    .pluck("CASE name WHEN 'History of COVID-19 contact' THEN 'Total' END as name", :gender, :person_id)
       end
 
       def get_history_covid
-        Observation.where('obs_datetime BETWEEN ? AND ? AND c.name IN(?) AND c.voided = ? AND obs.value_text = ?',
+        Observation.where('obs_datetime BETWEEN ? AND ? AND c.name IN(?) AND c.voided = ? AND obs.value_text = ? AND site_id = ?',
                           @start_date.to_date.strftime('%Y-%m-%d 00:00:00'), @end_date.to_date.strftime('%Y-%m-%d 23:59:59'),
-                          'History of COVID-19 contact', 0, 'Yes')\
+                          'History of COVID-19 contact', 0, 'Yes', Location.current.location_id)\
                    .joins('INNER JOIN concept_name c ON c.concept_id = obs.concept_id
       INNER JOIN person p ON p.person_id = obs.person_id')\
                    .pluck(:name, :gender, :person_id)

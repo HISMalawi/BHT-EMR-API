@@ -2,7 +2,7 @@ include ModelUtils
 
 class TbService::TbQueries::CasesQuery
   RELAPSE_PATIENT_TYPE = 9814 #conflict resolution..
-  def initialize (relation = Patient.all)
+  def initialize (relation = Patient.where(site_id: Location.site_id))
     @relation = relation.extending(Scopes)
     @program = program('TB Program')
   end

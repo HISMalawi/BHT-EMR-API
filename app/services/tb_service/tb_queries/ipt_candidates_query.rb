@@ -1,7 +1,7 @@
 include ModelUtils
 
 class TbService::TbQueries::IptCandidatesQuery
-  def initialize (relation = Patient.all)
+  def initialize (relation = Patient.where(site_id: Location.site_id))
     @relation = relation.extending(Scopes)
   end
 

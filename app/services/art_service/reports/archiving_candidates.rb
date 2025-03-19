@@ -7,6 +7,7 @@ module ArtService
     class ArchivingCandidates
       def initialize(start_date: nil, **_kwargs)
         @start_date = start_date || Date.today
+        @site_id = _kwargs[:site_id]
       end
 
       def find_report
@@ -70,7 +71,7 @@ module ArtService
             ON patient_identifier_type.patient_identifier_type_id = patient_identifier.identifier_type
             AND patient_identifier_type.name = 'Filing number'
             AND patient_identifier_type.retired = 0
-          WHERE patient_program.voided = 0
+          WHERE patient_program.voided = 0 AND patient_program.site_id = #{@site_id}
           GROUP BY patient_program.patient_id
         SQL
       end
@@ -121,7 +122,7 @@ module ArtService
             ON patient_identifier_type.patient_identifier_type_id = patient_identifier.identifier_type
             AND patient_identifier_type.name = 'Filing number'
             AND patient_identifier_type.retired = 0
-          WHERE orders.voided = 0
+          WHERE orders.voided = 0 AND orders.site_id=#{@site_id}
           GROUP BY orders.patient_id
           HAVING outcome_date IS NOT NULL
         SQL

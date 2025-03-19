@@ -8,6 +8,7 @@ module ArtService
         attr_reader :start_date, :end_date, :patient_id
 
         include Utils
+        include CommonSqlQueryUtils
 
         def initialize(start_date:, end_date:, **kwargs)
           @start_date = start_date

@@ -48,6 +48,7 @@ module AncService
         AND program_id = 12
 			) visit_no
         FROM encounter e WHERE Date(e.encounter_datetime) >= '#{@start_date}'
+        AND e.site_id = #{Location.current.location_id}
         AND Date(e.encounter_datetime) <= '#{@end_date}'
         AND voided = 0 AND program_id = 12
         GROUP BY e.patient_id, visit_date"

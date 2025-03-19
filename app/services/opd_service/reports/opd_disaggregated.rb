@@ -76,6 +76,7 @@ module OpdService
               INNER JOIN encounter reg_date ON reg_date.patient_id = e.patient_id
                   AND reg_date.encounter_type = #{EncounterType.find_by_name('PATIENT REGISTRATION').encounter_type_id}
                   AND reg_date.voided = 0
+                  AND reg_date.site_id = #{Location.current.location_id}
               LEFT JOIN (
                 SELECT e.patient_id,
                        hiv_status.value_text hiv_status,
@@ -85,7 +86,7 @@ module OpdService
                 FROM encounter e
                 INNER JOIN obs hiv_status ON hiv_status.encounter_id = e.encounter_id
                   AND hiv_status.voided = 0
-                  AND hiv_status.concept_id = #{concept('HIV Status').concept_id}
+                  AND hiv_status.site_id = #{Location.current.location_id}
                 INNER JOIN obs tst_date ON tst_date.encounter_id = e.encounter_id
                     AND tst_date.concept_id = #{concept('HIV test date').concept_id}
                     AND tst_date.voided = 0
@@ -117,7 +118,7 @@ module OpdService
                 AND preg.voided = 0
                 AND brest.obs_datetime >= '#{start_date}' AND brest.obs_datetime <= '#{end_date}'
               ) AS preg_status ON preg_status.person_id = p.patient_id
-            WHERE e.program_id = #{Program.find_by_name('OPD program').program_id}
+            WHERE e.program_id = #{Program.find_by_name('OPD program').program_id} AND e.site_id = #{Location.current.location_id}
             AND reg_date.encounter_datetime >= '#{start_date}' AND reg_date.encounter_datetime <= '#{end_date}'
             AND e.voided = 0
             GROUP BY e.patient_id
