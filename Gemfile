@@ -53,6 +53,8 @@ gem 'his_emr_api_lab', '~> 2.0.5'
 
 gem 'parallel', '~> 1.20.1'
 
+gem "audited"
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]

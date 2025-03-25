@@ -109,6 +109,8 @@ Rails.application.routes.draw do
 
       resources :concepts, only: %i[index show]
 
+      resources :audits, only: %i[index]
+
       # OPD
       get 'OPD_drugslist' => 'drugs#OPD_drugslist'
 
