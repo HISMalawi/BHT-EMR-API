@@ -555,6 +555,8 @@ class DdeService
     )
 
     doc_id = patient.patient_identifiers.where(type: patient_identifier_type('DDE person document id')).first
+    malawi_id = patient.patient_identifiers.where(type: patient_identifier_type('Malawi National ID')).first
+    dde_patient[:national_id] = malawi_id.identifier if malawi_id
     dde_patient[:doc_id] = doc_id.identifier if doc_id
 
     LOGGER.debug "Converted openmrs person to dde_patient: #{dde_patient}"
