@@ -1,13 +1,17 @@
+# frozen_string_literal: true
+
 class Audit < ApplicationRecord
   self.table_name = 'audits'
-  
+
   has_one :user, foreign_key: :user_id, primary_key: :user_id
 
   def as_json(options = {})
     super(options.merge(
       methods: %i[changes last_login],
       include: {
-        user: {}
+        user: {
+          methods: %i[name]
+        }
       },
       except: %i[audited_changes]
     ))
@@ -15,12 +19,12 @@ class Audit < ApplicationRecord
 
   def changes
     permitted_classes = [Date, Time]
-    json = Psych.safe_load(audited_changes, permitted_classes: permitted_classes)
+    json = Psych.safe_load(audited_changes, permitted_classes: permitted_classes, aliases: true)
 
-    if action == 'update'
-        return json.map do |key, value|
-            {key => {previous: value[0], current: value[1]}}
-        end
+    return unless action == 'update'
+
+    json.map do |key, value|
+      { key => { previous: value[0], current: value[1] } }
     end
   end
 
