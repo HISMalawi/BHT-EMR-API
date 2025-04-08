@@ -15,7 +15,7 @@ module Api
 
         @audits = @audits.where(action: filters[:audit_action]) if audit_action
 
-        render json: paginate(@audits)
+        render json: @audits
       end
 
       def filters
