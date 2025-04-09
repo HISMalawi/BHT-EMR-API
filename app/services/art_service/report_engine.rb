@@ -58,7 +58,8 @@ module ArtService
       'MATERNAL_STATUS' => ArtService::Reports::MaternalStatus,
       'NID_CUMULATIVE_REPORT' => ArtService::Reports::Clinic::NidCumulativeReport,
       'TX_HIV_HTN' => ArtService::Reports::Pepfar::TxHivHtn,
-      'LAB_AUDIT_TRAIL' => ArtService::Reports::Clinic::LabAuditTrailReport
+      'LAB_AUDIT_TRAIL' => ArtService::Reports::Clinic::LabAuditTrailReport,
+      'HTN_ENROLLMENT' => ArtService::Reports::Clinic::HtnEnrollment
     }.freeze
 
     def generate_report(type:, **kwargs)
