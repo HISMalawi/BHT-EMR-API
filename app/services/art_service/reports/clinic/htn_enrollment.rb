@@ -39,8 +39,8 @@ module ArtService
                 end
 
                 reporting_period_patients.each_with_object(cummulative) do |patient, report|
-                    process_enrollement_data(patient, report, 'reporting_period')
-                    process_treatment_drug_classification(patient, report, 'reporting_period')
+                    process_enrollement_data(patient, report, :reporting_period)
+                    process_treatment_drug_classification(patient, report, :reporting_period)
                 end
             end
 
