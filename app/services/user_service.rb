@@ -2,12 +2,19 @@
 
 require 'logger'
 require 'securerandom'
+require 'base62'
+require 'digest'
 
 require_relative 'person_service'
 
 module UserService
   AUTHENTICATION_TOKEN_VALIDITY_PERIOD = 24.hours
   LOGGER = Logger.new $stdout
+
+  ALPHABET = ('a'..'z').to_a + ('0'..'9').to_a + ['/']
+  CHAR_TO_INT = ALPHABET.each_with_index.to_h
+  INT_TO_CHAR = CHAR_TO_INT.invert
+  BASE_TIME = Time.now.to_i
 
   class UserCreateError < StandardError; end
   class UserUpdateError < InvalidParameterError; end
@@ -142,6 +149,103 @@ module UserService
     Rails.logger.error "Error logging in: #{e}"
     Rails.logger.error e.backtrace.join("\n")
     raise e
+  end
+
+  def self.reset_password(code:)
+    secret_key =  YAML.safe_load(File.read('config/application.yml'))['password_reset']['secret_key']
+
+    raise InvalidParameterError, 'Code is required' unless code.present?
+
+    #  {:generated_at=>\"kn/gb/xk/rrds/1800385256\", :expires_at=>1800471656}:Hash
+    decrypted = decrypt_from_code(code, secret_key) 
+
+    values = decrypted[:generated_at].split('/')
+
+    expires = decrypted[:expires_at]
+
+    raise InvalidParameterError, 'Invalid code' unless values.size == 5
+
+    fname, lname, username, location_id = values
+
+    # Check if the code is valid
+    raise InvalidParameterError, 'Invalid code, missing attributes' unless [fname, lname, username, location_id].all? { |v| v.present? }
+    
+    # Check if the location is valid
+    raise InvalidParameterError, 'Invalid Location' unless Location.current.id.to_i == location_id.to_i
+
+
+    # Check if the code is expired
+    raise InvalidParameterError, 'Code Expired' if Time.now.to_i > expires.to_i
+
+    # Check if the user exists
+    # example values: sr/ur/an/1/7003728
+    # first and last letters of the first and last name, location_id then expiry time
+    user = User.joins(person: :names)
+      .where("person_name.given_name LIKE '#{fname[0]}%' AND person_name.given_name LIKE '%#{fname[1]}'")
+      .where("person_name.family_name LIKE '#{lname[0]}%' AND person_name.family_name LIKE '%#{lname[1]}'")
+      .where("username LIKE '#{username[0]}%' AND username LIKE '%#{username[1]}'").first
+
+    raise NotFoundError, 'User Not Found' unless user
+
+    # Check if the user is active
+    raise InvalidParameterError, 'User is not active' unless user.active?
+
+    # auto expire user password
+    UserProperty.where(
+      user_id: user.id,
+      property: 'last_password_reset'
+    ).update_all(property_value: 31.days.ago.to_date)
+
+    # authenticate the user
+    new_authentication_token(user)
+  end
+
+  # Use SHA256 to generate a consistent integer from the key
+  def self.derive_key(secret_key)
+    Digest::SHA256.hexdigest(secret_key).to_i(16) & 0x3FFFFFFFFFFFF  # Fit within 66 bits
+  end
+
+  # Decode Base62 and reverse obfuscation
+  def self.decrypt_from_code(received_code, secret_key)
+    key = derive_key(secret_key)
+    obfuscated = Base62.decode(received_code)
+    packed = obfuscated ^ key  # Reverse XOR
+
+    fname = int_to_string(packed >> (26 + 20 + 10 + 10), 2)
+    lname = int_to_string((packed >> (26 + 20 + 10)) & 0x3FF, 2)
+    username = int_to_string((packed >> (26 + 20)) & 0x3FF, 2)
+    location_uuid = int_to_string((packed >> 26) & 0xFFFFF, 4)
+    generation_time = (packed & 0x3FFFFFF) + BASE_TIME
+    expiration_time = generation_time + 24 * 60 * 60
+
+    original_data = "#{fname}/#{lname}/#{username}/#{location_uuid}/#{generation_time}"
+
+    puts "Received Code: #{received_code}"
+    puts "Decompressed Data (Generated At): #{original_data}"
+    puts "Expiration Time: #{expiration_time} (#{Time.at(expiration_time).utc})"
+
+    { generated_at: original_data, expires_at: expiration_time }
+  end
+
+  def self.string_to_int(str, max_chars)
+    str = str.downcase[0, max_chars].ljust(max_chars, 'a')
+    result = 0
+    str.chars.each_with_index do |char, i|
+      result += (CHAR_TO_INT[char] || 0) * (36 ** (max_chars - 1 - i))
+    end
+    result
+  end
+
+  def self.int_to_string(num, max_chars)
+    result = ''
+    temp = num
+    max_chars.times do |i|
+      power = max_chars - 1 - i
+      char_idx = (temp / (36 ** power)) % 36
+      result += INT_TO_CHAR[char_idx]
+      temp -= char_idx * (36 ** power)
+    end
+    result
   end
 
   # Tries to authenticate user using the classical BART mode
