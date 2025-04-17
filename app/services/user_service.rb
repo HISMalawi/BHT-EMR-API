@@ -2,12 +2,21 @@
 
 require 'logger'
 require 'securerandom'
-require 'base62'
 require 'digest'
 
 require_relative 'person_service'
 
 module UserService
+
+  module CustomBase62
+    CHARS = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz".freeze
+    BASE = CHARS.length
+
+    def self.decode(str)
+      str.chars.reduce(0) { |num, char| num * BASE + CHARS.index(char) }
+    end
+  end
+
   AUTHENTICATION_TOKEN_VALIDITY_PERIOD = 24.hours
   LOGGER = Logger.new $stdout
 
@@ -157,8 +166,8 @@ module UserService
     raise InvalidParameterError, 'Code is required' unless code.present?
 
     #  {:generated_at=>\"kn/gb/xk/rrds/1800385256\", :expires_at=>1800471656}:Hash
-    decrypted = decrypt_from_code(code, secret_key) 
-
+    decrypted = decrypt_from_code(code, secret_key)
+    
     values = decrypted[:generated_at].split('/')
 
     expires = decrypted[:expires_at]
@@ -171,7 +180,7 @@ module UserService
     raise InvalidParameterError, 'Invalid code, missing attributes' unless [fname, lname, username, location_id].all? { |v| v.present? }
     
     # Check if the location is valid
-    raise InvalidParameterError, 'Invalid Location' unless Location.current.id.to_i == location_id.to_i
+    raise InvalidParameterError, 'Location in code does not match user' unless Location.current.id.to_i == location_id.to_i
 
 
     # Check if the code is expired
@@ -200,33 +209,6 @@ module UserService
     new_authentication_token(user)
   end
 
-  # Use SHA256 to generate a consistent integer from the key
-  def self.derive_key(secret_key)
-    Digest::SHA256.hexdigest(secret_key).to_i(16) & 0x3FFFFFFFFFFFF  # Fit within 66 bits
-  end
-
-  # Decode Base62 and reverse obfuscation
-  def self.decrypt_from_code(received_code, secret_key)
-    key = derive_key(secret_key)
-    obfuscated = Base62.decode(received_code)
-    packed = obfuscated ^ key  # Reverse XOR
-
-    fname = int_to_string(packed >> (26 + 20 + 10 + 10), 2)
-    lname = int_to_string((packed >> (26 + 20 + 10)) & 0x3FF, 2)
-    username = int_to_string((packed >> (26 + 20)) & 0x3FF, 2)
-    location_uuid = int_to_string((packed >> 26) & 0xFFFFF, 4)
-    generation_time = (packed & 0x3FFFFFF) + BASE_TIME
-    expiration_time = generation_time + 24 * 60 * 60
-
-    original_data = "#{fname}/#{lname}/#{username}/#{location_uuid}/#{generation_time}"
-
-    puts "Received Code: #{received_code}"
-    puts "Decompressed Data (Generated At): #{original_data}"
-    puts "Expiration Time: #{expiration_time} (#{Time.at(expiration_time).utc})"
-
-    { generated_at: original_data, expires_at: expiration_time }
-  end
-
   def self.string_to_int(str, max_chars)
     str = str.downcase[0, max_chars].ljust(max_chars, 'a')
     result = 0
@@ -246,6 +228,36 @@ module UserService
       temp -= char_idx * (36 ** power)
     end
     result
+  end
+
+  def self.derive_key(secret_key)
+    key = Digest::SHA256.hexdigest(secret_key).to_i(16) & 0x3FFFFFFFFFFFF
+    key
+  end
+
+  def self.decrypt_from_code(received_code, secret_key)
+    key = derive_key(secret_key)
+    obfuscated = CustomBase62.decode(received_code)
+    packed = obfuscated ^ key
+
+    fname = int_to_string(packed >> (26 + 10 + 10 + 10), 2)
+    lname = int_to_string((packed >> (26 + 10 + 10)) & 0x3FF, 2)
+    username = int_to_string((packed >> (26 + 10)) & 0x3FF, 2)
+    location_id = ((packed >> 26) & 0x3FF).to_s
+    timestamp = (packed & 0x3FFFFFF)
+    timestamp = timestamp - 0x4000000 if timestamp >= 0x2000000
+    generation_time = timestamp + (Time.now.to_i + 24 * 60 * 60)
+    expiration_time = generation_time + 24 * 60 * 60
+
+    original_data = "#{fname}/#{lname}/#{username}/#{location_id}/#{generation_time}"
+
+    puts "Received Code: #{received_code}"
+    puts "Decompressed Data (Generated At): #{original_data}"
+    puts "Expiration Time: #{expiration_time} (#{Time.at(expiration_time).strftime('%I:%M %p')})"
+
+    { generated_at: original_data, expires_at: expiration_time }
+  rescue StandardError => e
+    { error: "Decryption failed: #{e.message}" }
   end
 
   # Tries to authenticate user using the classical BART mode
