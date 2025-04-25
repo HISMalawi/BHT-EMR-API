@@ -300,9 +300,9 @@ module ArtService
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
             SELECT patient_id,
                    patient_outcome(patient_id, #{function_date}),
-                   NULL,
+                   current_defaulter_date(patient_id, #{function_date}),
                    pepfar_patient_outcome(patient_id, #{function_date}),
-                   NULL,
+                   current_pepfar_defaulter_date(patient_id, #{function_date}),
                    5
             FROM temp_earliest_start_date
             WHERE date_enrolled < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY

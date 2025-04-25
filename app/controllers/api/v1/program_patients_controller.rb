@@ -42,7 +42,7 @@ module Api
       end
 
       def find_next_available_arv_number
-        render json: { arv_number: service.find_next_available_arv_number }
+        render json: { arv_number: service.find_next_available_arv_number(params[:date]&.to_date || Date.today) }
       end
 
       def lookup_arv_number

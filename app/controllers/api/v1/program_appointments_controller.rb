@@ -6,15 +6,17 @@ module Api
       def booked_appointments
         program_id = params[:program_id]
         date = params[:date]&.to_date || Date.today
+        dsd = params[:dsd]
 
-        render json: service.booked_appointments(program_id, date)
+        render json: service.booked_appointments(program_id, date, dsd:)
       end
 
       def scheduled_appointments
         program_id = params[:program_id].to_i
         date = params[:date]&.to_date || Date.today
+        dsd = params[:dsd]
 
-        render json: service.scheduled_appointments(program_id, date)
+        render json: service.scheduled_appointments(program_id, date, dsd:)
       end
 
       private

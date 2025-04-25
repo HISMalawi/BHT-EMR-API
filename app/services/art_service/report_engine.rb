@@ -56,6 +56,10 @@ module ArtService
       'HYPERTENSION_REPORT' => ArtService::Reports::Clinic::HypertensionReport,
       'TX_NEW' => ArtService::Reports::Pepfar::TxNew,
       'MATERNAL_STATUS' => ArtService::Reports::MaternalStatus,
+      'NID_CUMULATIVE_REPORT' => ArtService::Reports::Clinic::NidCumulativeReport,
+      'TX_HIV_HTN' => ArtService::Reports::Pepfar::TxHivHtn,
+      'LAB_AUDIT_TRAIL' => ArtService::Reports::Clinic::LabAuditTrailReport,
+      'HTN_ENROLLMENT' => ArtService::Reports::Clinic::HtnEnrollment
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -74,10 +78,10 @@ module ArtService
       cohort.disaggregated(quarter, age_group)
     end
 
-    def cohort_survival_analysis(quarter, age_group, regenerate, occupation)
+    def cohort_survival_analysis(quarter, age_group, regenerate, occupation, dsd)
       cohort = REPORTS['COHORT_SURVIVAL_ANALYSIS'].new(type: 'survival_analysis',
                                                        name: 'survival_analysis', start_date: Date.today,
-                                                       end_date: Date.today, regenerate:, occupation:)
+                                                       end_date: Date.today, regenerate:, occupation:, dsd:)
       cohort.survival_analysis(quarter, age_group)
     end
 
@@ -152,10 +156,10 @@ module ArtService
                                                     end_date: end_date.to_date, age_group:, gender:).disaggregated_regimen_distribution
     end
 
-    def tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
+    def tx_mmd_client_level_data(start_date, end_date, patient_ids, org, dsd)
       REPORTS['ARV_REFILL_PERIODS'].new(start_date: start_date.to_date,
                                         end_date: end_date.to_date, min_age: 0, max_age: 0,
-                                        org:, initialize_tables: '').tx_mmd_client_level_data(patient_ids)
+                                        org:, initialize_tables: '', dsd:).tx_mmd_client_level_data(patient_ids)
     end
 
     def tb_prev(start_date, end_date)
@@ -183,9 +187,9 @@ module ArtService
                            .clients_due
     end
 
-    def vl_results(start_date, end_date)
+    def vl_results(start_date, end_date, **kwargs)
       REPORTS['VIRAL_LOAD'].new(start_date: start_date.to_date,
-                                end_date: end_date.to_date).vl_results
+                                end_date: end_date.to_date, **kwargs).vl_results
     end
 
     def external_consultation_clients(start_date, end_date, **kwargs)
@@ -208,9 +212,9 @@ module ArtService
                                     end_date: end_date.to_date, **kwargs).latest_regimen_dispensed(rebuild_outcome)
     end
 
-    def sc_arvdisp(start_date, end_date, rebuild_outcome)
+    def sc_arvdisp(start_date, end_date, rebuild_outcome, dsd)
       REPORTS['SC_ARVDISP'].new(start_date: start_date.to_date,
-                                end_date: end_date.to_date, rebuild_outcome:).report
+                                end_date: end_date.to_date, rebuild_outcome:, dsd:).report
     end
 
     private

@@ -4,6 +4,8 @@ class User < RetirableRecord
   self.table_name = :users
   self.primary_key = :user_id
 
+  audited except: %i[date_changed authentication_token token_expiry_time]
+
   belongs_to :person, foreign_key: :person_id
 
   has_many :notification_alert_recipients, class_name: 'NotificationAlertRecipient', foreign_key: :user_id

@@ -18,14 +18,11 @@ module ArtService
         @occupation = kwargs.delete(:occupation)
         @type = kwargs.delete(:application)
         ids = kwargs.delete(:patient_ids)
-        @patient_ids = case ids.class
-                       when String
-                         ids.split(',').map(&:to_i)
-                       when Array
-                         ids
-                       else
-                         []
-                       end
+        transformed = []
+        transformed = ids.split(',').map(&:to_i) if ids.class == String
+        transformed = ids if ids.class == Array
+
+        @patient_ids = transformed       
       end
 
       def find_report
