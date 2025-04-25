@@ -14,22 +14,25 @@ module AncService
     def print
       visits = self.print1
       diag = self.print2
-      extra = detailed_obstetric_history_label
       zpl = []
 
-      visits.map do |visit|
-        d = diag.find { |d| d["visit_no"]&.to_i == visit["visit_no"]&.to_i }
-        zpl << visit["zpl"]
-        zpl << d["zpl"]
-        zpl << extra.first["zpl"]
-        visit.merge! d
-        visit.merge! extra.first
-        visit.delete("zpl")
+      visit_data = visits[:data]
+      visit_no = visit_data["visit_no"]&.to_i
+
+      if visit_no == 1
+        history_label = PatientHistoryLabel.new @patient, @date
+        data = history_label.print
+        zpl << data[:zpl]
+        visit_data&.merge! data[:data]
       end
+      visit_data&.merge! diag[:data]
+
+      zpl << visits[:zpl]
+      zpl << diag[:zpl]
 
       {
-        data: visits.first,
-        zpl: zpl.join(""),
+        data: visit_data,
+        zpl: zpl&.flatten&.join
       }
     end
 
@@ -143,15 +146,10 @@ module AncService
 
       out = []
 
-      #raise encounters.inspect
-
       encounters.each { |v, k|
         out << [k["ANC VISIT TYPE"]["REASON FOR VISIT"].to_i, v] rescue []
       }
       out = out.sort.compact
-      visits = []
-      # raise out.to_yaml
-
       out.each do |key, element|
         @i = @i + 1
         vis = {}
@@ -255,11 +253,10 @@ module AncService
 
           label.draw_text(albe.to_s, 740, 200, 0, 2, 1, 1, false)
           vis["albendazole"] = albe
+          return { data: vis, zpl: label.print(1) }
         end
-        visits << vis
       end
 
-      visits
     end
 
     def print2
@@ -303,30 +300,15 @@ module AncService
       }
 
       @drugs = {}
-      @other_drugs = {}
-      main_drugs = ["TD", "SP", "Fefol", "Albendazole"]
-
-      @patient.encounters.where(["(encounter_type = ? OR encounter_type = ?) AND encounter_datetime >= ? AND encounter_datetime <= ?
-            AND program_id = ?", EncounterType.find_by_name("TREATMENT").id, EncounterType.find_by_name("DISPENSING").id,
-                                 @current_range[0]["START"], @current_range[0]["END"], PROGRAM.id]).order("encounter_datetime DESC").each { |e|
-        @drugs[e.encounter_datetime.strftime("%d/%b/%Y")] = {} if !@drugs[e.encounter_datetime.strftime("%d/%b/%Y")]
-        @other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")] = {} if !@other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")]
-        e.orders.each { |o|
-          drug_name = o.drug_order.drug.name.match(/syrup|\d+\.*\d+mg|\d+\.*\d+\smg|\d+\.*\d+ml|\d+\.*\d+\sml/i) ?
-            (o.drug_order.drug.name[0, o.drug_order.drug.name.index(" ")] + " " +
-             o.drug_order.drug.name.match(/syrup|\d+\.*\d+mg|\d+\.*\d+\smg|\d+\.*\d+ml|\d+\.*\d+\sml/i)[0]) :
-            (o.drug_order.drug.name[0, o.drug_order.drug.name.index(" ")]) rescue o.drug_order.drug.name
-
-          main_drugs_passed = ((main_drugs.include?(o.drug_order.drug.name[0, o.drug_order.drug.name.index(" ")]))) rescue false
-
-          if main_drugs_passed
-            @drugs[e.encounter_datetime.strftime("%d/%b/%Y")][o.drug_order.drug.name[0,
-                                                                                     o.drug_order.drug.name.index(" ")]] = o.drug_order.quantity
-          else
-            @other_drugs[e.encounter_datetime.strftime("%d/%b/%Y")][drug_name] = o.drug_order.quantity #amount_needed
-          end
-        }
-      }
+      orders = @patient.orders.where(start_date: @current_range[0]["START"]..@current_range[0]["END"])
+      encounter_date = orders&.first.encounter.encounter_datetime.strftime("%d/%b/%Y") if orders.present?
+      orders.each do |o|
+        drug_order = o.drug_order
+        struct = drug_order.dosage_struct
+        @drugs[encounter_date] ||= {}
+        @drugs[encounter_date][struct[:drug_name]] = drug_order&.quantity
+      end
+      
 
       label = ZebraPrinter::Lib::StandardLabel.new
 
@@ -338,17 +320,17 @@ module AncService
       label.draw_line(20, 130, 800, 2, 0)
       label.draw_line(20, 190, 800, 2, 0)
 
-      label.draw_line(160, 130, 2, 175, 0)
-      label.draw_line(364, 130, 2, 175, 0)
+      # label.draw_line(160, 130, 2, 175, 0)
+      label.draw_line(250, 130, 2, 175, 0)
       label.draw_line(594, 130, 2, 175, 0)
       label.draw_line(706, 130, 2, 175, 0)
       label.draw_text("Planned Delivery Place: #{@current_range[0]["PLANNED DELIVERY PLACE"] rescue ""}", 40, 66, 0, 2, 1, 1, false)
       label.draw_text("Bed Net Given: #{@current_range[0]["MOSQUITO NET"] rescue ""}", 40, 99, 0, 2, 1, 1, false)
       label.draw_text("", 28, 138, 0, 2, 1, 1, false)
-      label.draw_text("TD", 75, 156, 0, 2, 1, 1, false)
+      # label.draw_text("TD", 75, 140, 0, 2, 1, 1, false)
 
-      label.draw_text("Diagnosis", 170, 140, 0, 2, 1, 1, false)
-      label.draw_text("Medication/Outcome", 370, 140, 0, 2, 1, 1, false)
+      label.draw_text("Diagnosis", 75, 140, 0, 2, 1, 1, false)
+      label.draw_text("Medication/Outcome", 280, 140, 0, 2, 1, 1, false)
       label.draw_text("Next Vis.", 600, 140, 0, 2, 1, 1, false)
       label.draw_text("Date", 622, 158, 0, 2, 1, 1, false)
       label.draw_text("Provider", 710, 140, 0, 2, 1, 1, false)
@@ -362,19 +344,14 @@ module AncService
       }
       out = out.sort.compact
 
-      # raise out.to_yaml
-
-      visits = []
-
       out.each do |key, element|
         encounter = encounters[element]
         @i = @i + 1
         visit = {}
-
         if element == @date.to_date.strftime("%d/%b/%Y")
           td = (@drugs[element]["TD"] > 0 ? 1 : "") rescue ""
 
-          label.draw_text(td.to_s, 28, 200, 0, 2, 1, 1, false)
+          # label.draw_text(td.to_s, 28, 200, 0, 2, 1, 1, false)
           visit["td"] = td
 
           sign = ""
@@ -395,19 +372,23 @@ module AncService
 
           visit["diagnosis"] = sign
           (0..(sign.length)).each { |m|
-            label.draw_text(sign[m].to_s, 175, (200 + (25 * m)), 0, 2, 1, 1, false)
+            label.draw_text(sign[m].to_s, 28, (200 + (25 * m)), 0, 2, 1, 1, false)
           }
 
+          main_drugs = %w[Fefol TD SP]
+
           med = encounters[element]["UPDATE OUTCOME"]["OUTCOME"].humanize + "; " rescue ""
-          oth = (@other_drugs[element].collect { |d, v|
+          oth = @drugs[element].map { |d, v|
+
+            next if main_drugs.include?(d)
             "#{d}: #{(v.to_s.match(/\.[1-9]/) ? v : v.to_i)}"
-          }.join("; ")) if @other_drugs[element].length > 0 rescue ""
+
+          }.join("; ") if @drugs[element].length > 0 rescue ""
 
           med = paragraphate(med.to_s + oth.to_s, 17, 5)
-
           visit["medication"] = med
           (0..(med.length)).each { |m|
-            label.draw_text(med[m].to_s, 370, (200 + (18 * m)), 0, 2, 1, 1, false)
+            label.draw_text(med[m].to_s, 280, (200 + (18 * m)), 0, 2, 1, 1, false)
           }
           nex = encounters[element]["APPOINTMENT"]["APPOINTMENT DATE"] rescue []
 
@@ -426,21 +407,14 @@ module AncService
 
           user = "#{encounters[element]["USER"].given_name[0].upcase}.#{encounters[element]["USER"].family_name[0].upcase}" rescue ""
 
-          use = user #(encounters[element]["USER"].split(" ") rescue []).collect{|n| n[0,1].upcase + "."}.join("")  rescue ""
+          label.draw_text(user.to_s, 730, 200, 0, 2, 1, 1, false)
 
-          # use = paragraphate(use.to_s, 5, 5)
-
-          # (0..(use.length)).each{|m|
-          #   label.draw_text(use[m],710,(200 + (18 * m)),0,2,1,1,false)
-          # }
-          label.draw_text(use.to_s, 730, 200, 0, 2, 1, 1, false)
-          visit["user"] = use.to_s
-          visit["zpl"] = label.print(1)
+          visit["user"] = user.to_s
           visit["visit_no"] = key
+
+          return { data: visit, zpl: label.print(1) }
         end
-        visits << visit
       end
-      visits
     end
 
     def active_range(date = Date.today)
@@ -905,17 +879,17 @@ module AncService
           label3.draw_line(20, (((55 * (pos - 8)) + 35) <= 305 ? ((55 * (pos - 8)) + 35) : 305), 800, 2, 0)
           label3set = true
         end
-        label1json["zpl"] = label.print(1)
-        label2json["zpl"] = label2.print(1)
-        label3json["zpl"] = label3.print(1)
+        label1json["zpl"] = label
+        label2json["zpl"] = label2
+        label3json["zpl"] = label3
       end
 
       if label3set
-        [label1json, label2json, label3json]
+        { data: [label1json, label2json, label3json], zpl: label.print(1) + label2.print(1) + label3.print(1) }
       elsif label2set
-        [label1json, label2json]
+        {data: [label1json, label2json], zpl: label.print(1) + label2.print(1) }
       else
-        [label1json]
+        { data: [label1json], zpl: label.print(1) }
       end
     end
 

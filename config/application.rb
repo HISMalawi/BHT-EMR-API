@@ -24,6 +24,7 @@ module BHTEmrApi
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 6.1
     config.eager_load_paths << Rails.root.join('lib')
+    config.active_record.yaml_column_permitted_classes = [Date, Time]
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded after loading

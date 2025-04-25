@@ -14,10 +14,11 @@ module ArtService
 
         def initialize(start_date:, end_date:, **kwargs)
           @start_date = ActiveRecord::Base.connection.quote(start_date)
-          @check_date = start_date.to_date - 6.months
-          @cut_off_point = start_date.to_date
+          @check_date = start_date&.to_date - 6.months
+          @cut_off_point = start_date&.to_date
           @end_date = ActiveRecord::Base.connection.quote(end_date)
           @occupation = kwargs[:occupation]
+          @dsd = kwargs[:dsd]
         end
 
         def find_report
@@ -90,8 +91,8 @@ module ArtService
         end
 
         def patient_new_on_art?(patient)
-          tpt_initiation_date = patient['tpt_initiation_date'].to_date
-          art_start_date = patient['art_start_date'].to_date
+          tpt_initiation_date = patient['tpt_initiation_date']&.to_date
+          art_start_date = patient['art_start_date']&.to_date
 
           (tpt_initiation_date >= art_start_date) && (tpt_initiation_date < art_start_date + 180.days)
         end
@@ -100,11 +101,11 @@ module ArtService
           clients = fetch_patients_on_tpt.to_a
           results = []
           clients.each do |client|
-            next if client['tpt_initiation_date'].to_date > cut_off_point
+            next if client['tpt_initiation_date']&.to_date > cut_off_point
 
             result = individual_tpt_report(client['patient_id'])
             next if result.blank?
-            next if result['tpt_initiation_date'].to_date < check_date
+            next if result['tpt_initiation_date']&.to_date < check_date
 
             client['tpt_initiation_date'] = result['tpt_initiation_date']
             client['total_pills_taken'] = result['total_pills_taken']
@@ -154,6 +155,7 @@ module ArtService
                   AND denominator_encounter.voided = 0
                 GROUP BY patient_id
             ) AS denominator_patient ON denominator_patient.patient_id = person.person_id
+             #{dsd_query(dsd: @dsd, model: 'denominator_patient') if @dsd}
             INNER JOIN encounter AS prescription_encounter
               ON prescription_encounter.patient_id = denominator_patient.patient_id
               AND prescription_encounter.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
@@ -254,7 +256,7 @@ module ArtService
           result = client_tpt_dates(patient_id)
           return { start_date: '1900-01-01', end_date: } if result.blank?
 
-          sorted_result = result.sort { |a, b| a['start_date'].to_date <=> b['start_date'].to_date }.reverse
+          sorted_result = result.sort { |a, b| a['start_date']&.to_date <=> b['start_date']&.to_date }.reverse
           return_date = { start_date: sorted_result.last['start_date'], end_date: }
 
           course_interruption = result.first['course'] == '3HP' ? 1 : 2
@@ -366,7 +368,7 @@ module ArtService
 
           return end_date if result.blank?
 
-          sorted_result = result.sort { |a, b| a['start_date'].to_date <=> b['start_date'].to_date }
+          sorted_result = result.sort { |a, b| a['start_date']&.to_date <=> b['start_date']&.to_date }
           return_date = sorted_result.last['end_date']
           course_interruption = result.first['course'] == '3HP' ? 1 : 2
           # use a for loop to check if there is a course interruption

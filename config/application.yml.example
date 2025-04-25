@@ -1,3 +1,6 @@
+password_reset:
+  secret_key: <key>
+
 # Comment out parameter below to enable syncing with lims through the REST API.
 # lims_api: rest
 lims_host: localhost

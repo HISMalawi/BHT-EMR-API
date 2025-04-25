@@ -9,6 +9,23 @@ module CommonSqlQueryUtils
                                                                                                   occupation)
   end
 
+  def dsd_query(dsd:, model:)
+    <<~SQL 
+      INNER JOIN patient_program pp ON pp.patient_id = #{model}.patient_id
+      AND pp.voided = 0
+      INNER JOIN patient_state ps ON ps.patient_program_id = pp.patient_program_id
+      AND ps.voided = 0
+      AND ps.state = (
+        SELECT program_workflow_state_id 
+          FROM program_workflow_state 
+          WHERE program_workflow_id = (
+            SELECT program_id FROM program WHERE name = 'DSD PROGRAM'
+          )
+          AND concept_id = #{dsd}
+      )
+    SQL
+  end
+
   def occupation_filter(occupation:, field_name:, table_name: '', include_clause: true)
     clause = 'WHERE' if include_clause
     table_name = "#{table_name}." unless table_name.blank?

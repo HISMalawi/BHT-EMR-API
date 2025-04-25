@@ -11,6 +11,7 @@ module ArtService
 
         def initialize(start_date:, end_date:, **kwargs)
           super(start_date:, end_date:, **kwargs)
+          @dsd = kwargs[:dsd]
         end
 
         def find_report
@@ -134,6 +135,7 @@ module ArtService
                 ELSE 'unknown_cd4_count'
               END cd4_count_group
             FROM temp_earliest_start_date e
+             #{dsd_query(dsd: @dsd, model: 'e') if @dsd}
             INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id AND o.pepfar_cum_outcome = 'On antiretrovirals'
             INNER JOIN temp_patient_outcomes_start s ON s.patient_id = e.patient_id AND s.pepfar_cum_outcome IN ('Defaulted', 'Treatment stopped')
             LEFT JOIN temp_current_state_start c ON c.patient_id = e.patient_id

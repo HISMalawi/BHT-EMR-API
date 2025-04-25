@@ -40,6 +40,10 @@ class ReportService
     nil
   end
 
+  def nid_utilization_report(start_date:, end_date:)
+    NidUtilizationReport.new(start_date: start_date, end_date: end_date, program_id: @program.id).find_report
+  end
+
   def dashboard_stats(date)
     engine(@program).dashboard_stats(date)
   end
@@ -72,8 +76,8 @@ class ReportService
     engine(@program).dispensation(start_date, end_date)
   end
 
-  def cohort_survival_analysis(quarter, age_group, regenerate, occupation)
-    engine(@program).cohort_survival_analysis(quarter, age_group, regenerate, occupation)
+  def cohort_survival_analysis(quarter, age_group, regenerate, occupation, dsd)
+    engine(@program).cohort_survival_analysis(quarter, age_group, regenerate, occupation, dsd)
   end
 
   def defaulter_list(start_date, end_date, pepfar, **kwargs)
@@ -137,8 +141,8 @@ class ReportService
     engine(@program).disaggregated_regimen_distribution(start_date, end_date, gender, age_group)
   end
 
-  def tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
-    engine(@program).tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
+  def tx_mmd_client_level_data(start_date, end_date, patient_ids, org, dsd)
+    engine(@program).tx_mmd_client_level_data(start_date, end_date, patient_ids, org, dsd)
   end
 
   def tb_prev(start_date, end_date)
@@ -206,8 +210,8 @@ class ReportService
     engine(@program).latest_regimen_dispensed(start_date.to_date, end_date.to_date, rebuild_outcome, **kwargs)
   end
 
-  def sc_arvdisp(start_date, end_date, rebuild_outcome)
-    engine(@program).sc_arvdisp(start_date, end_date, rebuild_outcome)
+  def sc_arvdisp(start_date, end_date, rebuild_outcome, dsd)
+    engine(@program).sc_arvdisp(start_date, end_date, rebuild_outcome, dsd)
   end
 
   private

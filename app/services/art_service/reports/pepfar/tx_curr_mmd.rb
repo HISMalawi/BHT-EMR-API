@@ -16,6 +16,7 @@ module ArtService
         def initialize(start_date:, end_date:, **kwargs)
           super(start_date:, end_date:, **kwargs)
           @report = init_report
+          @dsd = kwargs[:dsd]
         end
 
         def init_report
@@ -42,6 +43,7 @@ module ArtService
                 TIMESTAMPDIFF(DAY, tcm.start_date, tcm.expiry_date) prescribed_days
             FROM temp_earliest_start_date tesd
             INNER JOIN temp_patient_outcomes tpo ON tpo.patient_id = tesd.patient_id AND tpo.#{@report_type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome = 'On antiretrovirals'
+            #{dsd_query(dsd: @dsd, model: 'tpo') if @dsd}
             INNER JOIN temp_current_medication tcm ON tcm.patient_id = tesd.patient_id
             WHERE tesd.date_enrolled <= '#{@end_date}' AND tesd.gender IN ('M', 'F')
             GROUP BY tesd.patient_id
