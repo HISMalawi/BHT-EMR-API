@@ -20,6 +20,8 @@ class User < RetirableRecord
            foreign_key: :person_id,
            dependent: :destroy)
 
+  default_scope { where(deactivated_on: nil) }
+
   def active?
     deactivated_on.nil?
   end
