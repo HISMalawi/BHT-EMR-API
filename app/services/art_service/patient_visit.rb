@@ -251,12 +251,16 @@ module ArtService
                        .gsub(/Isoniazid/i, 'INH')
       end
 
-      match = drug.name.match(/^(.+)\s*\(.*$/)
-      name = match.nil? ? drug.name : match[1]
-
-      name = 'CPT' if name.match?('Cotrimoxazole')
-      # name = 'INH' if name.match?('INH')
-      name
+      # match = drug.name.match(/^(.+)\s*\(.*$/)
+      # name = match.nil? ? drug.name : match[1]
+      name = drug.name
+      if name.match?('Cotrimoxazole')
+        'CPT'
+      elsif name.match?('INH')
+        'INH'
+      else
+        name
+      end
     end
   end
 end
