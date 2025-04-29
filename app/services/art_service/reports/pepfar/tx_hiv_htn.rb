@@ -15,7 +15,6 @@ module ArtService
 
         def initialize(start_date:, end_date:, **kwargs)
           super(start_date:, end_date:, **kwargs)
-          ArtService::Reports::MaternalStatus.new(start_date:, end_date:, **kwargs).process_data
         end
 
         def find_report
@@ -108,14 +107,14 @@ module ArtService
 
         def screened_for_htn
           ActiveRecord::Base.connection.select_all <<~SQL
-                                                                                                                                      SELECT tesd.patient_id,
+            SELECT tesd.patient_id,
               disaggregated_age_group(tesd.birthdate, DATE('#{end_date.to_date}')) age_group,
               LEFT(tesd.gender, 1) AS gender,
-              systolic.value_numeric AS systolic,
-              diastolic.value_numeric AS diastolic,
-              DATE(vitals.encounter_datetime) AS date_screened_for_htn,
-              IF (diagnosed.patient_id IS NOT NULL, 1, 0) AS diagonised,
-              DATE(diagnosed.date_diagonised) AS date_diagnosed,
+              vitals.systolic,
+              vitals.diastolic,
+              vitals.date_screened_for_htn,
+              DATE(dd.obs_datetime) AS date_diagnosed,
+              IF (dd.obs_datetime IS NOT NULL, 1, 0) AS diagonised,
               IF (ms.maternal_status IS NOT NULL, 
                 ms.maternal_status, 
                 IF (tesd.gender = 'M', 'Male', 'FNP')) AS maternal_status
@@ -123,30 +122,25 @@ module ArtService
             INNER JOIN temp_patient_outcomes tpo
               ON tpo.patient_id = tesd.patient_id
               AND tpo.pepfar_cum_outcome = 'On antiretrovirals'
-            LEFT JOIN encounter vitals
-              ON vitals.patient_id = tesd.patient_id
-              AND vitals.voided = 0
-              AND vitals.encounter_type = #{encounter_type("VITALS").id}
-              AND DATE(vitals.encounter_datetime) BETWEEN DATE('#{start_date - 6.months}') AND DATE('#{end_date}')
-            LEFT JOIN obs systolic
-              ON systolic.encounter_id = vitals.encounter_id
-              AND systolic.voided = 0
-              AND systolic.concept_id = #{concept("Systolic blood pressure").id}
-            LEFT JOIN obs diastolic
-              ON diastolic.encounter_id = vitals.encounter_id
-              AND diastolic.voided = 0
-              AND diastolic.concept_id = #{concept("Diastolic blood pressure").id}
             LEFT JOIN (
-              SELECT p.patient_id, date_diagnosied.value_datetime AS date_diagonised
-              FROM patient p
-              INNER JOIN encounter e ON e.patient_id = p.patient_id
-              AND e.voided = 0
-              AND e.encounter_type = #{encounter_type("HIV CLINIC CONSULTATION").id}
-              AND DATE(e.encounter_datetime) BETWEEN DATE('#{start_date - 6.months}') AND DATE('#{end_date}')
-              INNER JOIN obs date_diagnosied ON date_diagnosied.encounter_id = e.encounter_id
-              AND date_diagnosied.voided = 0
-              AND date_diagnosied.concept_id = #{concept("Hypertension diagnosis date").id}
-            ) diagnosed ON diagnosed.patient_id = tesd.patient_id
+              SELECT vitals.patient_id, systolic.value_numeric AS systolic, diastolic.value_numeric AS diastolic,
+                DATE(vitals.encounter_datetime) AS date_screened_for_htn
+              FROM encounter vitals
+              INNER JOIN obs systolic
+                ON systolic.encounter_id = vitals.encounter_id
+                AND systolic.voided = 0
+                AND systolic.concept_id = #{concept("Systolic blood pressure").id}
+              INNER JOIN obs diastolic
+                ON diastolic.encounter_id = vitals.encounter_id
+                AND diastolic.voided = 0
+                AND diastolic.concept_id = #{concept("Diastolic blood pressure").id}
+              WHERE vitals.voided = 0
+              AND DATE(vitals.encounter_datetime) BETWEEN DATE('#{start_date - 6.months}') AND DATE('#{end_date}')
+              AND vitals.encounter_type = #{encounter_type("VITALS").id}
+            ) AS vitals ON vitals.patient_id = tesd.patient_id
+            LEFT JOIN obs dd ON dd.voided = 0
+              AND dd.person_id = tesd.patient_id 
+              AND dd.concept_id = #{concept("Hypertension diagnosis date").id}
             LEFT JOIN temp_maternal_status ms ON ms.patient_id = tesd.patient_id
             GROUP BY tesd.patient_id
           SQL
