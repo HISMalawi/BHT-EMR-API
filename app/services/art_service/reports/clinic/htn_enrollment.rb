@@ -192,7 +192,7 @@ module ArtService
             LEFT JOIN obs lts_diastolic ON lts_diastolic.person_id = lts_systolic.person_id
               AND lts_diastolic.voided = 0
               AND lts_diastolic.concept_id = #{concept('Diastolic blood pressure').id}
-            WHERE e.patient_id IN (#{patient_ids.join(',')})
+            WHERE e.patient_id IN (#{patient_ids.push(0).join(',')})
               AND DATE(e.encounter_datetime) BETWEEN DATE('#{start_date - 3.months}') AND DATE('#{end_date}')
               AND e.encounter_type = #{encounter_type('VITALS').id}
               AND e.program_id = #{program('HIV Program').id}
