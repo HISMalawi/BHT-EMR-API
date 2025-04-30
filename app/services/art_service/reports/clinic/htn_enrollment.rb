@@ -25,15 +25,22 @@ module ArtService
         end
 
         def find_report
-          @report = report_struct
-          all_patients_diagnosed_with_htn.each do |patient|
+          @report = report_struct.deep_dup
+          diagnosed_with_htn = all_patients_diagnosed_with_htn
+          lts_visits = patient_latest_visits(diagnosed_with_htn.map { |p| p['patient_id'] })&.to_a
+
+          diagnosed_with_htn.each do |p|
+
+            patient_id = p['patient_id']
+
+            patient = p.merge(lts_visits&.find { |a| a['patient_id'] == patient_id } || {})
             date_diagonised = patient['date_diagonised']&.to_date
 
             PERIODS.each_key do |period|
-              next if period == :reporting_period && !within_reporting_period?(date_diagonised)
+              next if period === :reporting_period && !within_reporting_period?(date_diagonised)
 
               process_enrollement_data(patient, period)
-              process_treatment_drug_classification(patient, period)
+              process_treatment_drug_classification(p, period)
             end
           end
 
@@ -43,39 +50,36 @@ module ArtService
         def process_enrollement_data(patient, period)
           key = :htn_enrollment
           patient_id = patient['patient_id']
-          patient['date_screened']
-          date_diagonised = patient['date_diagonised']&.to_date
-          lts_visit_date = patient['lts_visit_date']&.to_date
-          lts_systolic = patient['lts_systolic']
-          lts_diastolic = patient['lts_diastolic']
-          moh_cum_outcome = patient['moh_cum_outcome']
-          patient['moh_outcome_date']&.to_date
+          date_diagonised = patient.fetch('date_diagonised', nil)&.to_date
+          lts_visit_date = patient.fetch('lts_visit_date', nil)&.to_date
+          lts_systolic = patient.fetch('lts_systolic', nil)&.to_i
+          lts_diastolic = patient.fetch('lts_diastolic', nil)&.to_i
+          moh_cum_outcome = patient.fetch('moh_cum_outcome')
 
           report[key][:registered_with_hypertension][period] << patient_id
 
-          return if date_diagonised.nil?
-
-          if moh_cum_outcome == 'On antiretrovirals' && date_diagonised.present?
+          
+          if moh_cum_outcome === 'on antiretrovirals'
             report[key][:enrolled_and_active_in_care][period] << patient_id
           end
-
-          if moh_cum_outcome == 'Defaulted'
+          
+          if moh_cum_outcome === 'defaulted'
             report[key][:who_have_defaulted_during_the_reporting_period][period] << patient_id
           end
-
-          report[key][:who_have_died][period] << patient_id if moh_cum_outcome == 'Patient died'
-          report[key][:who_have_transferred_out][period] << patient_id if moh_cum_outcome == 'Transferred out'
-          report[key][:who_have_stopped_htn_care][period] << patient_id if moh_cum_outcome == 'Treatment stopped'
-
-          if lts_visit_date.present? && lts_visit_date >= (start_date - 3.months)
+          
+          report[key][:who_have_died][period] << patient_id if moh_cum_outcome === 'patient died'
+          report[key][:who_have_transferred_out][period] << patient_id if moh_cum_outcome === 'patient transferred out'
+          report[key][:who_have_stopped_htn_care][period] << patient_id if moh_cum_outcome === 'treatment stopped'
+                    
+          if lts_visit_date.present?
             report[key][:with_a_visit_in_last_3_months][period] << patient_id
           end
 
-          if lts_visit_date.present? && lts_visit_date >= (start_date - 3.months) && lts_systolic.present? && lts_diastolic.present?
+          if lts_visit_date.present? && lts_systolic.present? && lts_diastolic.present?
             report[key][:with_a_visit_in_last_3_months_who_have_a_bp_measurement_recorded][period] << patient_id
           end
 
-          if lts_visit_date.present? && lts_visit_date >= (start_date - 3.months) && lts_systolic.present? && lts_diastolic.present? && lts_systolic < 140 && lts_diastolic < 90
+          if lts_visit_date.present? && lts_systolic.present? && lts_diastolic.present? && lts_systolic < 140 && lts_diastolic < 90
             report[key][:with_a_visit_in_last_3_months_who_have_bp_below_140_90][period] << patient_id
           end
         end
@@ -83,15 +87,17 @@ module ArtService
         def process_treatment_drug_classification(patient, period)
           key = :treatment_drug_classification
 
-          return unless patient['date_diagonised'].present?
-
           patient_id = patient['patient_id']
-          drugs = patient['drugs']&.split(',')&.map(&:downcase) || []
+          drugs = patient['drugs']&.split(',') || []
 
           drug_category_mapping.each do |category, drugs_list|
             next if report[key][category][period].include?(patient_id)
 
-            report[key][category][period] << patient_id if drugs_list.any? { |drug| drugs.include?(drug) }
+            report[key][category][period] << patient_id if drugs_list.any? { |d| drugs.include?(d) }
+            
+            return if report[key][:others][period].include?(patient_id)
+            
+            report[key][:others][period] << patient_id if drugs.length > 0 && drugs.all? { |d| !drugs_list.include?(d) }
           end
         end
 
@@ -127,7 +133,7 @@ module ArtService
 
         def drug_category_mapping
           {
-            diuretics: %w[htcz frusemide spironolactone bendrofluazide],
+            diuretics: %w[hctz frusemide spironolactone bendrofluazide],
             beta_blockers: %w[atenolol carvedilol propranolol bisoprolol],
             calcium_channel_blockers: %w[amlodipine nifedipine],
             ace_inhibitors: %w[enalapril captopril lisinopril perindopril],
@@ -144,73 +150,53 @@ module ArtService
 
         def all_patients_diagnosed_with_htn
           ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT p.patient_id,
-                DATE(vitals.encounter_datetime) AS date_screened,
-                DATE(diagnosed.date_diagonised) AS date_diagonised,
+            SELECT hp.patient_id,
+                DATE(diagonised.value_datetime) AS date_diagonised,
                 treatment.drugs,
-                lts_visit.lts_visit_date,
-                lts_visit.lts_systolic,
-                lts_visit.lts_diastolic,
-                tpo.moh_cum_outcome,
+                LOWER(tpo.moh_cum_outcome) AS moh_cum_outcome,
                 tpo.moh_outcome_date
-            FROM patient p
-            INNER JOIN encounter vitals ON vitals.patient_id = p.patient_id
-                AND vitals.voided = 0
-                AND vitals.encounter_type = #{encounter_type('VITALS').id}
-            INNER JOIN obs systolic ON systolic.encounter_id = vitals.encounter_id
-                AND systolic.voided = 0
-                AND systolic.concept_id = #{concept('Systolic blood pressure').id}
-            INNER JOIN obs diastolic ON diastolic.encounter_id = vitals.encounter_id
-                AND diastolic.voided = 0
-                AND diastolic.concept_id = #{concept('Diastolic blood pressure').id}
+            FROM encounter hp
+            INNER JOIN obs diagonised ON diagonised.encounter_id = hp.encounter_id
+                  AND diagonised.voided = 0
+                  AND diagonised.concept_id = #{concept('Hypertension diagnosis date').id}
             LEFT JOIN (
-                SELECT p.patient_id, date_diagnosied.value_datetime AS date_diagonised
-                FROM patient p
-                INNER JOIN encounter e ON e.patient_id = p.patient_id
-                    AND e.voided = 0
-                    AND e.encounter_type = #{encounter_type('HIV CLINIC CONSULTATION').id}
-                INNER JOIN obs date_diagnosied ON date_diagnosied.encounter_id = e.encounter_id
-                    AND date_diagnosied.voided = 0
-                    AND date_diagnosied.concept_id = #{concept('Hypertension diagnosis date').id}
-            ) diagnosed ON diagnosed.patient_id = p.patient_id
-            LEFT JOIN (
-                SELECT e.patient_id,#{' '}
-                    encounter_datetime,
-                    GROUP_CONCAT(DISTINCT c.name) AS drugs
-                FROM encounter e
-                INNER JOIN orders o ON o.encounter_id = e.encounter_id
+                SELECT o.patient_id,#{' '}
+                    o.date_created,
+                    o.encounter_id,
+                    GROUP_CONCAT(DISTINCT LOWER(c.name)) AS drugs
+                FROM orders o
                 INNER JOIN concept_name c ON c.concept_id = o.concept_id
-                WHERE e.voided = 0
-                    AND e.encounter_type = #{encounter_type('TREATMENT').id}
-                    AND o.voided = 0
-                    AND e.program_id = #{program('HIV Program').id}
-                AND DATE(e.encounter_datetime) > #{ActiveRecord::Base.connection.quote(start_date)}
-                AND DATE(e.encounter_datetime) < #{ActiveRecord::Base.connection.quote(end_date)}
+                WHERE o.voided = 0
+                  AND c.concept_id IN (#{Drug.bp_drugs.map(&:id).join(',')})
                 GROUP BY patient_id
-            ) treatment ON treatment.patient_id = p.patient_id
-            AND DATE(treatment.encounter_datetime) >= diagnosed.date_diagonised
-            LEFT JOIN (
-                SELECT e.patient_id,
-                        MAX(DATE(e.encounter_datetime)) AS lts_visit_date,
-                        lts_systolic.value_numeric AS lts_systolic,
-                        lts_diastolic.value_numeric AS lts_diastolic
-                FROM encounter e
-                    LEFT JOIN obs lts_systolic ON lts_systolic.encounter_id = e.encounter_id
-                        AND lts_systolic.voided = 0
-                        AND lts_systolic.concept_id = #{concept('Systolic blood pressure').id}
-                    LEFT JOIN obs lts_diastolic ON lts_diastolic.encounter_id = e.encounter_id
-                        AND lts_diastolic.voided = 0
-                        AND lts_diastolic.concept_id = #{concept('Diastolic blood pressure').id}
-                WHERE e.voided = 0
-                AND e.encounter_type = #{encounter_type('VITALS').id}
-                AND e.program_id = #{program('HIV Program').id}
-                GROUP BY patient_id
-            ) AS lts_visit ON lts_visit.patient_id = p.patient_id
-             AND DATE(lts_visit.lts_visit_date) >= DATE(#{ActiveRecord::Base.connection.quote(start_date - 3.months)})
-            LEFT JOIN temp_patient_outcomes tpo ON tpo.patient_id = p.patient_id
-            WHERE vitals.program_id = #{program('HIV Program').id}
-            AND DATE(vitals.encounter_datetime) <= #{ActiveRecord::Base.connection.quote(end_date)}
+            ) treatment ON treatment.date_created >= diagonised.obs_datetime
+            LEFT JOIN temp_patient_outcomes tpo ON tpo.patient_id = hp.patient_id
+            WHERE hp.program_id = #{program('HIV Program').id}
+              AND hp.voided = 0
+              AND DATE(hp.encounter_datetime) <= #{ActiveRecord::Base.connection.quote(end_date)}
             GROUP BY patient_id
+          SQL
+        end
+
+        def patient_latest_visits(patient_ids)
+          ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT
+              lts_systolic.person_id AS patient_id,
+              lts_systolic.value_numeric AS lts_systolic,
+              lts_diastolic.value_numeric AS lts_diastolic,
+              DATE(e.encounter_datetime) AS lts_visit_date
+            FROM encounter e 
+            LEFT JOIN obs lts_systolic ON lts_systolic.voided = 0
+              AND lts_systolic.person_id = e.patient_id
+              AND lts_systolic.concept_id = #{concept('Systolic blood pressure').id}
+            LEFT JOIN obs lts_diastolic ON lts_diastolic.person_id = lts_systolic.person_id
+              AND lts_diastolic.voided = 0
+              AND lts_diastolic.concept_id = #{concept('Diastolic blood pressure').id}
+            WHERE e.patient_id IN (#{patient_ids.join(',')})
+              AND DATE(e.encounter_datetime) BETWEEN DATE('#{start_date - 3.months}') AND DATE('#{end_date}')
+              AND e.encounter_type = #{encounter_type('VITALS').id}
+              AND e.program_id = #{program('HIV Program').id}
+            GROUP BY e.patient_id
           SQL
         end
       end
