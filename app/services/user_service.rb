@@ -28,9 +28,15 @@ module UserService
   class UserCreateError < StandardError; end
   class UserUpdateError < InvalidParameterError; end
 
-  def self.find_users(role: nil)
-    query = User.all
-    query = User.joins(:roles).where(user_role: { role: }) if role
+  def self.find_users(filters = {})
+    include_deactivated = (filters&.keys || []).include?(:include_deactivated)
+
+    query = include_deactivated ? User.unscope(where: :deactivated_on) : User.all
+    
+    role = filters&.dig(:role)
+
+    query = query.joins(:roles).where(user_role: { role: }) if role
+
     query
   end
 

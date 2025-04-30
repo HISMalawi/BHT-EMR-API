@@ -9,8 +9,8 @@ module Api
       skip_before_action :authenticate, only: %i[login reset_password]
 
       def index
-        filters = params.permit(:role).to_hash.transform_keys(&:to_sym)
-        render json: service.find_users(**filters)
+        filters = params.permit(%i[role include_deactivated]).to_hash.transform_keys(&:to_sym)
+        render json: service.find_users(filters)
       end
 
       def show
