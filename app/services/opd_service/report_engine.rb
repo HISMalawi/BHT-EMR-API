@@ -14,7 +14,7 @@ module OpdService
       'TRIAGE_REGISTRATION' => OpdService::Reports::TriageRegistration,
       'ATTENDANCE' => OpdService::Reports::Attendance,
       'DRUG' => OpdService::Reports::DrugReport,
-      'MAHIS_DASHBOARD' => OpdService::Reports::MahisDashboard
+      'MAHIS_DASHBOARD' => OpdService::Reports::MahisDashboard,
       'OPD_DISAGGREGATED' => OpdService::Reports::OpdDisaggregated
     }.freeze
 
