@@ -22,10 +22,13 @@ module Api
       # POST /patient_identifiers
       def create
         params[:location_id] = Location.current.location_id
-
         identifier = PatientIdentifierService.create(patient_identifier_params)
-
         if identifier.errors.empty?
+          if DdeService.dde_enabled?
+            person = Person.find(patient_identifier_params[:patient_id])
+            patient_service = PatientService.new
+            patient_service.update_patient(Program.find(1), person.patient) if person.patient
+          end
           render json: identifier, status: :created
         else
           render json: identifier.errors, status: :bad_request

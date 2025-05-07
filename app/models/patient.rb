@@ -3,6 +3,7 @@
 class Patient < VoidableRecord
   include ModelUtils
   attr_accessor :npid
+
   after_void :void_related_models
 
   NPID_NAME = 'National id'
@@ -44,6 +45,10 @@ class Patient < VoidableRecord
       },
       methods: %i[merge_history art_start_date]
     ))
+  end
+
+  def outcome(program, ref_date)
+    PatientStateService.new.find_patient_state(program, self, ref_date)
   end
 
   def national_id
@@ -172,7 +177,7 @@ class Patient < VoidableRecord
       order by orders.auto_expire_date desc
       limit 1
     SQL
-result['auto_expire_date']&.to_date || nil if result.present?
+    result['auto_expire_date']&.to_date || nil if result.present?
   end
 
   def tpt_status

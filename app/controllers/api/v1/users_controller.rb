@@ -3,15 +3,14 @@
 module Api
   module V1
     class UsersController < ApplicationController
-
-      
       DEFAULT_ROLENAME = 'clerk'
+      include PasswordPolicy
 
-      skip_before_action :authenticate, only: [:login]
+      skip_before_action :authenticate, only: %i[login reset_password]
 
       def index
         filters = params.permit(:role, :search_string).to_hash.transform_keys(&:to_sym)
-        query = service.find_users(**filters) 
+        query = service.find_users(**filters)
 
         render json: {
           count: query[1],
@@ -25,10 +24,11 @@ module Api
 
       def update_username
         update_params = params.require(%i[new_username])
-        new_username,  = update_params
+        new_username, = update_params
         id = user.user_id
         return unless validate_username(new_username)
-        user =  UserService.update_username User.find(id), new_username
+
+        user = UserService.update_username User.find(id), new_username
         render json: { message: ['username updated successfully'], user: }
       end
 
@@ -76,6 +76,13 @@ module Api
         end
       end
 
+      def reset_password
+        code = params[:code]
+
+        render json: { authorization: UserService.reset_password(code:) },
+               status: :ok
+      end
+
       def login
         login_params, error = required_params required: %i[username password]
         return render json: login_params, status: :bad_request if error
@@ -119,7 +126,7 @@ module Api
         update_params = params.permit user_village_ids: []
         user_villages = UserService.update_user_villages(user, update_params[:user_village_ids])
         render json: { villages: user_villages }, status: :ok
-      rescue => e
+      rescue StandardError => e
         render json: { errors: [e.message] }, status: :internal_server_error
       end
 
@@ -136,7 +143,7 @@ module Api
           render json: { errors: ['Username parameter is required'] }, status: :bad_request
           return
         end
-        
+
         exists = UserService.check_user(username_param[:username])
         render json: { exists: exists }, status: :ok
       rescue StandardError => e
@@ -165,7 +172,7 @@ module Api
       end
 
       def user
-        User.find(params[:user_id])
+        User.find(params[:id] || params[:user_id])
       end
 
       # validate user programs here

@@ -20,18 +20,16 @@ module Api
         offset = params[:offset].to_i || 0
         limit = params[:limit].to_i || 100
         location_id = params[:location_id]
-    
-        if location_id.blank?
-          render json: { error: 'Location ID is required' }, status: :bad_request and return
-        end
-  
+
+        render json: { error: 'Location ID is required' }, status: :bad_request and return if location_id.blank?
+
         patient_details = service.fetch_client_details(offset: offset, limit: limit, location_id:)
-    
+
         render json: { patients: patient_details, offset: offset, limit: limit }
       rescue StandardError => e
         render json: { error: e.message }, status: :internal_server_error
       end
- 
+
       def show
         render json: patient
       end
@@ -65,15 +63,15 @@ module Api
       # GET /api/v1/search/patients
       def search_by_name_and_gender
         filters = params.permit(%i[given_name middle_name family_name birthdate gender per_page page])
-      
-        page = (filters[:page].presence).to_i.nonzero? || 1
-        per_page = (filters[:per_page].presence).to_i.nonzero? || 50
-      
+
+        page = filters[:page].presence.to_i.nonzero? || 1
+        per_page = filters[:per_page].presence.to_i.nonzero? || 50
+
         patients = service.find_patients_by_name_and_gender(filters[:given_name],
                                                             filters[:middle_name],
                                                             filters[:family_name],
                                                             filters[:gender]).limit(per_page).offset((page.to_i - 1) * per_page)
-      
+
         render json: patients
       end
 
@@ -81,7 +79,7 @@ module Api
         person = Person.find(params.require(:person_id))
         program = Program.find(params.require(:program_id))
         malawi_national_id = params[:malawi_national_ID]
-        npid  = params[:npid]
+        npid = params[:npid]
 
         render json: service.create_patient(program, person, malawi_national_id, npid), status: :created
       end
@@ -99,32 +97,24 @@ module Api
       def print_national_health_id_label
         patient = Patient.find(params[:patient_id])
         qr_code = if params[:qr_code]
-                    params[:qr_code].casecmp?('true') ? true : false
+                    params[:qr_code].casecmp?('true') || false
                   else
                     false
                   end
 
-        label = generate_national_id_label(patient, qr_code)
-        send_data label, type: 'application/label;charset=utf-8',
-                         stream: false,
-                         filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
-                         disposition: 'inline',
-                         refresh: "1; url=#{params[:redirect_to]}"
+        render_zpl(generate_national_id_label(patient, qr_code))
       end
 
       def print_filing_number
         archived = params[:archived]&.downcase == 'true'
 
-        label_commands = if archived
-                           generate_archived_filing_number_label(patient)
-                         else
-                           generate_filing_number_label(patient)
-                         end
+        data = if archived
+                 generate_archived_filing_number_label(patient)
+               else
+                 generate_filing_number_label(patient)
+               end
 
-        send_data label_commands, type: 'application/label; charset=utf-8',
-                                  stream: false,
-                                  filename: "#{patient.id}#{rand(10_000)}.lbl",
-                                  disposition: 'inline'
+        render_zpl(data)
       end
 
       def visits
@@ -142,9 +132,9 @@ module Api
       def drugs_received
         cut_off_date = params[:date]&.to_date || Date.today
         program_id = params[:program_id] || Program.first.id
-        drugs_orders = paginate(service.drugs_orders_by_program(patient, cut_off_date, program_id:))
+        drugs_orders = service.drugs_orders_by_program(patient, cut_off_date, program_id:)
 
-        render json: drugs_orders
+        render json: drugs_orders.present? ? paginate(drugs_orders) : []
       end
 
       def bp_readings_trail
@@ -161,6 +151,38 @@ module Api
         end
       end
 
+      def assign_national_identifier
+        patient_id = params[:patient_id]
+        date = params[:date] || Date.today
+        number = params[:number]
+
+        begin
+          number = TbNumberService.assign_national_id(patient_id, date, number)
+          render json: number, status: :created
+        rescue TbNumberService::DuplicateIdentifierError
+          render status: :conflict
+        end
+      end
+
+      def update_national_identifier
+        patient_id = params[:patient_id]
+        date = params[:date] || Date.today
+        number = params[:number]
+
+        begin
+          number = TbNumberService.update_national_id(patient_id, date, number)
+          render json: number, status: :created
+        rescue TbNumberService::DuplicateIdentifierError
+          render status: :conflict
+        end
+      end
+
+      def most_recent_lab_order
+        patient_id, program_id, date = params.require(%i[patient_id program_id date])
+        render json: service.most_recent_lab_order(patient_id:,
+                                                   program_id:, date:)
+      end
+
       def tpt_status
         patient_id = params.require(:patient_id)
         date = params[:date]&.to_date || Date.today
@@ -169,11 +191,12 @@ module Api
 
       def assign_tb_number
         patient_id = params[:patient_id]
-        date = params[:date]&.to_date || Date.today
+        date = params[:date] || Date.today
         number = params[:number]
+        type = params[:id_type]
 
         begin
-          number = TbNumberService.assign_tb_number(patient_id, date, number)
+          number = TbNumberService.assign_tb_number(patient_id, date, number, type)
           render json: number, status: :created
         rescue TbNumberService::DuplicateIdentifierError
           render status: :conflict
@@ -219,7 +242,8 @@ module Api
       def find_program_drug_orders_awaiting_dispensation
         cut_off_date = params[:date]&.to_date || Date.today
         program_id = params[:program_id]
-        drugs_orders = paginate(service.find_program_drug_orders_awaiting_dispensation(patient, cut_off_date, program_id:))
+        drugs_orders = paginate(service.find_program_drug_orders_awaiting_dispensation(patient, cut_off_date,
+                                                                                       program_id:))
         valid_orders = drugs_orders.select { |order| order.drug.present? }
         render json: valid_orders.as_json
       end
@@ -264,27 +288,15 @@ module Api
       end
 
       def print_tb_lab_order_summary
-        label = lab_tests_engine.generate_lab_order_summary(tb_lab_order_params)
-        send_data label, type: 'application/label;charset=utf-8',
-                         stream: false,
-                         filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
-                         disposition: 'inline'
+        render_zpl(lab_tests_engine.generate_lab_order_summary(tb_lab_order_params))
       end
 
       def print_hts_linkage_code
-        label = HtsService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code
-        send_data label, type: 'application/label;charset=utf-8',
-                         stream: false,
-                         filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
-                         disposition: 'inline'
+        render_zpl(HtsService::HtsLinkageCode.new(params[:patient_id], params[:code]).print_linkage_code)
       end
 
       def print_tb_number
-        label = TbNumberService.generate_tb_patient_id(params[:patient_id])
-        send_data label, type: 'application/label;charset=utf-8',
-                         stream: false,
-                         filename: "#{params[:patient_id]}-#{SecureRandom.hex(12)}.lbl",
-                         disposition: 'inline'
+        render_zpl(TbNumberService.generate_tb_patient_id(params[:patient_id]))
       end
 
       def visit
@@ -318,6 +330,23 @@ module Api
                .distinct.order(patient_id: :asc).first.id
       end
 
+      def visits_after_last_outcome
+        program_id = params[:program]
+        date = params[:date]
+
+        render json: service.find_patient_visits_dates_since_last_outcome(patient.patient_id, program_id, date)
+      end
+
+      def tb_negative_minor
+        patient_id = params.require %i[patient_id]
+        response = tb_patient_engine.tb_negative_minor(patient_id)
+        if response
+          render json: response, status: :ok
+        else
+          render status: :no_content
+        end
+      end
+
       private
 
       def patient
@@ -330,7 +359,7 @@ module Api
         national_id = patient.national_id
         return nil unless national_id
 
-        sex =  "(#{person.gender})"
+        sex = "(#{person.gender})"
         address = person.addresses.first.to_s.strip[0..24].humanize
         label = ZebraPrinter::Lib::StandardLabel.new
         label.font_size = 2
@@ -350,7 +379,20 @@ module Api
           label.draw_multi_text("#{patient.national_id_with_dashes} #{person.birthdate}#{sex}")
           label.draw_multi_text(address)
         end
-        label.print(1)
+
+        json = {
+          name: person.name.titleize,
+          national_id: patient.national_id_with_dashes,
+          birthdate: person.birthdate,
+          sex:,
+          address: person.addresses.first.to_s.strip[0..24].humanize,
+          barcode: national_id
+        }
+
+        {
+          zpl: label.print(1),
+          data: json.merge({ qr: json.values.join('~') })
+        }
       end
 
       def generate_filing_number_label(patient, num = 1)
@@ -368,7 +410,13 @@ module Api
         label.draw_text(number, 75, 30, 0, 4, 4, 4, false)
         label.draw_text("Filing area #{file_type}", 75, 150, 0, 2, 2, 2, false)
         label.draw_text("Version number: #{version_number}", 75, 200, 0, 2, 2, 2, false)
-        label.print(num)
+
+        {
+          zpl: label.print(num),
+          number:,
+          file_type:,
+          version_number:
+        }
       end
 
       def generate_archived_filing_number_label(patient, num = 1)
@@ -386,7 +434,15 @@ module Api
         label.draw_text(number, 75, 30, 0, 4, 4, 4, false)
         label.draw_text("Filing area #{file_type}", 75, 150, 0, 2, 2, 2, false)
         label.draw_text("Version number: #{version_number}", 75, 200, 0, 2, 2, 2, false)
-        label.print(num)
+
+        {
+          zpl: label.print(num),
+          data: {
+            number:,
+            file_type:,
+            version_number:
+          }
+        }
       end
 
       def service
@@ -399,6 +455,11 @@ module Api
 
       def person_service
         PersonService.new
+      end
+
+      def tb_patient_engine
+        program = Program.find_by(name: 'TB PROGRAM')
+        TbService::PatientsEngine.new program:
       end
 
       def ait_intergration_service(patient_id)

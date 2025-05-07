@@ -199,7 +199,7 @@ module AncService
         0
       end
 
-      label = ZebraPrinter::StandardLabel.new
+      label = ZebraPrinter::Lib::StandardLabel.new
 
       label.draw_text('Obstetric History', 28, 8, 0, 1, 1, 2, false)
       label.draw_text('Medical History', 400, 8, 0, 1, 1, 2, false)
@@ -248,7 +248,7 @@ module AncService
       label.draw_text(@deliveries.to_s, 280, 89, 0, 2, 1, 1, begin
         (@deliveries > 4)
       rescue StandardError
-        false ? true : false
+        false
       end)
       label.draw_text(@abortions.to_s, 280, 119, 0, 2, 1, 1, (@abortions > 1))
       label.draw_text((if !@stillbirths.nil?
@@ -263,7 +263,7 @@ module AncService
                          ''
                        end).to_s, 280, 179, 0, 2, 1, 1,
                       (if !@vacuum.nil?
-                         @vacuum.positive? ? true : false
+                         @vacuum.positive? || false
                        else
                          false
                        end))
@@ -281,13 +281,13 @@ module AncService
                       begin
                         (@haemorrhage.upcase == 'PPH')
                       rescue StandardError
-                        false ? true : false
+                        false
                       end)
       label.draw_text((if !@preeclampsia.nil?
                          begin
                            (@preeclampsia.upcase == 'NO')
                          rescue StandardError
-                           false ? 'NO' : 'YES'
+                           'YES'
                          end
                        else
                          ''
@@ -370,7 +370,79 @@ module AncService
       label.draw_text(@age.to_s, 690, 264, 0, 2, 1, 1,
                       ((@age.positive? && @age < 16) || (@age > 40) ? true : false))
 
-      label.print(1)
+      detailed_obstetric_history = PatientVisitLabel.new(@patient, @date)
+                                                    .detailed_obstetric_history_label(@date)
+
+      {
+        zpl: label.print(1) + detailed_obstetric_history[:zpl],
+        data: {
+          obstetric_history: {
+            gravida: @gravida.to_s,
+            deliveries: @deliveries.to_s,
+            abortions: @abortions.to_s,
+            still_births: if !@stillbirths.nil?
+                            @stillbirths.upcase == 'NO' ? 'NO' : 'YES'
+                          else
+                            ''
+                          end,
+            vacuum_extraction: if !@vacuum.nil?
+                                 @vacuum.positive? ? 'YES' : 'NO'
+                               else
+                                 ''
+                               end,
+            csection: if !@csections.blank?
+                        @csections <= 0 ? 'NO' : 'YES'
+                      else
+                        ''
+                      end,
+            haemorrhage: @haemorrhage.to_s,
+            preeclampsia: if !@preeclampsia.nil?
+                            @preeclampsia.upcase == 'NO' ? 'NO' : 'YES'
+                          else
+                            ''
+                          end
+          },
+          medical_history: {
+            asthma: if !@asthma.nil?
+                      @asthma.upcase == 'NO' ? 'NO' : 'YES'
+                    else
+                      ''
+                    end,
+            hypertension: if !@hyper.nil?
+                            @hyper.upcase == 'NO' ? 'NO' : 'YES'
+                          else
+                            ''
+                          end,
+            diabetes: if !@diabetes.nil?
+                        @diabetes.upcase == 'NO' ? 'NO' : 'YES'
+                      else
+                        ''
+                      end,
+            epilepsy: if !@epilepsy.nil?
+                        @epilepsy.upcase == 'NO' ? 'NO' : 'YES'
+                      else
+                        ''
+                      end,
+            renal_disease: if !@renal.nil?
+                             @renal.upcase == 'NO' ? 'NO' : 'YES'
+                           else
+                             ''
+                           end,
+            fistula_repair: if !@fistula.nil?
+                              @fistula.upcase == 'NO' ? 'NO' : 'YES'
+                            else
+                              ''
+                            end,
+            leg_spine_deform: if !@deform.nil?
+                                @deform.upcase == 'NO' ? 'NO' : 'YES'
+                              else
+                                ''
+                              end,
+            age: @age.to_s
+          },
+          surgical_history: @surgicals
+        }.merge(detailed_obstetric_history[:data].first)
+      }
     end
 
     def active_range(date = Date.today)
@@ -463,13 +535,12 @@ module AncService
       rescue StandardError
         false
       end
-
         current_range['START'] = date_aborted.to_date + 10.days
         current_range['END'] = current_range['START'] + 9.months
       end
 
       unless begin
-        (current_range['START']).to_date.blank?
+        current_range['START'].to_date.blank?
       rescue StandardError
         true
       end
@@ -492,21 +563,18 @@ module AncService
 
       today = @date
       # This code which better accounts for leap years
-      patient_age = (today.year - person.birthdate.year) + \
-                    (if ((today.month - person.birthdate.month) + \
-                     ((today.day - person.birthdate.day).negative? ? -1 : 0)).negative?
-                       -1
-                     else
-                       0
-                     end)
+      patient_age = (today.year - person.birthdate.year) + (if ((today.month - person.birthdate.month) + ((today.day - person.birthdate.day).negative? ? -1 : 0)).negative?
+                                                              -1
+                                                            else
+                                                              0
+                                                            end)
 
       # If the birthdate was estimated this year, we round up the age, that way if
       # it is March and the patient says they are 25, they stay 25 (not become 24)
       birth_date = person.birthdate
       estimate = person.birthdate_estimated == 1
-      patient_age += if estimate && birth_date.month == 7 && birth_date.day == 1  \
-        && today.month < birth_date.month && \
-                        person.date_created.year == today.year
+      patient_age += if estimate && birth_date.month == 7 && birth_date.day == 1 \
+          && today.month < birth_date.month && person.date_created.year == today.year
                        1
                      else
                        0

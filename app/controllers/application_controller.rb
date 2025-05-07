@@ -8,7 +8,7 @@ class ApplicationController < ActionController::API
   before_action :authenticate
   after_action  :refresh_dashboard, if: :refresh_dashboard_needed?
   after_action  :refresh_client_details, if: :refresh_client_details_needed?
-      
+
   protected
 
   include RequireParams
@@ -16,6 +16,11 @@ class ApplicationController < ActionController::API
 
   CURRENT_LOCATION_PROPERTY = 'current_health_center_id'
   DEFAULT_PAGE_SIZE = 10
+
+  # Required by audited gem
+  def current_user
+    User.current
+  end
 
   def authenticate
     authentication_token = request.headers['Authorization']
@@ -65,6 +70,21 @@ class ApplicationController < ActionController::API
     nil
   end
 
+  def render_zpl(data)
+    raw = params.permit(:raw)[:raw]
+
+    unless raw && raw == 'true'
+      render json: data
+
+      return
+    end
+
+    send_data data[:zpl], type: 'application/label; charset=utf-8',
+                          stream: false,
+                          filename: "barcode-#{rand(10_000)}.lbl",
+                          disposition: 'inline'
+  end
+
   # Takes search filters and converts them to an expression containing
   # inexact glob matchers that can be passed to `where` expressins.
   def make_inexact_filters(filters, fields = nil)
@@ -85,7 +105,7 @@ class ApplicationController < ActionController::API
     [inexact_filters[0].join(' AND ')] + inexact_filters[1]
   end
 
-  private 
+  private
 
   def refresh_dashboard
     ImmunizationReportJob.perform_later(1.year.ago.to_date.to_s, Date.today.to_s, User.current.location_id)
@@ -109,7 +129,7 @@ class ApplicationController < ActionController::API
 
   def refresh_client_details
     ClientDetailsJob.perform_later(User.current.location_id)
-  end 
+  end
 
   def refresh_client_details_needed?
     patient_create_action?
@@ -117,6 +137,5 @@ class ApplicationController < ActionController::API
 
   def patient_create_action?
     controller_name == 'patients' && action_name == 'create'
-  end 
-
+  end
 end

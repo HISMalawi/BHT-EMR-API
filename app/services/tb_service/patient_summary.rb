@@ -9,31 +9,59 @@ module TbService
 
     include ModelUtils
 
-    attr_reader :patient, :date
+    attr_reader :patient
+    attr_reader :date
 
     def initialize(patient, date)
       @patient = patient
+      @program = get_program
       @date = date
     end
 
     def full_summary
       drug_start_date, drug_duration = drug_period
       {
+        tb_positive: tb_status,
         patient_id: patient.patient_id,
         npid: identifier(NPID_TYPE) || 'N/A',
-        tb_number:,
+        tb_number: tb_number,
+        malawi_national_id: mw_national_id,
         program_start_date: patient_program_start_date || 'N/A',
-        current_outcome: current_outcome || 'N/A',
-        current_drugs:,
-        residence:,
+        current_outcome: current_outcome[:name] || 'N/A',
+        current_outcome_date: current_outcome[:date] || 'N/A',
+        current_drugs: current_drugs,
+        residence: residence,
         drug_duration: drug_duration || 'N/A',
-        drug_start_date: drug_start_date&.strftime('%d/%m/%Y') || 'N/A'
+        drug_start_date: drug_start_date&.strftime('%d/%m/%Y') || 'N/A',
+        last_treatment_outcome_date: last_outcome_date,
+        hiv: hiv?,
+        eptb: eptb?,
+        age: age,
+        patient: patient
       }
+    end
+
+    def mw_national_id
+      national_identifier = TbNumberService.mw_national_identifier(patient.patient_id)
+      national_identifier.identifier if not national_identifier.nil?
+    end
+
+    def tb_status
+      positive = concept('Positive').concept_id
+        obs = Observation.where(concept: concept('TB status'), person_id: @patient)
+                   .where('obs_datetime > ? AND DATE(obs_datetime) <= DATE(?)', last_outcome_date, @date)
+                   .first
+      return obs.value_coded == positive if obs.present?
+      nil
+    end
+
+    def last_outcome_date
+      service = PatientService.new
+      service.patient_last_outcome_date @patient.patient_id, @program.program_id, @date
     end
 
     def identifier(identifier_type_name)
       identifier_type = PatientIdentifierType.find_by_name(identifier_type_name)
-
       PatientIdentifier.where(
         identifier_type: identifier_type.patient_identifier_type_id,
         patient_id: patient.patient_id
@@ -82,6 +110,7 @@ module TbService
                                 .where('CAST(min_weight AS DECIMAL(4, 1)) <= :weight
                                                   AND CAST(max_weight AS DECIMAL(4, 1)) >= :weight',
                                        weight: patient.weight.to_f.round(1))
+        ingredients
 
         ingredients.each do |ingredient|
           drug = Drug.find_by(drug_id: ingredient.drug_id)
@@ -91,16 +120,13 @@ module TbService
     end
 
     def current_outcome
-      program = Program.find_by(name: 'TB PROGRAM')
-
-      state = PatientState.joins(:patient_program)\
-                          .includes(:program_workflow_state)
-                          .where('start_date <= ?', date)\
-                          .merge(PatientProgram.where(program:, patient:))\
-                          .order(start_date: :desc)\
-                          .last
-
-      state.program_workflow_state.name
+      patient_state_service = PatientStateService.new
+      begin
+        state = patient_state_service.find_patient_state(@program, @patient, @date)
+        { name: state.name, date: state.start_date }
+      rescue => exception
+        { name: 'N/A', date: 'N/A'}
+      end
     end
 
     def drug_period
@@ -116,8 +142,8 @@ module TbService
     # Returns the most recent value_datetime for patient's observations of the
     # given concept
     def recent_value_datetime(concept_name)
-      concept = ConceptName.find_by_name(concept_name)
-      date = Observation.where(concept_id: concept.concept_id,
+      concpt = ConceptName.find_by_name(concept_name)
+      date = Observation.where(concept_id: concpt.concept_id,
                                person_id: patient.patient_id)\
                         .order(obs_datetime: :desc)\
                         .first\
@@ -128,18 +154,55 @@ module TbService
     end
 
     def tb_number
-      number = TbNumberService.get_patient_tb_number(patient_id: patient.patient_id)
+      number = TbNumberService.get_current_patient_identifier(patient_id: patient.patient_id)
       return 'N/A' unless number
-
       number[:identifier]
     end
 
     def patient_program_start_date
-      patient_program = PatientProgram.find_by(patient_id: patient.patient_id,
-                                               program_id: program('TB PROGRAM').program_id)
+      patient_program = PatientProgram.find_by(patient_id: @patient, program_id: @program)
       return 'N/A' unless patient_program
 
       patient_program.date_enrolled.to_date
     end
+
+    private
+
+
+    def get_program
+      ipt? ? program('IPT Program') : program('TB Program')
+    end
+
+    def ipt?
+      PatientProgram.joins(:patient_states)\
+                    .where(patient_program: { patient_id: @patient,
+                                              program_id: program('IPT Program') },
+                           patient_state: { end_date: nil })\
+                    .exists?
+    end
+
+    def hiv?
+      Observation.where(person_id: @patient.patient_id,
+                        concept: concept('HIV status'),
+                        value_coded: concept('Positive').concept_id)\
+                      .where('DATE(obs_datetime) <= DATE(?)', @date)
+                      .order(obs_datetime: :desc)
+                      .first
+                      .present?
+    end
+
+    def age
+      person = Person.find_by(person_id: @patient.patient_id)
+      ((Time.zone.now - person.birthdate.to_time) / 1.year.seconds).floor
+    end
+
+    def eptb?
+      obs = Observation.where(person_id: @patient.patient_id,
+                              concept: concept('Type of tuberculosis'))
+                        .where('DATE(obs_datetime) <= DATE(?)', @date)
+                        .order(obs_datetime: :desc)
+                        .first
+      obs.present? ? obs.value_coded == concept('Extrapulmonary tuberculosis (EPTB)').concept_id : false
+    end
   end
-end
+  end

@@ -6,6 +6,7 @@ module Api
   module V1
     class DrugsController < ApplicationController
       before_action :authenticate, except: %i[print_barcode]
+
       def show
         render json: Drug.find(params[:id])
       end
@@ -27,6 +28,10 @@ module Api
 
       def tb_drugs
         render json: Drug.tb_drugs, status: :ok
+      end
+
+      def bp_drugs
+        render json: Drug.bp_drugs, status: :ok
       end
 
       def drug_sets
@@ -68,7 +73,6 @@ module Api
         # set_id = params[:set_id]
 
         unless set_name.blank?
-
           ActiveRecord::Base.transaction do
             set = GeneralSet.create(name: set_name,
                                     description: set_desc,
@@ -80,7 +84,6 @@ module Api
             set_id = set.set_id
 
             unless set_id.blank?
-
               results['set'] = {
                 "name": set.name,
                 "description": set.description,
@@ -105,10 +108,8 @@ module Api
                 results['set_drugs'] << { drug_id: d.id, drug_name: d.name,
                                           frequency: drug_set.frequency, quantity: drug_set.duration }
               end
-
             end
           end
-
         end
 
         render json: results
@@ -116,16 +117,14 @@ module Api
 
       def void_drug_sets
         drug_set = GeneralSet.find(params[:id])
-        drug_set.deactivate params[:date].to_date # User.current, "Voided by #{User.current.username}"
+        drug_set.deactivate(params[:date].to_date) # User.current, "Voided by #{User.current.username}"
       end
 
       def print_barcode
         quantity = params.require(:quantity)
-        printer_commands = service.print_drug_barcode(drug, quantity)
-        send_data(printer_commands, type: 'application/label; charset=utf-8',
-                                    stream: false,
-                                    filename: "#{SecureRandom.hex(24)}.lbl",
-                                    disposition: 'inline')
+        data = service.print_drug_barcode(drug, quantity)
+
+        render_zpl(data)
       end
 
       def tb_side_effects_drug

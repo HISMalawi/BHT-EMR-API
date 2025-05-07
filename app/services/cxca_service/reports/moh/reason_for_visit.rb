@@ -8,7 +8,7 @@ module CxcaService
 
         CxCa_PROGRAM = Program.find_by_name 'CxCa program'
 
-        def initialize(start_date:, end_date:)
+        def initialize(start_date:, end_date:, **_kwargs)
           @start_date = start_date.to_date.beginning_of_day
           @end_date = end_date.to_date.end_of_day
         end

@@ -14,7 +14,7 @@ module ArtService
       # demographics = mastercard_demographics(patient)
 
       label = ZebraPrinter::Lib::StandardLabel.new
-      label.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 450, 300, 0, 1, 1, 1, false)
+      label.draw_text("Printed on: #{Date.today.strftime('%A, %d/%b/%Y')}", 450, 300, 0, 1, 1, 1, false)
       label.draw_text(arv_number || 'N/A', 575, 30, 0, 3, 1, 1, false)
       label.draw_text('PATIENT DETAILS', 25, 30, 0, 3, 1, 1, false)
       label.draw_text("Name:   #{name} (#{sex})", 25, 60, 0, 3, 1, 1, false)
@@ -70,9 +70,9 @@ module ArtService
       label2.draw_line(25, 170, 795, 3)
       # label data
       label2.draw_text('STATUS AT ART INITIATION', 25, 30, 0, 3, 1, 1, false)
-      label2.draw_text("(DSA: #{art_start_date&.strftime('%d-%b-%Y') || 'N/A'})", 370, 30, 0, 2, 1, 1, false)
+      label2.draw_text("(DSA: #{art_start_date&.strftime('%d/%b/%Y') || 'N/A'})", 370, 30, 0, 2, 1, 1, false)
       label2.draw_text(arv_number, 580, 20, 0, 3, 1, 1, false)
-      label2.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 25, 300, 0, 1, 1, 1, false)
+      label2.draw_text("Printed on: #{Date.today.strftime('%A, %d/%b/%Y')}", 25, 300, 0, 1, 1, 1, false)
 
       label2.draw_text("RFS: #{reason_for_art_eligibility}", 25, 70, 0, 2, 1, 1, false)
       label2.draw_text("#{cd4_count} #{cd4_count_date}", 25, 110, 0, 2, 1, 1, false)
@@ -105,15 +105,47 @@ module ArtService
         label3 = ZebraPrinter::Lib::StandardLabel.new
         label3.draw_text('STAGE DEFINING CONDITIONS', 25, line, 0, 3, 1, 1, false)
         label3.draw_text(identifier('ARV Number'), 370, line, 0, 2, 1, 1, false)
-        label3.draw_text("Printed on: #{Date.today.strftime('%A, %d-%b-%Y')}", 450, 300, 0, 1, 1, 1, false)
+        label3.draw_text("Printed on: #{Date.today.strftime('%A, %d/%b/%Y')}", 450, 300, 0, 1, 1, 1, false)
         extra_lines.each do |condition|
           label3.draw_text(condition, 25, line += 30, 0, 2, 1, 1, false)
         end
       end
 
-      return "#{label.print(1)} #{label2.print(1)} #{label3.print(1)}" unless extra_lines.blank?
+      data = {
+        printed_on: Date.today.strftime('%A, %d/%b/%Y'),
+        arv_number: arv_number || 'N/A',
+        patient_details: {
+          name: "#{name} (#{sex})",
+          dob: birthdate,
+          phone: phone_number,
+          address: address,
+          guardian: guardian || 'None',
+          transfer_in: transfer_in,
+          agrees_to_followup: agrees_to_followup
+        },
+        art_initiation_status: {
+          art_start_date: art_start_date&.strftime('%d/%b/%Y') || 'N/A',
+          reason_for_art_eligibility: reason_for_art_eligibility,
+          cd4_count: cd4_count,
+          cd4_count_date: cd4_count_date,
+          hiv_test_date: hiv_test_date,
+          tb_status: tb_status,
+          ks_status: ks,
+          pregnant: pregnant,
+          first_line_drugs: first_line_drugs,
+          alt_first_line_drugs: alt_first_line_drugs,
+          second_line_drugs: second_line_drugs,
+          initial_height: initial_height,
+          initial_weight: initial_weight,
+          age_at_initiation: age_at_initiation,
+          who_clinical_conditions: who_clinical_conditions.split(';')
+        }
+      }
 
-      "#{label.print(1)} #{label2.print(1)}"
+      {
+        data:,
+        zpl: "#{label.print(1)} #{label2.print(1)}"
+      }
     end
 
     def age_at_initiation
@@ -124,10 +156,7 @@ module ArtService
     end
 
     def address
-      PersonAddress.where(person_id: patient.id)\
-                   .order(:date_created)\
-                   .last\
-                   &.city_village || ''
+      PersonAddress.where(person_id: patient.id).order(:date_created).last&.city_village || ''
     end
 
     def agrees_to_followup
@@ -215,8 +244,8 @@ module ArtService
     end
 
     def pulmonary_tb
-      if hiv_staging_observation_present?('Pulmonary tuberculosis')\
-          || hiv_staging_observation_present?('Pulmonary tuberculosis (current)')
+      if hiv_staging_observation_present?('Pulmonary tuberculosis') \
+        || hiv_staging_observation_present?('Pulmonary tuberculosis (current)')
         'Pulmonary tb'
       end
     end
@@ -255,10 +284,7 @@ module ArtService
     def guardian
       return @guardian if @guardian
 
-      person_id = Relationship.where(person_a: patient.id)\
-                              .order(date_created: :desc)\
-                              .first\
-                              &.person_b
+      person_id = Relationship.where(person_a: patient.id).order(date_created: :desc).first&.person_b
 
       @guardian = PersonName.where(person_id:).order(:date_created).last&.to_s
     end
@@ -337,8 +363,7 @@ module ArtService
     # Patient's HIV staging encounter
     def hiv_staging
       @hiv_staging ||= Encounter.where(type: EncounterType.find_by_name('HIV Staging'),
-                                       patient:)\
-                                .order(:encounter_datetime)
+                                       patient:).order(:encounter_datetime)
                                 .last
     end
 
@@ -346,24 +371,17 @@ module ArtService
       concept_id = ConceptName.find_by_name(concept_name)&.concept_id
       return false unless hiv_staging
 
-      hiv_staging.observations\
-                 .where(concept_id: ConceptName.find_by_name('Who stages criteria present')&.concept_id)\
-                 .where(value_coded: concept_id)
-                 .order(:obs_datetime)\
-                 .first
+      hiv_staging.observations.where(concept_id: ConceptName.find_by_name('Who stages criteria present')&.concept_id).where(value_coded: concept_id)
+                 .order(:obs_datetime).first
                  .present?
     end
 
     # Returns the oldest observation for current patient of the given concept_name
     def initial_observation(concept_name)
-      concept_id = ConceptName.select(:concept_id)\
-                              .find_by_name(concept_name)\
-                              &.concept_id
+      concept_id = ConceptName.select(:concept_id).find_by_name(concept_name)&.concept_id
       return nil unless concept_id
 
-      Observation.where(person_id: patient.id, concept_id:)\
-                 .order(:obs_datetime)\
-                 .first
+      Observation.where(person_id: patient.id, concept_id:).order(:obs_datetime).first
     end
 
     # Returns most recent observation for the current patient
@@ -388,10 +406,7 @@ module ArtService
 
     # Returns current patient's attribute of the given name
     def attribute(attribute_name)
-      PersonAttribute.joins(:type)\
-                     .where(person_id: patient.id)\
-                     .merge(PersonAttributeType.where(name: attribute_name).limit(1))\
-                     .first
+      PersonAttribute.joins(:type).where(person_id: patient.id).merge(PersonAttributeType.where(name: attribute_name).limit(1)).first
     end
 
     def load_regimens

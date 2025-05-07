@@ -14,6 +14,7 @@ module LaboratoryService
           @start_date = start_date.to_date
           @end_date = end_date.to_date
           @occupation = kwargs[:occupation]
+          @dsd = kwargs[:dsd]
         end
 
         def read
@@ -64,6 +65,7 @@ module LaboratoryService
             INNER JOIN orders
               ON orders.order_id = lab_result_obs.order_id
               AND orders.voided = 0
+            #{dsd_query(dsd: @dsd, model: 'orders') if @dsd}
             INNER JOIN (
               SELECT concept_id, name FROM concept_name INNER JOIN concept USING (concept_id) WHERE concept.retired = 0 GROUP BY concept_id
             ) AS specimen_concept

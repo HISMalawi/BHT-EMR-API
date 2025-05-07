@@ -1891,9 +1891,9 @@ DECLARE num_of_days INT;
 IF set_status = 'Patient died' THEN
 
   SET date_of_death = (
-    SELECT COALESCE(death_date, outcome_date)
+    SELECT COALESCE(death_date, moh_outcome_date)
     FROM temp_patient_outcomes INNER JOIN temp_earliest_start_date USING (patient_id)
-    WHERE cum_outcome = 'Patient died' AND patient_id = set_patient_id
+    WHERE moh_cum_outcome = 'Patient died' AND patient_id = set_patient_id
   );
 
   IF date_of_death IS NULL THEN
@@ -2691,11 +2691,11 @@ RETURN set_outcome;
 END;
 
 DROP FUNCTION IF EXISTS `malaria_report`;
-CREATE FUNCTION `malaria_report`(_order_id varchar(100),_value_text varchar(100),_value_coded varchar(100),_person_id varchar(100),_obs_datetime varchar(100),_concept_name varchar(100),birthdate varchar(100),today_date varchar(100)) RETURNS varchar(100)
+CREATE FUNCTION `malaria_report`(_order_id varchar(100),_value_text varchar(100),_value_coded varchar(100),_person_id varchar(100),_obs_datetime varchar(100),_concept_name varchar(100),birthdate varchar(100),today_date varchar(100)) RETURNS TEXT
 DETERMINISTIC
 BEGIN
 
-DECLARE report_data VARCHAR(150);
+DECLARE report_data TEXT;
 DECLARE age_in_years INT(11);
 
 SET age_in_years  = (SELECT timestampdiff(year, birthdate, today_date));
@@ -2726,7 +2726,7 @@ ELSE
 	SELECT c.name INTO @pregnant_patient FROM `obs`
 	INNER JOIN concept_name c ON c.concept_id = obs.concept_id
 	WHERE `obs`.`voided` = 0 AND DATE(obs_datetime) = _obs_datetime
-    AND c.name = 'Patient pregnant' AND value_coded = 1065
+    AND c.name = 'Is patient pregnant?' AND value_coded = 1065
 	AND obs.person_id = _person_id AND c.voided = 0 LIMIT 1;
 
 	SELECT CONCAT(',',orders.instructions,'=',`quantity`) INTO @drug_data FROM `orders`
@@ -2743,7 +2743,7 @@ ELSE
 
 	IF (_concept_name = 'MRDT'AND _value_text = 'Positive') OR (_value_text = 'Parasites seen' AND _concept_name = 'Malaria film') OR (_value_text = 'Parasites seen' AND _concept_name = 'Malaria Species') THEN
 		SET _concept_name = CONCAT('positive_',_concept_name);
-        IF @pregnant_patient = 'Patient pregnant' THEN
+        IF @pregnant_patient = 'Is patient pregnant?' THEN
 			IF age_in_years <= 5 THEN SET report_data = CONCAT("< 5yrs,","confirm_pregnant,",_concept_name,@drug_data,@old_confirm_results);
 			ELSEIF age_in_years > 5 THEN SET report_data = CONCAT("> 5yrs,","confirm_pregnant,",_concept_name,@drug_data,@old_confirm_results);
 			END IF;
@@ -2760,7 +2760,7 @@ ELSE
 		ELSEIF age_in_years > 5 THEN SET report_data = CONCAT("> 5yrs,","suspected_malaria,",_concept_name,@drug_data,@old_confirm_results);
 		END IF;
 	ELSEIF _value_coded = 123 THEN
-			IF @pregnant_patient = 'Patient pregnant' THEN
+			IF @pregnant_patient = 'Is patient pregnant?' THEN
 				IF age_in_years <= 5 THEN SET report_data = CONCAT("< 5yrs,","presume_pregnant,",@drug_data,@old_confirm_results);
 				ELSEIF age_in_years > 5 THEN SET report_data = CONCAT("> 5yrs,","presume_pregnant,",@drug_data,@old_confirm_results);
 				END IF;

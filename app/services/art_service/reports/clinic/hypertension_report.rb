@@ -6,23 +6,24 @@ module ArtService
       # Generates a hypertension report for a clinic
       # rubocop:disable Metrics/ClassLength
       class HypertensionReport
+
+        include CommonSqlQueryUtils
         AGE_GROUPS = [
-          '20-24 years',
+          '15-19 years', '20-24 years',
           '25-29 years', '30-34 years',
           '35-39 years', '40-44 years',
           '45-49 years', '50-54 years',
           '55-59 years', '60-64 years',
           '65-69 years', '70-74 years',
           '75-79 years', '80-84 years',
-          '85-89 years',
-          '90 plus years'
+          '85-89 years', '90 plus years'
         ].freeze
 
         GENDER = %w[M F].freeze
 
         DRUG_MAPPING = {
           'Hydrochlorothiazide (25mg tablet)' => :hydrochlorothiazide_25mg,
-          'HCZ (25mg tablet)' => :hydrochlorothiazide_25mg,
+          'HCTZ (25mg tablet)' => :hydrochlorothiazide_25mg,
           'Hctz (25mg)' => :hydrochlorothiazide_25mg,
           'Amlodipine (5mg tablet)' => :amlodipine_5mg,
           'Amlodipine 5mg' => :amlodipine_5mg,
@@ -48,6 +49,7 @@ module ArtService
           @start_date = ActiveRecord::Base.connection.quote(start_date)
           @end_date = ActiveRecord::Base.connection.quote(end_date)
           @process_due = kwargs[:process_due] == 'true'
+          @dsd = kwargs[:dsd]
         end
 
         def find_report
@@ -127,8 +129,10 @@ module ArtService
             next unless AGE_GROUPS.include?(age_group)
             next unless GENDER.include?(gender)
 
+            patient = client_info(row)
+
             cluster = @report[age_group][gender][:due_screening]
-            cluster << row['patient_id']
+            cluster << patient
             @due_clients << row['patient_id']
           end
         end
@@ -156,7 +160,7 @@ module ArtService
             cluster_key = DRUG_MAPPING[drug]
             cluster[cluster_key] << patient_id if cluster_key
             # unique cluster[cluster_key]
-            cluster[cluster_key].uniq!
+            cluster[cluster_key]&.uniq!
           end
         end
 
@@ -195,6 +199,7 @@ module ArtService
                 END AS diastolic_classification,
                 UPPER(LEFT(p.gender, 1)) gender,
                 disaggregated_age_group(p.birthdate, #{@end_date}) age_group,
+                patient_start_date(tpo.patient_id) art_start_date,
                 i.identifier arv_number,
                 latest_drug_order.start_date,
                 GROUP_CONCAT(DISTINCT d.name) drug_names
@@ -206,6 +211,7 @@ module ArtService
                 AND o.voided = 0 AND o.obs_datetime >= #{@start_date} AND o.obs_datetime < #{@end_date} + INTERVAL 1 DAY
                 GROUP BY o.person_id
             ) AS tpo
+            #{dsd_query(dsd: @dsd, model: 'tpo') if @dsd}
             INNER JOIN obs sys ON sys.concept_id = 5085 AND sys.person_id = tpo.patient_id AND sys.obs_datetime = tpo.obs_date AND sys.voided = 0
             INNER JOIN obs dia ON dia.concept_id = 5086 AND dia.person_id = tpo.patient_id AND dia.obs_datetime = tpo.obs_date AND dia.voided = 0
             INNER JOIN person p ON p.person_id = tpo.patient_id AND p.voided = 0
@@ -231,7 +237,12 @@ module ArtService
 
         def due_for_bp_screening
           ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT p.person_id patient_id, disaggregated_age_group(p.birthdate, #{@end_date}) age_group, UPPER(LEFT(p.gender, 1)) gender, TIMESTAMPDIFF(YEAR, DATE(COALESCE(latest_bp.obs_date, MIN(ps2.start_date))), DATE(#{@start_date})) due
+            SELECT p.person_id patient_id,
+              disaggregated_age_group(p.birthdate, #{@end_date}) age_group,
+              UPPER(LEFT(p.gender, 1)) gender,
+              TIMESTAMPDIFF(YEAR, DATE(COALESCE(latest_bp.obs_date, MIN(ps2.start_date))), DATE(#{@start_date})) due,
+              patient_start_date(p.person_id) art_start_date,
+              i.identifier arv_number
             FROM person p
             INNER JOIN patient_program pp2 ON pp2.patient_id = p.person_id AND pp2.voided = 0 AND pp2.program_id = 1 -- HIV PROGRAM
             INNER JOIN (
@@ -241,6 +252,7 @@ module ArtService
               WHERE ps.voided = 0 AND ps.start_date < DATE(#{@start_date}) AND ps.end_date IS NULL
               GROUP BY ps.patient_program_id
             ) latest_state ON latest_state.patient_program_id = pp2.patient_program_id
+            #{dsd_query(dsd: @dsd, model: 'pp2') if @dsd}
             INNER JOIN patient_state ps2 ON ps2.patient_program_id = pp2.patient_program_id AND ps2.voided = 0 AND ps2.start_date = latest_state.start_date AND ps2.end_date IS NULL AND ps2.state = 7 -- ON ART
             LEFT JOIN (
               SELECT MAX(o.obs_datetime) obs_date, o.person_id patient_id
@@ -250,6 +262,7 @@ module ArtService
               AND o.voided = 0 AND o.obs_datetime < DATE(#{@start_date})
               GROUP BY o.person_id
             ) AS latest_bp ON latest_bp.patient_id = p.person_id
+             LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.identifier_type = 4 AND i.voided = 0
             WHERE p.voided = 0 AND p.person_id NOT IN (#{external_clients}) AND p.dead = 0 AND p.death_date IS NULL
             GROUP BY p.person_id
             HAVING due >= 1
@@ -279,7 +292,8 @@ module ArtService
             arv_number: data['arv_number'],
             gender: data['gender'],
             diastolic: data['diastolic'],
-            systolic: data['systolic']
+            systolic: data['systolic'],
+            art_start_date: data['art_start_date']
           }
         end
       end

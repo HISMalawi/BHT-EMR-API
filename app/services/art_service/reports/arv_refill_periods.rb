@@ -2,15 +2,11 @@
 
 module ArtService
   module Reports
-    class ArvRefillPeriods
+    class ArvRefillPeriods < CachedReport
       def initialize(start_date:, end_date:, min_age:, max_age:, org:, initialize_tables:, **kwargs)
-        @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
-        @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
+        super(start_date:, end_date:, **kwargs)
         @min_age = min_age
         @max_age = max_age
-        @org = org
-        @initialize_tables = (initialize_tables == 'true')
-        @occupation = kwargs[:occupation]
       end
 
       def arv_refill_periods
@@ -28,21 +24,15 @@ module ArtService
         arv_concept_set = ConceptName.find_by(name: 'ARVS').concept_id
         encounter_type = EncounterType.find_by(name: 'DISPENSING').id
 
-        if @initialize_tables
-          report_type = (@org.match(/pepfar/i) ? 'pepfar' : 'moh')
-          ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type).init_temporary_tables(@start_date,
-                                                                                                         @end_date, @occupation)
-        end
-
         patients = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
             p.patient_id, p.date_enrolled, p.birthdate, p.gender,
-            outcome.cum_outcome AS outcome
+            outcome.#{type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome AS outcome
           FROM temp_earliest_start_date p
           LEFT JOIN temp_patient_outcomes outcome USING(patient_id)
           WHERE DATE(date_enrolled) <= DATE('#{@end_date}')
           AND TIMESTAMPDIFF(year, p.birthdate, DATE('#{@end_date}')) BETWEEN #{@min_age} AND #{@max_age}
-          AND cum_outcome = 'On antiretrovirals';
+          AND #{@report_type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome = 'On antiretrovirals';
         SQL
 
         return {} if patients.blank?
@@ -199,7 +189,7 @@ module ArtService
 
         data = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
-            o.patient_id, p.gender, p.birthdate, o.start_date,
+            o.patient_id, p.gender, p.birthdate, o.start_date, e2.earliest_start_date art_start_date,
             o.auto_expire_date, d.name, quantity, d.drug_id, identifier arv_number,
             TIMESTAMPDIFF(day, DATE(o.start_date), DATE(o.auto_expire_date)) prescribed_days
           FROM orders o
@@ -208,6 +198,7 @@ module ArtService
           INNER JOIN concept_set s ON s.concept_id = d.concept_id
           INNER JOIN person p ON p.person_id = o.patient_id
           INNER JOIN encounter e ON e.patient_id = p.person_id
+          INNER JOIN temp_earliest_start_date e2 ON e2.patient_id = p.person_id
           AND e.program_id = #{program_id}
           LEFT JOIN patient_identifier i ON  i.patient_id = o.patient_id
           AND i.identifier_type = #{identifier_type}
@@ -272,6 +263,7 @@ module ArtService
           birthdate = i['birthdate']
 
           info[patient_id][regimen][drug_id] = {
+            art_start_date: i['art_start_date'].to_date.strftime('%d/%b/%Y'),
             drug_name:,
             start_date: start_date.to_date.strftime('%d/%b/%Y'),
             auto_expire_date: begin

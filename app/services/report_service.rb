@@ -70,8 +70,8 @@ class ReportService
     engine(@program).diagnosis_by_address(start_date, end_date)
   end
 
-  def with_nids
-    engine(@program).with_nids
+  def with_nids(start_date, end_date)
+    engine(@program).with_nids(start_date, end_date)
   end
 
   def cohort_disaggregated(quarter, age_group, start_date, end_date, rebuild, init, **kwargs)
@@ -82,8 +82,8 @@ class ReportService
     engine(@program).dispensation(start_date, end_date)
   end
 
-  def cohort_survival_analysis(quarter, age_group, regenerate, occupation)
-    engine(@program).cohort_survival_analysis(quarter, age_group, regenerate, occupation)
+  def cohort_survival_analysis(quarter, age_group, regenerate, occupation, dsd)
+    engine(@program).cohort_survival_analysis(quarter, age_group, regenerate, occupation, dsd)
   end
 
   def defaulter_list(start_date, end_date, pepfar, **kwargs)
@@ -147,8 +147,8 @@ class ReportService
     engine(@program).disaggregated_regimen_distribution(start_date, end_date, gender, age_group)
   end
 
-  def tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
-    engine(@program).tx_mmd_client_level_data(start_date, end_date, patient_ids, org)
+  def tx_mmd_client_level_data(start_date, end_date, patient_ids, org, dsd)
+    engine(@program).tx_mmd_client_level_data(start_date, end_date, patient_ids, org, dsd)
   end
 
   def tb_prev(start_date, end_date)
@@ -191,8 +191,8 @@ class ReportService
     engine(@program).external_consultation_clients(start_date, end_date, **kwargs)
   end
 
-  def cxca_reports(start_date, end_date, report_name)
-    engine(@program).reports(start_date.to_date, end_date.to_date, report_name)
+  def cxca_reports(start_date, end_date, report_name, **kwargs)
+    engine(@program).reports(start_date.to_date, end_date.to_date, report_name, **kwargs)
   end
 
   def radiology_reports(start_date, end_date, report_name)
@@ -216,8 +216,8 @@ class ReportService
     engine(@program).latest_regimen_dispensed(start_date.to_date, end_date.to_date, rebuild_outcome, **kwargs)
   end
 
-  def sc_arvdisp(start_date, end_date, rebuild_outcome)
-    engine(@program).sc_arvdisp(start_date, end_date, rebuild_outcome)
+  def sc_arvdisp(start_date, end_date, rebuild_outcome, dsd)
+    engine(@program).sc_arvdisp(start_date, end_date, rebuild_outcome, dsd)
   end
 
   private

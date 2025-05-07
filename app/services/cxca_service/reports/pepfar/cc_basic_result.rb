@@ -12,7 +12,7 @@ module CxcaService
         AGE_GROUPS = ['15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50+', 'Unknown Age',
                       'Totals'].freeze
 
-        def initialize(start_date:, end_date:)
+        def initialize(start_date:, end_date:, **_kwargs)
           @start_date = start_date.strftime('%Y-%m-%d 00:00:00')
           @end_date = end_date.strftime('%Y-%m-%d 23:59:59')
           @response = init_response_structure

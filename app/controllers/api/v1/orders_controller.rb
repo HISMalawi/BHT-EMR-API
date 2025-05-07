@@ -49,10 +49,9 @@ module Api
 
         ActiveRecord::Base.transaction do
           order.void(params[:reason])
-          Observation.where(order_id: order.id).each { |obs| obs.void(params[:reason])}
+          Observation.where(order_id: order.id).each { |obs| obs.void(params[:reason]) }
         end
         render json: order, status: :no_content
-
       rescue ActiveRecord::RecordNotFound
         render json: { errors: "Order ##{params[:id]} not found" }, status: :not_found
       end
@@ -62,11 +61,7 @@ module Api
       end
 
       def print_radiology_order
-        printer_commands = RadiologyService::OrderLabel.new(params.permit(:accession_number, :order_id)).print
-        send_data(printer_commands, type: 'application/label; charset=utf-8',
-                                    stream: false,
-                                    filename: "#{SecureRandom.hex(24)}.lbl",
-                                    disposition: 'inline')
+        render_zpl(RadiologyService::OrderLabel.new(params.permit(:accession_number, :order_id)))
       end
 
       private

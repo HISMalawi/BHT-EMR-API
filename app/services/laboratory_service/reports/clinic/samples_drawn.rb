@@ -8,6 +8,7 @@ module LaboratoryService
           @start_date = start_date.to_date
           @end_date = end_date&.to_date || Date.today
           @kwargs = kwargs
+          @dsd = kwargs[:dsd]
         end
 
         def samples_drawn
@@ -15,7 +16,7 @@ module LaboratoryService
         end
 
         def test_results
-          ProcessedResults.new(start_date: @start_date, end_date: @end_date, **@kwargs).read
+          ProcessedResults.new(start_date: @start_date, end_date: @end_date, dsd: @dsd, **@kwargs).read
         end
 
         def read
@@ -46,9 +47,10 @@ module LaboratoryService
                    person.birthdate,
                    patient_identifier.identifier AS arv_number,
                    disaggregated_age_group(person.birthdate, #{end_date}) AS age_group,
-                   reason_for_test.name AS reason_for_test,
+                   reason_for_test_obs.value_coded AS reason_for_test,
                    GROUP_CONCAT(DISTINCT test_concepts.name SEPARATOR ',') AS tests
             FROM orders
+            #{dsd_query(dsd: @dsd, model: 'orders') if @dsd}
             INNER JOIN order_type
               ON order_type.order_type_id = orders.order_type_id
               AND order_type.name = 'Lab'

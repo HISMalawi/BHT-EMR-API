@@ -5,24 +5,21 @@ module ArtService
     module Pepfar
       # TxTb report
       # rubocop:disable Metrics/ClassLength
-      class TxTb
+      class TxTb < CachedReport
         attr_accessor :start_date, :end_date, :report, :rebuild_outcome
 
         include Utils
+        include CommonSqlQueryUtils
 
         def initialize(start_date:, end_date:, **kwargs)
-          @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
-          @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
-          @rebuild_outcome = ActiveModel::Type::Boolean.new.cast(kwargs[:rebuild_outcome]) || false
-          @occupation = kwargs[:occupation]
-          @report_type = kwargs[:report_type] || 'moh'
+          super(start_date:, end_date:, **kwargs)
+          @dsd = kwargs[:dsd]
         end
 
         def find_report
           drop_temporary_tables
           create_temp_earliest_start_date unless temp_eartliest_start_date_exists?
           init_report
-          build_cohort_tables
           process_patients_alive_and_on_art
           process_tb_screening
           process_tb_confirmed_and_on_treatment
@@ -67,13 +64,6 @@ module ArtService
           execute_action('DROP TABLE IF EXISTS temp_tb_confirmed_and_on_treatment;')
         end
 
-        def build_cohort_tables
-          return unless rebuild_outcome || @occupation.present?
-
-          cohort_builder = ArtService::Reports::CohortBuilder.new(outcomes_definition: @report_type)
-          cohort_builder.init_temporary_tables(start_date, end_date, @occupation)
-        end
-
         def process_tb_screening
           execute_action(create_temp_tb_screened_query)
         end
@@ -93,6 +83,7 @@ module ArtService
               SELECT o.person_id, MAX(o.obs_datetime) AS obs_datetime, tesd.earliest_start_date, tesd.gender, tesd.birthdate
               FROM obs o
               INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id #{@report_type == 'moh' ? '' : "AND tesd.patient_id IN (#{@tx_curr.join(',')})"}
+              #{dsd_query(dsd: @dsd, model: 'tesd') if @dsd}
               WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
               AND o.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('TB Suspected', 'TB NOT suspected') AND voided = 0)
               AND o.voided = 0 AND o.obs_datetime BETWEEN '#{start_date}' AND '#{end_date}' #{@report_type == 'moh' ? '' : "AND o.person_id IN (#{@tx_curr.join(',')})"}
@@ -136,8 +127,9 @@ module ArtService
               END AS has_tb_confirmed_date,
               tesd.earliest_start_date as enrollment_date,
               prev.tb_confirmed_date prev_reading
-            FROM obs o
+              FROM obs o
             INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.person_id #{@report_type == 'moh' ? '' : "AND tesd.patient_id IN (#{@tx_curr.join(',')})"}
+            #{dsd_query(dsd: @dsd, model: 'tesd') if @dsd}
             INNER JOIN person p ON p.person_id = o.person_id AND p.voided = 0
             LEFT JOIN obs tcd ON tcd.concept_id = #{ConceptName.find_by_name('TB treatment start date').concept_id} AND tcd.voided = 0 AND tcd.person_id = o.person_id
             LEFT JOIN (
@@ -151,7 +143,7 @@ module ArtService
               AND o.voided = 0 #{@report_type == 'moh' ? '' : "AND o.person_id IN (#{@tx_curr.join(',')})"}
               AND o.obs_datetime <= '#{start_date}'
               GROUP BY o.person_id
-            ) prev ON prev.person_id = o.person_id
+              ) prev ON prev.person_id = o.person_id
             WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
             AND o.value_coded = #{ConceptName.find_by_name('Confirmed TB on treatment').concept_id}
             AND o.voided = 0
@@ -179,7 +171,7 @@ module ArtService
             SELECT tpo.patient_id, LEFT(tesd.gender, 1) AS gender, disaggregated_age_group(tesd.birthdate, DATE('#{end_date.to_date}')) age_group
             FROM temp_patient_outcomes tpo
             INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = tpo.patient_id
-            WHERE tpo.cum_outcome = 'On antiretrovirals'
+            WHERE tpo.pepfar_cum_outcome = 'On antiretrovirals'
           SQL
         end
 

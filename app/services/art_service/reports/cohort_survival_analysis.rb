@@ -3,13 +3,14 @@
 module ArtService
   module Reports
     class CohortSurvivalAnalysis
-      def initialize(name:, type:, start_date:, end_date:, regenerate:, occupation:)
+      def initialize(name:, type:, start_date:, end_date:, regenerate:, occupation:, dsd: nil)
         @name = name
         @type = type
         @start_date = start_date
         @end_date = end_date
         @regenerate = regenerate
         @occupation = occupation
+        @dsd = dsd
       end
 
       def survival_analysis(quarter, age_group)
@@ -66,10 +67,11 @@ module ArtService
           begin
             data = ActiveRecord::Base.connection.select_all <<~SQL
               SELECT
-                cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
+                moh_cum_outcome cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
                 timestampdiff(year, DATE(e.birthdate), DATE('#{end_date}')) AS patient_age,
                 e.gender
               FROM temp_earliest_start_date e
+              #{dsd_query(dsd: @dsd, model: 'e') if @dsd}
               INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
               WHERE date_enrolled BETWEEN '#{qstart_date.strftime('%Y-%m-%d')}'
               AND '#{qend_date.strftime('%Y-%m-%d')}'
@@ -167,7 +169,7 @@ module ArtService
 
         data = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT
-            cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
+            moh_cum_outcome cum_outcome, timestampdiff(month, DATE('#{qend_date}'), DATE('#{end_date}')) qinterval,
             timestampdiff(year, DATE(e.birthdate), DATE('#{end_date}')) AS patient_age,
             e.gender
           FROM temp_earliest_start_date e

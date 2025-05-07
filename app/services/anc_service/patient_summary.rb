@@ -10,8 +10,7 @@ module AncService
 
     include ModelUtils
 
-    attr_reader :patient
-    attr_reader :date
+    attr_reader :patient, :date
 
     def initialize(patient, date)
       @patient = patient
@@ -22,17 +21,37 @@ module AncService
 
     def full_summary
       active_range = @patient_visit.active_range(@date)
-      gest_age = ((@date.to_date - active_range[0]["START"].to_date).to_i / 7) - 1 rescue nil
-      edod = active_range[0]["END"].to_date rescue nil
+      gest_age = begin
+        ((@date.to_date - active_range[0]['START'].to_date).to_i / 7) - 1
+      rescue StandardError
+        nil
+      end
+      edod = begin
+        active_range[0]['END'].to_date
+      rescue StandardError
+        nil
+      end
       {
         patient_id: patient.patient_id,
         current_outcome: getCurrentPatientOutcome,
         date_of_lnmp: date_of_lnmp,
+        last_visit_date: patient_last_visit_date,
         anc_visits: number_of_visits,
         fundus: fundus,
         gestation: gest_age,
         edod: edod
       }
+    end
+
+    def patient_last_visit_date
+      patient.encounters.where(program_id: anc_program)
+             &.last
+             &.encounter_datetime
+             &.strftime('%d/%b/%Y')
+    end
+
+    def anc_program
+      Program.find_by(name: 'ANC program')&.id
     end
 
     def date_of_lnmp
@@ -44,49 +63,55 @@ module AncService
 
       visits = []
 
-      anc_visits = patient.encounters.joins([:observations])
-                          .where(['encounter_type = ? AND obs.concept_id = ?
-            AND encounter_datetime > ?',
-                                  EncounterType.find_by_name('ANC Visit Type').id,
-                                  ConceptName.find_by_name('Reason for visit').concept_id,
-                                  lmp_date]).each do |e|
+      patient.encounters.joins([:observations])
+             .where(["encounter_type = ? AND obs.concept_id = ?
+            AND encounter_datetime > ?",
+                     EncounterType.find_by_name('ANC Visit Type').id,
+                     ConceptName.find_by_name('Reason for visit').concept_id,
+                     lmp_date]).each do |e|
         e.observations.each do |o|
           visits << o.value_numeric unless o.value_numeric.blank?
         end
       end
-      return visits.length
+      visits.length
     end
 
     def fundus
       lmp_date = date_of_lnmp
-      fundus = patient.encounters.joins([:observations])
-                      .where(["encounter_type = ? AND obs.concept_id = ?
+      begin
+        patient.encounters.joins([:observations])
+               .where(["encounter_type = ? AND obs.concept_id = ?
             AND encounter_datetime > ?",
-                              EncounterType.find_by_name('Current pregnancy').id,
-                              ConceptName.find_by_name('week of first visit').concept_id,
-                              lmp_date])
-                      .last.observations.collect { |o|
-                 o.value_numeric
-               }.compact.last.to_i rescue nil
+                       EncounterType.find_by_name('Current pregnancy').id,
+                       ConceptName.find_by_name('week of first visit').concept_id,
+                       lmp_date])
+               .last.observations.collect(&:value_numeric).compact.last.to_i
+      rescue StandardError
+        nil
+      end
     end
 
     def getCurrentPatientOutcome
-      state = ActiveRecord::Base.connection.select_one(
-        "SELECT state FROM patient_state INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id
+      state = begin
+        ActiveRecord::Base.connection.select_one(
+          "SELECT state FROM patient_state INNER JOIN patient_program p ON p.patient_program_id = patient_state.patient_program_id
         AND p.program_id = 12 WHERE (patient_state.voided = 0 AND p.voided = 0
           AND p.program_id = program_id AND DATE(start_date) <= '#{@date}'
           AND p.patient_id = #{@patient.id})
           AND (patient_state.voided = 0)
           ORDER BY start_date DESC, patient_state.patient_state_id DESC,
           patient_state.date_created DESC LIMIT 1;"
-      )["state"] rescue nil
+        )['state']
+      rescue StandardError
+        nil
+      end
 
-      return "Unknown" if state.blank?
+      return 'Unknown' if state.blank?
 
-      outcome = ActiveRecord::Base.connection.select_one(
+      ActiveRecord::Base.connection.select_one(
         "SELECT name FROM program_workflow_state INNER JOIN concept_name ON concept_name.concept_id = program_workflow_state.concept_id
         WHERE program_workflow_state_id = '#{state}';"
-      )["name"]
+      )['name']
     end
   end
 end

@@ -19,14 +19,13 @@ module Api
         name = params[:name]
         tag = params[:tag]
         city_village = params[:city_village]
-      
+
         locations = paginate(Location.order(:name))
-        
         locations = locations.where('name like ?', "%#{name}%") unless name.blank?
         locations = filter_locations_by_tag locations, tag if tag
-        
+
         locations = locations.where('city_village like ?', "%#{city_village}%") unless city_village.blank?
-      
+
         render json: locations
       end
 
@@ -65,11 +64,7 @@ module Api
 
         return render json: 'location_id or location_name required', status: :bad_request unless location
 
-        commands = service.print_location_label(location)
-        send_data(commands, type: 'application/label; charset=utf-8',
-                            stream: false,
-                            filename: "#{params[:id]}#{rand(10_000)}.lbl",
-                            disposition: 'inline')
+        render_zpl(service.print_location_label(location))
       end
 
       private

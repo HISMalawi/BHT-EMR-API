@@ -9,21 +9,21 @@ class GeneralSet < ApplicationRecord
   def activate(date)
     return unless status != 'active'
 
-    update_attributes(status: 'active')
-    update_attributes(date_updated: date) unless date.blank?
+    update_attribute('status', 'active')
+    update_attribute('date_updated', date) unless date.blank?
   end
 
   def deactivate(date)
     return unless status != 'inactive'
 
-    update_attributes(status: 'inactive')
-    update_attributes(date_updated: date) unless date.blank?
+    update_attribute('status', 'inactive')
+    update_attribute('date_updated', date) unless date.blank?
   end
 
   def block(date)
     return unless status != 'blocked'
 
-    update_attributes(status: 'blocked')
-    update_attributes(date_updated: date) unless date.blank?
+    update_attribute('status', 'blocked')
+    update_attribute('date_updated', date) unless date.blank?
   end
 end

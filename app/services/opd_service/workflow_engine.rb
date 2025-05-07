@@ -42,14 +42,7 @@ module OpdService
     PRESCRIPTION = 'PRESCRIPTION'
     PATIENT_OUTCOME = 'PATIENT OUTCOME'
     TREATMENT = 'TREATMENT'
-    #     # Encounters graph
-    #     ENCOUNTER_SM = {
-    #       INITIAL_STATE => PATIENT_REGISTRATION,
-    #       PATIENT_REGISTRATION => SOCIAL_HISTORY,
-    #       SOCIAL_HISTORY => END_STATE
-    #     }.freeze
-    #
-    #     STATE_CONDITIONS = {
+    GENERAL_CONSULTATION = 'GENERAL CONSULTATION'
     #       PATIENT_REGISTRATION => %i[patient_not_registered_today?],
     #       SOCIAL_HISTORY => %i[social_history_not_collected?]
     #     }.freeze
@@ -104,6 +97,21 @@ module OpdService
 
     def next_state(current_state)
       ENCOUNTER_SM[current_state]
+    end
+
+    def eligible_for_general_consultation?
+      return true unless patient_not_registered_today?
+
+      !patient_on_tb_treatment_in_the_last_six_months?
+    end
+
+    def patient_on_tb_treatment_in_the_last_six_months?
+      Encounter.joins([:type, :observations])
+        .where('patient_id = ? AND encounter_type = ? AND DATE(encounter_datetime) > DATE(?)',
+               @patient.patient_id, EncounterType.find_by(name: GENERAL_CONSULTATION).encounter_type_id, (@date - 6.months))
+        .where('obs.concept_id = ? AND obs.value_coded = ?',
+               Concept.find_by_name('Tuberculosis regimen on treatment card').concept_id, Concept.find_by_name('Yes').concept_id)
+        .exists?
     end
 
     # Check if a relevant encounter of given type exists for given patient.

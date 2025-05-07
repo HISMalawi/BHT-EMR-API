@@ -1,0 +1,382 @@
+shorter_intensive_phase_regimen:
+  title: Shorter intensive phase regimen
+  duration: 4
+  next_phase: shorter_continuation_phase_regimen
+  fail_state_phase: short_intensive_extended_regimen
+  initial: 1
+  priority: 1
+  regimen_composition: Cm/Am-Mfx-Cfz-Eto/Pto-Z-E-Hh
+  drugs:
+    - Capreomycin
+    - Amikacin
+    - Moxifloxacin
+    - Clofazimine
+    - Ethambutol
+    - Pyrazinamide
+    - Ethionamide
+    - Prothionamide
+    - High-dose isoniazid
+  conditions:
+    - condition: has_resistance_to_drugs?
+      exceptional: is_transfer_in_patient?
+      param:
+        - Rifampicin
+      expected: true
+      fail: No evidence of Rifampicin resistance
+
+    - condition: negative_after_end_of_phase?
+      expected: true
+      fail: Sputum conversion unsuccessful
+
+    - condition: no_regimen_failure_history
+      param: Shorter intensive phase regimen
+      expected: true
+      fail: Regimen is suspended for patient
+
+    - condition: on_other_regimen_for_more_than_amonth?
+      param: Shorter intensive phase regimen
+      expected: false
+      fail: Can't enroll patient whose received treatment in another regimen for more than a month
+
+    - condition: pregnant?
+      expected: false
+      fail: Patient is pregnant
+
+    - condition: eptb?
+      expected: false
+      fail: Patient has EPTB
+
+    - condition: hiv?
+      expected: false
+      fail: Patient has HIV
+
+    - condition: minor?
+      expected: false
+      fail: Patient is a minor
+
+    - condition: treatment_failure_risk?
+      expected: false
+      fail: Patient is a treatment failure risk
+
+    - condition: has_resistance_to_drugs?
+      param:
+        - Capreomycin
+        - Amikacin
+        - Moxifloxacin
+        - Clofazimine
+        - Ethambutol
+        - Ethionamide
+        - Pyrazinamide
+        - Prothionamide
+        - High-dose isoniazid
+      expected: false
+      fail: Patient has resistance to drugs in this regimen
+
+    - condition: is_a_contact_of_person_resistant_to_drugs?
+      param:
+        - Capreomycin
+        - Amikacin
+        - Moxifloxacin
+        - Clofazimine
+        - Ethambutol
+        - Ethionamide
+        - Pyrazinamide
+        - Prothionamide
+        - High-dose isoniazid
+      expected: false
+      fail: Patient is a contact of person resistant to drugs of this regimen
+
+short_intensive_extended_regimen:
+  title: Short intensive extended regimen
+  duration: 2
+  next_phase: shorter_continuation_phase_regimen
+  fail_state_phase: standard_intensive_phase_regimen
+  initial: 0
+  priority: 0
+  regimen_composition: Cm/Am-Mfx-Cfz-Eto/Pto-Z-E-Hh
+  drugs:
+    - Capreomycin
+    - Amikacin
+    - Moxifloxacin
+    - Clofazimine
+    - Ethionamide
+    - Ethambutol
+    - Pyrazinamide
+    - Prothionamide
+    - High-dose isoniazid
+  conditions:
+    - condition: has_resistance_to_drugs?
+      exceptional: is_transfer_in_patient?
+      param:
+        - Rifampicin
+      expected: true
+      fail: No evidence of Rifampicin resistance
+
+    - condition: negative_after_end_of_phase?
+      expected: true
+      fail: Sputum conversion unsuccessful
+
+    - condition: hiv?
+      expected: false
+      fail: Patient has HIV
+
+    - condition: minor?
+      expected: false
+      fail: Patient is a minor
+
+    - condition: check_if_currently_on_different_regimen_than
+      param:
+        - shorter_intensive_phase_regimen
+        - short_intensive_extended_regimen
+      expected: false
+      fail: Regimen requires completion of Short intensive phase
+
+    - condition: no_regimen_failure_history
+      param: short_intensive_extended_regimen
+      expected: true
+      fail: Regimen is suspended for patient
+
+    - condition: pregnant?
+      expected: false
+      fail: Patient is pregnant
+
+    - condition: eptb?
+      expected: false
+      fail: Patient has EPTB
+
+    - condition: treatment_failure_risk?
+      expected: false
+      fail: Patient is a treatment failure risk
+
+    - condition: has_resistance_to_drugs?
+      param:
+        - Capreomycin
+        - Amikacin
+        - Moxifloxacin
+        - Clofazimine
+        - Ethambutol
+        - Ethionamide
+        - Pyrazinamide
+        - Prothionamide
+        - High-dose isoniazid
+      expected: false
+      fail: Patient has resistance to drugs in this regimen
+
+shorter_continuation_phase_regimen:
+  title: Shorter continuation phase regimen
+  duration: 5
+  next_phase:
+  fail_state_phase: individualised_regimen
+  initial: 0
+  priority: 0
+  regimen_composition: Mfx-Cfz-E-Z
+  drugs:
+    - Moxifloxacin
+    - Clofazimine
+    - Ethambutol
+    - Pyrazinamide
+  conditions:
+    - condition: negative_after_end_of_phase?
+      expected: true
+      fail: Sputum conversion unsuccessful
+
+    - condition: hiv?
+      expected: false
+      fail: Patient has HIV
+
+    - condition: minor?
+      expected: false
+      fail: Patient is a minor
+
+    - condition: no_regimen_failure_history
+      param: shorter_continuation_phase_regimen
+      expected: true
+      fail: Regimen is suspended for patient
+
+    - condition: check_if_currently_on_different_regimen_than
+      param:
+        - shorter_continuation_phase_regimen
+        - short_intensive_extended_regimen
+        - shorter_intensive_phase_regimen
+      expected: false
+      fail: Regimen requires successful completion of shorter/extended intensive phase regimen
+
+    - condition: pregnant?
+      expected: false
+      fail: Patient is pregnant
+
+    - condition: eptb?
+      expected: false
+      fail: Patient has EPTB
+
+    - condition: treatment_failure_risk?
+      expected: false
+      fail: Patient is a treatment failure risk
+
+    - condition: has_resistance_to_drugs?
+      param:
+        - Moxifloxacin
+        - Clofazimine
+        - Ethambutol
+        - Pyrazinamide
+      expected: false
+      fail: Patient has resistance to drugs in this regimen
+
+standard_intensive_phase_regimen:
+  title:  Standard intensive phase regimen
+  duration: 8
+  next_phase: standard_continuation_phase_regimen
+  fail_state_phase: individualised_regimen
+  initial: 1
+  priority: 2
+  regimen_composition: Am/Cm-Lfx-Cs-Eto-Z
+  drugs:
+    - Amikacin
+    - Capreomycin
+    - Levofloxacin
+    - Cycloserine
+    - Ethionamide
+    - Pyrazinamide
+  conditions:
+    - condition: has_resistance_to_drugs?
+      exceptional: is_transfer_in_patient?
+      param:
+        - Rifampicin
+      expected: true
+      fail: No evidence of Rifampicin resistance
+
+    - condition: negative_after_end_of_phase?
+      fail: Sputum conversion unsuccessful
+      expected: true
+
+    - condition: no_regimen_failure_history
+      param: standard_intensive_phase_regimen
+      expected: true
+      fail: Regimen is suspended for patient
+
+    - condition: pregnant?
+      expected: false
+      fail:  Patient is pregnant
+
+    - condition: has_resistance_to_drugs?
+      param:
+        - Amikacin
+        - Capreomycin
+        - Levofloxacin
+        - Cycloserine
+        - Ethionamide
+        - Pyrazinamide
+      expected: false
+      fail: Patient has resistance to drugs in this regimen
+
+    - condition: is_a_contact_of_person_resistant_to_drugs?
+      param:
+        - Amikacin
+        - Capreomycin
+        - Levofloxacin
+        - Cycloserine
+        - Ethionamide
+        - Pyrazinamide
+      expected: false
+      fail: Patient is a contact of person resistant to drugs of this regimen
+
+
+standard_continuation_phase_regimen:
+  title: Standard continuation phase regimen
+  duration: 12
+  next_phase:
+  fail_state_phase: individualised_regimen
+  initial: 0
+  priority: 0
+  regimen_composition: Lfx-Cs-Eto-Z
+  drugs:
+    - Levofloxacin
+    - Cycloserine
+    - Ethionamide
+    - Pyrazinamide
+  conditions:
+    - condition: negative_after_end_of_phase?
+      fail: Sputum conversion unsuccessful
+      expected: true
+
+    - condition: no_regimen_failure_history
+      param: standard_continuation_phase_regimen
+      expected: true
+      fail: Regimen is suspended for patient
+
+    - condition: check_if_currently_on_different_regimen_than
+      param:
+        - standard_continuation_phase_regimen
+        - standard_intensive_phase_regimen
+      expected: false
+      fail: Regimen requires successful completion of Standard intensive phase regimen
+
+    - condition: pregnant?
+      expected: false
+      fail:  Patient is pregnant
+
+    - condition: has_resistance_to_drugs?
+      param:
+        - Levofloxacin
+        - Cycloserine
+        - Ethionamide
+        - Pyrazinamide
+      expected: false
+      fail:  Patient has resistance to drugs in this regimen
+
+inh_mono_drug_resistance_regimen:
+  title: INH Mono Drug Resistance Regimen
+  duration: 6
+  next_phase:
+  fail_state_phase:
+  initial: 1
+  priority: 4
+  regimen_composition: Lfx-R-Z-E
+  drugs:
+    - Levofloxacin
+    - Rifampicin
+    - Pyrazinamide
+    - Ethambutol
+  conditions:
+    - condition: negative_after_end_of_phase?
+      expected: true
+      fail: Sputum conversion unsuccessful
+
+    - condition: has_resistance_to_drugs?
+      param:
+        - Levofloxacin
+        - Rifampicin
+        - Pyrazinamide
+        - Ethambutol
+      expected: false
+      fail: Patient has resistance to some medications in the regimen
+
+    - condition: has_resistance_to_drugs?
+      param:
+        - Isoniazid
+      expected: true
+      exceptional: is_transfer_in_patient?
+      fail: This regimen is applicable to INH resistant patients only
+
+    - condition: is_mono_resistant?
+      exceptional: is_transfer_in_patient?
+      expected: true
+      fail: patient is not mono resistant
+
+individualised_regimen:
+  title:  Individualised regimen
+  duration: 0
+  next_phase:
+  fail_state_phase: individualised_regimen
+  initial: 1
+  priority: 3
+  regimen_composition:
+  drugs: _custom_
+  conditions:
+    - condition: negative_after_end_of_phase?
+      expected: true
+      fail:  Sputum conversion unsuccessful. Try another regimen of drugs.
+
+    - condition: has_resistance_to_custom_drugs?
+      expected: false
+      fail:  Patient has resistance to some medications in the regimen.
