@@ -45,10 +45,12 @@ class StreamingService
         },
         payload: {
           complete:,
-          patient: patient.as_json,
-          encounters: patient.visit_data(program_id:, date:),
-          current_program: patient.current_program(program_id:),
-          ids: ArtService::IdsBuilder.new(patient_id: patient.id, program_id:, date:).build
+          raw: {
+            patient: patient.as_json,
+            encounters: patient.visit_data(program_id:, date:),
+            current_program: patient.current_program(program_id:)
+          },
+          analytical: ArtService::PatientStreamBuilder.new(patient_id: patient.id, date:).build
         }
       }
     )

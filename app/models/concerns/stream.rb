@@ -12,7 +12,7 @@ module Stream
   end
 
   def stream
-    if eligible_fo_streaming?
+    if eligible_for_streaming?
       QueuePatientForStreamingJob
         .set(wait: WAIT_TIME.seconds)
         .perform_later(
@@ -30,7 +30,7 @@ module Stream
     encounter_type.name == 'LAB RESULTS'
   end
 
-  def eligible_fo_streaming?
+  def eligible_for_streaming?
     service.visit_complete? || lab_result_encounter?
   end
 
