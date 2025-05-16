@@ -27,39 +27,39 @@ class Encounter < VoidableRecord
   # named_scope(:current,
   #             conditions: 'DATE(encounter.encounter_datetime) = CURRENT_DATE()')
 
-  def as_json(options = {})
-    super(options.merge(
-      include: {
-        type: {},
-        patient: {},
-        location: {},
-        provider: {
-          include: {
-            names: {}
-          },
-          except: %i[
-            password salt secret_question secret_answer
-            authentication_token token_expiry_time
-          ]
-        },
-        program: {},
-        observations: {
-          include: {
-            concept: {
-              include: {
-                concept_names: {}
-              }
-            },
-            drug: {
-              include: {
-                drug_cms: {}
-              }
-            }
-          }
-        }
-      }
-    ))
-  end
+  # def as_json(options = {})
+  #   super(options.merge(
+  #     include: {
+  #       type: {},
+  #       patient: {},
+  #       location: {},
+  #       provider: {
+  #         include: {
+  #           names: {}
+  #         },
+  #         except: %i[
+  #           password salt secret_question secret_answer
+  #           authentication_token token_expiry_time
+  #         ]
+  #       },
+  #       program: {},
+  #       observations: {
+  #         include: {
+  #           concept: {
+  #             include: {
+  #               concept_names: {}
+  #             }
+  #           },
+  #           drug: {
+  #             include: {
+  #               drug_cms: {}
+  #             }
+  #           }
+  #         }
+  #       }
+  #     }
+  #   ))
+  # end
 
   # def before_save
   #   self.provider = User.current_user if provider.blank?
