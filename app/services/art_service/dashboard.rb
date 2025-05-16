@@ -31,11 +31,9 @@ module ArtService
         report.waiting_for_consultation << patient_id if workflow(patient_id:).next_encounter&.name == 'HIV CLINIC CONSULTATION'
         report.waiting_for_dispensation << patient_id if workflow(patient_id:).next_encounter&.name == 'DISPENSING'
 
-        if workflow(patient_id:).next_encounter.blank?
-          report.total_visits[:complete] << patient_id
-        else
-          report.total_visits[:incomplete] << patient_id
-        end
+        key = workflow(patient_id:).next_encounter.blank? ? :complete : :incomplete
+
+        report.total_visits[key] << patient_id
       end
       report.encounters_created_today = encounters_created_today
       
