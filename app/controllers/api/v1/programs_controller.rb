@@ -45,6 +45,20 @@ module Api
         end
       end
 
+      def dashboard
+        raise InvalidParameterError, 'Date is missing' unless params[:date]
+
+        program_id = params[:program_id]
+        date = params[:date].to_date
+
+        program = Program.find(program_id)
+
+        render json: ProgramDashboardService.new(program:, date:).dashboard
+      rescue StandardError => e
+        puts e.backtrace
+        throw e
+      end
+
       def booked_appointments
         program_id = params[:program_id]
         date = params[:date].to_date

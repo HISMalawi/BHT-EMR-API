@@ -358,6 +358,8 @@ Rails.application.routes.draw do
       get '/immunization/aefi_report', to: 'immunization_report#aefi_report'
       get '/immunization/vaccine_names', to: 'immunization_report#vaccine_names'
       get '/immunization/under_five_immunizations_drugs', to: 'immunization_report#under_five_immunizations_drugs'
+
+      get '/programs/:program_id/dashboard' => 'programs#dashboard'
     end
   end
 

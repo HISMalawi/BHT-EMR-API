@@ -7,11 +7,11 @@ module ArtService
   class WorkflowEngine
     include ModelUtils
 
-    def initialize(patient:, date: nil, program: nil)
+    def initialize(patient:, date: nil, program: nil, activities: nil)
       @patient = patient
       @program = program || load_hiv_program
       @date = date || Date.today
-      @activities = load_user_activities
+      @activities = activities == 'all' ? ALL_ACTIVITIES : load_user_activities
     end
 
     # Retrieves the next encounter for bound patient
@@ -59,6 +59,21 @@ module ArtService
     FAST_TRACK = 'FAST TRACK ASSESMENT' # ASSESMENT[sic] - It's how its named in the db
     DISPENSING = 'DISPENSING'
     APPOINTMENT = 'APPOINTMENT'
+
+    ALL_ACTIVITIES = [
+      HIV_CLINIC_REGISTRATION,
+      HIV_RECEPTION,
+      VITALS,
+      SYMPTOM_SCREENING,
+      HIV_STAGING,
+      AHD_SCREENING,
+      HIV_CLINIC_CONSULTATION,
+      ART_ADHERENCE,
+      TREATMENT,
+      FAST_TRACK,
+      DISPENSING,
+      APPOINTMENT
+    ]
 
     # Encounters graph
     ENCOUNTER_SM = {
