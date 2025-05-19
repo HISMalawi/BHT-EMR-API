@@ -66,3 +66,10 @@ healthdata:
 concepts_merge_db:
   <<: *default
   database: openmrs_limbe
+# metadata_server:
+#  adapter: mysql2
+#  username: root
+#  database: openmrs
+#  password:
+#  host: localhost
+#  pool: 500

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "zebra_printer/init"
+require 'zebra_printer/init'
 
 module Api
   module V1
@@ -37,12 +37,12 @@ module Api
 
         render json: {
           date_enrolled:,
-          earliest_start_date:,
+          earliest_start_date:
         }
       end
 
       def find_next_available_arv_number
-        render json: { arv_number: service.find_next_available_arv_number }
+        render json: { arv_number: service.find_next_available_arv_number(params[:date]&.to_date || Date.today) }
       end
 
       def lookup_arv_number

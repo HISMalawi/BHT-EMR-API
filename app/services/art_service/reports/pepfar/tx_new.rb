@@ -14,6 +14,7 @@ module ArtService
 
         def initialize(start_date:, end_date:, **kwargs)
           super(start_date:, end_date:, **kwargs)
+          @dsd = kwargs[:dsd]
         end
 
         def find_report
@@ -161,6 +162,7 @@ module ArtService
               preg_or_breast.name AS maternal_status,
               DATE(MIN(pregnant_or_breastfeeding.obs_datetime)) AS maternal_status_date
             FROM temp_earliest_start_date e
+            #{dsd_query(dsd: @dsd, model: 'e') if @dsd}
             LEFT JOIN (
               SELECT max(o.obs_datetime) AS obs_datetime, o.person_id
               FROM obs o

@@ -20,10 +20,11 @@ module TbService
       'COMMUNITY' => TbService::Reports::Community,
       'MDR_CASEFINDING' => TbService::Reports::MdrCaseFinding,
       'MDR_OUTCOMES' => TbService::Reports::MdrOutcomes,
-      'MDR_INTERIM_OUTCOMES' => TbService::Reports::MdrInterimOutcomes
+      'MDR_INTERIM_OUTCOMES' => TbService::Reports::MdrInterimOutcomes,
+      'TB_ART_STAT' => TbService::Reports::Pepfar::TbStatArt
     }.freeze
 
-    def find_report(type:, name:, start_date:, end_date:)
+    def find_report(type:, name:, start_date:, end_date:, **_kwargs)
       report = REPORTS[type.upcase]
       raise InvalidParameterError, "Report type (#{type}) not known" unless report
 
@@ -32,12 +33,19 @@ module TbService
         start_date = start_date.to_date - 1.year
         end_date = end_date.to_date - 1.year
       end
+      
+      if report.class == Class
+        report = report.new(start_date, end_date)
 
-      indicator = report.method(name.strip.to_sym)
+        return report.find_report
+      end
+
+      indicator = report.method(name&.strip&.to_sym)
       raise InvalidParameterError, "Report indicator (#{name}) not known" unless indicator
 
       start_date = start_date.to_time
       _, end_date = TimeUtils.day_bounds(end_date)
+
 
       report.format_report(indicator: name, report_data: indicator.call(start_date, end_date), start_date:, end_date:)
     end

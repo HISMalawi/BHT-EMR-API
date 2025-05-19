@@ -6,11 +6,11 @@ module Api
       DEFAULT_ROLENAME = 'clerk'
       include PasswordPolicy
 
-      skip_before_action :authenticate, only: [:login]
+      skip_before_action :authenticate, only: %i[login reset_password]
 
       def index
-        filters = params.permit(:role).to_hash.transform_keys(&:to_sym)
-        render json: service.find_users(**filters)
+        filters = params.permit(%i[role include_deactivated]).to_hash.transform_keys(&:to_sym)
+        render json: service.find_users(filters)
       end
 
       def show
@@ -57,6 +57,13 @@ module Api
         else
           render json: user.errors, status: :bad_request
         end
+      end
+
+      def reset_password
+        code = params[:code]
+
+        render json: { authorization: UserService.reset_password(code:) },
+               status: :ok
       end
 
       def login

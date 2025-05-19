@@ -109,6 +109,8 @@ Rails.application.routes.draw do
 
       resources :concepts, only: %i[index show]
 
+      resources :audits, only: %i[index]
+
       # OPD
       get 'OPD_drugslist' => 'drugs#OPD_drugslist'
 
@@ -323,6 +325,7 @@ Rails.application.routes.draw do
   get '/api/v1/archiving_candidates' => 'api/v1/patients#find_archiving_candidates'
   get '/api/v1/_health' => 'healthcheck#index'
   post '/api/v1/auth/login' => 'api/v1/users#login'
+  post '/api/v1/auth/reset_password' => 'api/v1/users#reset_password'
   post '/api/v1/auth/verify_token' => 'api/v1/users#check_token_validity'
   get '/api/v1/fast_track_assessment' => 'api/v1/fast_track#assessment'
   post '/api/v1/cancel_fast_track' => 'api/v1/fast_track#cancel'
@@ -335,6 +338,7 @@ Rails.application.routes.draw do
   get '/api/v1/cervical_cancer_screening' => 'api/v1/cervical_cancer_screening#show'
 
   get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
+  get '/api/v1/nid_utilization_report' => 'api/v1/reports#nid_utilization_report'
   get '/api/v1/dashboard_stats_for_syndromic_statistics' => 'api/v1/reports#syndromic_statistics'
   post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
   post '/api/v1/patient_art_vl_dates' => 'api/v1/reports#patient_art_vl_dates'

@@ -12,6 +12,7 @@ module ArtService
         @end_date = ActiveRecord::Base.connection.quote(end_date.to_date.strftime('%Y-%m-%d 23:59:59'))
         @type = kwargs[:type]
         @occupation = kwargs[:occupation]
+        @dsd = kwargs[:dsd]
       end
 
       def find_report
@@ -55,6 +56,7 @@ module ArtService
           SELECT o.patient_id, MAX(o.start_date) AS start_date
           FROM orders o
           INNER JOIN drug_order od ON od.order_id = o.order_id AND od.quantity > 0 AND od.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
+          #{dsd_query(dsd: @dsd, model: 'o') if @dsd}
           LEFT JOIN (#{current_occupation_query}) a ON a.person_id = o.patient_id
           WHERE o.start_date > #{end_date} - INTERVAL 18 MONTH AND o.start_date < #{end_date} + INTERVAL 1 DAY
           AND o.voided = 0 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
@@ -69,6 +71,7 @@ module ArtService
           CREATE table temp_drug_dispensed
           SELECT o.patient_id, od.drug_inventory_id, d.name, o.start_date, od.quantity
           FROM orders o
+          #{dsd_query(dsd: @dsd, model: 'o') if @dsd}
           INNER JOIN temp_current_dispensation tcd ON tcd.patient_id = o.patient_id AND tcd.start_date = o.start_date
           INNER JOIN drug_order od ON od.order_id = o.order_id AND od.quantity > 0 AND od.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
           INNER JOIN drug d ON d.drug_id = od.drug_inventory_id AND d.retired  = 0
@@ -93,13 +96,14 @@ module ArtService
       def create_temp_current_patient_regimen
         ActiveRecord::Base.connection.execute <<~SQL
           CREATE table temp_current_patient_regimen
-          SELECT patient_id, name
+          SELECT d.patient_id, name
           FROM temp_current_regimen_names tcrn
           INNER JOIN (
             SELECT patient_id, GROUP_CONCAT(drug_inventory_id ORDER BY drug_inventory_id ASC) AS drugs
             FROM temp_drug_dispensed
             GROUP BY patient_id
           ) d ON d.drugs = tcrn.drugs
+          #{dsd_query(dsd: @dsd, model: 'd') if @dsd}
         SQL
         ActiveRecord::Base.connection.execute 'create index patient_regimen on temp_current_patient_regimen (patient_id)'
       end
@@ -107,8 +111,9 @@ module ArtService
       def create_temp_patient_outcome
         ActiveRecord::Base.connection.execute <<~SQL
           CREATE TABLE temp_reg_outcome
-          SELECT patient_id, #{type == 'pepfar' ? "pepfar_patient_outcome(patient_id, #{end_date})" : "patient_outcome(patient_id, #{end_date})"} outcome
+          SELECT temp_current_dispensation.patient_id, #{type == 'pepfar' ? "pepfar_patient_outcome(temp_current_dispensation.patient_id, #{end_date})" : "patient_outcome(temp_current_dispensation.patient_id, #{end_date})"} outcome
           FROM temp_current_dispensation
+          #{dsd_query(dsd: @dsd, model: 'temp_current_dispensation') if @dsd}
         SQL
         ActiveRecord::Base.connection.execute 'create index reg_outcome on temp_reg_outcome (patient_id)'
       end
@@ -131,6 +136,7 @@ module ArtService
             AND name NOT LIKE 'Lab test result'
             GROUP BY concept_id
           ) AS measure_concept ON measure_concept.concept_id = measure.concept_id
+          #{dsd_query(dsd: @dsd, model: 'orders') if @dsd}
           WHERE lab_result_obs.voided = 0
           AND measure.person_id IN (SELECT patient_id FROM temp_reg_outcome WHERE outcome = 'On antiretrovirals')
           AND (measure.value_numeric IS NOT NULL || measure.value_text IS NOT NULL)
@@ -146,6 +152,7 @@ module ArtService
           SELECT t.*
           FROM temp_vl_results t
           LEFT JOIN temp_vl_results td ON td.patient_id = t.patient_id AND td.result_date > t.result_date
+          #{dsd_query(dsd: @dsd, model: 't') if @dsd}
           WHERE td.patient_id IS NULL
         SQL
         ActiveRecord::Base.connection.execute 'create index current_vl on temp_current_vl_results (patient_id)'
@@ -162,6 +169,7 @@ module ArtService
             WHERE concept_id = 5089 AND voided = 0 AND obs_datetime < #{end_date} + INTERVAL 1 DAY
             GROUP BY person_id
           ) latest_obs ON latest_obs.person_id = tro.patient_id
+           #{dsd_query(dsd: @dsd, model: 'tro') if @dsd}
           INNER JOIN obs o ON o.person_id = latest_obs.person_id AND o.concept_id = 5089 AND o.obs_datetime = latest_obs.max_datetime AND o.voided = 0 AND o.obs_datetime < #{end_date} + INTERVAL 1 DAY
           WHERE tro.outcome = 'On antiretrovirals'
         SQL
@@ -180,6 +188,7 @@ module ArtService
               LEFT JOIN `person` `pe` ON ((`pe`.`person_id` = `p`.`patient_id`))
               LEFT JOIN `patient_state` `s` ON ((`p`.`patient_program_id` = `s`.`patient_program_id`)))
               LEFT JOIN `person` ON ((`person`.`person_id` = `p`.`patient_id`)))
+            #{dsd_query(dsd: @dsd, model: 'p') if @dsd}
            WHERE
             ((`p`.`voided` = 0)
             AND (`s`.`voided` = 0)
@@ -208,6 +217,7 @@ module ArtService
             trc.earliest_start_date
           FROM temp_patient_start_date trc
           INNER JOIN temp_current_dispensation tcd ON tcd.patient_id = trc.patient_id AND tcd.start_date BETWEEN #{@start_date} AND #{@end_date}
+          #{dsd_query(dsd: @dsd, model: 'trc') if @dsd}
           INNER JOIN person p ON p.person_id = trc.patient_id AND p.voided = 0
           INNER JOIN person_name pn ON pn.person_id = p.person_id AND pn.voided = 0
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id AND i.identifier_type = 4 AND i.voided = 0

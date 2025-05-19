@@ -11,6 +11,7 @@ module ArtService
         @start_date = start_date
         @end_date = end_date
         @occupation = kwargs[:occupation]
+        @dsd = kwargs[:dsd]
       end
 
       def find_report
@@ -27,6 +28,7 @@ module ArtService
           FROM orders o
           LEFT JOIN lims_acknowledgement_statuses las ON las.order_id = o.order_id
           INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided = 0 AND (e.program_id = 1 OR e.program_id = 23) -- HIV PROGRAM AND Laboratory program
+          #{dsd_query(dsd: @dsd, model: 'e') if @dsd}
           INNER JOIN users u ON u.user_id = o.orderer
           INNER JOIN person_name pn ON pn.person_id = u.person_id
           INNER JOIN obs test ON test.person_id = e.patient_id AND test.voided = 0 AND test.order_id = o.order_id AND test.concept_id = 9737 -- 'Test Type'

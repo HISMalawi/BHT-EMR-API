@@ -82,8 +82,8 @@ module ArtService
         end
 
         def patient_new_on_art?(patient)
-          tpt_initiation_date = patient['tpt_initiation_date'].to_date
-          art_start_date = patient['art_start_date'].to_date
+          tpt_initiation_date = patient['tpt_initiation_date']&.to_date
+          art_start_date = patient['art_start_date']&.to_date
 
           (tpt_initiation_date >= art_start_date) && (tpt_initiation_date < art_start_date + 90.days)
         end
