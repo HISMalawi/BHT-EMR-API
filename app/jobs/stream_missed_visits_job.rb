@@ -1,25 +1,23 @@
 class StreamMissedVisitsJob < ApplicationJob
   def perform
     @date = Date.today - 1
-    @program_id = 1
+    @program_id = 1 # TODO: make this dynamic for all programs
     
-    missed_patients = queued_visits - todays_emr_visits
+    missed_patients = queued_visits - todays_visits
 
     missed_patients.each do |patient_id|
-      QueuePatientForStreamingJob
-          .perform_later(
+      StreamingJob.perform_later(
             patient_id:,
             program_id: @program_id,
-            date: @date.strftime('%Y-%m-%d'),
-            complete: engine(patient_id).visit_complete?
+            date: @date.strftime('%Y-%m-%d')
           )
     end
   end
 
-  def todays_emr_visits
+  def todays_visits
     Patient.distinct.joins(:encounters)
            .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date))\
-           .where('encounter.encounter_type IN (?)', 1)\
+           .where('encounter.program_id = ?', @program_id)\
            .pluck(:patient_id)
   end
 

@@ -61,7 +61,7 @@ module ArtService
       raise "Outcomes (outcomes.sql) file not found at #{@query_dir}" unless query.present?
 
       query = query&.gsub('@patient_id', @patient_id.to_s)
-      execute_query(query)
+      ActiveRecord::Base.connection.select_all(query)
     end
 
     def execute_query(query)

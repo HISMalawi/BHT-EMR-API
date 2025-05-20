@@ -2,11 +2,10 @@ class StreamIncompleteVisitsJob < ApplicationJob
   def perform
     date = (Date.today - 1)
     program_incomplete_visits(date:).each { |patient_id|  
-      QueuePatientForStreamingJob.perform_later(
+      StreamingJob.perform_later(
           patient_id:,
           program_id:,
-          date: date.strtotime('%Y-%m-%d'),
-          complete: false
+          date: date.strtotime('%Y-%m-%d')
         )
       }
   end

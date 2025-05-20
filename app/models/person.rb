@@ -3,6 +3,8 @@
 class Person < VoidableRecord
   after_void :void_related_models
 
+  include Stream
+
   # TODO: stream when demographics change
 
   self.table_name = 'person'

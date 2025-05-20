@@ -3,16 +3,15 @@
 require 'socket'
 
 class StreamingService
-  attr_accessor :patient, :program_id, :date, :client, :complete, :config
+  attr_accessor :patient, :program_id, :date, :client, :config
 
   include Utils::JsonUtils
 
-  def initialize(patient_id:, program_id:, date:, complete:)
+  def initialize(patient_id:, program_id:, date:)
     setup_remote_config
     @patient = Patient.find(patient_id)
     @program_id = program_id
     @date = date
-    @complete = complete
   end
 
   def setup_remote_config
@@ -33,9 +32,7 @@ class StreamingService
     )
   end
 
-  def stream_patient
-    raise 'Invalid visit status' unless [true, false].include?(@complete)
-
+  def stream_visit
     payload = to_compressed_json(
       {
         meta: {
@@ -44,7 +41,6 @@ class StreamingService
           location_id: Location.current_health_center&.id
         },
         payload: {
-          complete:,
           raw: {
             patient: patient.as_json,
             encounters: patient.visit_data(program_id:, date:),
@@ -55,7 +51,7 @@ class StreamingService
       }
     )
 
-    Rails.logger.info("Sending stream data for #{patient.name}")
+    Rails.logger.info("Sending stream data for #{patient.name} on #{date}")
 
     client.post(payload.to_json)
   rescue RestClient::ExceptionWithResponse => e
