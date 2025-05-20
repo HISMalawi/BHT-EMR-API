@@ -6,11 +6,11 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby '~> 3.2.0'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 8.0.0'
+gem 'rails', '~> 8.0.2'
 # Use sqlite3 as the database for Active Record
 gem 'mysql2'
 # Use Puma as the app server
-gem 'puma', '~> 6.3'
+gem 'puma', '~> 6.6.0'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 # gem 'jbuilder', '~> 2.5'
 # Use Redis adapter to run Action Cable in production
@@ -69,8 +69,8 @@ end
 
 group :development do
   gem 'listen'
-  # gem 'spring-watcher-listen', '~> 2.0.0'
-  gem 'web-console', '>= 3.3.0'
+  # gem 'spring-watcher-listen', '~> 2.1.0'
+  gem 'web-console', '>= 4.2.1'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
@@ -83,4 +83,6 @@ gem 'concurrent-ruby', '= 1.3.4'
 # gems for reading excel and csv files
 gem 'roo', '~> 2.8'
 
-gem "solid_queue", "1.0.2"
+gem "solid_queue", "1.1.5"
+
+gem 'solid_queue_monitor', '~> 0.3.1'
