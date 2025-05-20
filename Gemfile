@@ -12,6 +12,8 @@ gem 'sidekiq-cron'
 gem 'redis'
 gem 'activejob-uniqueness'
 
+gem 'concurrent-ruby', '~> 1.2.0'
+
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 7.0.6'
 # Use sqlite3 as the database for Active Record
