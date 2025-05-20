@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
+require 'solid_queue_monitor'
+
 Rails.application.routes.draw do
+  mount SolidQueueMonitor::Engine => '/streaming'
   mount Lab::Engine => '/'
   # mount Radiology::Engine => '/'
   # mount EmrOhspInterface::Engine => '/'
