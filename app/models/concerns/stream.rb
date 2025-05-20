@@ -3,9 +3,7 @@
 module Stream
   extend ActiveSupport::Concern
 
-  WAIT_TIME = YAML.safe_load(
-    File.read('config/database.yml'), aliases: true
-  )[Rails.env]['queue']['processing_delay_time'] || 300
+  WAIT_TIME = Rails.configuration.database_configuration[Rails.env]['queue']['processing_delay_time'] || 10
 
   included do
     after_commit :stream, on: %i[create update]
