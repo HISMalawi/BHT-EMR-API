@@ -44,6 +44,8 @@ o.value_drug, o.value_datetime, o.value_modifier, o.value_numeric, o.value_text
 from obs o JOIN    attribute_concepts ac ON  FIND_IN_SET(o.concept_id, ac.attribute_concepts) > 0 
 LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.concept_name_type = 'FULLY_SPECIFIED' AND cn.locale = 'en' AND cn.voided = 0
 LEFT JOIN concept_name cn2 ON o.value_coded = cn2.concept_id AND cn2.concept_name_type = 'FULLY_SPECIFIED' AND cn2.locale = 'en' AND cn2.voided = 0
+AND o.person_id = @patient_id
+AND DATE(o.obs_datetime) = @visit_date
 ),
 temp_prescriptions AS (
     SELECT
@@ -74,6 +76,7 @@ temp_prescriptions AS (
       AND e.encounter_type=25
       AND o.voided = 0
       AND d.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
+      AND o.patient_id = @patient_id
     GROUP BY o.patient_id, o.order_id, d.drug_inventory_id, o.encounter_id, o.start_date, o.auto_expire_date, o.instructions, o.voided, o.date_voided, d.equivalent_daily_dose, d.quantity
 ),
 temp_dispensed_drugs AS (
@@ -100,6 +103,7 @@ temp_dispensed_drugs AS (
     WHERE 
        e.voided = 0 
       AND o.voided = 0
+      AND o.patient_id = @patient_id
       AND d.drug_inventory_id IN (SELECT drug_id FROM arv_drug)
     GROUP BY o.patient_id, o.order_id, d.drug_inventory_id, o.encounter_id, o.start_date, o.auto_expire_date, o.instructions, o.voided, o.date_voided, d.equivalent_daily_dose, d.quantity
 ),
@@ -128,6 +132,7 @@ final_dispensations AS (
     FROM temp_dispensed_drugs tp
     JOIN medication_regimen mr
         ON mr.drugs = (SELECT GROUP_CONCAT(DISTINCT drug_id ORDER BY drug_id ASC) FROM temp_dispensed_drugs tp2 WHERE tp2.patient_id = tp.patient_id  AND tp2.encounter_id = tp.encounter_id)
+    WHERE tp.patient_id = @patient_id
     GROUP BY tp.patient_id, DATE(tp.start_date), mr.regimen_name
 ),
 final_prescriptions AS (
@@ -144,7 +149,7 @@ final_prescriptions AS (
     FROM temp_prescriptions tp
     JOIN medication_regimen mr
         ON mr.drugs = (SELECT GROUP_CONCAT(DISTINCT drug_id ORDER BY drug_id ASC) FROM temp_prescriptions tp2 WHERE tp2.patient_id = tp.patient_id  AND tp2.encounter_id = tp.encounter_id)
-     WHERE  tp.patient_id is not null
+     WHERE  tp.patient_id = @patient_id
         GROUP BY tp.patient_id, DATE(tp.start_date), mr.regimen_name
 ),
 temp_non_art_prescriptions AS (
@@ -174,6 +179,7 @@ temp_non_art_prescriptions AS (
       AND e.voided = 0
       AND o.voided = 0
       AND d.drug_inventory_id NOT IN (SELECT drug_id FROM arv_drug)
+      AND o.patient_id = @patient_id
     GROUP BY o.patient_id, o.order_id, d.drug_inventory_id, o.encounter_id, o.start_date, o.auto_expire_date, o.instructions, o.voided, o.date_voided, d.equivalent_daily_dose, d.quantity
 ),
 final_non_art_prescriptions AS (
@@ -186,6 +192,7 @@ final_non_art_prescriptions AS (
         GROUP_CONCAT( DISTINCT CONCAT(tp.drug_id,':',date(tp.end_date)) ORDER BY tp.drug_id ASC) AS auto_expire_date,
         GROUP_CONCAT(DISTINCT CONCAT(tp.drug_id, ':', tp.quantity) ORDER BY tp.drug_id ASC) AS quantity
     FROM temp_non_art_prescriptions tp
+    WHERE tp.patient_id = @patient_id
    GROUP BY tp.patient_id, DATE(tp.start_date)
 ),
 temp_non_art_dispensed_drugs AS (
@@ -213,6 +220,7 @@ temp_non_art_dispensed_drugs AS (
        e.voided = 0 
       AND o.voided = 0
       AND d.drug_inventory_id NOT IN (SELECT drug_id FROM arv_drug)
+      AND o.patient_id = @patient_id
     GROUP BY o.patient_id, o.order_id, d.drug_inventory_id, o.encounter_id, o.start_date, o.auto_expire_date, o.instructions, o.voided, o.date_voided, d.equivalent_daily_dose, d.quantity
 ),
 final_non_art_dispensations AS (
@@ -226,6 +234,7 @@ final_non_art_dispensations AS (
         GROUP_CONCAT(DISTINCT CONCAT(tp.drug_id, ':', tp.quantity) ORDER BY tp.drug_id ASC) AS quantity,
         1 as dispensed 
     FROM temp_non_art_dispensed_drugs tp
+    WHERE tp.patient_id = @patient_id
     GROUP BY tp.patient_id, DATE(tp.start_date)
 ),
 visit_appointments as 
@@ -246,6 +255,7 @@ visit_appointments as
             WHERE
                 o.concept_id IN (5096)
                 AND o.voided = 0
+                AND o.person_id = @patient_id
             GROUP BY
                 o.person_id,
                 DATE(o.obs_datetime)
@@ -269,6 +279,7 @@ join drug_order do on oo.order_id=do.order_id
 join drug dr on do.drug_inventory_id = dr.drug_id
 join arv_drug ad on do.drug_inventory_id = ad.drug_id
 WHERE o.concept_id =6987
+AND o.person_id = @patient_id
 ),
 test_type_concepts AS (
     SELECT cn.concept_id,name
@@ -282,6 +293,7 @@ select distinct ob.person_id, o.order_id, date(ob.obs_datetime) visit_date, coal
 from orders o left join obs ob on o.encounter_id = ob.encounter_id left join concept_name cn on ob.value_coded = cn.concept_id
 and cn.concept_name_type='FULLY_SPECIFIED' and cn.voided=0 and cn.locale='en'
 where o.order_type_id = 4 and  ob.concept_id in (2429,10609,10610) and ob.voided=0 and o.voided=0 and  coalesce(cn.name, ob.value_text) is not null
+AND o.patient_id = @patient_id
 ),
 lab_test_result_concepts AS (
     SELECT cn.concept_id,name
@@ -340,6 +352,7 @@ INNER JOIN obs AS test_result_measure_obs
     AND test_result_measure_obs.voided = 0
     AND DATE(test_result_measure_obs.obs_datetime) >= DATE(COALESCE(orders.discontinued_date, orders.start_date))
 WHERE orders.order_type_id IN (SELECT order_type_id FROM lab_order_types)
+  AND orders.patient_id = @patient_id
   AND orders.voided = 0)
 select distinct
 fp.patient_id, fp.site_id,
