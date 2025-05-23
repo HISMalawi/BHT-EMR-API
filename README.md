@@ -4,11 +4,14 @@ Table of Contents
 =================
 
 - [HIS EMR API](#his-emr-api)
+- [Table of Contents](#table-of-contents)
   - [Requirements](#requirements)
   - [Setting up](#setting-up)
     - [Configuration](#configuration)
     - [Setting up rails](#setting-up-rails)
     - [Setting up Production mode](#setting-up-production-mode)
+    - [Setting up Streaming](#setting-up-streaming)
+      - [Pre-requisites](#pre-requisites)
       - [Database](#database)
         - [Using an existing database](#using-an-existing-database)
         - [Using an empty database](#using-an-empty-database)
@@ -27,7 +30,7 @@ Table of Contents
     - [Useful (recommended) tools for development](#useful-recommended-tools-for-development)
     - [Dev Container](#dev-container)
     - [Data Cleaning](#data-cleaning)
-   - [Contributors](#contributors)
+  - [Contributors](#contributors)
 
 ## Requirements
 
@@ -79,6 +82,44 @@ Incase this does not run you might want to make it executable and you can achiev
 ```sh
 chmod +x bin/setup_production_mode.sh 
 ```
+
+### Setting up Streaming
+
+#### Pre-requisites
+
+ - Before you run the streaming setup, you need to do the following:
+
+    - In your application.yml file, add the following:
+  
+   
+    ```yml
+    cdr:
+      url: http://localhost:3001/api/v1/stream
+      username: admin
+      password: password
+    ```
+
+    - In your database.yml file, update the structure of the configuration to match the example below (For all environments):
+    
+    ```yml
+    development:
+      primary: 
+        <<: *default
+        database: openmrs_dev
+      queue:
+        <<: *default
+        database: queue_dev
+        migration_paths: db/migrate
+        processing_delay_time: 10
+    ```
+
+Setup streaming run the following command:
+
+```bash
+rails streaming:setup
+```
+
+Done !! You can now test the streaming by going to `http://localhost:3000/streaming/`
 
 #### Database
 
