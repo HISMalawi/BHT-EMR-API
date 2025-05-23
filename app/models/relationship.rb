@@ -25,4 +25,8 @@ class Relationship < VoidableRecord
       }
     ))
   end
+
+  def person_b_person
+    Person.find(person_b)
+  end
 end

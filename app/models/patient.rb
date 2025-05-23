@@ -30,6 +30,9 @@ class Patient < VoidableRecord
 
     super(options.merge(
       include: {
+        relationships: {
+          methods: %i[person_b_person]
+        },
         person: {
           include: {
             names: {},
