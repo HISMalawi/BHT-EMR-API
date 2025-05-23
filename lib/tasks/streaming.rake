@@ -34,6 +34,18 @@ namespace :streaming do
     # load schema
     Rake::Task['db:schema:load:queue'].invoke unless SolidQueue::Job.table_exists?
 
+    # Enable Streaming in Global Properties
+    use_db = <<~SQL
+      USE #{Rails.configuration.database_configuration[Rails.env]['primary']['database']};
+    SQL
+    query = <<~SQL
+      INSERT INTO global_property (uuid, property, property_value, description)
+      VALUES (UUID(), 'patient.streaming', 'active', 'Enable/Disable patient streaming')
+      ON DUPLICATE KEY UPDATE property_value = 'active';
+    SQL
+    ActiveRecord::Base.connection.execute(use_db)
+    ActiveRecord::Base.connection.execute(query)
+
     # success message
     puts "\e[32mStreaming setup successfully\e[0m"
   
