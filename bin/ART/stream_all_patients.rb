@@ -19,7 +19,7 @@ class StreamAllPatients
   end
 end
 
-Encounter.where(program_id: 1).group(:patient_id).pluck(:patient_id).each do |patient_id|
+Encounter.where(program_id: 1).order(:encounter_datetime).group(:patient_id).pluck(:patient_id).each do |patient_id|
   
   visits = Encounter.where(patient_id:).group('DATE(encounter_datetime)').pluck('DATE(encounter_datetime)')
   visits.each do |date|

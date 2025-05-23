@@ -15,20 +15,32 @@ default: &default
 development:
   primary: 
     <<: *default
-    database: openmrs_limbe
+    database: openmrs_dev
   queue:
     <<: *default
-    database: openmrs_limbe
+    database: queue_dev
     migration_paths: db/migrate
-    processing_delay_time: 300:
+    processing_delay_time: 10:
 
 test:
-  <<: *default
-  database: openmrs
+  primary:
+    <<: *default
+    database: khulambe_test
+  queue:
+    <<: *default
+    database: queue_test
+    migrations_paths: db/queue_migrate
+    processing_delay_time: 10
 
 production:
-  <<: *default
-  database: openmrs_kawale
+  primary:
+    <<: *default
+    database: openmrs_prod
+  queue:
+    <<: *default
+    database: queue_prod
+    migrations_paths: db/queue_migrate
+    processing_delay_time: 10
 
 # Uncomment out the following and update them accordingly if
 # you need to sync hts and anc to RDS.
