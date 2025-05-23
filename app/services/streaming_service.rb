@@ -54,9 +54,9 @@ class StreamingService
     Rails.logger.info("Sending stream data for #{patient.name} on #{date}")
 
     client.post(payload.to_json)
-  rescue RestClient::ExceptionWithResponse => e
-    Rails.logger.error("Failed to send stream data #{e}")
-    raise e.message
+  rescue RestClient::ExceptionWithResponse, RestClient::ServerBrokeConnection => e
+    Rails.logger.error("Failed to send stream data #{e.response.body}")
+    raise e.response.body.to_s
   end
 
   def ip_address
