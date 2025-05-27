@@ -89,7 +89,7 @@ chmod +x bin/setup_production_mode.sh
 
  - Before you run the streaming setup, you need to do the following:
 
-    - In your application.yml file, add the following:
+    - In your application.yml file, add the following (edit with the corret details):
   
    
     ```yml
@@ -112,8 +112,11 @@ chmod +x bin/setup_production_mode.sh
         migration_paths: db/migrate
         processing_delay_time: 10
     ```
+  
+    - Create the new database specified in the queue section of the database.yml file.
+    - Do same for development, production and test environments.
 
-Setup streaming run the following command:
+Setup streaming  by running the following command:
 
 ```bash
 rails streaming:setup
