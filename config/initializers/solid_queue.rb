@@ -15,9 +15,3 @@ end
 Rails.application.config.to_prepare do
   SolidQueue::Process.prepend(SilenceHeartbeat) unless Rails.env.production?
 end
-
-Rails.application.config.after_initialize do
-  if defined?(SolidQueue::Engine)
-    SolidQueue::Engine.paths["db/migrate"] = ["db/queue_migrate"]
-  end
-end
