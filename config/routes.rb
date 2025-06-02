@@ -121,6 +121,11 @@ Rails.application.routes.draw do
       # Totals
       get 'totals' => 'totals#index'
 
+      #fhir
+      get '/fhir/patients', to: 'fhir#patients'
+      get '/fhir/patient/:id', to: 'fhir#patient'
+      get '/fhir/patient/:id/observations', to: 'fhir#observations'
+      
       # Locations
       resources :locations do
         get('/label', to: redirect do |params, _request|
@@ -479,6 +484,7 @@ Rails.application.routes.draw do
   get '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#index'
   delete '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#destroy'
   put '/api/v1/eir/session_schedule/:id', to: 'api/v1/session_schedule#update'
+
 
   # facility
   namespace :api do
