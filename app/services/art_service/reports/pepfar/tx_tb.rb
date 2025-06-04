@@ -14,6 +14,7 @@ module ArtService
         def initialize(start_date:, end_date:, **kwargs)
           super(start_date:, end_date:, **kwargs)
           @dsd = kwargs[:dsd]
+          @report_type = kwargs[:report_type]
         end
 
         def find_report
@@ -77,6 +78,7 @@ module ArtService
               current_obs.earliest_start_date as enrollment_date,
               disaggregated_age_group(current_obs.birthdate, DATE('#{end_date.to_date}')) AS age_group,
               cn.name AS tb_status,
+              tpo.pepfar_cum_outcome  AS outcome,
               GROUP_CONCAT(DISTINCT vcn.name) AS screening_methods
             FROM obs o
             INNER JOIN (
@@ -90,6 +92,7 @@ module ArtService
               GROUP BY o.person_id
             ) current_obs ON current_obs.person_id = o.person_id AND current_obs.obs_datetime = o.obs_datetime
             INNER JOIN concept_name cn ON cn.concept_id = o.value_coded AND cn.voided = 0
+            INNER JOIN temp_patient_outcomes tpo ON tpo.patient_id = o.person_id
             LEFT JOIN obs screen_method ON screen_method.concept_id = #{ConceptName.find_by_name('TB screening method used').concept_id} AND screen_method.voided = 0 AND screen_method.person_id = o.person_id AND DATE(screen_method.obs_datetime) = DATE(current_obs.obs_datetime)
             LEFT JOIN concept_name vcn ON vcn.concept_id = screen_method.value_coded AND vcn.voided = 0 AND vcn.name IN ('Chest x-ray', 'MWRD')
             WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
