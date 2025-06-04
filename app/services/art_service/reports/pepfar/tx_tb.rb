@@ -230,9 +230,17 @@ module ArtService
         end
 
         def process_method(metrics, methods, patient_id)
-          metrics[:symptom_screen_alone] << patient_id if methods.blank?
-          metrics[:cxr_screen] << patient_id if methods&.include?('chest x-ray') && !methods&.include?('mwrd')
-          metrics[:mwrd_screen] << patient_id if methods&.include?('mwrd')
+          # Hierarchical classification - patient counted in only one indicator
+          if methods&.include?('mwrd')
+            # If mWRD is used, count under mWRD regardless of other methods
+            metrics[:mwrd_screen] << patient_id
+          elsif methods&.include?('chest x-ray')
+            # If CXR is used (but not mWRD), count under CXR
+            metrics[:cxr_screen] << patient_id
+          else
+            # If neither mWRD nor CXR is used, count under symptom screening
+            metrics[:symptom_screen_alone] << patient_id
+          end
         end
 
         # rubocop:enable Metrics/AbcSize
