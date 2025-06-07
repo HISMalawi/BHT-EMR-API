@@ -71,7 +71,7 @@ module BuildPatientRecordService
             voided: []
           },
           appointments: {
-            saved: [],
+            saved: safe_extract_observations(patient_id, safe_find_encounter_type('APPOINTMENT')),
             unsaved: []
           },
           diagnosis: {
@@ -333,7 +333,7 @@ module BuildPatientRecordService
                   end
                 end
                 .map do |observation|
-          safe_build_observation_hash(observation)
+          safe_build_observation_hash(observation, encounter)
         end.compact
       rescue StandardError => e
         Rails.logger.error("Error processing observations for encounter #{encounter.id}: #{e.message}")
@@ -341,7 +341,7 @@ module BuildPatientRecordService
       end
     end
     
-    def safe_build_observation_hash(observation)
+    def safe_build_observation_hash(observation, encounter)
       begin
         children = if observation.children.length.positive?
                     observation.children.map do |child|
@@ -353,7 +353,10 @@ module BuildPatientRecordService
                         children: child.children || [],
                         value_coded: child.value_coded,
                         value_text: child.value_text || '',
-                        value_numeric: child.value_numeric
+                        value_numeric: child.value_numeric,
+                        provider_id: encounter.provider_id,
+                        location_id: encounter.location_id,
+                        program_id: encounter.program_id,
                       }
                     end.compact
                   else
@@ -368,7 +371,10 @@ module BuildPatientRecordService
           children: children,
           value_coded: observation.value_coded,
           value_text: observation.value_text || '',
-          value_numeric: observation.value_numeric
+          value_numeric: observation.value_numeric,
+          provider_id: encounter.provider_id,
+          location_id: encounter.location_id,
+          program_id: encounter.program_id,
         }
       rescue StandardError => e
         Rails.logger.error("Error building observation hash for obs #{observation.id}: #{e.message}")
