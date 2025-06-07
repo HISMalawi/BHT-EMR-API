@@ -344,7 +344,7 @@ module BuildPatientRecordService
     def safe_build_observation_hash(observation, encounter)
       begin
         children = observation.children.map { |child| safe_build_observation_hash(child, encounter) }
-    
+        
         {
           concept_id: observation.concept_id,
           concept_name: safe_concept_id_to_name(observation.concept_id),
