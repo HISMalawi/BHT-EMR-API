@@ -1,0 +1,144 @@
+# Create missing tables
+
+# Add Missing columns to concept_name
+connection = ActiveRecord::Base.connection
+
+unless connection.column_exists?(:concept_name, :concept_name_type)
+  connection.add_column :concept_name, :concept_name_type, :string, limit: 50
+end
+
+unless connection.column_exists?(:concept_name, :locale_preferred)
+  connection.add_column :concept_name, :locale_preferred, :string, limit: 4
+end
+
+migrations_to_skip = %w[
+  20091009094538
+  20091009125056
+  20091009125602
+  20091211111847
+  20091211111940
+  20100510073658
+  20101129190928
+  20101129190928
+  20110214131134
+  20110602192435
+  20110604142932
+  20110609132925
+  20110614184541
+  20110726131026
+  20110727100353
+  20110727100435
+  20110727100509
+  20140221071909
+  20140221071959
+  20140723080240
+  20140728112036
+  20160112152154
+  20160914173912
+  20170309093939
+  20171103064127
+  20171114083901
+  20190219134117
+  20190410120250
+  20190410120646
+  20190503064300
+  20190508125042
+  20190510124325
+  20190515130847
+  20190516091445
+  20190516134103
+  20190523131939
+  20190527122235
+  20190527130805
+  20190604082239
+  20190604085024
+  20190604094625
+  20190604100015
+  20190604113533
+  20190604120350
+  20190612112843
+  20190612113802
+  20190612121345
+  20190731064855
+  20190809181643
+  20200424093319
+  20200602124956
+  20200624084028
+  20200624084345
+  20200624084431
+  20200806095216
+  20200915143604
+  20200921102611
+  20200928133511
+  20210127082844
+  20210128095948
+  20210210114015
+  20210224142005
+  20210225073257
+  20210313201739
+  20210318125442
+  20210323080801
+  20210324123534
+  20210324143628
+  20210326203324
+  20210415173348
+  20210504143808
+  20210505072331
+  20210610101533
+  20210614143815
+  20210716101030
+  20210727125130
+  20210807122554
+  20210929090751
+  20211018081109
+  20211018105619
+  20211028142517
+  20211028144234
+  20211222061644
+  20220105061145
+  20220105140130
+  20220403182327
+  20220420085001
+  20220524083521
+  20220725075253
+  20220725095428
+  20220913143642
+  20220918120906
+  20221112075527
+  20230309133251
+  20230309133950
+  20230404133238
+  20230612075110
+  20230818093250
+  20230823071343
+  20230825101519
+  20231031090722
+  20240625064618
+  20241011080330
+  20241016144202
+]
+
+migrations_to_skip.each { |migration| ActiveRecord::SchemaMigration.find_or_create_by!(version: migration) }
+
+sql_files = %i[spine_adaptaion]
+
+sql_files.each do |file|
+  sql = File.read("db/sql/#{file}.sql")
+  statements = sql.split(/;[\r\n]+/)
+  statements.each do |statement|
+    next if statement.strip.empty?
+
+    ActiveRecord::Base.connection.execute(statement)
+  end
+end
+
+`./bin/update_art_metadata.sh #{Rails.env}`
+
+# Set site to queens
+ActiveRecord::Base.connection.execute("UPDATE `global_property` SET `property_value` = '614' WHERE `property` = 'current_health_center_id';")
+ActiveRecord::Base.connection.execute("UPDATE `global_property` SET `property_value` = 'Queen Elizabeth Central Hospital' WHERE `property` = 'current_health_center_name';")
+ActiveRecord::Base.connection.execute("UPDATE `global_property` SET `property_value` = 'QECH' WHERE `property` = 'site_prefix';")
+# Update program ID
+ActiveRecord::Base.connection.execute('UPDATE encounter SET program_id = 31;')
+User.where(user_id: 1).update_all(person_id: 1)
+
