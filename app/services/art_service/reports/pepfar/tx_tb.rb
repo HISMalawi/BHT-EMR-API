@@ -14,7 +14,8 @@ module ArtService
         def initialize(start_date:, end_date:, **kwargs)
           super(start_date:, end_date:, **kwargs)
           @dsd = kwargs[:dsd]
-          @report_type = kwargs[:report_type]
+          @report_type = kwargs[:report_type] || 'pepfar'
+          @tx_curr = []
         end
 
         def find_report
