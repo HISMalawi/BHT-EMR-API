@@ -1,4 +1,5 @@
 class StreamIncompleteVisitsJob < ApplicationJob
+  self.queue_adapter = :solid_queue
   def perform
     date = (Date.today - 1)
     program_incomplete_visits(date:).each { |patient_id|  

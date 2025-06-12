@@ -21,7 +21,7 @@ module Stream
   end
 
   def lab_result_encounter?
-    encounter_type&.name == 'LAB RESULTS'
+    EncounterType.find(encounter_type)&.name == 'LAB RESULTS' if encounter_type.class == Integer
   end
   
   def patient_state_change?
@@ -33,7 +33,7 @@ module Stream
   end
 
   def eligible_for_streaming?
-    return false if streaming_disabled?
+    return false unless streaming_enabled?
 
     patient_state_change? ||\
     patient_attributes_change? ||\
@@ -51,7 +51,6 @@ module Stream
 
   def stream_wait_time
     config = Rails.configuration.database_configuration[Rails.env]
-    config = config['primary'] unless config['primary'].nil?
     config['queue']['processing_delay_time'] || 10
   end
 
@@ -77,7 +76,7 @@ module Stream
     date.strftime('%Y-%m-%d')
   end
 
-  def streaming_disabled?
+  def streaming_enabled?
     GlobalProperty.find_by_property('patient.streaming')&.property_value == 'active'
   end
 end
