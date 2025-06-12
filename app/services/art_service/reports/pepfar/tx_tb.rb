@@ -5,14 +5,15 @@ module ArtService
     module Pepfar
       # TxTb report
       # rubocop:disable Metrics/ClassLength
-      class TxTb < CachedReport
+      class TxTb
         attr_accessor :start_date, :end_date, :report, :rebuild_outcome
 
         include Utils
         include CommonSqlQueryUtils
 
         def initialize(start_date:, end_date:, **kwargs)
-          super(start_date:, end_date:, **kwargs)
+          @start_date = start_date
+          @end_date = end_date
           @dsd = kwargs[:dsd]
           @report_type = kwargs[:report_type] || 'pepfar'
           @tx_curr = []
@@ -20,7 +21,7 @@ module ArtService
 
         def find_report
           drop_temporary_tables
-          create_temp_earliest_start_date unless temp_eartliest_start_date_exists?
+          raise 'Temporary table temp_earliest_start_date does not exist, please run the disaggregated report first' unless temp_earliest_start_date_exists?
           init_report
           process_patients_alive_and_on_art
           process_tb_screening
@@ -107,13 +108,8 @@ module ArtService
           SQL
         end
 
-        def temp_eartliest_start_date_exists?
+        def temp_earliest_start_date_exists?
           ActiveRecord::Base.connection.table_exists?('temp_earliest_start_date')
-        end
-
-        def create_temp_earliest_start_date
-          cohort_builder = ArtService::Reports::CohortBuilder.new(outcomes_definition: 'pepfar')
-          cohort_builder.init_temporary_tables(start_date, end_date, @occupation)
         end
 
         def process_tb_confirmed_and_on_treatment
