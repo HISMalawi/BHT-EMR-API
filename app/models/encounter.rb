@@ -17,6 +17,7 @@ class Encounter < VoidableRecord
   belongs_to :patient
   belongs_to :location, optional: true
   belongs_to :program
+  belongs_to :visit, class_name: 'Visit', foreign_key: :visit_id, optional: true
 
   validate :encounter_datetime_cannot_be_in_the_future
 

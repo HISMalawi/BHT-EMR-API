@@ -1,8 +1,61 @@
-class Visit < ApplicationRecord
-    validates :patientId, presence: true
-    validates :startDate, presence: true
-    validates :programId, presence: true
+# frozen_string_literal: true
 
-    has_many :stages
-    belongs_to :location, optional: true   
-end   
+class Visit < VoidableRecord
+  self.table_name = 'visit'
+  self.primary_key = 'visit_id'
+
+  belongs_to :patient, optional: false
+  belongs_to :person, foreign_key: :patient_id, primary_key: :person_id
+  belongs_to :visit_type, optional: false
+  belongs_to :indication, class_name: 'Concept', optional: true
+  belongs_to :location
+
+  has_many :encounters, -> { order(encounter_datetime: :desc, encounter_id: :desc) }
+
+  validates :date_started, presence: true
+
+  before_validation :validate_dates
+
+  def as_json(options = {})
+    super(options.merge(methods: %i[visit_type_name patient]))
+  end
+
+  def visit_type_name
+    visit_type&.name
+  end
+
+  # check visit start and end date are valid
+  # should contain time in their values and start date should be before end date
+  def validate_dates
+    # check if date_started has a valid date and time instead of zeros for time
+    if date_started && date_started.strftime('%H:%M:%S') == '00:00:00'
+      errors.add(:date_started,
+                 'should contain time')
+    end
+
+    # check if date_stoped has a valid date and time instead of zeros for time
+    if date_stopped && date_stopped.strftime('%H:%M:%S') == '00:00:00'
+      errors.add(:date_stopped,
+                 'should contain time')
+    end
+
+    return unless date_started && date_stopped && date_started > date_stopped
+
+    erors.add(:date_started, 'should be before date stopped')
+  end
+
+  def voided_encounters
+    encounters.where(voided: true)
+  end
+
+  def encounters_done
+    encounters
+  end
+
+  def add_encounter(encounter)
+    return unless encounter
+
+    encounter.visit = self
+    encounters << encounter
+  end
+end
