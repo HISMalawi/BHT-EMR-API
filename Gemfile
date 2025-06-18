@@ -85,4 +85,4 @@ gem 'roo', '~> 2.8'
 
 gem "solid_queue", "1.1.5"
 
-gem 'solid_queue_monitor', '~> 0.3.1'
+gem 'solid_queue_monitor', '~> 0.3.2'

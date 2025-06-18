@@ -1,16 +1,24 @@
+# frozen_string_literal: true
+
 class StreamMissedVisitsJob < ApplicationJob
   def perform
     @date = Date.today - 1
     @program_id = 1 # TODO: make this dynamic for all programs
-    
+
     missed_patients = queued_visits - todays_visits
 
-    missed_patients.each do |patient_id|
-      StreamingJob.perform_later(
-            patient_id:,
-            program_id: @program_id,
-            date: @date.strftime('%Y-%m-%d')
-          )
+    begin
+      ActiveRecord::Base.establish_connection(:queue)
+
+      missed_patients.each do |patient_id|
+        StreamingJob.perform_later(
+          patient_id:,
+          program_id: @program_id,
+          date: @date.strftime('%Y-%m-%d')
+        )
+      end
+    ensure
+      ActiveRecord::Base.establish_connection(:primary)
     end
   end
 
@@ -28,14 +36,14 @@ class StreamMissedVisitsJob < ApplicationJob
     SQL
 
     query.to_a.map do |job|
-      JSON.parse(job['arguments'])['arguments']&.first['patient_id']
+      JSON.parse(job['arguments'])['arguments']&.first&.[]('patient_id')
     end
   end
 
-  def engine (patient_id) 
+  def engine(patient_id)
     WorkflowService.new(
-      program_id: @program_id, 
-      patient_id:, 
+      program_id: @program_id,
+      patient_id:,
       date: @date.strftime('%Y-%m-%d')
     )
   end

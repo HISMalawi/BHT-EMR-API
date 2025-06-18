@@ -1,15 +1,27 @@
+# frozen_string_literal: true
+
 class StreamIncompleteVisitsJob < ApplicationJob
   def perform
     date = (Date.today - 1)
-    program_incomplete_visits(date:).each { |patient_id|  
-      StreamingJob.perform_later(
+    visits = program_incomplete_visits(date:)
+
+    begin
+      # connect to solid queue db
+      # then start the job
+      ActiveRecord::Base.establish_connection(:queue)
+
+      visits.each do |patient_id|
+        StreamingJob.perform_later(
           patient_id:,
           program_id:,
           date: date.strtotime('%Y-%m-%d')
         )
-      }
+      end
+    ensure
+      ActiveRecord::Base.establish_connection(:primary)
+    end
   end
-    
+
   # TODO: make this dynamic for all programs
   def program_incomplete_visits(date:)
     ArtService::DataCleaningTool.new(
