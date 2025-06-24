@@ -15,10 +15,14 @@ namespace :streaming do
     # copy queue.yml and recurring.yml example files if not already
     unless File.exist?(Rails.root.join('config', 'queue.yml'))
       FileUtils.cp Rails.root.join('config', 'queue.yml.example'), Rails.root.join('config', 'queue.yml')
+      
+      puts "Copied queue.yml and recurring.yml example files to config directory."
     end
 
     unless File.exist?(Rails.root.join('config', 'recurring.yml'))
       FileUtils.cp Rails.root.join('config', 'recurring.yml.example'), Rails.root.join('config', 'recurring.yml')
+
+      puts "Copied queue.yml and recurring.yml example files to config directory."
     end
 
     # check for queue configs in application.yml
@@ -28,11 +32,24 @@ namespace :streaming do
       exit 1
     end
 
-    # create queue database if not exists
-    Rake::Task['db:create:queue'].invoke
+    # check if queue database exists, if not create it
+    ENV['DISABLE_DATABASE_ENVIRONMENT_CHECK'] = '1' if Rails.env.production?
 
-    # load schema
-    Rake::Task['db:schema:load:queue'].invoke unless SolidQueue::Job.table_exists?
+    config = ActiveRecord::Base.configurations.configs_for(env_name: Rails.env, name: 'queue')
+
+    abort "Missing 'queue' DB config under #{Rails.env} in database.yml" unless config
+
+    ActiveRecord::Tasks::DatabaseTasks.create(config)
+
+    # Connect to queue database before checking for schema
+    ActiveRecord::Base.establish_connection(:queue)
+    
+    unless SolidQueue::Process.table_exists?
+      puts 'Loading schema for queue DB...'
+      ActiveRecord::Tasks::DatabaseTasks.load_schema(config, :ruby, "#{Rails.root}/db/queue_schema.rb")
+    end
+    
+    ActiveRecord::Base.establish_connection(:primary)
 
     # Enable Streaming in Global Properties
     use_db = <<~SQL
