@@ -19,7 +19,7 @@ development:
   queue:
     <<: *default
     database: queue_dev
-    migration_paths: db/migrate
+    migrations_paths: []
     processing_delay_time: 10:
 
 test:
@@ -29,7 +29,7 @@ test:
   queue:
     <<: *default
     database: queue_test
-    migrations_paths: db/queue_migrate
+    migrations_paths: []
     processing_delay_time: 10
 
 production:
@@ -39,7 +39,7 @@ production:
   queue:
     <<: *default
     database: queue_prod
-    migrations_paths: db/queue_migrate
+    migrations_paths: []
     processing_delay_time: 10
 
 # Uncomment out the following and update them accordingly if
