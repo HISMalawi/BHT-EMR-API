@@ -22,6 +22,8 @@ module Stream
 
   def lab_result_encounter?
     encounter_type&.name == 'LAB RESULTS'
+  rescue
+    false
   end
   
   def patient_state_change?
