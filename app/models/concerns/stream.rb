@@ -78,6 +78,6 @@ module Stream
   end
 
   def streaming_disabled?
-    GlobalProperty.find_by_property('patient.streaming')&.property_value == 'active'
+    GlobalProperty.find_by_property('patient.streaming')&.property_value != 'active'
   end
 end
