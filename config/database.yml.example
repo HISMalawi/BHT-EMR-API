@@ -20,7 +20,7 @@ development:
     <<: *default
     database: queue_dev
     migrations_paths: []
-    processing_delay_time: 10:
+    processing_delay_time: 10
 
 test:
   primary:
