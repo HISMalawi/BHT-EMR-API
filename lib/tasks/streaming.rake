@@ -5,6 +5,9 @@ require 'rake'
 namespace :streaming do
   desc "Setup streaming"
   task setup: :environment do
+
+    system("export DATABASE=primary")
+
     # verify queue config has been setup in database.yml
     unless Rails.configuration.database_configuration[Rails.env]['queue']
       puts "Please setup queue config in database.yml"
