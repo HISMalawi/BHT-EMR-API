@@ -2,7 +2,7 @@
 
 class RetryStreamingJob < ApplicationJob
   def perform
-    ActiveRecord::Base.establish_connection(:queue)
+    self.queue_adapter = :solid_queue
 
     SolidQueue::FailedExecution.all\
                                .each do |job|
