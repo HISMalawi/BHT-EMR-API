@@ -33,7 +33,7 @@ module Stream
   end
 
   def eligible_for_streaming?
-    return false if streaming_disabled?
+    return false unless streaming_enabled?
 
     patient_state_change? ||\
     patient_attributes_change? ||\
@@ -77,7 +77,7 @@ module Stream
     date.strftime('%Y-%m-%d')
   end
 
-  def streaming_disabled?
-    GlobalProperty.find_by_property('patient.streaming')&.property_value != 'active'
+  def streaming_enabled?
+    GlobalProperty.find_by_property('patient.streaming')&.property_value == 'active' || false 
   end
 end
