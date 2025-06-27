@@ -20,7 +20,7 @@ class User < RetirableRecord
            foreign_key: :person_id,
            dependent: :destroy)
 
-  default_scope { where(deactivated_on: nil) }
+  default_scope { where(deactivated_on: nil) } if self.respond_to?(:deactivated_on)
 
   def active?
     deactivated_on.nil?
