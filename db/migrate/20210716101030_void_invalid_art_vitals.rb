@@ -2,6 +2,8 @@
 
 class VoidInvalidArtVitals < ActiveRecord::Migration[5.2]
   def up
+    return unless Encounter.respond_to?(:program_id)
+    
     puts 'Voiding weight and height vitals with 0 and null values; please wait...'
     ActiveRecord::Base.connection.execute("SET SESSION sql_mode = ''")
 
