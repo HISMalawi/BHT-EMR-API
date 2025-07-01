@@ -51,7 +51,7 @@ class StreamingService
       }
     )
 
-    Rails.logger.info("Sending stream data for #{patient.name} on #{date}")
+    Rails.logger.info("Sending stream data for #{patient.name} on #{date} to #{config['url']}")
 
     client.post(payload.to_json)
   rescue RestClient::ExceptionWithResponse, RestClient::ServerBrokeConnection => e
