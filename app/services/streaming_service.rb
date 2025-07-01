@@ -26,7 +26,7 @@ class StreamingService
 
     @client = RestClient::Resource.new(
       config['url'],
-      user: config['usernae'],
+      user: config['username'],
       password: config['password'],
       headers: { 'Content-Type' => 'application/json' }
     )
@@ -56,7 +56,7 @@ class StreamingService
     client.post(payload.to_json)
   rescue RestClient::ExceptionWithResponse, RestClient::ServerBrokeConnection => e
     Rails.logger.error("Failed to send stream data #{e&.message}")
-    raise e&.message
+    raise e
   end
 
   def ip_address
