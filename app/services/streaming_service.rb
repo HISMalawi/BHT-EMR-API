@@ -54,8 +54,14 @@ class StreamingService
 
     Rails.logger.info("Sending stream data for #{patient.name} on #{date} to #{config['url']}")
 
-    client.post(payload.to_json)
-  rescue RestClient::ExceptionWithResponse, RestClient::ServerBrokeConnection => e
+    require 'net/http'
+    uri = URI(config['url'])
+    http = Net::HTTP.new(uri.host, uri.port)
+    request = Net::HTTP::Post.new(uri.path, 'Content-Type' => 'application/json')
+    request.body = payload.to_json
+    response = http.request(request)
+    Rails.logger.info("Stream response: #{response.code}")
+  rescue Exception => e
     Rails.logger.error("Failed to send stream data #{e&.message}")
     raise e
   end
