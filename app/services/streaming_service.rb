@@ -28,7 +28,8 @@ class StreamingService
       config['url'],
       user: config['username'],
       password: config['password'],
-      headers: { 'Content-Type' => 'application/json' }
+      headers: { 'Content-Type' => 'application/json' },
+      verify_ssl: false
     )
   end
 
