@@ -30,8 +30,8 @@ class StreamingService
       password: config['password'],
       headers: { content_type: :json },
       verify_ssl: OpenSSL::SSL::VERIFY_NONE,
-      open_timeout: 10,
-      timeout: 20
+      open_timeout: 600,
+      timeout: 600
     )
   end
 
