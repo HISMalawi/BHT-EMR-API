@@ -29,7 +29,9 @@ class StreamingService
       user: config['username'],
       password: config['password'],
       headers: { 'Content-Type' => 'application/json' },
-      verify_ssl: false
+      verify_ssl: false,
+      open_timeout: 10,
+      timeout: 20
     )
   end
 
@@ -54,14 +56,8 @@ class StreamingService
 
     Rails.logger.info("Sending stream data for #{patient.name} on #{date} to #{config['url']}")
 
-    require 'net/http'
-    uri = URI(config['url'])
-    http = Net::HTTP.new(uri.host, uri.port)
-    request = Net::HTTP::Post.new(uri.path, 'Content-Type' => 'application/json')
-    request.body = payload.to_json
-    response = http.request(request)
-    Rails.logger.info("Stream response: #{response.code}")
-  rescue Exception => e
+    client.post(payload.to_json)
+  rescue RestClient::ExceptionWithResponse, RestClient::ServerBrokeConnection => e
     Rails.logger.error("Failed to send stream data #{e&.message}")
     raise e
   end
