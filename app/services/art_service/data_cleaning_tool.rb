@@ -21,6 +21,7 @@ module ArtService
       'MISSING ART START DATE' => 'missing_start_date',
       'MULTIPLE OPEN STATES' => 'multiple_open_states',
       'ACTIVE CLIENTS WITH ADVERSE OUTCOMES' => 'active_clients_with_adverse_outcomes',
+      'ART START DATE BEFORE DATE OF BIRTH' => 'art_start_date_before_date_of_birth'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -33,6 +34,26 @@ module ArtService
       eval(TOOLS[@tool_name.to_s])
     rescue StandardError => e
       "#{e.class}: #{e.message}"
+    end
+
+    def art_start_date_before_date_of_birth
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          p.patient_id,
+          pp.birthdate,
+          MIN(o.value_datetime) AS art_start_date,
+          n.given_name,
+          n.family_name,
+          i.identifier arv_number
+        FROM patient p
+        INNER JOIN person_name n ON n.person_id = p.patient_id AND n.voided = 0
+        INNER JOIN person pp USING(person_id)
+        INNER JOIN obs o ON o.person_id = p.patient_id AND o.voided = 0
+        LEFT JOIN patient_identifier i ON i.patient_id = p.patient_id AND i.identifier_type = #{indetifier_type} AND i.voided = 0
+        WHERE o.concept_id = #{concept('Date antiretrovirals started').concept_id}
+        AND o.value_datetime <= pp.birthdate
+        GROUP BY p.patient_id;
+        SQL
     end
 
     def active_clients_with_adverse_outcomes
