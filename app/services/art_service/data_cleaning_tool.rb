@@ -41,6 +41,7 @@ module ArtService
         SELECT
           p.patient_id,
           pp.birthdate,
+          pp.gender,
           MIN(o.value_datetime) AS art_start_date,
           n.given_name,
           n.family_name,
