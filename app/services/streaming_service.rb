@@ -28,8 +28,8 @@ class StreamingService
       config['url'],
       user: config['username'],
       password: config['password'],
-      headers: { 'Content-Type' => 'application/json' },
-      verify_ssl: false,
+      headers: { content_type: :json },
+      verify_ssl: OpenSSL::SSL::VERIFY_NONE,
       open_timeout: 10,
       timeout: 20
     )
