@@ -40,22 +40,15 @@ namespace :streaming do
     # check if queue database exists, if not create it
     ENV['DISABLE_DATABASE_ENVIRONMENT_CHECK'] = '1' if Rails.env.production?
 
-    config = ActiveRecord::Base.configurations.configs_for(env_name: Rails.env, name: 'queue')
+    config = ActiveRecord::Base.configurations.configs_for(env_name: Rails.env, name: "queue").configuration_hash
 
     abort "Missing 'queue' DB config under #{Rails.env} in database.yml" unless config
 
     ActiveRecord::Tasks::DatabaseTasks.create(config)
 
-    # Connect to queue database before checking for schema
-    ActiveRecord::Base.establish_connection(:queue)
+    # dump force the file, use raw commands
+    system("mysql -u #{config[:username]} -p#{config[:password]} -h #{config[:host]} #{config[:database]} < #{Rails.root.join('db', 'sql', 'solid_queue_schema.sql')}  -f")
     
-    unless SolidQueue::Process.table_exists?
-      puts 'Loading schema for queue DB...'
-      ActiveRecord::Tasks::DatabaseTasks.load_schema(config, :ruby, "#{Rails.root}/db/queue_schema.rb")
-    end
-    
-    ActiveRecord::Base.establish_connection(:primary)
-
     # Enable Streaming in Global Properties
     use_db = <<~SQL
       USE #{Rails.configuration.database_configuration[Rails.env]['primary']['database']};
