@@ -15,3 +15,5 @@ end
 Rails.application.config.to_prepare do
   SolidQueue::Process.prepend(SilenceHeartbeat) unless Rails.env.production?
 end
+
+system('rails streaming:setup') unless SolidQueue::Job.table_exists?
