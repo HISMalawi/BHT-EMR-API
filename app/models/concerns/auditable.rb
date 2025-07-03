@@ -15,8 +15,8 @@ module Auditable
   extend ActiveSupport::Concern
 
   included do
-    audited
-
+    audited if Audit.table_exists?
+    
     before_save :update_change_trail
     before_create :update_create_trail
   end
