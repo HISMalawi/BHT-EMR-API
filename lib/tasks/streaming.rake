@@ -6,6 +6,8 @@ namespace :streaming do
   desc "Setup streaming"
   task setup: :environment do
 
+    # set database to primary to prevent rails from using queue database
+    # when running rake tasks
     system("export DATABASE=primary")
 
     # verify queue config has been setup in database.yml
