@@ -10,11 +10,11 @@ module Stream
   def stream
     if eligible_for_streaming?
       StreamingJob.set(wait: stream_wait_time.seconds)
-        .perform_later(
-          patient_id: get_patient_id,
-          program_id: get_program_id,
-          date: get_date
-        )
+                  .perform_later(
+                    patient_id: get_patient_id,
+                    program_id: get_program_id,
+                    date: get_date
+                  )
     end
   rescue StandardError => e
     Rails.logger.error("Error streaming: #{e.message}")
@@ -22,12 +22,12 @@ module Stream
 
   def lab_result_encounter?
     encounter_type&.name == 'LAB RESULTS'
-  rescue
+  rescue StandardError
     false
   end
-  
+
   def patient_state_change?
-    self.class == PatientState
+    instance_of?(PatientState)
   end
 
   def patient_attributes_change?
@@ -37,10 +37,10 @@ module Stream
   def eligible_for_streaming?
     return false unless streaming_enabled?
 
-    patient_state_change? ||\
-    patient_attributes_change? ||\
-    lab_result_encounter? ||\
-    service.visit_complete?
+    patient_state_change? || \
+      patient_attributes_change? || \
+      lab_result_encounter? || \
+      service.visit_complete?
   end
 
   def service
@@ -53,33 +53,32 @@ module Stream
 
   def stream_wait_time
     config = Rails.configuration.database_configuration[Rails.env]
-    config = config['primary'] unless config['primary'].nil?
     config['queue']['processing_delay_time'] || 10
   end
 
   def get_patient_id
-    id = patient_id if self.respond_to?(:patient_id)
-    id ||= patient_program.patient_id if self.respond_to?(:patient_program)
-    id ||= person_id if self.respond_to?(:person_id)
+    id = patient_id if respond_to?(:patient_id)
+    id ||= patient_program.patient_id if respond_to?(:patient_program)
+    id ||= person_id if respond_to?(:person_id)
     id
   end
 
   def get_program_id
-    program_id = patient_program.program_id if self.respond_to?(:patient_program)
-    program_id ||= program_id if self.respond_to?(:program_id)
+    program_id = patient_program.program_id if respond_to?(:patient_program)
+    program_id ||= program_id if respond_to?(:program_id)
     program_id ||= 1
     program_id
   end
 
   def get_date
-    date = encounter_datetime if self.respond_to?(:encounter_datetime)
-    date ||= obs_datetime if self.respond_to?(:obs_datetime)
-    date ||= date_created if self.respond_to?(:date_created)
+    date = encounter_datetime if respond_to?(:encounter_datetime)
+    date ||= obs_datetime if respond_to?(:obs_datetime)
+    date ||= date_created if respond_to?(:date_created)
     date ||= Date.today
     date.strftime('%Y-%m-%d')
   end
 
   def streaming_enabled?
-    GlobalProperty.find_by_property('patient.streaming')&.property_value == 'active' || false 
+    GlobalProperty.find_by_property('patient.streaming')&.property_value == 'active' || false
   end
 end
