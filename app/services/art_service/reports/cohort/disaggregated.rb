@@ -81,15 +81,16 @@ module ArtService
             # it as is. Regimens are in this format NUMBERLETTERS
             report[age_group.to_s][gender.to_s]['tx_curr'] << patient_id
             report[age_group.to_s][gender.to_s]['total'] << patient_id
-            process_aggregate_rows(gender:, regimen:, patient_id:)
-
+            
             if regimen.to_s == '15P'
               report[age_group.to_s][gender.to_s][regimen.to_s] << patient_id
+              process_aggregate_rows(gender:, regimen:, patient_id:)
               next
             end
-
+            
             regimen = regimen.gsub(/(\d+[A-Za-z]*P)\z/, '\1P') if regimen.match?(/\A\d+[A-Za-z]*[^P]P\z/)
             report[age_group.to_s][gender.to_s][regimen.to_s] << patient_id
+            process_aggregate_rows(gender:, regimen:, patient_id:)
           end
         end
 
