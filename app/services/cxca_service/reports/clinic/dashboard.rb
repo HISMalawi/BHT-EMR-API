@@ -13,10 +13,15 @@ module CxcaService
 
         def build_report
           methods = ['VIA', 'Speculum Exam', 'PAP Smear', 'HPV DNA']
-          age_groups = ['15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50+']
+
+          age_groups = ['<25', '25-29', '30-44', '45-49', '49+']
           [:reffered, :walkin].each_with_object({}) do |section, report|
             report[section] = age_groups.each_with_object({}) do |age_group, age_group_report|
               age_group_report[age_group] = methods.each_with_object({}) do |method, method_report|
+                if section == :reffered
+                  method_report['booked'] = []
+                end
+                
                 method_report[method] = []
               end
             end
@@ -28,15 +33,31 @@ module CxcaService
         end
 
         def dashboard
+          
           reffered = refered_from_art&.map { |r| r['person_id'] }
           (screened_today || []).each do |person|
             section = reffered.include?(person['person_id']) ? :reffered : :walkin
             method = person['screening_method']
-            age_group = person['age_group']
-            report[section][age_group][method] << person['person_id']
+            age_group = map_age_group(person['age_group'])
+            id = person['person_id']
+
+            report[section][age_group]['booked'] << id if section === :reffered
+            report[section][age_group][method] << id
           end
 
           report
+        end
+        
+        def map_age_group(group)
+          map = {
+            '<25' => ['15-19', '20-24'],
+            '25-29' => ['25-29'],
+            '30-44' => ['30-34', '35-39', '40-44'],
+            '45-49' => ['45-49'],
+            '>49' => ['50+']
+          }
+          
+          map.select { |k,v| v.include?(group) }&.keys.first
         end
 
         def refered_from_art
