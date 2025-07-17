@@ -54,7 +54,7 @@ module CxcaService
 
     STATE_CONDITIONS = {
       CXCA_TEST => %i[show_cxca_test?],
-      CXCA_SCREENING_RESULTS => %i[show_cxca_screening_results? offer_cxca_screening?],
+      CXCA_SCREENING_RESULTS => %i[offer_cxca_screening?],
       CANCER_TREATMENT => %i[show_cancer_treatment? offer_cxca_screening?],
       CXCA_OUTCOME => %i[require_referral_outcome?],
       APPOINTMENT => %i[show_appointment? offer_cxca_screening? patient_has_not_been_referred?],
