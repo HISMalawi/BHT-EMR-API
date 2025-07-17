@@ -162,6 +162,9 @@ Rails.application.routes.draw do
 
       resources :patient_programs, only: %i[create index show destroy]
 
+      get 'streaming/stats', to: 'streaming#stats'
+      get 'streaming/failed', to: 'streaming#failed'
+
       resources :programs do
         resources :program_workflows, path: :workflows
         resources :program_regimens, path: :regimens
