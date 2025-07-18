@@ -12,8 +12,8 @@ module CxcaService
         end
 
         def build_report
-          methods = ['VIA', 'Speculum Exam', 'PAP Smear', 'HPV DNA']
-
+          methods = ['via', 'speculum exam', 'pap smear', 'hpv dna']
+    
           age_groups = ['<25', '25-29', '30-44', '45-49', '49+']
           [:reffered, :walkin].each_with_object({}) do |section, report|
             report[section] = age_groups.each_with_object({}) do |age_group, age_group_report|
@@ -37,7 +37,7 @@ module CxcaService
           reffered = refered_from_art&.map { |r| r['person_id'] }
           (screened_today || []).each do |person|
             section = reffered.include?(person['person_id']) ? :reffered : :walkin
-            method = person['screening_method']
+            method = person['screening_method'].downcase
             age_group = map_age_group(person['age_group'])
             id = person['person_id']
 
@@ -84,7 +84,9 @@ module CxcaService
               SELECT person_id, concept_name.name AS screening_method
               FROM obs
               INNER JOIN concept_name ON concept_name.concept_id = obs.value_coded
-                AND concept_name.voided = 0
+                AND concept_name.voided = 0 AND (concept_name.concept_name_type != 'FULLY_SPECIFIED' 
+                  OR concept_name.concept_name_type IS NULL 
+                  OR concept_name.concept_name_type = '')
               INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id
                 AND encounter.voided = 0
                 AND encounter.program_id = (SELECT program_id FROM program WHERE name = 'CxCa program' LIMIT 1) 
