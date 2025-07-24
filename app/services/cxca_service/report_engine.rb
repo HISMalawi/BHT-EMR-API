@@ -25,7 +25,8 @@ module CxcaService
       'CLINIC CXCA SCRN' => CxcaService::Reports::Clinic::CxcaScrn,
       'MONTHLY CECAP TX' => CxcaService::Reports::Clinic::MonthlyCecapTx,
       'MONTHLY SCREEN' => CxcaService::Reports::Clinic::MonthlyScreenReport,
-      'REASON FOR NOT SCREENING REPORT' => CxcaService::Reports::Clinic::ReasonForNotScreeningReport
+      'REASON FOR NOT SCREENING REPORT' => CxcaService::Reports::Clinic::ReasonForNotScreeningReport,
+      'DASHBOARD' => CxcaService::Reports::Clinic::Dashboard
     }.freeze
 
     def reports(start_date, end_date, name, **kwargs)
@@ -51,7 +52,7 @@ module CxcaService
     end
 
     def dashboard_stats(date)
-      test_performed date
+      REPORT_NAMES['DASHBOARD'].new(start_date: date, end_date: date).find_report
     end
 
     private

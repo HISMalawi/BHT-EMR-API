@@ -73,6 +73,7 @@ module ArtService
         fourteen_pp: 'Regimen 14PP',
         fourteen_pa: 'Regimen 14PA',
         fourteen_a: 'Regimen 14 A',
+        fifteen_p: 'Regimen 15P',
         fifteen_pp: 'Regimen 15PP',
         fifteen_pa: 'Regimen 15PA',
         fifteen_a: 'Regimen 15 A',

@@ -249,18 +249,13 @@ module ArtService
       if moh_name && %r{^\d*[A-Z]+\s*\d+(\s*/\s*\d*[A-Z]+\s*\d+)*$}i.match(moh_name)
         return moh_name.gsub(/\s+/, '')
                        .gsub(/Isoniazid/i, 'INH')
+                       .gsub(/Rifampicin/i, 'RIF')
+                       .gsub(/Cotrimoxazole/i, 'CPT')
       end
 
-      # match = drug.name.match(/^(.+)\s*\(.*$/)
-      # name = match.nil? ? drug.name : match[1]
-      name = drug.name
-      if name.match?('Cotrimoxazole')
-        'CPT'
-      elsif name.match?('INH')
-        'INH'
-      else
-        name
-      end
+      match = drug.name.match(/^(.+)\s*\(.*$/)
+      name = match.nil? ? drug.name : match[1]
+      name
     end
   end
 end
