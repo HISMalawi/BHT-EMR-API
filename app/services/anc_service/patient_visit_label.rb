@@ -378,12 +378,12 @@ module AncService
           main_drugs = %w[Fefol TD SP]
 
           med = encounters[element]["UPDATE OUTCOME"]["OUTCOME"].humanize + "; " rescue ""
-          oth = @drugs[element].map { |d, v|
+          oth = @other_drugs[element].map { |d, v|
 
             next if main_drugs.include?(d)
             "#{d}: #{(v.to_s.match(/\.[1-9]/) ? v : v.to_i)}"
 
-          }.join("; ") if @drugs[element].length > 0 rescue ""
+          }.join("; ") if @other_drugs[element].length > 0 rescue ""
 
           med = paragraphate(med.to_s + oth.to_s, 17, 5)
           visit["medication"] = med
