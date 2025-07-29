@@ -495,10 +495,68 @@ module AncService
         visit = {}
         next unless element == @date.to_date.strftime('%d/%b/%Y')
 
-        td = begin
-          (@drugs[element]['TD'].positive? ? 1 : '')
-        rescue StandardError
-          ''
+          # label.draw_text(td.to_s, 28, 200, 0, 2, 1, 1, false)
+          visit["td"] = td
+
+          sign = ""
+          diagnosis = ["malaria", "anaemia", "pre-eclampsia", "vaginal bleeding", "early rupture of membranes",
+                       "premature labour", "pneumonia", "verruca planus, extensive"]
+
+          anc_exam = encounter["ANC EXAMINATION"]
+
+          unless anc_exam.blank?
+            anc_exam.each do |key, value|
+              if diagnosis.include?(key.downcase)
+                sign += "#{key.downcase}, "
+              end
+            end
+          end
+
+          sign = paragraphate(sign.to_s, 13, 5)
+
+          visit["diagnosis"] = sign
+          (0..(sign.length)).each { |m|
+            label.draw_text(sign[m].to_s, 28, (200 + (25 * m)), 0, 2, 1, 1, false)
+          }
+
+          main_drugs = %w[Fefol TD SP]
+
+          med = encounters[element]["UPDATE OUTCOME"]["OUTCOME"].humanize + "; " rescue ""
+          oth = @other_drugs[element].map { |d, v|
+
+            next if main_drugs.include?(d)
+            "#{d}: #{(v.to_s.match(/\.[1-9]/) ? v : v.to_i)}"
+
+          }.join("; ") if @other_drugs[element].length > 0 rescue ""
+
+          med = paragraphate(med.to_s + oth.to_s, 17, 5)
+          visit["medication"] = med
+          (0..(med.length)).each { |m|
+            label.draw_text(med[m].to_s, 280, (200 + (18 * m)), 0, 2, 1, 1, false)
+          }
+          nex = encounters[element]["APPOINTMENT"]["APPOINTMENT DATE"] rescue []
+
+          if nex != []
+            date = nex.to_date
+            nex = []
+            nex << date.strftime("%d/")
+            nex << date.strftime("%b/")
+            nex << date.strftime("%Y")
+            visit["next_visit"] = date
+          end
+
+          (0..(nex.length)).each { |m|
+            label.draw_text(nex[m].to_s, 610, (200 + (18 * m)), 0, 2, 1, 1, false)
+          }
+
+          user = "#{encounters[element]["USER"].given_name[0].upcase}.#{encounters[element]["USER"].family_name[0].upcase}" rescue ""
+
+          label.draw_text(user.to_s, 730, 200, 0, 2, 1, 1, false)
+
+          visit["user"] = user.to_s
+          visit["visit_no"] = key
+
+          return { data: visit, zpl: label.print(1) }
         end
 
         # label.draw_text(td.to_s, 28, 200, 0, 2, 1, 1, false)
