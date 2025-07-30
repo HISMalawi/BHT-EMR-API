@@ -26,6 +26,11 @@ module ArtService
           ].freeze
         end
 
+        COHORT_REGIMENS = %w[
+          0P 2P 4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15P 15PP 15PA 16P 17PP 17PA
+          4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A 16A 17A
+        ].freeze
+
         ##
         # Returns the drilldown information for all specified patients (ie patient_ids)
         #
@@ -80,6 +85,22 @@ module ArtService
           else
             patient['total_days_on_medication'].to_i >= FULL_6H_COURSE_PILLS
           end
+        end
+
+        # Filters the query to only include
+        # patients for which the given `concept_id (DSD)` is the value of the
+        # (DSD) the patient is enrolled in.
+        #
+        #@param concept_id [Integer]
+        #
+        # Returns an SQL fragment that
+        def dsd_filter(concept_id:)
+          <<~SQL
+            INNER JOIN obs dsd ON dsd.person_id = p.patient_id
+              AND dsd.concept_id = #{concept('').concept_id}
+              AND dsd.voided = 0
+              AND value_coded = #{concept_id}
+          SQL
         end
 
         # this just gives all clients who are truly external or drug refill

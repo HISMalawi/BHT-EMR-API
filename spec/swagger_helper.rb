@@ -52,35 +52,23 @@ RSpec.configure do |config|
               patients: { type: :array, items: { type: :integer } }
             }
           },
-          aetc_dissag_diagnosis: {
+          data_cleaning_supervision: {
             type: :object,
             properties: {
-              diagnosis: { type: :string, example: 'Malaria' },
-              '< 6 months': { type: :object, properties: {
-                M: { type: :array, items: { type: :integer } },
-                F: { type: :array, items: { type: :integer } },
-                UNKNOWN: { type: :array, items: { type: :integer } }
+              data_cleaning_tool_id: { type: :integer, example: 1 },
+              data_cleaning_datetime: { type: :string, format: 'date-time', example: '2020-01-01' },
+              comments: { type: :string, example: 'Comments' },
+              date_created: { type: :string, format: 'date-time', example: '2020-01-01' },
+              date_changed: { type: :string, format: 'date-time', example: '2020-01-01' },
+              created_by: { type: :object, properties: {
+                user_id: { type: :integer, example: 1 },
+                name: { type: :string, example: 'John Doe' }
               } },
-              '6 months to < 5': { type: :object, properties: {
-                M: { type: :array, items: { type: :integer } },
-                F: { type: :array, items: { type: :integer } },
-                UNKNOWN: { type: :array, items: { type: :integer } }
+              updated_by: { type: :object, properties: {
+                user_id: { type: :integer, example: 1 },
+                name: { type: :string, example: 'John Doe' }
               } },
-              '5 to 14': { type: :object, properties: {
-                M: { type: :array, items: { type: :integer } },
-                F: { type: :array, items: { type: :integer } },
-                UNKNOWN: { type: :array, items: { type: :integer } }
-              } },
-              '> 14': { type: :object, properties: {
-                M: { type: :array, items: { type: :integer } },
-                F: { type: :array, items: { type: :integer } },
-                UNKNOWN: { type: :array, items: { type: :integer } }
-              } },
-              'total_by_gender': { type: :object, properties: {
-                M: { type: :array, items: { type: :integer } },
-                F: { type: :array, items: { type: :integer } },
-                UNKNOWN: { type: :array, items: { type: :integer } }
-              } }
+              all_supervisors: { type: :array, items: { type: :string } }
             }
           },
           aetc_dissag_diagnosis: {

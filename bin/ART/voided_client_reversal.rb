@@ -19,53 +19,53 @@ end
 
 def unvoid_patient(patient:)
   pat = Patient.unscoped.find_by(patient_id: patient['patient_id'])
-  pat.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
+  pat.update(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
 end
 
 def unvoid_person(patient:)
   person = Person.unscoped.find_by(person_id: patient['patient_id'])
-  person.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
+  person.update(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
 end
 
 def unvoid_person_name(patient:)
   names = PersonName.unscoped.where(person_id: patient['patient_id'], date_voided: patient['date_voided'])
   names.each do |name|
-    name.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
+    name.update(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
   end
 end
 
 def unvoid_patient_identifier(patient:)
   identifiers = PatientIdentifier.unscoped.where(patient_id: patient['patient_id'], date_voided: patient['date_voided'])
   identifiers.each do |identifier|
-    identifier.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
+    identifier.update(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
   end
 end
 
 def unvoid_person_attributes(patient:)
   attributes = PersonAttribute.unscoped.where(person_id: patient['patient_id'], date_voided: patient['date_voided'])
   attributes.each do |attribute|
-    attribute.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
+    attribute.update(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
   end
 end
 
 def unvoid_person_addressess(patient:)
   addresses = PersonAddress.unscoped.where(person_id: patient['patient_id'], date_voided: patient['date_voided'])
   addresses.each do |address|
-    address.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
+    address.update(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
   end
 end
 
 def unvoid_relationship(patient:)
   relationships = Relationship.unscoped.where(person_a: patient['patient_id'], date_voided: patient['date_voided'])
   relationships.each do |relationship|
-    relationship.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
+    relationship.update(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
   end
 end
 
 def unvoid_patient_program(patient:)
   programs = PatientProgram.unscoped.where(patient_id: patient['patient_id'], date_voided: patient['date_voided'])
   programs.each do |program|
-    program.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
+    program.update(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
   end
 end
 
@@ -73,14 +73,14 @@ def unvoid_patient_state(patient:)
   patient_programs = PatientProgram.where(patient_id: patient['patient_id']).collect(&:patient_program_id)
   states = PatientState.unscoped.where(patient_program_id: patient_programs, date_voided: patient['date_voided'])
   states.each do |state|
-    state.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
+    state.update(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
   end
 end
 
 def unvoid_encounters(patient:)
   encounters = Encounter.unscoped.where(patient_id: patient['patient_id'], date_voided: patient['date_voided'])
   encounters.each do |encounter|
-    encounter.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil) if encounter.program_id.present?
+    encounter.update(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil) if encounter.program_id.present?
     next if encounter.program_id.present?
 
     # update using raw query to avoid validation errors
@@ -94,14 +94,14 @@ end
 def unvoid_orders(patient:)
   orders = Order.unscoped.where(patient_id: patient['patient_id'], date_voided: patient['date_voided'])
   orders.each do |order|
-    order.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
+    order.update(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
   end
 end
 
 def unvoid_obs(patient:)
   obs = Observation.unscoped.where(person_id: patient['patient_id'], date_voided: patient['date_voided'])
   obs.each do |ob|
-    ob.update!(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
+    ob.update(voided: 0, voided_by: nil, date_voided: nil, void_reason: nil)
   end
 end
 

@@ -46,6 +46,10 @@ class Patient < VoidableRecord
     ))
   end
 
+  def outcome(program, ref_date)
+    PatientStateService.new.find_patient_state(program, self, ref_date)
+  end
+
   def national_id
     id_types = PatientIdentifierType.where(name: [NPID_NAME, LEGACY_NPID_NAME])
     id_obj = patient_identifiers.find_by(identifier_type: id_types)

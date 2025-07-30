@@ -7,6 +7,8 @@ module ModelUtils
   # Parameters:
   #  name - A string repr of the concept name
   def concept(name)
+    return unless name.present?
+
     Concept.joins(:concept_names).where('concept_name.name = ?', name).first
   end
 

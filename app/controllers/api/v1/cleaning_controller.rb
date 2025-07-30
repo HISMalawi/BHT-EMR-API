@@ -6,7 +6,8 @@ module Api
       SERVICES = {
         'ANC PROGRAM' => AncService::DataCleaning,
         'HIV PROGRAM' => ArtService::DataCleaningTool,
-        'HTC PROGRAM' => HtsService::DataCleaning
+        'HTC PROGRAM' => HtsService::DataCleaning,
+        'TB PROGRAM' => TbService::DataCleaning
       }.freeze
 
       def index
@@ -118,6 +119,14 @@ module Api
         identifier = params.require(:identifier)
         ArtService::DataCleaningTool.void_duplicate_npid(identifier)
         render json: { message: 'Voided successfully' }, status: :ok
+      end
+
+      def tb_tools
+        program = Program.find(params[:program_id])
+        service = SERVICES[program.name.upcase].new(start_date: params[:start_date],
+                                                    scenario: "",
+                                                    end_date: params[:end_date], context: params[:context])
+        render json: service.results
       end
 
       def art_tools

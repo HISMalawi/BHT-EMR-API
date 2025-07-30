@@ -15,8 +15,9 @@ module ArtService
       def initialize(start_date:, end_date:, **kwargs)
         @start_date = start_date.to_date
         @end_date = end_date.to_date
-        @tb_prev = ArtService::Reports::Pepfar::TbPrev3.new(start_date: @start_date, end_date: @end_date)
+        @tb_prev = ArtService::Reports::Pepfar::TbPrev3.new(start_date: @start_date, end_date: @end_date, dsd: @dsd)
         @occupation = kwargs[:occupation]
+        @dsd = kwargs[:dsd]
       end
 
       def find_report
@@ -194,6 +195,7 @@ module ArtService
             AND e.encounter_type = 25 /* Treatment */
             AND e.voided = 0
             AND e.program_id = 1 /* HIV Program */
+          #{dsd_query(dsd: @dsd, model: 'e') if @dsd}
           INNER JOIN orders o ON o.encounter_id = e.encounter_id
             AND o.order_type_id = #{OrderType.find_by_name('Drug order').id}
             AND o.voided = 0
@@ -396,7 +398,9 @@ module ArtService
             report[patient['age_group']][patient[@param]][:completed_tpt_new] << @common_response if new_on_art
             report[patient['age_group']][patient[@param]][:completed_tpt_prev] << @common_response unless new_on_art
           else
-            report[patient['age_group']][patient[@param]][:not_completed_tpt] << @common_response
+            if patient_on_art(patient)
+              report[patient['age_group']][patient[@param]][:not_completed_tpt] << @common_response
+            end
             process_outcomes report, patient
           end
         end
@@ -409,7 +413,9 @@ module ArtService
           if patient_completed_tpt?(patient, patient['tpt_type'])
             report[patient['age_group']][patient[@param]][:completed_tpt] << @common_response
           else
-            report[patient['age_group']][patient[@param]][:not_completed_tpt] << @common_response
+            if patient_on_art(patient)
+              report[patient['age_group']][patient[@param]][:not_completed_tpt] << @common_response
+            end
             process_outcomes report, patient
           end
         end
@@ -457,6 +463,10 @@ module ArtService
           report[patient['age_group']][patient[@param]][condition] << @common_response
           @condition = true
         end
+      end
+
+      def patient_on_art(patient)
+        patient['outcome'] == 'On antiretrovirals'
       end
 
       def patient_new_on_art?(patient)

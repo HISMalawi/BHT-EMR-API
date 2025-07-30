@@ -41,7 +41,8 @@ module Api
       end
 
       def with_nids
-        stats = service.with_nids
+        start_date, end_date = params.require %i[start_date end_date]
+        stats = service.with_nids(start_date, end_date)
         render json: stats
       end
 
@@ -111,10 +112,11 @@ module Api
       end
 
       def cohort_survival_analysis
-        quarter, age_group, reg = params.require %i[quarter age_group regenerate]
+        quarter, age_group, reg= params.require %i[quarter age_group regenerate]
         occupation = params[:occupation]
+        dsd = params[:dsd]
         reg = (reg == 'true')
-        stats = service.cohort_survival_analysis(quarter, age_group, reg, occupation)
+        stats = service.cohort_survival_analysis(quarter, age_group, reg, occupation, dsd)
 
         render json: stats
       end
@@ -129,14 +131,14 @@ module Api
       def defaulter_list
         start_date, end_date, pepfar = params.require %i[start_date end_date pepfar]
         pepfar = (pepfar == 'true')
-        stats = service.defaulter_list(start_date, end_date, pepfar, occupation: params[:occupation])
+        stats = service.defaulter_list(start_date, end_date, pepfar, occupation: params[:occupation], dsd: params[:dsd])
 
         render json: stats
       end
 
       def missed_appointments
         start_date, end_date = params.require %i[start_date end_date]
-        stats = service.missed_appointments(start_date, end_date, occupation: params[:occupation])
+        stats = service.missed_appointments(start_date, end_date, occupation: params[:occupation], dsd: params[:dsd])
 
         render json: stats
       end
@@ -155,12 +157,12 @@ module Api
       def regimen_switch
         pepfar = params[:pepfar] == 'true'
         render json: service.regimen_switch(params[:start_date], params[:end_date], pepfar,
-                                            occupation: params[:occupation])
+                                            occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def regimen_report
         render json: service.regimen_report(params[:start_date], params[:end_date], params[:type],
-                                            occupation: params[:occupation])
+                                            occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def screened_for_tb
@@ -176,37 +178,39 @@ module Api
       def arv_refill_periods
         render json: service.arv_refill_periods(params[:start_date], params[:end_date],
                                                 params[:min_age], params[:max_age], params[:org],
-                                                params[:initialize_tables], occupation: params[:occupation])
+                                                params[:initialize_tables], occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def tx_ml
-        render json: service.tx_ml(params[:start_date], params[:end_date], occupation: params[:occupation])
+        render json: service.tx_ml(params[:start_date], params[:end_date], occupation: params[:occupation],
+                                                                           rebuild: params[:rebuild], dsd: params[:dsd])
       end
 
       def tx_rtt
-        render json: service.tx_rtt(params[:start_date], params[:end_date], occupation: params[:occupation])
+        render json: service.tx_rtt(params[:start_date], params[:end_date], occupation: params[:occupation],
+                                                                            rebuild: params[:rebuild], dsd: params[:dsd])
       end
 
       def moh_tpt
-        render json: service.moh_tpt(params[:start_date], params[:end_date], occupation: params[:occupation])
+        render json: service.moh_tpt(params[:start_date], params[:end_date], occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def ipt_coverage
-        render json: service.ipt_coverage(params[:start_date], params[:end_date])
+        render json: service.ipt_coverage(params[:start_date], params[:end_date], dsd: params[:dsd])
       end
 
       def disaggregated_regimen_distribution
         render json: service.disaggregated_regimen_distribution(params[:start_date],
-                                                                params[:end_date], params[:gender], params[:age_group])
+                                                                params[:end_date], params[:gender], params[:age_group], params[:dsd])
       end
 
       def tx_mmd_client_level_data
         render json: service.tx_mmd_client_level_data(params[:start_date],
-                                                      params[:end_date], params[:patient_ids], params[:org])
+                                                      params[:end_date], params[:patient_ids], params[:org], params[:dsd])
       end
 
       def tb_prev
-        render json: service.tb_prev(params[:start_date], params[:end_date])
+        render json: service.tb_prev(params[:start_date], params[:end_date], params[:dsd])
       end
 
       def patient_visit_types
@@ -219,37 +223,38 @@ module Api
 
       def patient_outcome_list
         render json: service.patient_outcome_list(params[:start_date],
-                                                  params[:end_date], params[:outcome], occupation: params[:occupation])
+                                                  params[:end_date], params[:outcome], occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def clients_due_vl
-        render json: service.clients_due_vl(params[:start_date], params[:end_date], occupation: params[:occupation])
+        render json: service.clients_due_vl(params[:start_date], params[:end_date], occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def vl_results
-        render json: service.vl_results(params[:start_date], params[:end_date])
+        render json: service.vl_results(params[:start_date], params[:end_date], dsd: params[:dsd])
       end
 
       def samples_drawn
-        render json: service.samples_drawn(params[:start_date], params[:end_date])
+        render json: service.samples_drawn(params[:start_date], params[:end_date], dsd: params[:dsd])
       end
 
       def lab_test_results
-        render json: service.lab_test_results(params[:start_date], params[:end_date], occupation: params[:occupation])
+        render json: service.lab_test_results(params[:start_date], params[:end_date], occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def orders_made
         render json: service.orders_made(params[:start_date],
-                                         params[:end_date], params[:status])
+                                         params[:end_date], params[:status], dsd: params[:dsd])
       end
 
       def external_consultation_clients
         render json: service.external_consultation_clients(params[:start_date], params[:end_date],
-                                                           occupation: params[:occupation])
+                                                           occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def cxca_reports
-        render json: service.cxca_reports(params[:start_date], params[:end_date], params[:report_name])
+        render json: service.cxca_reports(params[:start_date], params[:end_date], params[:report_name],
+                                          screening_method: params[:screening_method])
       end
 
       def radiology_reports
@@ -276,12 +281,12 @@ module Api
         render json: service.latest_regimen_dispensed(params[:start_date],
                                                       params[:end_date],
                                                       params[:rebuild_outcome] == 'true',
-                                                      occupation: params[:occupation])
+                                                      occupation: params[:occupation], dsd: params[:dsd])
       end
 
       def sc_arvdisp
         render json: service.sc_arvdisp(params[:start_date],
-                                        params[:end_date], (params[:rebuild_outcome] == 'true'))
+                                        params[:end_date], (params[:rebuild_outcome] == 'true'), params[:dsd])
       end
 
       private

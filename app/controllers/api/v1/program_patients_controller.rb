@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'zebra_printer/init'
+require "zebra_printer/init"
 
 module Api
   module V1
@@ -37,12 +37,12 @@ module Api
 
         render json: {
           date_enrolled:,
-          earliest_start_date:
+          earliest_start_date:,
         }
       end
 
       def find_next_available_arv_number
-        render json: { arv_number: service.find_next_available_arv_number }
+        render json: { arv_number: service.find_next_available_arv_number(params[:date]&.to_date || Date.today) }
       end
 
       def lookup_arv_number
@@ -70,49 +70,29 @@ module Api
       end
 
       def print_visit_label
-        label_commands = service.visit_summary_label(patient, date).print
-        send_data label_commands, type: 'application/label; charset=utf-8',
-                                  stream: false,
-                                  filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
-                                  disposition: 'inline'
+        render_zpl(service.visit_summary_label(patient, date).print)
       end
 
       def print_history_label
-        label_commands = service.history_label(patient, date).print
-        send_data label_commands, type: 'application/label; charset=utf-8',
-                                  stream: false,
-                                  filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
-                                  disposition: 'inline'
+        render_zpl(service.history_label(patient, date).print)
       end
 
       def print_lab_results_label
-        label_commands = service.lab_results_label(patient, date).print
-        send_data label_commands, type: 'application/label; charset=utf-8',
-                                  stream: false,
-                                  filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
-                                  disposition: 'inline'
+        render_zpl(service.lab_results_label(patient, date).print)
       end
 
       def print_transfer_out_label
-        label_commands = service.transfer_out_label(patient, date).print
-        send_data label_commands, type: 'application/label; charset=utf-8',
-                                  stream: false,
-                                  filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
-                                  disposition: 'inline'
+        render_zpl(service.transfer_out_label(patient, date).print)
       end
 
       def print_patient_history_label
-        label_commands = service.patient_history_label(patient, date).print
-        send_data label_commands, type: 'application/label; charset=utf-8',
-                                  stream: false,
-                                  filename: "#{params[:patient_id]}#{rand(10_000)}.lbl",
-                                  disposition: 'inline'
+        render_zpl(service.patient_history_label(patient, date).print)
       end
 
       def defaulter_list
-        start_date  = params[:start_date].to_date
-        end_date    = params[:end_date].to_date
-        defaulters  = service.defaulter_list start_date, end_date
+        start_date = params[:start_date].to_date
+        end_date = params[:end_date].to_date
+        defaulters = service.defaulter_list start_date, end_date
 
         render json: defaulters
       end

@@ -1,0 +1,29 @@
+group_a:
+  title: Group A
+  description: Include all three medicines
+  drugs:
+    - Moxifloxacin
+    - Levofloxacin
+    - Bedaquiline
+    - Linezolid
+group_b:
+  title: Group B
+  description: Add one or both medicines
+  drugs:
+    - Clofazimine
+    - Cycloserine
+    - Terizidone
+group_c:
+  title: Group C
+  description: Add to complete the regimen and when medicines from Groups A and B cannot be used
+  drugs:
+    - Ethambutol
+    - Delamanid
+    - Pyrazinamide
+    - Imipenem-cilastatin
+    - Amikacin
+    - Capreomycin
+    - Streptomycin
+    - Ethionamide
+    - Prothionamide
+    - P-aminosalicylic acid

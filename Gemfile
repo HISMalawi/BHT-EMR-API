@@ -52,28 +52,27 @@ gem 'test-unit'
 gem 'rswag-api'
 gem 'rswag-ui'
 
-# gem 'emr_ohsp_interface', '~> 1.2'
-# gem 'his_emr_api_lab', '~> 1.1.30'
-# gem 'his_emr_api_radiology', '~> 0.0.8'
+gem 'emr_ohsp_interface', '~> 2.2.5'
 
-gem 'emr_ohsp_interface', '~> 2.2.3'
-gem 'his_emr_api_lab', '~> 2.0.5'
+gem 'his_emr_api_lab', '~> 2.0.7'
+
+# gem 'emr_ohsp_interface', '~> 2.2.3'
+# gem 'his_emr_api_lab', '~> 2.0.5'
 # gem 'his_emr_api_radiology', '~> 1.0.9'
 
 gem 'parallel', '~> 1.20.1'
 gem 'time_difference'
 
+gem "audited"
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
-  gem 'spring'
-end
-
-group :test do
   gem 'factory_bot_rails'
   gem 'rspec'
   gem 'rspec-rails'
   gem 'rswag-specs'
+  gem 'spring'
 end
 
 group :development do
@@ -87,6 +86,8 @@ gem 'tzinfo-data', platforms: %i[mingw mswin x64_mingw jruby]
 
 gem 'whenever', '~> 1.0'
 
+gem 'concurrent-ruby', '= 1.3.4'
+
 # gems for reading excel and csv files
 gem 'roo', '~> 2.8'
 
@@ -94,5 +95,3 @@ gem 'roo', '~> 2.8'
 gem 'whitesimilarity'
 
 gem 'mongoid', '~> 9.0', '>= 9.0.6'
-
-gem 'concurrent-ruby', '1.3.4'

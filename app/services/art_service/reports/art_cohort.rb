@@ -42,7 +42,6 @@ module ArtService
 
       def defaulter_list(pepfar)
         report_type = (pepfar ? 'pepfar' : 'moh')
-        defaulter_date_sql = pepfar ? 'current_pepfar_defaulter_date' : 'current_defaulter_date'
         ArtService::Reports::CohortBuilder.new(outcomes_definition: report_type)
                                           .init_temporary_tables(@start_date, @end_date, @occupation)
 
@@ -53,7 +52,7 @@ module ArtService
             art_reason.name art_reason, a.value cell_number, landmark.value landmark,
             s.state_province district, s.county_district ta,
             s.city_village village, TIMESTAMPDIFF(year, DATE(e.birthdate), DATE('#{@end_date}')) age,
-            #{defaulter_date_sql}(e.patient_id, TIMESTAMP('#{@end_date.to_date.strftime('%Y-%m-%d 23:59:59')}')) AS defaulter_date,
+            o.#{report_type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }outcome_date AS defaulter_date,
             DATE(appointment.appointment_date) AS appointment_date
           FROM temp_earliest_start_date e
           INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id
@@ -63,7 +62,7 @@ module ArtService
             INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 AND o.concept_id = 5096 -- appointment date
             WHERE e.encounter_type = 7 -- appointment encounter type
             AND e.program_id = 1 -- hiv program
-            AND e.patient_id IN (SELECT patient_id FROM temp_patient_outcomes WHERE cum_outcome = 'Defaulted')
+            AND e.patient_id IN (SELECT patient_id FROM temp_patient_outcomes WHERE #{report_type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome = 'Defaulted')
             AND e.encounter_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY
             GROUP BY e.patient_id
           ) appointment ON appointment.patient_id = e.patient_id
@@ -73,7 +72,7 @@ module ArtService
           LEFT JOIN person_attribute landmark ON landmark.person_id = e.patient_id AND landmark.voided = 0 AND landmark.person_attribute_type_id = 19
           LEFT JOIN person_address s ON s.person_id = e.patient_id AND s.voided = 0
           LEFT JOIN concept_name art_reason ON art_reason.concept_id = e.reason_for_starting_art AND art_reason.voided = 0
-          WHERE o.cum_outcome = 'Defaulted'
+          WHERE o.#{report_type&.downcase == 'pepfar' ? 'pepfar_' : 'moh_' }cum_outcome = 'Defaulted'
           GROUP BY e.patient_id
           HAVING (defaulter_date >= DATE('#{@start_date}') AND defaulter_date <= DATE('#{@end_date}')) OR (defaulter_date IS NULL)
           ORDER BY e.patient_id, n.date_created DESC;
@@ -83,32 +82,21 @@ module ArtService
       def cohort_report_drill_down(id)
         id = ActiveRecord::Base.connection.quote(id)
 
-        patients = ActiveRecord::Base.connection.select_all <<~SQL
+        ActiveRecord::Base.connection.select_all <<~SQL
           SELECT i.identifier arv_number, p.birthdate,
-                 p.gender, n.given_name, n.family_name, p.person_id patient_id,
-                 outcomes.cum_outcome AS outcome
+                 p.gender, n.given_name, n.family_name, p.person_id person_id,
+                 outcomes.moh_cum_outcome AS outcome, tesd.earliest_start_date art_start_date
           FROM person p
           INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
           INNER JOIN temp_patient_outcomes AS outcomes
             ON outcomes.patient_id = c.patient_id
+          INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = p.person_id
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
           AND i.voided = 0 AND i.identifier_type = 4
           LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
           WHERE c.reporting_report_design_resource_id = #{id}
           GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
         SQL
-
-        patients.map do |person|
-          {
-            person_id: person['patient_id'],
-            given_name: person['given_name'],
-            family_name: person['family_name'],
-            birthdate: person['birthdate'],
-            gender: person['gender'],
-            arv_number: person['arv_number'],
-            outcome: person['outcome']
-          }
-        end
       end
 
       private
@@ -116,9 +104,9 @@ module ArtService
       LOGGER = Rails.logger
 
       def find_saved_report
-        result = Report.where(type: @type, name: "#{@name} #{@occupation}",
+        @report = Report.where(type: @type, name: "#{@name} #{@occupation}",
                               start_date: @start_date, end_date: @end_date)
-        result&.map { |r| r['id'] } || []
+        @report&.map { |r| r['id'] } || []
       end
 
       # Writes the report to database
@@ -158,8 +146,17 @@ module ArtService
       end
 
       def clear_drill_down
+        saved_reports = find_saved_report
+        return if saved_reports.blank?
+
         ActiveRecord::Base.connection.execute <<~SQL
-          DELETE FROM cohort_drill_down #{find_saved_report.count.positive? ? "WHERE reporting_report_design_resource_id IN (#{find_saved_report.join(',')})" : ''}
+          DELETE FROM cohort_drill_down WHERE reporting_report_design_resource_id IN (#{saved_reports.join(',')})
+        SQL
+        ActiveRecord::Base.connection.execute <<~SQL
+          DELETE FROM reporting_report_design_resource WHERE report_design_id IN (#{saved_reports.join(',')})
+        SQL
+        ActiveRecord::Base.connection.execute <<~SQL
+          DELETE FROM reporting_report_design WHERE id IN (#{saved_reports.join(',')})
         SQL
       end
 

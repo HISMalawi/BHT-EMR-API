@@ -120,7 +120,7 @@ class DdeClient
     return handle_response e.response unless @auto_login
 
     LOGGER.debug 'Auto-logging into DDE...'
-    establish_connection(@connection[:config])
+    establish_connection(**@connection[:config])
     LOGGER.debug "Reset connection: #{@connection}"
     retry # Retry last request...
   rescue RestClient::BadRequest => e

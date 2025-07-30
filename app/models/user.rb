@@ -4,6 +4,8 @@ class User < RetirableRecord
   self.table_name = :users
   self.primary_key = :user_id
 
+  audited except: %i[date_changed authentication_token token_expiry_time]
+
   belongs_to :person, foreign_key: :person_id
 
   has_many :notification_alert_recipients, class_name: 'NotificationAlertRecipient', foreign_key: :user_id
@@ -18,6 +20,8 @@ class User < RetirableRecord
            class_name: 'PersonName',
            foreign_key: :person_id,
            dependent: :destroy)
+
+  default_scope { where(deactivated_on: nil) } if self.respond_to?(:deactivated_on)
 
   def active?
     deactivated_on.nil?
@@ -50,5 +54,9 @@ class User < RetirableRecord
         }
       }
     ))
+  end
+
+  def name
+    person&.name
   end
 end

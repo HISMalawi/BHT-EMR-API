@@ -16,6 +16,7 @@ module ArtService
         @start_date = ActiveRecord::Base.connection.quote(start_date)
         @end_date = ActiveRecord::Base.connection.quote(end_date)
         @occupation = kwargs[:occupation]
+        @dsd = kwargs[:dsd]
       end
 
       def find_report
@@ -107,7 +108,7 @@ module ArtService
       end
 
       def newly_initiated_on_tpt
-        tpt = ArtService::Reports::Cohort::Tpt.new(start_date.to_date, end_date.to_date, occupation: @occupation)
+        tpt = ArtService::Reports::Cohort::Tpt.new(start_date.to_date, end_date.to_date, occupation: @occupation, dsd: @dsd)
         data = {}
         three_hp = tpt.newly_initiated_on_3hp
         ipt = tpt.newly_initiated_on_ipt
@@ -144,6 +145,7 @@ module ArtService
           INNER JOIN patient_program
             ON patient_program.patient_id = person.person_id
             AND patient_program.program_id IN (SELECT program_id FROM program WHERE name = 'HIV Program')
+          #{dsd_query(dsd: @dsd, model: 'patient_program') if @dsd}
           INNER JOIN encounter AS prescription_encounter
             ON prescription_encounter.patient_id = person.person_id
             AND prescription_encounter.encounter_type IN (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment')

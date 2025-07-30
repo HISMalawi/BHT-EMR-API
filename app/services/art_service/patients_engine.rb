@@ -101,33 +101,97 @@ module ArtService
       current_arv_code = global_property("site_prefix_#{location_id}")&.property_value
       raise 'Global property `site_prefix` not set' unless current_arv_code
 
-      type = PatientIdentifierType.find_by_name('ARV Number')
-      current_arv_number_identifiers = PatientIdentifier.where(identifier_type: type)
+    def arv_identifier_type
+      PatientIdentifierType.find_by_name("ARV Number")
+    end
 
-      unless current_arv_number_identifiers.nil?
-        assigned_arv_ids = current_arv_number_identifiers.collect do |identifier|
-          Regexp.last_match(1).to_i if identifier.identifier =~ /#{current_arv_code}-ARV- *(\d+)/
-        end.compact
-      end
+    # Returns the start and end dates of the quarter for the given date.
+    #
+    # @param date [Date] the date to find the quarter for
+    # @return [Array<Date>] the start and end dates of the quarter
+    def quarter_dates(date)
+      [date.beginning_of_quarter.to_date, date.end_of_quarter.to_date]
+    end
 
-      next_available_number = nil
+    # Finds the last ARV identifier issued in the previous quarter.
+    #
+    # The identifier is stripped of the site prefix and the "ARV-" prefix,
+    # and returned as an integer.
+    #
+    # @param date [Date] date to find the last ARV identifier for
+    # @return [Integer] the last ARV identifier issued in the previous quarter
+    def last_arv_number_from_prev_quarter(date)
+      date = date&.to_date || Date.today
 
-      if assigned_arv_ids.empty?
-        next_available_number = 1
-      else
-        # Check for unused ARV idsV Suggest the next arv_id based on unused ARV
-        # ids that are within 10 of the current_highest arv id. This makes sure
-        # that we don't get holes unless we really want them and also means that our
-        # suggestions aren't broken by holes
-        # array_of_unused_arv_ids = (1..highest_arv_id).to_a - assigned_arv_ids
-        assigned_numbers = assigned_arv_ids.sort
+      current_quarter_start = date.beginning_of_quarter
+      prev_quarter_start, prev_quarter_end = quarter_dates(current_quarter_start - 1.month)
 
-        possible_number_range = global_property('arv_number_range')&.property_value&.to_i || 100_000
+      id = PatientIdentifier.where(
+        identifier_type: PatientIdentifierType.find_by_name('ARV Number'),
+        date_created: (prev_quarter_start..prev_quarter_end)
+      ).order(date_created: :desc)
+       &.first
+       &.identifier
 
-        possible_identifiers = Array.new(possible_number_range) { |i| (i + 1) }
-        next_available_number = (possible_identifiers - assigned_numbers).first
-      end
+      return max_arv_number if id.nil?
 
+      id
+    end
+
+    def max_arv_number
+      PatientIdentifier.where(identifier_type: arv_identifier_type).order(:date_created).last&.identifier
+    end
+
+    # Returns the next available ARV identifier for the given date,
+    # which is the lowest number not yet assigned in the current quarter.
+    #
+    # @param date [Date] date to generate the identifier for
+    # @return [Integer] the next available ARV identifier
+    def next_available_id_in_current_quarter(date)
+      prefix = current_arv_code
+
+      quarter_start, quarter_end = quarter_dates(date)
+      last_available = last_arv_number_from_prev_quarter(date)&.gsub("#{prefix}-ARV-", '')&.to_i
+
+      next_available = (last_available + 1) rescue 1
+
+      # Find all ARV identifiers issued in the current quarter,
+      # greater than the last available number from the previous quarter
+      ids = PatientIdentifier.where(identifier_type: arv_identifier_type)
+
+      return next_available unless ids.any?
+
+      # Map the ARV identifiers to their assigned numbers
+      assigned_numbers = ids.map do |identifier|
+        Regexp.last_match(1).to_i if identifier.identifier =~ /#{prefix}-ARV- *(\d+)/
+      end.compact
+
+      # If there are no assigned numbers, return the next available
+      # number in the current quarter.
+      # 
+      # which is the last available number + 1
+      return next_available unless assigned_numbers.any?
+      # Find the lowest number not yet assigned
+      # in the current quarter by subtracting the assigned numbers from the possible number range
+      # and sorting the resulting array
+      available_numbers_this_qtr = (next_available..possible_number_range).to_a - assigned_numbers
+      # Return the lowest number
+      # which is the first element of the sorted array
+      available_numbers_this_qtr.sort.first
+    end
+
+    def possible_number_range
+      global_property('arv_number_range')&.property_value&.to_i || 100_000
+    end
+
+    # Finds the next available ARV identifier for the given date,
+    # which is the lowest number not yet assigned in the current quarter.
+    #
+    # @param date [Date] date to generate the identifier for
+    # @return [String] the next available ARV identifier, including the site prefix
+    def find_next_available_arv_number(date)
+      next_available_number = next_available_id_in_current_quarter(date)
+      
       "#{current_arv_code} #{next_available_number}"
     end
 

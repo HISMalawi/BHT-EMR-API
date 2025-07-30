@@ -9,6 +9,7 @@ module ArtService
 
       include ModelUtils
       include CommonSqlQueryUtils
+      include ArtTempTablesUtils
 
       def initialize(outcomes_definition: 'moh')
         unless %w[moh pepfar].include?(outcomes_definition.downcase)
@@ -18,33 +19,23 @@ module ArtService
         @outcomes_definition = outcomes_definition
       end
 
-      def init_temporary_tables(_start_date, end_date, occupation)
-        create_temp_cohort_members_table
-        create_tmp_patient_table
-        drop_temp_register_start_date_table
-        drop_temp_other_patient_types
-        drop_temp_order_details
-        drop_art_start_date
-        create_temp_other_patient_types(end_date)
-        create_temp_register_start_date_table(end_date)
-        create_temp_order_details(end_date)
-        create_art_start_date(end_date)
+      def init_temporary_tables(start_date, end_date, occupation)
+        prepare_tables
+        load_temp_other_patient_types(end_date)
+        load_temp_register_start_date_table(end_date)
+        load_temp_order_details(end_date)
+        load_art_start_date(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
-        update_cum_outcome(end_date)
+        update_cum_outcome(start_date:, end_date:)
       end
 
       def build(cohort_struct, start_date, end_date, occupation)
         # load_tmp_patient_table(cohort_struct)
-        create_temp_cohort_members_table
-        create_tmp_patient_table
-        drop_temp_register_start_date_table
-        drop_temp_other_patient_types
-        drop_temp_order_details
-        drop_art_start_date
-        create_temp_other_patient_types(end_date)
-        create_temp_register_start_date_table(end_date)
-        create_temp_order_details(end_date)
-        create_art_start_date(end_date)
+        prepare_tables
+        load_temp_other_patient_types(end_date)
+        load_temp_register_start_date_table(end_date)
+        load_temp_order_details(end_date)
+        load_art_start_date(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
 
         # create_tmp_patient_table_2(end_date)
@@ -91,7 +82,7 @@ module ArtService
         cohort_struct.quarterly_all_males = males(quarter_start_date, end_date)
 
         # Pregnant females (all ages)
-        create_temp_pregnant_obs(cum_start_date, end_date)
+        load_temp_pregnant_obs(cum_start_date, end_date)
         cohort_struct.pregnant_females_all_ages = pregnant_females_all_ages(start_date, end_date)
         cohort_struct.cum_pregnant_females_all_ages = pregnant_females_all_ages(cum_start_date, end_date)
         cohort_struct.quarterly_pregnant_females_all_ages = pregnant_females_all_ages(quarter_start_date, end_date)
@@ -301,7 +292,7 @@ module ArtService
         cohort_struct.quarterly_kaposis_sarcoma = kaposis_sarcoma(quarter_start_date, end_date)
 
         # From this point going down: we update temp_earliest_start_date cum_outcome field to have the latest Cumulative outcome
-        update_cum_outcome(end_date)
+        update_cum_outcome(start_date: quarter_start_date, end_date:)
         update_tb_status(end_date)
         update_patient_side_effects(end_date)
 
@@ -357,6 +348,7 @@ module ArtService
         cohort_struct.fourteen_pp       = filter_prescriptions_by_regimen(prescriptions, '14PP')
         cohort_struct.fourteen_pa       = filter_prescriptions_by_regimen(prescriptions, '14PA')
         cohort_struct.fourteen_a        = filter_prescriptions_by_regimen(prescriptions, '14A')
+        cohort_struct.fifteen_p         = filter_prescriptions_by_regimen(prescriptions, '15P')
         cohort_struct.fifteen_pp        = filter_prescriptions_by_regimen(prescriptions, '15PP')
         cohort_struct.fifteen_pa        = filter_prescriptions_by_regimen(prescriptions, '15PA')
         cohort_struct.fifteen_a         = filter_prescriptions_by_regimen(prescriptions, '15A')
@@ -481,7 +473,7 @@ module ArtService
           "SELECT t1.patient_id FROM temp_earliest_start_date t1
           INNER JOIN temp_patient_outcomes t2 ON t1.patient_id = t2.patient_id
           WHERE date_enrolled <= '#{end_date.to_date}' AND gender = '#{gender.first}'
-            AND cum_outcome = 'On antiretrovirals'
+            AND moh_cum_outcome = 'On antiretrovirals'
             AND timestampdiff(#{iu}, birthdate, date_enrolled) BETWEEN #{diff[0].to_i} AND #{diff[1].to_i}"
         )
 
@@ -498,7 +490,7 @@ module ArtService
           data2 = ActiveRecord::Base.connection.select_all(
             "SELECT e.patient_id FROM encounter e
             INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-              AND o.cum_outcome = 'On antiretrovirals' INNER JOIN obs ON obs.encounter_id = e.encounter_id
+              AND o.moh_cum_outcome = 'On antiretrovirals' INNER JOIN obs ON obs.encounter_id = e.encounter_id
               AND obs.concept_id = #{amount_dispensed}
             WHERE value_drug IN(#{ipt_drug_ids.join(',')})
               AND e.patient_id IN(#{patient_ids.join(',')})
@@ -601,10 +593,10 @@ module ArtService
       def patients_with_pre_art_or_unknown_outcome(_start_date, _end_date)
         begin
           patients = ActiveRecord::Base.connection.select_all(
-            "SELECT e.*, cum_outcome, patient_reason_for_starting_art_text(e.patient_id) reason_for_starting
+            "SELECT e.*, moh_cum_outcome, patient_reason_for_starting_art_text(e.patient_id) reason_for_starting
             FROM temp_patient_outcomes o
             INNER JOIN temp_earliest_start_date e ON e.patient_id = o.patient_id
-            WHERE cum_outcome LIKE '%Pre-%' OR cum_outcome LIKE '%Unknown%'"
+            WHERE moh_cum_outcome LIKE '%Pre-%' OR moh_cum_outcome LIKE '%Unknown%'"
           )
         rescue StandardError
           raise 'Try running the revised cohort before this report'
@@ -615,7 +607,7 @@ module ArtService
         (patients || []).each do |p|
           Patient.find(p['patient_id'].to_i)
 
-          patient_outcome = p['cum_outcome']
+          patient_outcome = p['moh_cum_outcome']
           person = Person.find(p['patient_id'])
 
           patient_obj = PatientService.get_patient(person)
@@ -720,69 +712,10 @@ module ArtService
       end
       # rubocop:enable Metrics/MethodLength
 
-      ##
-      # This will hold crucial information for cohort members
-      # rubocop:disable Metrics/MethodLength
-      # rubocop:disable Metrics/AbcSize
-      def create_temp_cohort_members_table
-        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_cohort_members')
-        ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE temp_cohort_members (
-            patient_id INT PRIMARY KEY,
-            date_enrolled DATE,
-            earliest_start_date DATE,
-            recorded_start_date DATE DEFAULT NULL,
-            birthdate DATE DEFAULT NULL,
-            birthdate_estimated BOOLEAN,
-            death_date DATE,
-            gender VARCHAR(32),
-            age_at_initiation INT DEFAULT NULL,
-            age_in_days INT DEFAULT NULL,
-            reason_for_starting_art INT DEFAULT NULL,
-            occupation VARCHAR(255) DEFAULT NULL
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-        SQL
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_id_index ON temp_cohort_members (patient_id)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_enrolled_index ON temp_cohort_members (date_enrolled)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_date_enrolled_index ON temp_cohort_members (patient_id, date_enrolled)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_start_date_index ON temp_cohort_members (earliest_start_date)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_start_date__date_enrolled_index ON temp_cohort_members (patient_id, earliest_start_date, date_enrolled, gender)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_reason ON temp_cohort_members (reason_for_starting_art)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_birthdate_idx ON temp_cohort_members (birthdate)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX member_occupation_idx ON temp_cohort_members (birthdate)'
-        )
-      end
-      # rubocop:enable Metrics/AbcSize
-      # rubocop:enable Metrics/MethodLength
-
-      def create_temp_other_patient_types(end_date)
+      def load_temp_other_patient_types(end_date)
         type_of_patient_concept = concept('Type of patient').concept_id
         drug_refill_concept = concept('Drug refill').concept_id
         external_concept = concept('External Consultation').concept_id
-        ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE temp_other_patient_types (
-            patient_id INT(11) NOT NULL,
-            PRIMARY KEY (patient_id)
-          )
-        SQL
 
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_other_patient_types (patient_id)
@@ -796,48 +729,6 @@ module ArtService
           AND pp.voided = 0
           GROUP BY patient_id
         SQL
-      end
-
-      def drop_temp_other_patient_types
-        ActiveRecord::Base.connection.execute <<~SQL
-          DROP TABLE IF EXISTS temp_other_patient_types
-        SQL
-      end
-
-      def drop_temp_order_details
-        ActiveRecord::Base.connection.execute <<~SQL
-          DROP TABLE IF EXISTS temp_order_details
-        SQL
-      end
-
-      def drop_art_start_date
-        ActiveRecord::Base.connection.execute <<~SQL
-          DROP TABLE IF EXISTS temp_art_start_date
-        SQL
-      end
-
-      def create_art_start_date(end_date)
-        ActiveRecord::Base.connection.execute <<-SQL
-          CREATE TABLE temp_art_start_date (
-            patient_id INT(11) NOT NULL,
-            value_datetime DATE NOT NULL,
-            PRIMARY KEY (patient_id)
-          )
-        SQL
-        ActiveRecord::Base.connection.execute 'CREATE INDEX tasd_date ON temp_art_start_date (value_datetime)'
-        load_art_start_date(end_date)
-      end
-
-      def create_temp_order_details(end_date)
-        ActiveRecord::Base.connection.execute <<-SQL
-          CREATE TABLE temp_order_details (
-            patient_id INT NOT NULL,
-            start_date DATE NOT NULL,
-            PRIMARY KEY (patient_id)
-          )
-        SQL
-        ActiveRecord::Base.connection.execute 'CREATE INDEX tod_date ON temp_order_details (start_date)'
-        load_temp_order_details(end_date)
       end
 
       def load_temp_order_details(end_date)
@@ -863,21 +754,14 @@ module ArtService
           AND o.obs_datetime < (DATE('#{end_date}') + INTERVAL 1 DAY) AND e.voided = 0
           WHERE e.voided = 0
           GROUP BY o.person_id
+          HAVING value_datetime IS NOT NULL
         SQL
       end
 
-      def create_temp_register_start_date_table(end_date)
+      def load_temp_register_start_date_table(end_date)
         type_of_patient_concept = concept('Type of patient').concept_id
         new_patient_concept = concept('New patient').concept_id
 
-        ActiveRecord::Base.connection.execute <<-SQL
-          CREATE TABLE temp_register_start_date (
-            patient_id INT(11) NOT NULL,
-            start_date DATE NOT NULL,
-            PRIMARY KEY (patient_id)
-          )
-        SQL
-        ActiveRecord::Base.connection.execute 'CREATE INDEX trsd_date ON temp_register_start_date (start_date)'
         ActiveRecord::Base.connection.execute <<-SQL
           INSERT INTO temp_register_start_date (patient_id, start_date)
           SELECT pp.patient_id as patient_id, MIN(o.obs_datetime) AS start_date
@@ -890,12 +774,6 @@ module ArtService
           WHERE pp.program_id = 1
           AND pp.voided = 0
           GROUP BY patient_id
-        SQL
-      end
-
-      def drop_temp_register_start_date_table
-        ActiveRecord::Base.connection.execute <<-SQL
-          DROP TABLE IF EXISTS temp_register_start_date
         SQL
       end
 
@@ -934,83 +812,15 @@ module ArtService
       # rubocop:enable Metrics/MethodLength
       # rubocop:enable Metrics/AbcSize
 
-      def create_tmp_patient_table
-        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS temp_earliest_start_date')
-        ActiveRecord::Base.connection.execute(
-          'CREATE TABLE IF NOT EXISTS temp_earliest_start_date (
-             patient_id INT PRIMARY KEY,
-             date_enrolled DATE,
-             earliest_start_date DATE,
-             recorded_start_date DATE DEFAULT NULL,
-             birthdate DATE DEFAULT NULL,
-             birthdate_estimated BOOLEAN,
-             death_date DATE,
-             gender VARCHAR(32),
-             age_at_initiation INT DEFAULT NULL,
-             age_in_days INT DEFAULT NULL,
-             reason_for_starting_art INT DEFAULT NULL
-          );'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX patient_id_index ON temp_earliest_start_date (patient_id)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX date_enrolled_index ON temp_earliest_start_date (date_enrolled)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX patient_id__date_enrolled_index ON temp_earliest_start_date (patient_id, date_enrolled)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX earliest_start_date_index ON temp_earliest_start_date (earliest_start_date)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX earliest_start_date__date_enrolled_index ON temp_earliest_start_date (patient_id, earliest_start_date, date_enrolled, gender)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX idx_reason_for_art ON temp_earliest_start_date (reason_for_starting_art)'
-        )
-        ActiveRecord::Base.connection.execute(
-          'CREATE INDEX birthdate_idx ON temp_earliest_start_date (birthdate)'
-        )
-      end
-
-      def update_cum_outcome(end_date)
-        ArtService::Reports::Cohort::Outcomes.new(end_date:,
+      def update_cum_outcome(start_date:, end_date:)
+        ArtService::Reports::Cohort::Outcomes.new(end_date:, start_date:,
                                                   definition: @outcomes_definition,
                                                   rebuild: 'true').update_cummulative_outcomes
+        ArtService::Reports::MaternalStatus.new(end_date:, start_date:).process_data
       end
 
       def update_tb_status(end_date)
-        ActiveRecord::Base.connection.execute(
-          'DROP TABLE IF EXISTS `temp_patient_tb_status`'
-        )
-
-        ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE temp_patient_tb_status (
-            patient_id INT(11) PRIMARY KEY,
-            tb_status INT(11)
-          )
-        SQL
-
-        ActiveRecord::Base.connection.execute(
-          'ALTER TABLE temp_patient_tb_status
-           ADD INDEX patient_id_index (patient_id)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'ALTER TABLE temp_patient_tb_status
-           ADD INDEX tb_status_index (tb_status)'
-        )
-
-        ActiveRecord::Base.connection.execute(
-          'ALTER TABLE temp_patient_tb_status
-           ADD INDEX patient_id_tb_status_index (patient_id, tb_status)'
-        )
-        prepare_latest_tb_status_table
-        create_temp_latest_tb_status(end_date)
+        load_temp_latest_tb_status(end_date)
 
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_patient_tb_status
@@ -1027,25 +837,12 @@ module ArtService
 
       private
 
-      def prepare_latest_tb_status_table
-        ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE IF NOT EXISTS temp_latest_tb_status(
-            person_id INT PRIMARY KEY,
-            obs_datetime DATETIME
-          )
-        SQL
-        unless ActiveRecord::Base.connection.index_exists?(:temp_latest_tb_status, :obs_datetime)
-          ActiveRecord::Base.connection.execute 'CREATE INDEX tlts_date ON temp_latest_tb_status(obs_datetime)'
-        end
-        ActiveRecord::Base.connection.execute 'TRUNCATE temp_latest_tb_status'
-      end
-
-      def create_temp_latest_tb_status(end_date)
+      def load_temp_latest_tb_status(end_date)
         ActiveRecord::Base.connection.select_all <<~SQL
           INSERT INTO temp_latest_tb_status
           SELECT t.person_id, MAX(t.obs_datetime) obs_datetime
           FROM obs t
-          INNER JOIN temp_patient_outcomes o ON o.patient_id = t.person_id AND o.cum_outcome = 'On antiretrovirals'
+          INNER JOIN temp_patient_outcomes o ON o.patient_id = t.person_id AND o.moh_cum_outcome = 'On antiretrovirals'
           WHERE t.concept_id = 7459 AND t.voided = 0 AND t.obs_datetime <= '#{end_date} 23:59:59'
           GROUP BY t.person_id
         SQL
@@ -1223,7 +1020,7 @@ module ArtService
             AND e.patient_id NOT IN (#{total_pregnant_women.join(',')})
           INNER JOIN temp_patient_outcomes
             ON temp_patient_outcomes.patient_id = e.patient_id
-            AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
+            AND temp_patient_outcomes.moh_cum_outcome = 'On antiretrovirals'
           INNER JOIN temp_max_drug_orders AS max_obs ON max_obs.patient_id = obs.person_id
             AND DATE(max_obs.start_date) = DATE(obs.obs_datetime)
           WHERE obs.person_id = e.patient_id
@@ -1253,7 +1050,7 @@ module ArtService
             AND LEFT(e.gender, 1) = 'F'
           INNER JOIN temp_patient_outcomes
             ON temp_patient_outcomes.patient_id = e.patient_id
-            AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
+            AND temp_patient_outcomes.moh_cum_outcome = 'On antiretrovirals'
           INNER JOIN temp_max_drug_orders AS max_obs ON max_obs.patient_id = obs.person_id
             AND DATE(max_obs.start_date) = DATE(obs.obs_datetime)
           GROUP BY obs.person_id
@@ -1298,7 +1095,7 @@ module ArtService
       def latest_art_adherence(patients_alive_and_on_art, _start_date, end_date)
         patients_alive_and_on_art = Set.new(patients_alive_and_on_art.map { |patient| patient['patient_id'] })
         end_date = ActiveRecord::Base.connection.quote(end_date)
-        create_tmp_max_adherence(end_date)
+        load_tmp_max_adherence(end_date)
 
         not_adherent = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT adherence.person_id
@@ -1351,17 +1148,7 @@ module ArtService
         [adherent, not_adherent, unknown_adherence]
       end
 
-      def create_tmp_max_adherence(end_date)
-        drop_tmp_max_adherence
-        ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE tmp_max_adherence (
-            person_id INT PRIMARY KEY,
-            visit_date DATE
-          )
-        SQL
-
-        ActiveRecord::Base.connection.execute('CREATE INDEX tma_date ON tmp_max_adherence (visit_date)')
-
+      def load_tmp_max_adherence(end_date)
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO tmp_max_adherence
           SELECT obs.person_id, DATE(MAX(obs.obs_datetime)) AS visit_date
@@ -1373,17 +1160,13 @@ module ArtService
               AND orders.voided = 0
             INNER JOIN temp_patient_outcomes
               ON temp_patient_outcomes.patient_id = obs.person_id
-              AND temp_patient_outcomes.cum_outcome = 'On antiretrovirals'
+              AND temp_patient_outcomes.moh_cum_outcome = 'On antiretrovirals'
             WHERE obs.concept_id = 6987
               AND obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
               AND (obs.value_numeric IS NOT NULL OR obs.value_text IS NOT NULL)
               AND obs.voided = 0
             GROUP BY obs.person_id;
         SQL
-      end
-
-      def drop_tmp_max_adherence
-        ActiveRecord::Base.connection.execute('DROP TABLE IF EXISTS tmp_max_adherence')
       end
 
       def adherence_encounter
@@ -1447,7 +1230,7 @@ module ArtService
           SELECT e.*, tb_status FROM temp_earliest_start_date e
           LEFT JOIN temp_patient_tb_status s ON s.patient_id = e.patient_id
           INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id
-          WHERE o.cum_outcome = 'On antiretrovirals'
+          WHERE o.moh_cum_outcome = 'On antiretrovirals'
           AND DATE(e.date_enrolled) <= '#{end_date.to_date}';
         ")
       end
@@ -1472,7 +1255,7 @@ module ArtService
           SELECT e.*, s.has_se
           FROM temp_earliest_start_date e
           INNER JOIN temp_patient_side_effects s ON s.patient_id = e.patient_id
-          INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id AND o.cum_outcome = 'On antiretrovirals'
+          INNER JOIN temp_patient_outcomes o ON o.patient_id = e.patient_id AND o.moh_cum_outcome = 'On antiretrovirals'
           WHERE DATE(e.date_enrolled) <= '#{end_date.to_date}';
         SQL
 
@@ -1490,7 +1273,7 @@ module ArtService
       end
 
       COHORT_REGIMENS = %w[
-        0P 2P 4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15PP 15PA 16P 17PP 17PA
+        0P 2P 4PP 4PA 9PP 9PA 11PP 11PA 12PP 12PA 14PP 14PA 15P 15PP 15PA 16P 17PP 17PA
         4A 5A 6A 7A 8A 9A 10A 11A 12A 13A 14A 15A 16A 17A
       ].freeze
 
@@ -1525,16 +1308,16 @@ module ArtService
         registered = []
         if month_str == '4+ months'
           data = ActiveRecord::Base.connection.select_all(
-            "SELECT patient_id, died_in(t.patient_id, cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
+            "SELECT patient_id, died_in(t.patient_id, moh_cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
             INNER JOIN temp_earliest_start_date t USING(patient_id)
-            WHERE cum_outcome = 'Patient died' GROUP BY patient_id
+            WHERE moh_cum_outcome = 'Patient died' GROUP BY patient_id
             HAVING died_in IN ('4+ months', 'Unknown')"
           )
         else
           data = ActiveRecord::Base.connection.select_all(
-            "SELECT patient_id, died_in(t.patient_id, cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
+            "SELECT patient_id, died_in(t.patient_id, moh_cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
             INNER JOIN temp_earliest_start_date t USING(patient_id)
-            WHERE cum_outcome = 'Patient died' GROUP BY patient_id
+            WHERE moh_cum_outcome = 'Patient died' GROUP BY patient_id
             HAVING died_in = '#{month_str}'"
           )
         end
@@ -1548,9 +1331,9 @@ module ArtService
 
       def get_outcome(outcome)
         sql_patch = if outcome == 'Pre-ART (Continue)'
-                      "cum_outcome = '#{outcome}' OR cum_outcome = 'Unknown'"
+                      "moh_cum_outcome = '#{outcome}' OR moh_cum_outcome = 'Unknown'"
                     else
-                      "cum_outcome = '#{outcome}'"
+                      "moh_cum_outcome = '#{outcome}'"
                     end
 
         ActiveRecord::Base.connection.select_all(
@@ -1856,19 +1639,17 @@ module ArtService
         )
       end
 
-      def create_temp_pregnant_obs(start_date, end_date)
-        ActiveRecord::Base.connection.execute 'DROP TABLE IF EXISTS temp_pregnant_obs;'
+      def load_temp_pregnant_obs(start_date, end_date)
         ActiveRecord::Base.connection.execute <<~SQL
-          CREATE TABLE temp_pregnant_obs
+          INSERT INTO temp_pregnant_obs
           SELECT o.person_id,o.value_coded, DATE(o.obs_datetime) obs_datetime
           FROM obs o
           WHERE o.concept_id IN (6131,1755,7972,7563)
             AND o.value_coded IN (1065,1755)
             AND o.voided = 0
-            AND o.obs_datetime >= '#{start_date}' AND o.obs_datetime < '#{end_date}' + INTERVAL 1 DAY;
+            AND o.obs_datetime >= '#{start_date}' AND o.obs_datetime < '#{end_date}' + INTERVAL 1 DAY
+          GROUP BY o.person_id
         SQL
-        ActiveRecord::Base.connection.execute 'CREATE INDEX fre_person ON temp_pregnant_obs(person_id);'
-        ActiveRecord::Base.connection.execute 'CREATE INDEX fre_obs_time ON temp_pregnant_obs(obs_datetime);'
       end
 
       def pregnant_females_all_ages(start_date, end_date)

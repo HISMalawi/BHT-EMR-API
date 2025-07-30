@@ -70,7 +70,7 @@ module OpdService
       stats
     end
 
-    def with_nids
+    def with_nids(start_date, end_date)
       type = PatientIdentifierType.find_by_name 'Malawi National ID'
 
       data = Person.where('identifier_type = ? AND identifier != ? AND identifier != ? AND identifier != ?', type.id,
@@ -78,6 +78,7 @@ module OpdService
                    .joins('INNER JOIN patient_identifier i ON i.patient_id = person.person_id
         RIGHT JOIN person_address a ON a.person_id = person.person_id
         RIGHT JOIN person_name n ON n.person_id = person.person_id')\
+                   .where(n: { date_created: start_date&.to_date.beginning_of_day..end_date&.to_date.end_of_day })
                    .select('person.*, a.state_province district, i.identifier nid,
         a.township_division ta, a.city_village village,
         n.given_name, n.family_name').order('n.date_created DESC')
@@ -130,12 +131,12 @@ module OpdService
         address = "#{district}, #{ta}, #{village}"
         if stats[concept.name].blank?
           stats[concept.name] = {}
-          stats[concept.name][address] = 0
+          stats[concept.name][address] = []
         elsif stats[concept.name][address].blank?
-          stats[concept.name][address] = 0
+          stats[concept.name][address] = []
         end
 
-        stats[concept.name][address] += 1
+        stats[concept.name][address] << record['person_id']
       end
 
       stats

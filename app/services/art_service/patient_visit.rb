@@ -244,19 +244,15 @@ module ArtService
     end
 
     def format_drug_name(drug)
-      moh_name = drug.alternative_names.first&.short_name
+      short_name = drug.alternative_names.first&.short_name
 
-      if moh_name && %r{^\d*[A-Z]+\s*\d+(\s*/\s*\d*[A-Z]+\s*\d+)*$}i.match(moh_name)
-        return moh_name.gsub(/\s+/, '')
-                       .gsub(/Isoniazid/i, 'INH')
+      return short_name.gsub(/\s+/, '') if short_name.present? && !Drug.arv_drugs.pluck(:drug_id).include?(drug.drug_id)
+
+      if %r{^\d*[A-Z]+\s*\d+(\s*/\s*\d*[A-Z]+\s*\d+)*$}i.match(short_name)
+        return short_name.gsub(/\s+/, '')
       end
 
-      match = drug.name.match(/^(.+)\s*\(.*$/)
-      name = match.nil? ? drug.name : match[1]
-
-      name = 'CPT' if name.match?('Cotrimoxazole')
-      # name = 'INH' if name.match?('INH')
-      name
+      drug.name
     end
   end
 end

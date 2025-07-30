@@ -3,71 +3,38 @@
 module ArtService
   module Reports
     module Pepfar
-      class TxMl
-        attr_reader :start_date, :end_date
+      class TxMl < CachedReport
+        attr_reader :start_date, :end_date, :rebuild, :occupation
 
         include Utils
         include CommonSqlQueryUtils
 
         def initialize(start_date:, end_date:, **kwargs)
-          @start_date = start_date.to_date.strftime('%Y-%m-%d 00:00:00')
-          @end_date = end_date.to_date.strftime('%Y-%m-%d 23:59:59')
-          @occupation = kwargs[:occupation]
+          super(start_date:, end_date:, **kwargs)
+          @dsd = kwargs[:dsd]
         end
 
         def data
-          tx_ml
+          process_data
         end
 
         private
 
-        def tx_ml
-          data = {}
-          tx_curr = potential_tx_ml_clients
-          tx_new  = new_potential_tx_ml_clients
-          patient_ids = []
-          earliest_start_dates = {}
-
-          (tx_curr || []).each do |pat|
-            patient_id = pat['patient_id'].to_i
-            patient_ids << patient_id
-            earliest_start_dates[patient_id] = begin
-              pat['earliest_start_date'].to_date
-            rescue StandardError
-              pat['date_enrolled'].to_date
+        def report_fmt
+          pepfar_age_groups.each_with_object({}) do |age_group, report|
+            genders = %i[M F]
+            genders.each do |gender|
+              report[age_group] ||= {}
+              report[age_group][gender] = [[], [], [], [], [], []]
             end
           end
+        end
 
-          (tx_new || []).each do |pat|
+        def process_data
+          data = report_fmt
+          (process_tx_ml_clients || []).each do |pat|
             patient_id = pat['patient_id'].to_i
-            patient_ids << patient_id
-            patient_ids = patient_ids.uniq
-            earliest_start_dates[patient_id] = begin
-              pat['earliest_start_date'].to_date
-            rescue StandardError
-              pat['date_enrolled'].to_date
-            end
-            patient_ids << pat['patient_id']
-            patient_ids = patient_ids.uniq
-          end
-
-          return [] if patient_ids.blank?
-
-          filtered_patients = ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT
-              p.person_id patient_id, birthdate, gender,
-              pepfar_patient_outcome(p.person_id, date('#{end_date}')) outcome,
-              disaggregated_age_group(p.birthdate, DATE('#{end_date}')) age_group
-            FROM person p
-            WHERE p.person_id IN(#{patient_ids.join(',')})
-            GROUP BY p.person_id
-          SQL
-
-          (filtered_patients || []).each do |pat|
             outcome = pat['outcome']
-            next if outcome == 'On antiretrovirals'
-
-            patient_id = pat['patient_id'].to_i
             gender = begin
               pat['gender'].first.upcase
             rescue StandardError
@@ -84,7 +51,7 @@ module ArtService
 
             case outcome
             when 'Defaulted'
-              def_months = defaulter_period(patient_id, earliest_start_dates[patient_id])
+              def_months = pat['months'].to_i
               if def_months < 3
                 data[age_group][gender][1] << patient_id
               elsif def_months <= 5
@@ -102,69 +69,58 @@ module ArtService
           rescue StandardError => e
             Rails.logger.error(e.message)
           end
-
           data
         end
 
-        def potential_tx_ml_clients
-          ActiveRecord::Base.connection.select_all <<~SQL
+        def tx_ml_clients
+          <<~SQL
             SELECT
-              p.patient_id AS patient_id,
-              pe.birthdate,
-              pe.gender,
-              CAST(patient_date_enrolled(p.patient_id) AS date) AS date_enrolled,
-              date_antiretrovirals_started(p.patient_id, MIN(s.start_date)) AS earliest_start_date
-            FROM patient_program p
-            INNER JOIN person pe ON pe.person_id = p.patient_id AND pe.voided = 0
-            INNER JOIN patient_state s ON p.patient_program_id = s.patient_program_id AND s.voided = 0 AND s.state = 7
-            LEFT JOIN (#{current_occupation_query}) a ON a.person_id = p.patient_id
-            WHERE p.program_id = 1 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
-              AND DATE(s.start_date) < '#{start_date.to_date}'
-              AND pepfar_patient_outcome(p.patient_id, DATE('#{start_date.to_date - 1.day}')) = 'On antiretrovirals'
-              AND pe.person_id NOT IN (#{drug_refills_and_external_consultation_list})
-            GROUP BY p.patient_id
-            HAVING date_enrolled IS NOT NULL AND DATE(date_enrolled) < '#{start_date.to_date}';
+              e.patient_id,
+              e.birthdate,
+              e.gender,
+              e.date_enrolled,
+              e.earliest_start_date,
+              o.pepfar_outcome_date outcome_date,
+              TIMESTAMPDIFF(MONTH, DATE(e.earliest_start_date), DATE(o.pepfar_outcome_date)) months,
+              disaggregated_age_group(e.birthdate, DATE('#{end_date}')) age_group,
+              o.pepfar_cum_outcome outcome
+            FROM temp_earliest_start_date e
+            #{dsd_query(dsd: @dsd, model: 'e') if @dsd}
+            INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id AND o.pepfar_cum_outcome IN ('Defaulted', 'Patient died', 'Treatment stopped', 'Patient transferred out')
+            LEFT JOIN (#{current_occupation_query}) a ON a.person_id = e.patient_id
+            WHERE e.patient_id IN (SELECT patient_id FROM temp_patient_outcomes_start WHERE pepfar_cum_outcome = 'On antiretrovirals')
+            AND DATE(e.earliest_start_date) < '#{start_date.to_date}'
+            GROUP BY e.patient_id
           SQL
         end
 
-        def new_potential_tx_ml_clients
-          ActiveRecord::Base.connection.select_all <<~SQL
+        def tx_ml_clients_new
+          <<~SQL
             SELECT
-              p.patient_id AS patient_id,
-              pe.birthdate,
-              pe.gender,
-              cast(patient_date_enrolled(p.patient_id) as date) AS date_enrolled,
-              date_antiretrovirals_started(p.patient_id, min(s.start_date)) AS earliest_start_date
-            FROM patient_program p
-            INNER JOIN person pe ON pe.person_id = p.patient_id AND pe.voided = 0
-            INNER JOIN patient_state s ON p.patient_program_id = s.patient_program_id AND s.voided = 0 AND s.state = 7
-            LEFT JOIN (#{current_occupation_query}) a ON a.person_id = p.patient_id
-            WHERE p.program_id = 1 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
-              AND DATE(s.start_date) BETWEEN DATE('#{start_date}') AND DATE('#{end_date}')
-              AND pe.person_id NOT IN (#{drug_refills_and_external_consultation_list})
-            GROUP BY p.patient_id
-            HAVING date_enrolled IS NOT NULL AND date_enrolled BETWEEN DATE('#{start_date}') AND DATE('#{end_date}');
+              e.patient_id,
+              e.birthdate,
+              e.gender,
+              e.date_enrolled,
+              e.earliest_start_date,
+              o.pepfar_outcome_date outcome_date,
+              TIMESTAMPDIFF(MONTH, DATE(e.earliest_start_date), DATE(o.pepfar_outcome_date)) months,
+              disaggregated_age_group(e.birthdate, DATE('#{end_date}')) age_group,
+              o.pepfar_cum_outcome outcome
+            FROM temp_earliest_start_date e
+            #{dsd_query(dsd: @dsd, model: 'e') if @dsd}
+            INNER JOIN temp_patient_outcomes o ON e.patient_id = o.patient_id AND o.pepfar_cum_outcome IN ('Defaulted', 'Patient died', 'Treatment stopped', 'Patient transferred out')
+            LEFT JOIN (#{current_occupation_query}) a ON a.person_id = e.patient_id
+            WHERE e.earliest_start_date BETWEEN DATE('#{start_date}') AND DATE('#{end_date}')
+            GROUP BY e.patient_id
           SQL
         end
 
-        def defaulter_period(patient_id, earliest_start_date)
-          defaulter_date = ActiveRecord::Base.connection.select_one <<~SQL
-            SELECT current_pepfar_defaulter_date(#{patient_id}, '#{end_date}') def_date;
+        def process_tx_ml_clients
+          ActiveRecord::Base.connection.select_all <<~SQL
+            (#{tx_ml_clients})
+            UNION
+            (#{tx_ml_clients_new})
           SQL
-
-          defaulter_date = begin
-            defaulter_date['def_date'].to_date
-          rescue StandardError
-            end_date.to_date
-          end
-
-          raise "Defaulted outside the reporting period" if defaulter_date > end_date.to_date
-          raise "Defaulted outside the reporting period" if defaulter_date < start_date.to_date
-          days_gone = ActiveRecord::Base.connection.select_one <<~SQL
-            SELECT TIMESTAMPDIFF(MONTH, DATE('#{earliest_start_date}'), DATE('#{defaulter_date}')) months;
-          SQL
-
-          days_gone['months'].to_i
         end
       end
     end

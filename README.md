@@ -1,4 +1,4 @@
-# BHT EMR API
+# HIS EMR API
 
 # Table of Contents
 
@@ -214,7 +214,7 @@ You will have to choose the environment you want to update the metadata for.
   To add metadata into the system
 
 ```bash
-bin/dump_metadata.sh [production|development|test]
+bin/dump_metadata.sh
 ```
 
 Commit the changes to the repository. And as always make sure you create a PR to be reviewed.
@@ -417,6 +417,21 @@ See the following for more:
 - You don't need to worry about setting up the storage, the container comes with it pre-configured
 - You don't need to worry about setting up the locale, the container comes with it pre-configured
 - You don't need to worry about setting up the gems, the container comes with them pre-installed
+
+### Data Cleaning
+
+- [ANC](/bin/ANC/README.md)
+
+## Contributors
+These are organizations that have contributed to the development of the HIS EMR API
+<p>
+    <img src="public/malawi.png" alt="Malawi Government" style="background: white !important;height:60px;padding: 5px;border-radius:1%" />
+    <img src="public/PEPFAR.jpg" alt="PEPFAR" style="background: white !important;height:60px;padding: 5px; object-fit:fit;border-radius:1%;" />
+    <img src="public/egpaf.png" alt="Elizabeth Glaser Pediatric AIDS Foundation" style="background: white !important;height:60px;padding: 5px; object-fit:fit;border-radius:1%;" />
+    <img src="public/baobab.png" alt="Baobab Health Trust" style="background: white !important;height:60px;padding: 5px; object-fit:fit;border-radius:1%;" />
+    <img src="public/LIN.jpg" alt="Luke International" style="background: white !important;height:60px;padding: 5px; object-fit:fit;border-radius:1%;" />
+</p>
+
 
 [Back to top](#table-of-contents)
 

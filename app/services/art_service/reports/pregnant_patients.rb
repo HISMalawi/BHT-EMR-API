@@ -12,6 +12,7 @@ module ArtService
         @start_date = start_date
         @end_date = end_date
         @occupation = kwargs[:occupation]
+        @dsd = kwargs[:dsd]
       end
 
       def find_report
@@ -45,6 +46,8 @@ module ArtService
                    obs.obs_datetime AS last_reported_date
             FROM obs
             INNER JOIN person ON person.person_id = obs.person_id
+            INNER JOIN patient ppp ON ppp.patient_id = person.person_id
+            #{dsd_query(dsd: @dsd, model: 'ppp') if @dsd}
             INNER JOIN person_name ON person_name.person_id = obs.person_id
             LEFT JOIN patient_identifier ON patient_identifier.patient_id = obs.person_id
               AND patient_identifier.identifier_type = #{arv_number_type_id}
