@@ -15,9 +15,3 @@ end
 Rails.application.config.to_prepare do
   SolidQueue::Process.prepend(SilenceHeartbeat) unless Rails.env.production?
 end
-
-command = 'cp config/queue.yml.example config/queue.yml'
-system(command) unless File.exist?(Rails.root.join('config', 'queue.yml')) || return
-
-command = 'cp config/recurring.yml.example config/recurring.yml'
-system(command) unless File.exist?(Rails.root.join('config', 'recurring.yml')) || return
