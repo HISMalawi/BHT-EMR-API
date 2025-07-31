@@ -5,6 +5,13 @@ module ArtService
   #
   # Basically provides ART specific patient-centric functionality
   class PatientsEngine
+    NPID_TYPE = 'National id'
+    ARV_NO_TYPE = 'ARV Number'
+    FILING_NUMBER = 'Filing number'
+    ARCHIVED_FILING_NUMBER = 'Archived filing number'
+
+    SECONDS_IN_MONTH = 2_592_000
+
     include ModelUtils
 
     def initialize(program: nil)
@@ -96,10 +103,10 @@ module ArtService
                  .first
     end
 
-     def find_next_available_arv_number
-      location_id =User.current.location_id
-      current_arv_code = global_property("site_prefix_#{location_id}")&.property_value
-      raise 'Global property `site_prefix` not set' unless current_arv_code
+    def current_arv_code
+      location_id = User.current.location_id
+      global_property("site_prefix_#{location_id}")&.property_value
+    end
 
     def arv_identifier_type
       PatientIdentifierType.find_by_name("ARV Number")
@@ -235,15 +242,6 @@ module ArtService
     end
 
     private
-
-    NPID_TYPE = 'National id'
-    ARV_NO_TYPE = 'ARV Number'
-    FILING_NUMBER = 'Filing number'
-    ARCHIVED_FILING_NUMBER = 'Archived filing number'
-
-    SECONDS_IN_MONTH = 2_592_000
-
-    include ModelUtils
 
     def patient_identifier(patient, identifier_type_name)
       identifier_type = PatientIdentifierType.find_by_name(identifier_type_name)
