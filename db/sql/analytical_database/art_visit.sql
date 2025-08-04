@@ -446,8 +446,7 @@ NULL allergic_to_cotrimaxole,
             CONCAT('[', fnd.drug_comb, ']'),
             '$[*]' COLUMNS (drug_id INT PATH '$')
         ) AS jt2
-        JOIN arv_drug ad ON ad.drug_id = jt2.drug_id
-        JOIN drug d2 ON ad.drug_id = d2.drug_id
+        JOIN drug d2 ON d2.drug_id = jt2.drug_id
     ) AS dosage_on_non_art_treatment,
  (
         SELECT GROUP_CONCAT(
@@ -546,7 +545,7 @@ max(case when od.`attribute`='reason_for_poor_adherence' then coalesce(od.value_
 ltd.lab_order_test_date,
 group_concat( distinct case when ltd.lab_test_type is not null and ltd.lab_test_type !='' then ltd.lab_test_type else null end )  lab_test_type,
 group_concat(distinct ltd.lab_reason_for_test)  lab_reason_for_test,
-group_concat( distinct case when ltd.lab_result_date is not null then ltd.lab_result_date else null end ) lab_result_date,
+TRIM(LEADING ',' FROM GROUP_CONCAT(DISTINCT CASE WHEN ltd.lab_result_date IS NOT NULL THEN ltd.lab_result_date  ELSE NULL END)) AS lab_result_date,
 group_concat( distinct concat(ltd.lab_result_date,':',ltd.lab_result)) lab_result,
 group_concat( distinct case when ltd.sample_type is not null and ltd.sample_type !='' then ltd.sample_type else null end ) sample_type
 from 

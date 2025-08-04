@@ -168,7 +168,7 @@ select
 	max(if(o.concept_id = 3289, cn2.name, null)) as type_of_patient,
 	max(if(pi.identifier_type = 4 and pi.voided = 0, pi.identifier, null)) as arv_number,
 	max(if(o.concept_id = 2552, cn2.name, null)) as agrees_to_follow_up,
-	max(if(o.concept_id = 7879, coalesce(o.value_numeric, o.value_text), null)) as has_hts_linkage_number,
+	max(if(o.concept_id = 7879, coalesce(o.value_numeric, o.value_text), null)) as hts_linkage_number,
 	max(if(o.concept_id = 7754, cn2.name, null)) as ever_received_arvs,
 	max(if(o.concept_id = 7880, cn2.name, null)) as confirmatory_hiv_test,
 	max(if(o.concept_id = 7881, o.value_text, null)) as location_of_confirmatory_hiv_test,
