@@ -10,12 +10,17 @@ module Api
       end
 
       def stats
-        jobs_done = SolidQueue::ClaimedExecution.count
-        jobs_failed = SolidQueue::FailedExecution.count
-        jobs_pending = SolidQueue::ReadyExecution.count
-        jobs_queued = SolidQueue::ScheduledExecution.count
-        last_sync_at = SolidQueue::ClaimedExecution.maximum(:created_at)
-        visits_since_last_sync = Encounter.all.where(program_id: 1, encounter_datetime: last_sync_at..).group(:patient_id).count
+        start_date = params[:start_date] || DateTime.now.beginning_of_day 
+        end_date = params[:end_date] || DateTime.now.end_of_day
+
+        jobs = SolidQueue::Job.where(class_name: 'StreamingJob', created_at: start_date..end_date)
+
+        jobs_done = jobs.where("finished_at IS NOT NULL").count
+        jobs_failed = jobs.joins('INNER JOIN solid_queue_failed_executions fe ON solid_queue_jobs.id = fe.job_id').count
+        jobs_pending = jobs.where("finished_at IS NULL").count
+        jobs_queued = jobs.joins('INNER JOIN solid_queue_ready_executions re ON solid_queue_jobs.id = re.job_id').count
+        last_sync_at = SolidQueue::Job.maximum(:created_at)
+        visits_since_last_sync = Encounter.all.where(program_id: 1, encounter_datetime: last_sync_at..).group(:patient_id).count().count
 
         render json: {
           solid_queue: {

@@ -17,7 +17,7 @@ default: &default
   clear_finished:
     class: ClearFinishedJob
     queue: finished
-    schedule: at 1am every day
+    schedule: at 1am every month
     priority: 10
 
 development: 

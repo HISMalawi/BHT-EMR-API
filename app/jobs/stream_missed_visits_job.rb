@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class StreamMissedVisitsJob < ApplicationJob
+  self.queue_adapter = :solid_queue
+
   def perform
     @date = Date.today - 1
     @program_id = 1 # TODO: make this dynamic for all programs
