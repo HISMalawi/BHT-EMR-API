@@ -23,6 +23,14 @@ module RdsService
     def method_missing(method_name, *args)
       LOGGERS.each { |logger| logger.method(method_name).call(*args) }
     end
+
+    def respond_to_missing?(method_name, include_private = false)
+      LOGGERS.all? { |logger| logger.respond_to?(method_name, include_private) }
+    end
+
+    def silence
+      yield if block_given?
+    end
   end.new
 
   def logger
@@ -477,8 +485,8 @@ module RdsService
 
     JSON.parse(response.body).each do |replication|
       LOGGER.debug([replication['source'], replication['target']])
-      is_in_sync = (replication['source'].include?(sync_params['source'])\
-                    && replication['target'].include?(sync_params['target']))
+      is_in_sync = replication['source'].include?(sync_params['source'])\
+                    && replication['target'].include?(sync_params['target'])
 
       next unless is_in_sync
 

@@ -6,7 +6,6 @@ Rails.application.configure do
   # Code is not reloaded between requests.
   config.cache_classes = false
 
-
   config.active_support.to_time_preserves_timezone = :zone
 
   # Eager load code on boot. This eager loads most of Rails and
@@ -47,7 +46,8 @@ Rails.application.configure do
 
   # Use the lowest log level to ensure availability of diagnostic information
   # when problems arise.
-  config.log_level = :debug
+  # config.log_level = :debug
+  config.active_record.verbose_query_logs = true
 
   # Prepend all log lines with the following tags.
   config.log_tags = [:request_id]
