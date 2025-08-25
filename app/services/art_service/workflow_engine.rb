@@ -342,9 +342,11 @@ module ArtService
 
     def dispensing_complete?
       prescription_type = EncounterType.find_by(name: TREATMENT).encounter_type_id
-      prescription = Encounter.find_by(encounter_type: prescription_type,
+      prescription = Encounter.where(encounter_type: prescription_type,
                                        patient_id: @patient.patient_id,
                                        program_id: @program.program_id)
+                              .where('encounter_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(@date)).last
+                                       
 
       return false unless prescription
 
