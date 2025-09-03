@@ -48,13 +48,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :data_verification, only: %i[index] do
-        collection do
-          get '/encounters_done_per_provider' => 'data_verification#encounters_done_per_provider'
-          get '/password_changes' => 'data_verification#password_changes'
-          get '/encounters_done_odd_hours' => 'data_verification#encounters_done_odd_hours'
-        end
-      end
+      resources :data_verification, only: %i[index]
 
       # Not placed under users urls to allow crud on current user's roles
       resources :user_roles, only: %i[index create destroy]
