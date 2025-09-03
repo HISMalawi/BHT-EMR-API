@@ -21,7 +21,8 @@ module ArtService
       'MISSING ART START DATE' => 'missing_start_date',
       'MULTIPLE OPEN STATES' => 'multiple_open_states',
       'ACTIVE CLIENTS WITH ADVERSE OUTCOMES' => 'active_clients_with_adverse_outcomes',
-      'ART START DATE BEFORE DATE OF BIRTH' => 'art_start_date_before_date_of_birth'
+      'ART START DATE BEFORE DATE OF BIRTH' => 'art_start_date_before_date_of_birth',
+      'ON ANTITRITRALVIRALS CLIENTS WITHOUT HIV PROGRAM' => 'on_antritralvirals_clients_without_hiv_program'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -34,6 +35,42 @@ module ArtService
       eval(TOOLS[@tool_name.to_s])
     rescue StandardError => e
       "#{e.class}: #{e.message}"
+    end
+
+    def on_antritralvirals_clients_without_hiv_program
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          p.patient_id,
+          pp.birthdate,
+          pp.gender,
+          MIN(ob.value_datetime) AS art_start_date,
+          n.given_name,
+          n.family_name,
+          i.identifier arv_number
+        FROM patient p
+        INNER JOIN person_name n ON n.person_id = p.patient_id 
+          AND n.voided = 0
+        INNER JOIN person pp USING(person_id)
+        LEFT JOIN obs ob ON ob.person_id = p.patient_id 
+          AND ob.voided = 0
+          AND ob.concept_id = #{concept('Date antiretrovirals started').concept_id} 
+        LEFT JOIN patient_identifier i ON i.patient_id = p.patient_id 
+          AND i.identifier_type = #{indetifier_type} 
+          AND i.voided = 0
+        INNER JOIN orders o ON o.patient_id = p.patient_id
+        INNER JOIN drug_order do ON do.order_id = o.order_id
+          AND do.drug_inventory_id IN(#{arv_drugs.join(',')})
+          AND do.quantity > 0
+          AND o.start_date < #{ActiveRecord::Base.connection.quote(@end_date)}
+        AND p.patient_id NOT IN (
+          SELECT patient_id 
+            FROM patient_program 
+            WHERE program_id = #{program.id} 
+            AND voided = 0 
+            AND start_date <= DATE(#{ActiveRecord::Base.connection.quote(@end_date)})
+        )
+        GROUP BY p.patient_id
+      SQL
     end
 
     def art_start_date_before_date_of_birth
