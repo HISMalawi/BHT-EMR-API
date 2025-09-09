@@ -1,70 +1,70 @@
-with cellphone_number as
+WITH cellphone_number AS
 (
-select
-	person_id as person_id,
-	coalesce(max((case when (person_attribute_type_id = 12) then value end)),
-	max((case when (person_attribute_type_id = 14) then value end)),
-	max((case when (person_attribute_type_id = 15) then value end))) as cellphone_number
-from
-	person_attribute
-where
-	(person_attribute.voided = 0)
-group by
-	person_attribute.person_id)
-select
-	p.person_id,
-	(
-	select
-		property_value site_id
-	from
-		global_property
-	where
-		property = 'current_health_center_id') site_id,
-	pn.given_name,
-	pn.middle_name,
-	pn.family_name,
-	p.gender sex,
-	p.birthdate,
-	case
-		when p.birthdate_estimated = 1 then 'Yes'
-		else 'Yes'
-	end birthdate_est,
-	cellphone_number,
-	pa.region region_of_origin,
-	pa.address2 home_district,
-	pa.county_district home_traditional_authority,
-	pa.neighborhood_cell home_village,
-	pa.region,
-	pa.state_province current_district,
-	pa.township_division current_traditional_authority,
-	pa.city_village current_village,
-	paa.value closest_landmark,
-	group_concat(distinct pi2.identifier) national_id
-from
-	person p
-join patient_program pp on
-	p.person_id = pp.patient_id
-	and pp.program_id = 1
-	and p.voided = 0
-	and pp.voided = 0
-  and pp.patient_id = @person_id
-left join person_name pn on
-	p.person_id = pn.person_id
-	and pn.voided = 0
-  and pn.person_id = @person_id
-left join person_address pa on
-	p.person_id = pa.person_id
-	and pa.voided = 0
-  and pa.person_id = @person_id
-left join person_attribute paa on
-	p.person_id = paa.person_id
-	and paa.voided = 0
-	and paa.person_attribute_type_id = 19
-  and paa.person_id = @person_id
-left join cellphone_number on
-	p.person_id = cellphone_number.person_id
-left join patient_identifier pi2 on
-	p.person_id = pi2.patient_id
-	and pi2.identifier_type = 28
-	and pi2.voided = 0
-  and pi2.patient_id = @person_id
+    SELECT
+        person_id,
+        COALESCE(
+            MAX(CASE WHEN person_attribute_type_id = 12 THEN value END),
+            MAX(CASE WHEN person_attribute_type_id = 14 THEN value END),
+            MAX(CASE WHEN person_attribute_type_id = 15 THEN value END)
+        ) AS cellphone_number
+    FROM person_attribute
+    WHERE voided = 0
+	AND person_id = @person_id
+    GROUP BY person_id
+)
+SELECT
+    p.person_id,
+    (
+        SELECT property_value
+        FROM global_property
+        WHERE property = 'current_health_center_id'
+    ) AS site_id,
+    MAX(pn.given_name) AS given_name,
+    MAX(pn.middle_name) AS middle_name,
+    MAX(pn.family_name) AS family_name,
+    CASE
+        WHEN UPPER(p.gender) IN ('M','MALE') THEN 'M'
+        WHEN UPPER(p.gender) IN ('F','FEMALE') THEN 'F'
+        ELSE 'Unknown'
+    END AS sex,
+    CASE
+        WHEN YEAR(p.birthdate) < 1900 THEN '1900-01-01'
+        ELSE p.birthdate
+    END AS birthdate,
+    CASE WHEN p.birthdate_estimated = 1 THEN 'Yes' ELSE 'Yes' END AS birthdate_est,
+    c.cellphone_number,
+    MAX(pa.region) AS region_of_origin,
+    MAX(pa.address2) AS home_district,
+    MAX(pa.county_district) AS home_traditional_authority,
+    MAX(pa.neighborhood_cell) AS home_village,
+    MAX(pa.region) AS region,
+    MAX(pa.state_province) AS current_district,
+    MAX(pa.township_division) AS current_traditional_authority,
+    MAX(pa.city_village) AS current_village,
+    MAX(paa.value) AS closest_landmark,
+    GROUP_CONCAT(DISTINCT pi2.identifier) AS national_id
+FROM person p
+LEFT JOIN patient_program pp
+    ON p.person_id = pp.patient_id
+   AND pp.program_id = 1
+   AND pp.voided = 0
+LEFT JOIN person_name pn
+    ON p.person_id = pn.person_id
+   AND pn.voided = 0
+LEFT JOIN person_address pa
+    ON p.person_id = pa.person_id
+   AND pa.voided = 0
+LEFT JOIN person_attribute paa
+    ON p.person_id = paa.person_id
+   AND paa.voided = 0
+   AND paa.person_attribute_type_id = 19
+LEFT JOIN cellphone_number c
+    ON p.person_id = c.person_id
+LEFT JOIN patient_identifier pi2
+    ON p.person_id = pi2.patient_id
+   AND pi2.identifier_type = 28
+   AND pi2.voided = 0
+WHERE p.voided = 0
+AND p.person_id = @person_id
+GROUP BY p.person_id;
+ 

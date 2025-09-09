@@ -13,10 +13,9 @@ where
 	and e.voided = 0
 	and e.program_id = 1
 	and o.concept_id = 10564
-    and e.patient_id = @patient_id
+	and e.patient_id = @patient_id
 group by
-	e.patient_id
-),
+	e.patient_id),
 drugs_quantity as
 (
 select
@@ -42,9 +41,12 @@ where
 	and o.concept_id in (10563)
 		and e.encounter_type = 53
 		and o.value_numeric <> 0
-        and e.patient_id = @patient_id
-    group by
-		e.patient_id
+	group by
+		o.person_id,
+		o.concept_id,
+		o.value_drug,
+		e.patient_id,
+		o.value_numeric
 ),
 regimen_from_prev_fac as
 (with regimen_meta as (
@@ -86,7 +88,7 @@ where
 	and o.voided = 0
 	and o.concept_id = 10563
 	and e.encounter_type = 53
-    and e.patient_id = @patient_id
+	and e.patient_id = @patient_id
 group by
 	e.patient_id
 )
@@ -130,7 +132,7 @@ where
 	and lower(concept_id.name) regexp 'who'
 		and value_coded.voided = 0
 		and value_coded.concept_name_type = 'FULLY_SPECIFIED'
-        and e.patient_id = @patient_id
+	and e.patient_id = @patient_id
 	group by
 		e.patient_id
 ),
@@ -154,7 +156,7 @@ where
 	e.voided = 0
 	and o.voided = 0
 	and o.concept_id = 730
-    and e.patient_id = @patient_id
+	and e.patient_id = @patient_id
 )
 select
 	p.person_id as patient_id,
@@ -192,13 +194,6 @@ select
         max(if(o.concept_id = 2516, cast(o.value_datetime as date), null)),
         cast(date_antiretrovirals_started(p.person_id, min(ps.start_date)) as date)
     ) as art_start_date,
-	case
-		when max(if(o.concept_id = 2516, o.value_datetime, null)) is null
-		or patient_date_enrolled(p.person_id) is null then ''
-		else timestampdiff(month, 
-            date(max(if(o.concept_id = 2516, o.value_datetime, null))), 
-            date(patient_date_enrolled(p.person_id)))
-	end as months_on_art,
 	timestampdiff(year, pe.birthdate, min(ps.start_date)) as age_at_initiation,
 	timestampdiff(day, pe.birthdate, min(ps.start_date)) as age_in_days_at_initiation,
 	max(if(o.concept_id = 6981, o.value_text, null)) as art_number_at_previous_location,
@@ -220,7 +215,7 @@ left join
 	p.person_id = pp.patient_id
 	and pp.program_id = 1
 	and pp.voided = 0
-    and pp.patient_id = @patient_id
+	and p.person_id = @patient_id
 left join 
     patient_state ps on
 	pp.patient_program_id = ps.patient_program_id
@@ -231,7 +226,7 @@ left join
 	p.person_id = e.patient_id
 	and e.encounter_type in (9, 5, 52, 53)
 	and e.voided = 0
-    and e.patient_id = @patient_id
+	and e.patient_id = @patient_id
 left join 
     obs o on
 	e.encounter_id = o.encounter_id
@@ -257,11 +252,10 @@ left join
 	p.person_id = pi.patient_id
 	and pi.identifier_type = 4
 	and pi.voided = 0
-    and pi.patient_id = @patient_id
+	and pi.patient_id = @patient_id
 left join 
     person pe on
 	p.person_id = pe.person_id
-    and pe.person_id = @patient_id
 left join date_drug on
 	p.person_id = date_drug.patient_id
 left join drugs_quantity on
