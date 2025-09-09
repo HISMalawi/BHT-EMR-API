@@ -29,6 +29,10 @@ module ArtService
           find_report
         end
 
+        def children_age_groups
+          ['Unknown', '<1 year', '1-4 years', '5-9 years', '10-14 years']
+        end
+
         def indicators
           {
                 tx_curr: [],
@@ -40,7 +44,7 @@ module ArtService
         end
 
         def init_report
-          @report = (pepfar_age_groups - ['Unknown']).each_with_object({}) do |age_group, report|
+          @report = (pepfar_age_groups - children_age_groups).each_with_object({}) do |age_group, report|
             report[age_group] = %w[M F].each_with_object({}) do |gender, gender_sub_report|
               gender_sub_report[gender] = indicators
             end
