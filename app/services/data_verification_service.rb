@@ -3,41 +3,27 @@ class DataVerificationService
       start_date, end_date, program_id = verify_params(params)
 
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT e.encounter_id, 
-          u.user_id, 
-          u.username, 
-          e.encounter_datetime,
-          e.patient_id
+        SELECT
+        u.username, 
+        u.user_id,
+        et.name
         FROM encounter e
+        INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type
+          AND e.program_id = #{program_id}
+          AND e.voided = 0
         INNER JOIN users u on u.user_id = e.creator
-        INNER JOIN user_role ur USING(user_id)
+          AND u.retired = 0
         WHERE DATE(e.encounter_datetime) BETWEEN #{start_date} AND #{end_date}
-        AND patient_id IN (
-          SELECT patient_id
-          FROM patient_program
-          WHERE program_id = #{program_id}
-        )
-        AND ur.role = 'Provider'
-        GROUP BY e.encounter_id
       SQL
 
       report = {}
 
       query.each do |en|
-        user_id = en['user_id']
-        patient_id = en['patient_id']
         username = en['username']
-        encounter_datetime = en['encounter_datetime']
-        encounter_id = en['encounter_id']
-
-        report[username] ||= []
-
-        report[username].push({
-          encounter_id:,
-          encounter_datetime:,
-          patient_id:,
-          creator: user_id
-        })
+        encounter_type = en['name']
+        report[username] ||= {}
+        report[username][encounter_type] ||= 0
+        report[username][encounter_type] += 1
       end
 
       report
