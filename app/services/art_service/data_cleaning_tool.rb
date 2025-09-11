@@ -22,7 +22,7 @@ module ArtService
       'MULTIPLE OPEN STATES' => 'multiple_open_states',
       'ACTIVE CLIENTS WITH ADVERSE OUTCOMES' => 'active_clients_with_adverse_outcomes',
       'ART START DATE BEFORE DATE OF BIRTH' => 'art_start_date_before_date_of_birth',
-      'ON ANTITRITRALVIRALS CLIENTS WITHOUT HIV PROGRAM' => 'on_antritralvirals_clients_without_hiv_program'
+      'ON ANTIRETROVIRALS CLIENTS WITHOUT HIV PROGRAM' => 'on_antiretrovirals_clients_without_hiv_program'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -37,7 +37,7 @@ module ArtService
       "#{e.class}: #{e.message}"
     end
 
-    def on_antritralvirals_clients_without_hiv_program
+    def on_antiretrovirals_clients_without_hiv_program
       ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
           p.patient_id,
@@ -46,7 +46,8 @@ module ArtService
           MIN(ob.value_datetime) AS art_start_date,
           n.given_name,
           n.family_name,
-          i.identifier arv_number
+          i.identifier arv_number,
+          MAX(o.start_date) last_art_dispensation_date
         FROM patient p
         INNER JOIN person_name n ON n.person_id = p.patient_id 
           AND n.voided = 0
