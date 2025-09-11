@@ -48,6 +48,8 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :data_verification, only: %i[index]
+
       # Not placed under users urls to allow crud on current user's roles
       resources :user_roles, only: %i[index create destroy]
 

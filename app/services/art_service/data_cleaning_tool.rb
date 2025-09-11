@@ -36,7 +36,7 @@ module ArtService
     rescue StandardError => e
       "#{e.class}: #{e.message}"
     end
-
+    
     def on_antiretrovirals_clients_without_hiv_program
       ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
