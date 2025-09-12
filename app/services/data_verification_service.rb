@@ -12,7 +12,7 @@ class DataVerificationService
           AND e.program_id = #{program_id}
           AND e.voided = 0
         INNER JOIN users u on u.user_id = e.creator
-        INNER JOIN person p ON p.person_id = u.person_id
+        INNER JOIN person_name p ON p.person_id = u.person_id
           AND u.retired = 0
         WHERE DATE(e.encounter_datetime) BETWEEN #{start_date} AND #{end_date}
       SQL
@@ -34,7 +34,7 @@ class DataVerificationService
       query = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT up.property_value, u.user_id, CONCAT(p.given_name, ' ', p.family_name) AS username
         FROM user_property up
-        INNER JOIN person p ON p.person_id = u.person_id
+        INNER JOIN person_name p ON p.person_id = u.person_id
         INNER JOIN users u USING(user_id)
         WHERE up.property LIKE 'last_password_reset%'
         GROUP BY u.user_id
@@ -68,7 +68,7 @@ class DataVerificationService
           u.user_id
           FROM encounter e
           INNER JOIN users u ON u.user_id = e.creator
-          INNER JOIN person p ON p.person_id = u.person_id
+          INNER JOIN person_name p ON p.person_id = u.person_id
           WHERE e.encounter_datetime BETWEEN #{start_date} AND #{end_date}
           AND e.patient_id IN (
             SELECT patient_id
