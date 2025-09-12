@@ -165,7 +165,7 @@ module AncService
         },
         {
           "test": 'Syphilis',
-          "test_date": @syphilis_date,
+          "test_date":  @date.to_date.strftime("%Y-%m-%d"),
           "result": @syphilis
         },
         {
@@ -175,7 +175,7 @@ module AncService
         },
         {
           "test": 'Malaria',
-          "test_date": @malaria_date,
+          "test_date":  @date.to_date.strftime("%Y-%m-%d"),
           "result": @malaria
         },
         {
@@ -194,6 +194,8 @@ module AncService
           "result": @serum_glucose
         }
       ], patient_labs&.to_a].flatten!&.map(&:symbolize_keys)
+
+      extra_labs = extra_labs.filter! { |lab| !lab[:result].blank? && !lab[:test_date].blank? }
 
       label = ZebraPrinter::Lib::StandardLabel.new
 
@@ -215,9 +217,13 @@ module AncService
       # # label.draw_text("Hb2",28,256,0,2,1,1,false)
       # label.draw_text("Malaria", 28, 236, 0, 2, 1, 1, false) if @malaria.present?
       # label.draw_text("Blood Group", 28, 266, 0, 2, 1, 1, false) if @blood_group.present?
-      
+      row_limit = 4
+
+
       index = 146
-      extra_labs.take(5).each do |lab|
+      extra_labs.take(row_limit).each do |lab|
+        next if lab[:result].blank?
+
         label.draw_text(lab[:test], 28, index, 0, 2, 1, 1, false)
         index += 30
       end
@@ -243,25 +249,25 @@ module AncService
 
 
       if extra_labs.length > 0
-        label.draw_line(590, 80, 250, 1, 0)
+        label.draw_line(550, 80, 250, 1, 0)
 
         
         extra_labs.length.times do |i|
-          label.draw_line(590, 80 + (i+1) * 30, 250, 1, 0)
+          label.draw_line(560, 80 + (i+1) * 30, 250, 1, 0)
         end
       end
       
-      extra_labs.drop(5).each_with_index do |lab, i|
+      extra_labs.drop(row_limit).each_with_index do |lab, i|
         
         next if lab[:result].blank?
 
-        label.draw_text(lab[:test], 470, 56+((i+1) * 30), 0, 2, 1, 1, false)
-        label.draw_text(lab[:test_date], 590, 56+((i+1) * 30), 0, 2, 1, 1, false)
-        label.draw_text(lab[:result], 730, 56+((i+1) * 30), 0, 2, 1, 1, false)
+        label.draw_text(lab[:test_date], 435, 56+((i+1) * 30), 0, 2, 1, 1, false)
+        label.draw_text(lab[:test], 560, 56+((i+1) * 30), 0, 2, 1, 1, false)
+        label.draw_text(lab[:result], 710, 56+((i+1) * 30), 0, 2, 1, 1, false)
       end
 
-      label.draw_line(590, 80, 1, extra_labs.length * 30, 0)
-      label.draw_line(720, 80, 1, extra_labs.length * 30, 0)
+      label.draw_line(560, 80, 1, extra_labs.length * 30, 0)
+      label.draw_line(700, 80, 1, extra_labs.length * 30, 0)
       
       label.draw_text(@height.blank? ? "N/A" : "#{@height} CM", 270, 56, 0, 2, 1, 1, false)
       label.draw_text(@weight.blank? ? "N/A" : "#{@weight} KG", 270, 86, 0, 2, 1, 1, false)
@@ -276,18 +282,35 @@ module AncService
         @encounter_datetime
       end)
 
-      label.draw_text((@hiv_test_date.blank? ? @encounter_datetime : @hiv_test_date.to_s), 188, 146, 0, 2, 1, 1, false) if @hiv_test.present?
-      label.draw_text((@syphilis.blank? ? "N/A" : @date.to_s).to_s, 188, 176, 0, 2, 1, 1, false) if @syphilis.present?
-      label.draw_text((@hb.blank? ? "N/A" : @date.to_s).to_s, 188, 206, 0, 2, 1, 1, false) if @hb.present?
-      label.draw_text((@malaria.blank? ? "N/A" : @date.to_s).to_s, 188, 236, 0, 2, 1, 1, false) if @malaria.present?
-      label.draw_text((@blood_group.blank? ? "N/A" : @date.to_s).to_s, 188, 266, 0, 2, 1, 1, false) if @blood_group.present?
+      # label.draw_text((@hiv_test_date.blank? ? @encounter_datetime : @hiv_test_date.to_s), 188, 146, 0, 2, 1, 1, false) if @hiv_test.present?
+      # label.draw_text((@syphilis.blank? ? "N/A" : @date.to_s).to_s, 188, 176, 0, 2, 1, 1, false) if @syphilis.present?
+      # label.draw_text((@hb.blank? ? "N/A" : @date.to_s).to_s, 188, 206, 0, 2, 1, 1, false) if @hb.present?
+      # label.draw_text((@malaria.blank? ? "N/A" : @date.to_s).to_s, 188, 236, 0, 2, 1, 1, false) if @malaria.present?
+      # label.draw_text((@blood_group.blank? ? "N/A" : @date.to_s).to_s, 188, 266, 0, 2, 1, 1, false) if @blood_group.present?
 
-      label.draw_text(@hiv_test.to_s, 345, 146, 0, 2, 1, 1, false) if @hiv_test.present?
-      label.draw_text((@syphilis.blank? ? "N/A" : @syphilis.to_s).to_s, 325, 176, 0, 2, 1, 1, false) if @syphilis.present?
-      label.draw_text((@hb.blank? ? @hb2 ||= "N/A" : @hb.to_s).to_s, 325, 206, 0, 2, 1, 1, false) if @hb.present?
-      # label.draw_text(@hb2,325,256,0,2,1,1,false)
-      label.draw_text((@malaria.blank? ? "N/A" : @malaria.to_s).to_s, 325, 236, 0, 2, 1, 1, false) if @malaria.present?
-      label.draw_text((@blood_group.blank? ? "N/A" : @blood_group.to_s).to_s, 325, 266, 0, 2, 1, 1, false) if @blood_group.present?
+      # label.draw_text(@hiv_test.to_s, 345, 146, 0, 2, 1, 1, false) if @hiv_test.present?
+      # label.draw_text((@syphilis.blank? ? "N/A" : @syphilis.to_s).to_s, 325, 176, 0, 2, 1, 1, false) if @syphilis.present?
+      # label.draw_text((@hb.blank? ? @hb2 ||= "N/A" : @hb.to_s).to_s, 325, 206, 0, 2, 1, 1, false) if @hb.present?
+      # # label.draw_text(@hb2,325,256,0,2,1,1,false)
+      # label.draw_text((@malaria.blank? ? "N/A" : @malaria.to_s).to_s, 325, 236, 0, 2, 1, 1, false) if @malaria.present?
+      # label.draw_text((@blood_group.blank? ? "N/A" : @blood_group.to_s).to_s, 325, 266, 0, 2, 1, 1, false) if @blood_group.present?
+      
+      index = 146
+      extra_labs.take(row_limit).each do |lab|
+        next if lab[:result].blank?
+
+        label.draw_text(lab[:test_date], 188, index, 0, 2, 1, 1, false)
+        index += 30
+      end
+
+      index = 146
+      extra_labs.take(row_limit).each do |lab|
+        next if lab[:result].blank?
+
+        label.draw_text(lab[:result], 325, index, 0, 2, 1, 1, false)
+        index += 30
+      end
+
       # label.draw_text(@malaria,188,226,0,2,1,1,false)
 
       {
