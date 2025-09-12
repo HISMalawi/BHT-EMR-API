@@ -28,5 +28,7 @@ class Relationship < VoidableRecord
 
   def person_b_person
     Person.find(person_b)
+  rescue StandardError
+    nil
   end
 end
