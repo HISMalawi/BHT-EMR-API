@@ -6,6 +6,7 @@ class DataVerificationService
         SELECT
         CONCAT(p.given_name, ' ', p.family_name) AS username, 
         u.user_id,
+        u.person_id,
         et.name
         FROM encounter e
         INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type
@@ -34,8 +35,8 @@ class DataVerificationService
       query = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT up.property_value, u.user_id, CONCAT(p.given_name, ' ', p.family_name) AS username
         FROM user_property up
-        INNER JOIN person_name p ON p.person_id = u.person_id
         INNER JOIN users u USING(user_id)
+        INNER JOIN person_name p ON p.person_id = u.person_id
         WHERE up.property LIKE 'last_password_reset%'
         GROUP BY u.user_id
       SQL
