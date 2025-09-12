@@ -32,11 +32,15 @@ class DataVerificationService
     end
 
     def password_changes(params)
+      start_date, end_date, _ = verify_params(params)
+
       query = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT up.property_value, u.user_id, CONCAT(p.given_name, ' ', p.family_name) AS username
         FROM user_property up
         INNER JOIN users u USING(user_id)
         INNER JOIN person_name p ON p.person_id = u.person_id
+        AND STR_TO_DATE(up.property_value, '%Y-%m-%d') >= #{start_date}
+        AND STR_TO_DATE(up.property_value, '%Y-%m-%d') <= #{end_date} 
         WHERE up.property LIKE 'last_password_reset%'
         GROUP BY u.user_id
       SQL
