@@ -76,18 +76,22 @@ module ArtService
             gender = p["gender"]
             age_group = p["age_group"]
 
+            next if children_age_groups.include?(age_group)
+
             @report[age_group][gender][:tx_curr] << id
             @report["All"][maternal_status][:tx_curr] << id
 
-            @report[age_group][gender][:screened_for_htn] << id
-            @report["All"][maternal_status][:screened_for_htn] << id
+            if systolic && diastolic
+              @report[age_group][gender][:screened_for_htn] << id
+              @report["All"][maternal_status][:screened_for_htn] << id
+            end
 
             if diagonised == 1
               @report[age_group][gender][:ever_diagnosed_htn] << id 
               @report['All'][maternal_status][:ever_diagnosed_htn] << id
             end
 
-            if diagonised == 1 && date_diagnosed > start_date
+            if (diagonised == 1) && (date_diagnosed && date_diagnosed > start_date)
               @report[age_group][gender][:newly_diagnosed_htn] << id 
               @report["All"][maternal_status][:newly_diagnosed_htn] << id
             end
@@ -134,11 +138,11 @@ module ArtService
               AND vitals.encounter_type = #{encounter_type("VITALS").id}
               AND DATE(vitals.encounter_datetime) >= #{ActiveRecord::Base.connection.quote(start_date)}
               AND DATE(vitals.encounter_datetime) <= #{ActiveRecord::Base.connection.quote(end_date)}
-            INNER JOIN obs systolic
+            LEFT JOIN obs systolic
               ON systolic.encounter_id = vitals.encounter_id
               AND systolic.voided = 0
               AND systolic.concept_id = #{concept("Systolic blood pressure").id}
-            INNER JOIN obs diastolic
+            LEFT JOIN obs diastolic
               ON diastolic.encounter_id = vitals.encounter_id
               AND diastolic.voided = 0
               AND diastolic.concept_id = #{concept("Diastolic blood pressure").id}
