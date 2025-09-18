@@ -4,14 +4,16 @@ class DataVerificationService
 
       query = ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
-        u.username, 
+        CONCAT(p.given_name, ' ', p.family_name) AS username, 
         u.user_id,
+        u.person_id,
         et.name
         FROM encounter e
         INNER JOIN encounter_type et ON et.encounter_type_id = e.encounter_type
           AND e.program_id = #{program_id}
           AND e.voided = 0
         INNER JOIN users u on u.user_id = e.creator
+        INNER JOIN person_name p ON p.person_id = u.person_id
           AND u.retired = 0
         WHERE DATE(e.encounter_datetime) BETWEEN #{start_date} AND #{end_date}
       SQL
@@ -30,10 +32,15 @@ class DataVerificationService
     end
 
     def password_changes(params)
+      start_date, end_date, _ = verify_params(params)
+
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT up.property_value, u.user_id, u.username
+        SELECT up.property_value, u.user_id, CONCAT(p.given_name, ' ', p.family_name) AS username
         FROM user_property up
         INNER JOIN users u USING(user_id)
+        INNER JOIN person_name p ON p.person_id = u.person_id
+        AND STR_TO_DATE(up.property_value, '%Y-%m-%d') >= #{start_date}
+        AND STR_TO_DATE(up.property_value, '%Y-%m-%d') <= #{end_date} 
         WHERE up.property LIKE 'last_password_reset%'
         GROUP BY u.user_id
       SQL
@@ -59,9 +66,14 @@ class DataVerificationService
       start_date, end_date, program_id = verify_params(params)
 
       query = ActiveRecord::Base.connection.select_all <<~SQL
-        SELECT e.encounter_id, e.patient_id, e.encounter_datetime, TIME_FORMAT(encounter_datetime, '%k') AS time, u.user_id, u.username
+        SELECT e.encounter_id, 
+          e.patient_id, e.encounter_datetime, 
+          TIME_FORMAT(encounter_datetime, '%k') AS time,
+          CONCAT(p.given_name, ' ', p.family_name) AS username, 
+          u.user_id
           FROM encounter e
           INNER JOIN users u ON u.user_id = e.creator
+          INNER JOIN person_name p ON p.person_id = u.person_id
           WHERE e.encounter_datetime BETWEEN #{start_date} AND #{end_date}
           AND e.patient_id IN (
             SELECT patient_id
