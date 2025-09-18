@@ -142,7 +142,7 @@ module ArtService
               ON systolic.encounter_id = vitals.encounter_id
               AND systolic.voided = 0
               AND systolic.concept_id = #{concept("Systolic blood pressure").id}
-            LEFT JOIN obs diastolic
+            INNER JOIN obs diastolic
               ON diastolic.encounter_id = vitals.encounter_id
               AND diastolic.voided = 0
               AND diastolic.concept_id = #{concept("Diastolic blood pressure").id}
