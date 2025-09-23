@@ -2,7 +2,7 @@
 
 # this job is used to clear notifications after a certain period of time has elapsed
 class NotificationClearJob < ApplicationJob
-  queue_as :default
+  self.queue_adapter = :async
 
   def perform
     lab = User.find_by(username: 'lab_daemon')

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ApplicationJob < ActiveJob::Base
+  self.queue_adapter = :async
+
   def login(user_id, location_id)
     User.current = User.find(user_id)
     Location.current = Location.find(location_id)

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class VoidPatientJob < ApplicationJob
+  self.queue_adapter = :async
+
   def perform(patient_id, reason, user_id)
     User.current = User.find(user_id)
     patient = Patient.find(patient_id)

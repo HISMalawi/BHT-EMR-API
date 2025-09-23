@@ -2,7 +2,8 @@
 
 # Ait Integration Job
 class AitIntergrationJob < ApplicationJob
-  queue_as :default
+  self.queue_adapter = :async
+  
   rescue_from(Exception) do |_exception|
     retry_job wait: 5.minutes, queue: :default
   end

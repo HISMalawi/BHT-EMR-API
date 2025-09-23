@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class StreamIncompleteVisitsJob < ApplicationJob
+  self.queue_adapter = :solid_queue
+  
   def perform
     date = (Date.today - 1)
     visits = program_incomplete_visits(date:)

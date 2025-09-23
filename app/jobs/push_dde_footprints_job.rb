@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class PushDdeFootprintsJob < ApplicationJob
+  self.queue_adapter = :async
+
   def perform(program_id:, patient_id:, date:, creator_id:)
     patient = Patient.find(patient_id)
     dde_service(program_id).create_patient_footprint(patient, date&.to_date, creator_id)

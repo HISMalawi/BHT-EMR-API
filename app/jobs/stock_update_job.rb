@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class StockUpdateJob < ApplicationJob
-  queue_as :default
+  self.queue_adapter = :async
 
   def perform(action, user_id:, location_id:, dispensation_id:)
     login(user_id, location_id)

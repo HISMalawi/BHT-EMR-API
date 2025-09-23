@@ -270,4 +270,6 @@ where
 	patient_date_enrolled(p.person_id) is not null
 	and p.person_id = @patient_id
 group by
-	p.person_id;
+	p.person_id
+having 1=1
+   and p.person_id = @patient_id

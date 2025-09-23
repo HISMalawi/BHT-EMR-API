@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ReportJob < ApplicationJob
-  queue_as :default
+  self.queue_adapter = :async
 
   def perform(clazzname, kwargs)
     logger.debug("Running report job #{clazzname}(#{kwargs})")

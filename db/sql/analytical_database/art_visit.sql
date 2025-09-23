@@ -1,4 +1,4 @@
-with attribute_concepts as  
+with attribute_concepts as
 (
 select
 	'cd4_count' as attribute,
@@ -164,6 +164,7 @@ from
 	obs o
 JOIN attribute_concepts ac ON
 	FIND_IN_SET(o.concept_id, ac.attribute_concepts) > 0
+	and o.person_id = @patient_id
 LEFT JOIN concept_name cn ON
 	o.concept_id = cn.concept_id
 	AND cn.concept_name_type = 'FULLY_SPECIFIED'
@@ -174,10 +175,8 @@ LEFT JOIN concept_name cn2 ON
 	AND cn2.concept_name_type = 'FULLY_SPECIFIED'
 	AND cn2.locale = 'en'
 	AND cn2.voided = 0
-where
-	o.person_id = @patient_id
-),
-final_pull as 
+	where o.voided = 0),
+final_pull as
 (
 select
 	distinct x.patient_id,
@@ -199,14 +198,13 @@ from
 		obs o
 	join encounter e on
 		o.encounter_id = e.encounter_id
-		and e.patient_id = @patient_id
+		and o.person_id = @patient_id
 	join concept_name cn on
 		cn.concept_id = o.concept_id
 		and cn.voided = 0
 		and cn.locale = 'en'
 		and cn.concept_name_type = 'FULLY_SPECIFIED'
-	where
-		o.concept_id in
+	where o.concept_id in
 (
 		select
 			concept_id
@@ -220,7 +218,6 @@ from
 		and o.voided = 0
 		and o.encounter_id is not null
 		and o.person_id is not null
-		and o.person_id = @patient_id
 		and e.voided = 0
 		and e.encounter_type in (54, 25, 57, 13, 10, 32)
 			and COALESCE(o.value_text, o.value_numeric) is not null
@@ -244,12 +241,12 @@ from
 				orders o
 			join obs ob on
 				o.order_id = ob.order_id
+				and ob.person_id = @patient_id
 				and ob.voided = 0
 				and ob.concept_id = 9737
 				and ob.value_coded = 856
-				and o.patient_id = @patient_id
 				and o.order_type_id in (3, 4)
-					and o.voided = 0
+				and o.voided = 0
 			union all
 				select
 					ob.person_id as patient_id,
@@ -269,7 +266,6 @@ from
 					ob.concept_id = 856
 					and ob.voided = 0
 					and ob.order_id is not null
-					and ob.person_id = @patient_id
 					and coalesce(value_text, value_numeric) is not null
 			union all
 				select
@@ -286,8 +282,7 @@ from
 					orders o
 				where
 					o.order_type_id in (1, 2)
-						and o.patient_id = @patient_id
-						and o.voided = 0
+					and o.voided = 0
 				union all
 					select
 						ob.person_id as patient_id,
@@ -307,7 +302,7 @@ from
 						ob.concept_id = 856
 						and ob.voided = 0
 						and ob.order_id is null
-						and ob.person_id = @patient_id
+						and cn.voided = 0
 						and coalesce(value_text, value_numeric) is not null) x
 ),
 final_dispensations AS (
@@ -341,13 +336,13 @@ with medication_regimen as (
 		orders o
 	join drug_order d on
 		o.order_id = d.order_id
+		and o.patient_id = @patient_id
 	join encounter e on
 		o.encounter_id = e.encounter_id
 	join drug dd on
 		d.drug_inventory_id = dd.drug_id
 	where
 		e.encounter_type in (54, 25)
-        and o.patient_id = @patient_id
 			and e.voided = 0
 			and o.voided = 0
 			and d.drug_inventory_id in (
@@ -371,7 +366,7 @@ with medication_regimen as (
 		drug_order do
 	join obs o on
 		do.order_id = o.order_id
-        and o.person_id = @patient_id
+		and o.person_id = @patient_id
 	join orders o2 on
 		o2.order_id = do.order_id
 	join drug d on
@@ -401,9 +396,9 @@ union all
 		obs o
 	join drug d on
 		o.value_drug = d.drug_id
+	and o.person_id = @patient_id
 	where
 		o.concept_id = 6781
-		and o.person_id = @patient_id
 		and d.drug_id in (
 		select
 			drug_id
@@ -428,7 +423,7 @@ union all
 		drug_order do
 	join obs o on
 		do.order_id = o.order_id
-		and o.person_id = @patient_id
+		    and o.person_id = @patient_id
 	join orders o2 on
 		o2.order_id = do.order_id
 	join drug d on
@@ -458,9 +453,9 @@ union all
 		obs o
 	join drug d on
 		o.value_drug = d.drug_id
+	and o.person_id = @patient_id
 	where
 		o.concept_id = 2540
-		and o.person_id = @patient_id
 		and d.drug_id in (
 		select
 			drug_id
@@ -485,13 +480,13 @@ union all
 		orders o
 	join drug_order d on
 		o.order_id = d.order_id
+		    and o.patient_id = @patient_id
 	join encounter e on
 		o.encounter_id = e.encounter_id
 	join drug dd on
 		d.drug_inventory_id = dd.drug_id
 	where
 		e.encounter_type in (54, 25)
-			and o.patient_id = @patient_id
 			and e.voided = 0
 			and o.voided = 0
 			and dd.retired = 0
@@ -530,6 +525,7 @@ union all
 	join orders o on
 		o.patient_id = pvd.patient_id
 		and DATE(o.start_date) = pvd.visit_date
+		    and o.patient_id = @patient_id
 	join drug_order do on
 		o.order_id = do.order_id
 			and do.drug_inventory_id = pvd.drug_inventory_id
@@ -550,6 +546,7 @@ union all
 			cq.patient_id = pvd.patient_id
 			and cq.visit_date = pvd.visit_date
 			and cq.drug_inventory_id = pvd.drug_inventory_id
+		where o.voided = 0
 		group by
 			pvd.patient_id,
 			pvd.visit_date,
@@ -572,13 +569,13 @@ with drug_qty as (
 		orders o
 	join drug_order d on
 		o.order_id = d.order_id
+		    and o.patient_id = @patient_id
 	join encounter e on
 		o.encounter_id = e.encounter_id
 	join drug dd on
 		d.drug_inventory_id = dd.drug_id
 	where
 		e.encounter_type in (54, 25)
-			and o.patient_id = @patient_id
 			and e.voided = 0
 			and o.voided = 0
 			and d.drug_inventory_id not in (
@@ -602,7 +599,7 @@ with drug_qty as (
 		drug_order do
 	join obs o on
 		do.order_id = o.order_id
-		and o.person_id = @patient_id
+		    and o.person_id = @patient_id
 	join orders o2 on
 		o2.order_id = do.order_id
 	join drug d on
@@ -632,9 +629,9 @@ union all
 		obs o
 	join drug d on
 		o.value_drug = d.drug_id
+	and o.person_id = @patient_id
 	where
 		o.concept_id = 6781
-		and o.person_id = @patient_id
 		and d.drug_id not in (
 		select
 			drug_id
@@ -659,7 +656,7 @@ union all
 		drug_order do
 	join obs o on
 		do.order_id = o.order_id
-		and o.person_id = @patient_id
+		    and o.person_id = @patient_id
 	join orders o2 on
 		o2.order_id = do.order_id
 	join drug d on
@@ -689,9 +686,9 @@ union all
 		obs o
 	join drug d on
 		o.value_drug = d.drug_id
+	and o.person_id = @patient_id
 	where
 		o.concept_id = 2540
-		and o.person_id = @patient_id
 		and d.drug_id not in (
 		select
 			drug_id
@@ -716,13 +713,13 @@ union all
 		orders o
 	join drug_order d on
 		o.order_id = d.order_id
+		    and o.patient_id = @patient_id
 	join encounter e on
 		o.encounter_id = e.encounter_id
 	join drug dd on
 		d.drug_inventory_id = dd.drug_id
 	where
 		e.encounter_type in (54, 25)
-			and o.patient_id = @patient_id
 			and e.voided = 0
 			and o.voided = 0
 			and dd.retired = 0
@@ -760,6 +757,7 @@ union all
 	join orders o on
 		o.patient_id = pvd.patient_id
 		and DATE(o.start_date) = pvd.visit_date
+		    and o.patient_id = @patient_id
 	join drug_order do on
 		o.order_id = do.order_id
 			and do.drug_inventory_id = pvd.drug_inventory_id
@@ -778,13 +776,14 @@ union all
 			cq.patient_id = pvd.patient_id
 			and cq.visit_date = pvd.visit_date
 			and cq.drug_inventory_id = pvd.drug_inventory_id
+		where o.voided = 0
 		group by
 			pvd.patient_id,
 			pvd.visit_date,
 			dc.drug_comb
 ) x
 ),
-visit_appointments as 
+visit_appointments as
 (
 SELECT
 	o.person_id,
@@ -800,15 +799,18 @@ INNER JOIN (
 	FROM
 		obs o
 	WHERE
-		o.concept_id IN (5096)
+	    o.person_id = @patient_id
+		and o.concept_id IN (5096)
 			AND o.voided = 0
 		GROUP BY
 			o.person_id,
 			DATE(o.obs_datetime)
         ) pp ON
+
 	pp.obs_id = o.obs_id
+where o.voided = 0
 ),
-art_adherence as  
+art_adherence as
 (
 SELECT
 	o.person_id,
@@ -824,7 +826,7 @@ FROM
 	obs o
 join orders oo on
 	o.order_id = oo.order_id
-	and oo.patient_id = @patient_id
+	    and o.person_id = @patient_id
 	and o.voided = 0
 	and oo.voided = 0
 join drug_order do on
@@ -835,7 +837,8 @@ join arv_drug ad on
 	do.drug_inventory_id = ad.drug_id
 WHERE
 	o.concept_id = 6987
-),
+	and o.voided = 0
+	and oo.voided = 0),
 lab_tests_data as
 (
 SELECT
@@ -906,7 +909,6 @@ test_type_concepts AS (
 		AND cn.locale = 'en'
 	WHERE
 		o.order_type_id = 4
-		AND o.patient_id = @patient_id
 		AND ob.concept_id IN (2429, 10609, 10610)
 			AND ob.voided = 0
 			AND o.voided = 0
@@ -914,7 +916,7 @@ test_type_concepts AS (
 )
 	SELECT
 		DISTINCT
-    o.patient_id,
+        o.patient_id,
 		rft.reason_for_testing AS lab_reason_for_test,
 		DATE(o.start_date) AS lab_order_test_date,
 		test_type.name AS lab_test_type,
@@ -959,7 +961,8 @@ test_type_concepts AS (
 			p.person_id = o.patient_id
 			AND p.voided = 0
 		WHERE
-			o.order_type_id IN (
+		    o.patient_id = @patient_id
+			AND o.order_type_id IN (
 			SELECT
 				order_type_id
 			FROM
@@ -970,7 +973,7 @@ test_type_concepts AS (
 	UNION ALL
 		SELECT
 			DISTINCT
-    o.person_id AS patient_id,
+            o.person_id AS patient_id,
 			coalesce(rft.reason_for_testing, NULL) AS lab_reason_for_test,
 			DATE(o.obs_datetime) as lab_order_test_date,
 			'Viral Load' AS lab_test_type,
@@ -996,10 +999,12 @@ test_type_concepts AS (
 			AND cn.voided = 0
 		WHERE
 			o.concept_id = 856
+		    and o.person_id = @patient_id
 			AND o.voided = 0
+			and e.voided = 0
+			and cn.voided = 0
 			AND o.order_id IS NULL
 			AND o.person_id IS NOT NULL
-			AND o.person_id = @patient_id
 			AND COALESCE(o.value_text, o.value_numeric) IS NOT NULL
 				AND
   COALESCE(o.value_text, o.value_numeric) != ''
@@ -1017,13 +1022,13 @@ fp.patient_id,
 	fp.site_id,
 	fp.visit_date,
 	case
-		when 
+		when
 	max(case when od.`attribute` = 'patient_present' then od.value_coded_value else NULL end) is not null
 		and max(case when od.`attribute` = 'patient_present' then od.value_coded_value else NULL end) not in ('yes', 'no') then 'unknown'
 		else max(case when od.`attribute` = 'patient_present' then od.value_coded_value else NULL end)
 	end as patient_present,
 	case
-		when 
+		when
 	max(case when od.`attribute` = 'guardian_present' then od.value_coded_value else NULL end) is not null
 		and max(case when od.`attribute` = 'guardian_present' then od.value_coded_value else NULL end) not in ('yes', 'no') then 'unknown'
 		else max(case when od.`attribute` = 'guardian_present' then od.value_coded_value else NULL end)
@@ -1114,9 +1119,9 @@ left join art_adherence aa on
 left join lab_tests_data ltd ON
 		fp.patient_id = ltd.patient_id
 	and date(fp.visit_date)= date(ltd.lab_order_test_date)
-where 
+where
 	fp.patient_id = @patient_id
 	and date(fp.visit_date) = '@visit_date'
 group by
 		fp.patient_id,
-		fp.visit_date;
+		fp.visit_date

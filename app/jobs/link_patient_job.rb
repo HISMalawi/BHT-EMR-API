@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class LinkPatientJob < ApplicationJob
-  queue_as :default
+  self.queue_adapter = :async
 
   def perform(patient, date)
     ActiveRecord::Base.transaction do
