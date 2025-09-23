@@ -80,3 +80,5 @@ gem 'concurrent-ruby', '= 1.3.4'
 
 # gems for reading excel and csv files
 gem 'roo', '~> 2.8'
+
+gem 'stringio', '~> 3.1.7'
