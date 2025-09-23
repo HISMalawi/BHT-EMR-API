@@ -304,6 +304,8 @@ module AncService
       encounter_date = orders&.first.encounter.encounter_datetime.strftime("%d/%b/%Y") if orders.present?
       orders.each do |o|
         drug_order = o.drug_order
+        next unless drug_order
+
         struct = drug_order.dosage_struct
         @drugs[encounter_date] ||= {}
         @drugs[encounter_date][struct[:drug_name]] = drug_order&.quantity

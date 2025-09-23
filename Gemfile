@@ -45,8 +45,9 @@ gem 'test-unit'
 gem 'rswag-api'
 gem 'rswag-ui'
 
-# gem 'emr_ohsp_interface', '~> 2.2.5'
-# gem 'emr_ohsp_interface', '~> 2.2.3'
+gem 'emr_ohsp_interface', '~> 2.2.5'
+
+gem 'his_emr_api_lab', '~> 2.0.8'
 
 gem 'his_emr_api_lab', '2.0.7.streaming'
 # gem 'his_emr_api_radiology', '~> 1.0.9'
@@ -81,6 +82,4 @@ gem 'concurrent-ruby', '= 1.3.4'
 # gems for reading excel and csv files
 gem 'roo', '~> 2.8'
 
-gem "solid_queue", "1.1.5"
-
-gem 'solid_queue_monitor', '~> 0.3.2'
+gem 'stringio', '~> 3.1.7'
