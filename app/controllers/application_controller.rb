@@ -6,6 +6,7 @@ require 'user_service'
 class ApplicationController < ActionController::API
   before_action :check_location
   before_action :authenticate
+  before_action :check_client_version
 
   protected
 
@@ -15,11 +16,39 @@ class ApplicationController < ActionController::API
   CURRENT_LOCATION_PROPERTY = 'current_health_center_id'
   DEFAULT_PAGE_SIZE = 10
 
+  # Map of clients to their allowed versions
+  CLIENT_VERSION_CONFIGURATION = {
+    'EMASTERCARD' => 'v2025.Q3.R2',
+    'POC' => 'v2025.Q3.R3'
+  }
+
   # Required by audited gem
   def current_user
     User.current
   end
 
+  def check_client_version
+    client = request.headers['Client']
+    client_version = request.headers['Client-Version']
+
+    unless client
+      render json: { errors: ['Unrecognized API Client'] }, status: :bad_request
+      return false
+    end
+
+    unless client_version
+      render json: { errors: ['Unknown API Client Version'] }, status: :bad_request
+      return false
+    end
+    
+    if CLIENT_VERSION_CONFIGURATION.key?(client) && CLIENT_VERSION_CONFIGURATION[client] != client_version
+      required_version = CLIENT_VERSION_CONFIGURATION[client]
+      render json: { errors: ["Please use the following client version of #{required_version}"], required_version: required_version }, status: :upgrade_required
+      return false
+    end
+    true
+  end
+  
   def authenticate
     authentication_token = request.headers['Authorization']
     unless authentication_token
