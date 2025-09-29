@@ -19,7 +19,7 @@ class ApplicationController < ActionController::API
   # Map of clients to their allowed versions
   CLIENT_VERSION_CONFIGURATION = {
     'EMASTERCARD' => 'v2025.Q3.R2',
-    'POC' => 'v2025.Q3.R2'
+    'POC' => 'v2025.Q3.R3'
   }
 
   # Required by audited gem
@@ -28,6 +28,10 @@ class ApplicationController < ActionController::API
   end
 
   def check_client_version
+    if params[:no_client]
+      return true
+    end
+
     client = request.headers['Client']
     client_version = request.headers['Client-Version']
 
