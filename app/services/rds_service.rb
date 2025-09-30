@@ -20,6 +20,10 @@ module RdsService
       end
     end
 
+    def silence(&block)
+     yield
+    end
+
     def method_missing(method_name, *args)
       LOGGERS.each { |logger| logger.method(method_name).call(*args) }
     end
