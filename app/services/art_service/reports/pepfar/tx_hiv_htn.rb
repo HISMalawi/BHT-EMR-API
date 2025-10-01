@@ -89,8 +89,8 @@ module ArtService
               @report['All'][maternal_status][:ever_diagnosed_htn] << id
             end
 
-            if diagonised == 1 && date_diagnosed > start_date
-              @report[age_group][gender][:newly_diagnosed_htn] << id 
+            if diagonised == 1 && date_diagnosed && date_diagnosed > start_date
+              @report[age_group][gender][:newly_diagnosed_htn] << id
               @report["All"][maternal_status][:newly_diagnosed_htn] << id
             end
 
