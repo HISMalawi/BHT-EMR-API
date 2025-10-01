@@ -65,7 +65,7 @@ module ArtService
         def map_results(patients:)
 
           patients.each do |p|
-            next if p['age_group'] == 'Unknown'
+            next if p['age_group'] == 'Unknown' || children_age_groups.include?(p['age_group'])
 
             id = p['patient_id']
             diagonised = p["diagonised"]
@@ -79,8 +79,10 @@ module ArtService
             @report[age_group][gender][:tx_curr] << id
             @report["All"][maternal_status][:tx_curr] << id
 
-            @report[age_group][gender][:screened_for_htn] << id
-            @report["All"][maternal_status][:screened_for_htn] << id
+            if systolic && diastolic
+              @report[age_group][gender][:screened_for_htn] << id
+              @report["All"][maternal_status][:screened_for_htn] << id
+            end
 
             if diagonised == 1
               @report[age_group][gender][:ever_diagnosed_htn] << id 
@@ -116,9 +118,9 @@ module ArtService
             SELECT tesd.patient_id,
               disaggregated_age_group(tesd.birthdate, DATE(#{ActiveRecord::Base.connection.quote(end_date)})) age_group,
               LEFT(tesd.gender, 1) AS gender,
-              systolic.value_numeric AS systolic,
-              diastolic.value_numeric AS diastolic,
-              DATE(vitals.encounter_datetime) AS date_screened_for_htn,
+              vitals.systolic,
+              vitals.diastolic,
+              vitals.date_screened_for_htn,
               IF (diagnosed.patient_id IS NOT NULL, 1, 0) AS diagonised,
               DATE(diagnosed.date_diagonised) AS date_diagnosed,
               IF (ms.maternal_status IS NOT NULL, 
@@ -128,20 +130,26 @@ module ArtService
             INNER JOIN temp_patient_outcomes tpo
               ON tpo.patient_id = tesd.patient_id
               AND tpo.pepfar_cum_outcome = 'On antiretrovirals'
-            LEFT JOIN encounter vitals
-              ON vitals.patient_id = tesd.patient_id
-              AND vitals.voided = 0
-              AND vitals.encounter_type = #{encounter_type("VITALS").id}
-              AND DATE(vitals.encounter_datetime) >= #{ActiveRecord::Base.connection.quote(start_date)}
-              AND DATE(vitals.encounter_datetime) <= #{ActiveRecord::Base.connection.quote(end_date)}
-            INNER JOIN obs systolic
-              ON systolic.encounter_id = vitals.encounter_id
-              AND systolic.voided = 0
-              AND systolic.concept_id = #{concept("Systolic blood pressure").id}
-            INNER JOIN obs diastolic
-              ON diastolic.encounter_id = vitals.encounter_id
-              AND diastolic.voided = 0
-              AND diastolic.concept_id = #{concept("Diastolic blood pressure").id}
+            LEFT JOIN (
+              SELECT
+                vitals.patient_id,
+                vitals.encounter_datetime AS date_screened_for_htn,
+                systolic.value_numeric AS systolic,
+                diastolic.value_numeric AS diastolic 
+              FROM encounter vitals
+              INNER JOIN obs systolic
+                ON systolic.encounter_id = vitals.encounter_id
+                AND systolic.voided = 0
+                AND systolic.concept_id = #{concept("Systolic blood pressure").id}
+              INNER JOIN obs diastolic
+                ON diastolic.encounter_id = vitals.encounter_id
+                AND diastolic.voided = 0
+                AND diastolic.concept_id = #{concept("Diastolic blood pressure").id}
+              WHERE vitals.voided = 0
+                AND vitals.encounter_type = #{encounter_type("VITALS").id}
+                AND DATE(vitals.encounter_datetime) >= #{ActiveRecord::Base.connection.quote(start_date)}
+                AND DATE(vitals.encounter_datetime) <= #{ActiveRecord::Base.connection.quote(end_date)}
+            ) vitals ON vitals.patient_id = tesd.patient_id
             LEFT JOIN (
               SELECT p.patient_id, date_diagnosied.value_datetime AS date_diagonised
               FROM patient p
