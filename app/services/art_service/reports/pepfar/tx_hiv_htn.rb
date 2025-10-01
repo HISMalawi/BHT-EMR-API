@@ -72,6 +72,7 @@ module ArtService
             date_diagnosed = p["date_diagnosed"]
             systolic = p["systolic"]
             diastolic = p["diastolic"]
+            had_previous_high_bp = p["had_previous_high_bp"]
             maternal_status = p["maternal_status"]
             gender = p["gender"]
             age_group = p["age_group"]
@@ -85,7 +86,7 @@ module ArtService
             end
 
             if diagonised == 1
-              @report[age_group][gender][:ever_diagnosed_htn] << id 
+              @report[age_group][gender][:ever_diagnosed_htn] << id
               @report['All'][maternal_status][:ever_diagnosed_htn] << id
             end
 
@@ -96,8 +97,8 @@ module ArtService
 
             next unless systolic && diastolic
 
-            if (diagonised == 1) && (systolic < SYSTOLIC_THRESHOLD && diastolic < DIASTOLIC_THRESHOLD)
-              @report[age_group][gender][:controlled_htn] << id 
+            if (diagonised == 1) && (systolic < SYSTOLIC_THRESHOLD && diastolic < DIASTOLIC_THRESHOLD) && (had_previous_high_bp == 1)
+              @report[age_group][gender][:controlled_htn] << id
               @report["All"][maternal_status][:controlled_htn] << id
             end
           end
@@ -123,8 +124,9 @@ module ArtService
               vitals.date_screened_for_htn,
               IF (diagnosed.patient_id IS NOT NULL, 1, 0) AS diagonised,
               DATE(diagnosed.date_diagonised) AS date_diagnosed,
-              IF (ms.maternal_status IS NOT NULL, 
-                ms.maternal_status, 
+              IF (previous_high_bp.patient_id IS NOT NULL, 1, 0) AS had_previous_high_bp,
+              IF (ms.maternal_status IS NOT NULL,
+                ms.maternal_status,
                 IF (tesd.gender = 'M', 'Male', 'FNP')) AS maternal_status
             FROM temp_earliest_start_date tesd
             INNER JOIN temp_patient_outcomes tpo
@@ -135,7 +137,7 @@ module ArtService
                 vitals.patient_id,
                 vitals.encounter_datetime AS date_screened_for_htn,
                 systolic.value_numeric AS systolic,
-                diastolic.value_numeric AS diastolic 
+                diastolic.value_numeric AS diastolic
               FROM encounter vitals
               INNER JOIN obs systolic
                 ON systolic.encounter_id = vitals.encounter_id
@@ -161,6 +163,18 @@ module ArtService
                 AND date_diagnosied.voided = 0
                 AND date_diagnosied.concept_id = #{concept("Hypertension diagnosis date").id}
             ) diagnosed ON diagnosed.patient_id = tesd.patient_id
+            LEFT JOIN (
+              SELECT DISTINCT e.patient_id
+              FROM encounter e
+              INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0
+              WHERE e.voided = 0
+                AND e.encounter_type = #{encounter_type("VITALS").id}
+                AND DATE(e.encounter_datetime) < #{ActiveRecord::Base.connection.quote(start_date)}
+                AND ((o.concept_id = #{concept("Systolic blood pressure").id}
+                AND o.value_numeric >= #{SYSTOLIC_THRESHOLD})
+                OR (o.concept_id = #{concept("Diastolic blood pressure").id}
+                AND o.value_numeric >= #{DIASTOLIC_THRESHOLD}))
+            ) previous_high_bp ON previous_high_bp.patient_id = tesd.patient_id
             LEFT JOIN temp_maternal_status ms ON ms.patient_id = tesd.patient_id
             GROUP BY tesd.patient_id
           SQL
