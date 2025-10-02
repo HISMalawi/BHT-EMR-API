@@ -51,17 +51,6 @@ module ArtService
           end
           process_aggreggation_rows
         end
-
-        # [
-        #   {
-        #     "patient_id": 1256,
-        #     "systolic": 160.0,
-        #     "diastolic": 100.0,
-        #     "date_screened_for_htn": "2024-12-05",
-        #     "diagnosed": 1,
-        #     "date_diagnosed": "2024-12-04"
-        #   }
-        # ]
         def map_results(patients:)
 
           patients.each do |p|
@@ -135,9 +124,9 @@ module ArtService
             LEFT JOIN (
               SELECT
                 vitals.patient_id,
-                vitals.encounter_datetime AS date_screened_for_htn,
-                systolic.value_numeric AS systolic,
-                diastolic.value_numeric AS diastolic
+                MAX(vitals.encounter_datetime) AS date_screened_for_htn,
+                CAST(SUBSTRING_INDEX(GROUP_CONCAT(systolic.value_numeric ORDER BY vitals.encounter_datetime DESC), ',', 1) AS DECIMAL(10,2)) AS systolic,
+                CAST(SUBSTRING_INDEX(GROUP_CONCAT(diastolic.value_numeric ORDER BY vitals.encounter_datetime DESC), ',', 1) AS DECIMAL(10,2)) AS diastolic
               FROM encounter vitals
               INNER JOIN obs systolic
                 ON systolic.encounter_id = vitals.encounter_id
@@ -151,6 +140,7 @@ module ArtService
                 AND vitals.encounter_type = #{encounter_type("VITALS").id}
                 AND DATE(vitals.encounter_datetime) >= #{ActiveRecord::Base.connection.quote(start_date)}
                 AND DATE(vitals.encounter_datetime) <= #{ActiveRecord::Base.connection.quote(end_date)}
+              GROUP BY vitals.patient_id
             ) vitals ON vitals.patient_id = tesd.patient_id
             LEFT JOIN (
               SELECT p.patient_id, date_diagnosied.value_datetime AS date_diagonised
@@ -169,7 +159,7 @@ module ArtService
               INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0
               WHERE e.voided = 0
                 AND e.encounter_type = #{encounter_type("VITALS").id}
-                AND DATE(e.encounter_datetime) < #{ActiveRecord::Base.connection.quote(start_date)}
+                AND DATE(e.encounter_datetime) <= #{ActiveRecord::Base.connection.quote(end_date)}
                 AND ((o.concept_id = #{concept("Systolic blood pressure").id}
                 AND o.value_numeric >= #{SYSTOLIC_THRESHOLD})
                 OR (o.concept_id = #{concept("Diastolic blood pressure").id}
