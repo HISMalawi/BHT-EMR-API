@@ -514,6 +514,9 @@ Rails.application.routes.draw do
   delete '/api/v1/eir/session_schedule', to: 'api/v1/session_schedule#destroy'
   put '/api/v1/eir/session_schedule/:id', to: 'api/v1/session_schedule#update'
 
+  #htc
+  get '/api/v1/hts/reports', to: 'api/v1/hts_reports#general_reports'
+
 
   # facility
   namespace :api do
@@ -531,4 +534,7 @@ Rails.application.routes.draw do
       end
     end
   end
+
+
+  
 end

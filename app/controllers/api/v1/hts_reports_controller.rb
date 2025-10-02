@@ -2,11 +2,11 @@
 
 module Api
   module V1
-    class HtsReportsController < ApplicationController
-      before_action :validate_params
+    class HtsReportsController < ApplicationController  
+      before_action :validate_params, only: [:index]
       def index
         report = service.generate_report(name: @name,
-                                         type: @name,
+        type: @name,
                                          start_date: @start_date,
                                          end_date: @end_date,
                                          quarter: @quarter,
@@ -18,11 +18,15 @@ module Api
           render status: :no_content
         end
       end
+      def general_reports 
+        
+      end
 
       def daily_stats
         render json: HtsService::Dashboard.daily_statistics(params[:start_date], params[:end_date])
       end
 
+    
       private
 
       def validate_params
@@ -45,6 +49,8 @@ module Api
       def service
         ReportService.new(program_id: 18, overwrite_mode: false)
       end
+
+   
     end
   end
 end
