@@ -71,7 +71,7 @@ module ArtService
         '14A' => [984, 982],
         '14P' => [736, 982],
         '15A' => [969, 982],
-        '15P' => [1044, 982],
+        '15P' => [1339],
         '16A' => [969, 954],
         '16P' => [1044, 1043],
         '17A' => [969, 11],
@@ -103,20 +103,20 @@ module ArtService
         return [] if drugs.nil?
 
         d_orders = DrugOrder.select('orders.patient_id AS patient_id, MAX(orders.start_date) AS prescription_date')
-                 .joins(:order)
-                 .joins("LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = orders.patient_id")
-                 .where(quantity: 1..Float::INFINITY, drug_inventory_id: drugs)
-                 .where(occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a',
-                                          include_clause: false).to_s)
-                 .merge(treatment_orders)
-                 .group('orders.patient_id')
+                            .joins(:order)
+                            .joins("LEFT JOIN (#{current_occupation_query}) AS a ON a.person_id = orders.patient_id")
+                            .where(quantity: 1..Float::INFINITY, drug_inventory_id: drugs)
+                            .where(occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a',
+                                                     include_clause: false).to_s)
+                            .merge(treatment_orders)
+                            .group('orders.patient_id')
         d_orders = d_orders.joins(dsd_query(dsd: @dsd, model: 'orders')) if @dsd
         d_orders
       end
 
       # Returns all orders in treatment encounter of HIV program
       def treatment_orders
-        o = Order.joins(:encounter)
+        Order.joins(:encounter)
              .where(start_date: start_date..end_date)
              .merge(treatment_encounter)
              .or(Order.joins(:encounter)
