@@ -219,11 +219,27 @@ module ArtService
         tb_status:,
         height:,
         weight:,
-        bmi:
+        bmi:,
+        systolic_blood_pressure:,
+        diastolic_blood_pressure:
       }
     end
 
     private
+
+    def systolic_blood_pressure
+      Observation.where(concept: concept('Systolic blood pressure'), person: patient.person)
+                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                 .last
+                 &.value_numeric
+    end
+
+    def diastolic_blood_pressure
+      Observation.where(concept: concept('Diastolic blood pressure'), person: patient.person)
+                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                 .last
+                 &.value_numeric
+    end
 
     def viral_load_tests(sql_params = '=')
       viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)

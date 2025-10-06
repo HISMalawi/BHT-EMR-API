@@ -6,6 +6,7 @@ require 'user_service'
 class ApplicationController < ActionController::API
   before_action :check_location
   before_action :authenticate
+  before_action :check_client_version
 
   protected
 
@@ -15,9 +16,73 @@ class ApplicationController < ActionController::API
   CURRENT_LOCATION_PROPERTY = 'current_health_center_id'
   DEFAULT_PAGE_SIZE = 10
 
+  # Map of clients to their allowed versions
+  CLIENT_VERSION_CONFIGURATION = {
+    'EMASTERCARD' => 'v2025.Q3.R2',
+    'POC' => 'v2025.Q3.R2'
+  }
+
   # Required by audited gem
   def current_user
     User.current
+  end
+
+  def check_client_version
+    if params[:no_client]
+      return true
+    end
+
+    client = request.headers['Client']
+    client_version = request.headers['Client-Version']
+
+    unless client
+      render json: { errors: ['Unrecognized API Client'] }, status: :bad_request
+      return false
+    end
+
+    unless client_version
+      render json: { errors: ['Unknown API Client Version'] }, status: :bad_request
+      return false
+    end
+    
+    if CLIENT_VERSION_CONFIGURATION.key?(client)
+      required_version = CLIENT_VERSION_CONFIGURATION[client]
+      if !validate_frontend_versions(client_version, required_version)
+        render json: { errors: ["Minimum version required is #{required_version}"], required_version: required_version }, status: :upgrade_required
+        return false
+      end
+    end
+    true
+  end
+  
+  def validate_frontend_versions(active, target)
+    to_num = ->(str) { str.gsub(/\D/, '').to_i }
+
+    active_version_parts = active.split(".")
+    target_version_parts = target.split(".")
+    
+
+    active_version_year =  to_num.call(active_version_parts[0])
+    active_version_quarter = to_num.call(active_version_parts[1])
+    active_version_revision = to_num.call(active_version_parts[2])
+
+    target_version_year = to_num.call(target_version_parts[0])
+    target_version_quarter = to_num.call(target_version_parts[1])
+    target_version_revision = to_num.call(target_version_parts[2])
+
+    if active_version_year < target_version_year
+      return false
+    end    
+    
+    if active_version_quarter < target_version_quarter
+      return false
+    end
+
+    if active_version_revision < target_version_revision
+      return false
+    end
+
+    true
   end
 
   def authenticate

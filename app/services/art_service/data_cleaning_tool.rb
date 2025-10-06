@@ -22,7 +22,8 @@ module ArtService
       'MULTIPLE OPEN STATES' => 'multiple_open_states',
       'ACTIVE CLIENTS WITH ADVERSE OUTCOMES' => 'active_clients_with_adverse_outcomes',
       'ART START DATE BEFORE DATE OF BIRTH' => 'art_start_date_before_date_of_birth',
-      'ON ANTITRITRALVIRALS CLIENTS WITHOUT HIV PROGRAM' => 'on_antritralvirals_clients_without_hiv_program'
+      'DISPENSED IMPLAUSIBLE AMOUNTS' => 'dispensed_implausible_amounts',
+      'ON ANTIRETROVIRALS CLIENTS WITHOUT HIV PROGRAM' => 'on_antiretrovirals_clients_without_hiv_program'
     }.freeze
 
     def initialize(start_date:, end_date:, tool_name:)
@@ -37,7 +38,50 @@ module ArtService
       "#{e.class}: #{e.message}"
     end
 
-    def on_antritralvirals_clients_without_hiv_program
+    def dispensed_implausible_amounts
+      ActiveRecord::Base.connection.select_all <<~SQL
+        SELECT
+          o.patient_id,
+          p.gender,
+          p.birthdate,
+          o.start_date,
+          amounts.value_numeric amount_dispensed,
+          i.identifier arv_number,
+          patient_current_regimen(o.patient_id, o.start_date) regimen,
+          e.encounter_datetime date_dispensed,
+          app.obs_datetime next_appointment,
+          CONCAT(pn.given_name, ' ', pn.family_name) dispensing_user
+        FROM orders o
+        INNER JOIN encounter e USING(encounter_id)
+        INNER JOIN drug_order d ON o.order_id = d.order_id
+          AND DATEDIFF(o.start_date, o.auto_expire_date) <= 180 -- 6 Months#{' '}
+          AND o.voided = 0
+        INNER JOIN (
+          SELECT SUM(value_numeric) value_numeric, order_id#{' '}
+          FROM obs
+          WHERE concept_id = #{concept('Amount Dispensed').concept_id}
+            AND obs.voided = 0
+          GROUP BY order_id
+        ) amounts ON amounts.order_id = o.order_id
+          AND amounts.value_numeric % 30 != 0 -- not divisible by 30
+        INNER JOIN person_name pn ON pn.person_id = o.patient_id
+        INNER JOIN person p ON p.person_id = o.patient_id#{' '}
+        LEFT JOIN patient_identifier i ON i.patient_id = o.patient_id
+          AND i.identifier_type = #{indetifier_type}#{' '}
+          AND i.voided = 0
+        LEFT JOIN obs app ON app.person_id = o.patient_id
+          AND app.concept_id = #{concept('Appointment date').concept_id}
+          AND app.voided = 0
+          AND app.obs_datetime > o.start_date -- Latest Appointment date after dispensation
+        WHERE d.drug_inventory_id IN(#{arv_drugs.join(',')})
+          AND e.voided = 0
+          AND d.quantity > 0#{' '}
+          AND o.start_date >= DATE(#{ActiveRecord::Base.connection.quote(@start_date)})
+          AND o.start_date <= DATE(#{ActiveRecord::Base.connection.quote(@end_date)})
+      SQL
+    end
+
+    def on_antiretrovirals_clients_without_hiv_program
       ActiveRecord::Base.connection.select_all <<~SQL
         SELECT
           p.patient_id,
@@ -46,27 +90,29 @@ module ArtService
           MIN(ob.value_datetime) AS art_start_date,
           n.given_name,
           n.family_name,
-          i.identifier arv_number
+          i.identifier arv_number,
+          MAX(o.start_date) last_art_dispensation_date
         FROM patient p
-        INNER JOIN person_name n ON n.person_id = p.patient_id 
+        INNER JOIN person_name n ON n.person_id = p.patient_id#{' '}
           AND n.voided = 0
         INNER JOIN person pp USING(person_id)
-        LEFT JOIN obs ob ON ob.person_id = p.patient_id 
+        LEFT JOIN obs ob ON ob.person_id = p.patient_id#{' '}
           AND ob.voided = 0
-          AND ob.concept_id = #{concept('Date antiretrovirals started').concept_id} 
-        LEFT JOIN patient_identifier i ON i.patient_id = p.patient_id 
-          AND i.identifier_type = #{indetifier_type} 
+          AND ob.concept_id = #{concept('Date antiretrovirals started').concept_id}#{' '}
+        LEFT JOIN patient_identifier i ON i.patient_id = p.patient_id#{' '}
+          AND i.identifier_type = #{indetifier_type}#{' '}
           AND i.voided = 0
         INNER JOIN orders o ON o.patient_id = p.patient_id
+          AND o.voided = 0
         INNER JOIN drug_order do ON do.order_id = o.order_id
           AND do.drug_inventory_id IN(#{arv_drugs.join(',')})
           AND do.quantity > 0
           AND o.start_date < #{ActiveRecord::Base.connection.quote(@end_date)}
         AND p.patient_id NOT IN (
-          SELECT patient_id 
-            FROM patient_program 
-            WHERE program_id = #{program.id} 
-            AND voided = 0 
+          SELECT patient_id#{' '}
+            FROM patient_program#{' '}
+            WHERE program_id = #{program.id}#{' '}
+            AND voided = 0#{' '}
             AND start_date <= DATE(#{ActiveRecord::Base.connection.quote(@end_date)})
         )
         GROUP BY p.patient_id
@@ -91,7 +137,7 @@ module ArtService
         WHERE o.concept_id = #{concept('Date antiretrovirals started').concept_id}
         AND o.value_datetime <= pp.birthdate
         GROUP BY p.patient_id;
-        SQL
+      SQL
     end
 
     def active_clients_with_adverse_outcomes
@@ -606,7 +652,7 @@ module ArtService
         patient = Patient.find(patient_id)
         date =  visit_date.to_date
         workflow_engine = ArtService::WorkflowEngine.new(patient:, date:, program:)
-        complete = workflow_engine.next_encounter.blank? ? true : false
+        complete = workflow_engine.next_encounter.blank? || false
 
         next if complete
 

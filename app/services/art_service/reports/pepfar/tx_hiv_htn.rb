@@ -66,6 +66,8 @@ module ArtService
             gender = p["gender"]
             age_group = p["age_group"]
 
+            next if children_age_groups.include?(age_group)
+
             @report[age_group][gender][:tx_curr] << id
             @report["All"][maternal_status][:tx_curr] << id
 

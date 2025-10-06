@@ -14,11 +14,26 @@ module ArtService
         pills_brought: get_pills_brought(patient.patient_id, date),
         adherence: get_adherence(patient.patient_id, date),
         pills_given: get_pills_gave(patient.patient_id, date),
-        side_effects: get_side_effects(patient.patient_id, date)
+        side_effects: get_side_effects(patient.patient_id, date),
+        vitals: get_patient_vitals(patient.patient_id, date)
       }
     end
 
     private
+
+    def get_patient_vitals(patient_id, visit_date)
+      concepts = ['Weight (kg)', 'Height (cm)', 'BMI', 'Systolic blood pressure', 'Diastolic blood pressure', 'Temperature']
+
+      vitals = Observation.where(person_id: patient_id,
+                                concept_id: ConceptName.where(name: concepts).select(:concept_id),
+                                obs_datetime: visit_date.to_date...visit_date.to_date + 1.day)
+      vitals.map do |ob|
+        {
+          name: ob&.concept&.concept_names&.first&.name,
+          value: ob&.value_numeric
+        }  
+      end
+    end
 
     def get_pills_brought(patient_id, visit_date)
       concpet = ConceptName.find_by_name('AMOUNT OF DRUG BROUGHT TO CLINIC')
