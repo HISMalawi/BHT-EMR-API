@@ -117,7 +117,7 @@ module ArtService
       # Returns all orders in treatment encounter of HIV program
       def treatment_orders
         Order.joins(:encounter)
-             .where(start_date: start_date..end_date)
+             .where(start_date: (start_date - 1.day)..(end_date + 1.day))
              .merge(treatment_encounter)
              .or(Order.joins(:encounter)
                       .where(auto_expire_date: start_date..end_date)
