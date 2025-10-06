@@ -304,6 +304,8 @@ module AncService
       encounter_date = orders&.first.encounter.encounter_datetime.strftime("%d/%b/%Y") if orders.present?
       orders.each do |o|
         drug_order = o.drug_order
+        next unless drug_order
+
         struct = drug_order.dosage_struct
         @drugs[encounter_date] ||= {}
         @drugs[encounter_date][struct[:drug_name]] = drug_order&.quantity
@@ -378,12 +380,12 @@ module AncService
           main_drugs = %w[Fefol TD SP]
 
           med = encounters[element]["UPDATE OUTCOME"]["OUTCOME"].humanize + "; " rescue ""
-          oth = @drugs[element].map { |d, v|
+          oth = @other_drugs[element].map { |d, v|
 
             next if main_drugs.include?(d)
             "#{d}: #{(v.to_s.match(/\.[1-9]/) ? v : v.to_i)}"
 
-          }.join("; ") if @drugs[element].length > 0 rescue ""
+          }.join("; ") if @other_drugs[element].length > 0 rescue ""
 
           med = paragraphate(med.to_s + oth.to_s, 17, 5)
           visit["medication"] = med

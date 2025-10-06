@@ -85,7 +85,8 @@ module ArtService
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT i.identifier arv_number, p.birthdate,
                  p.gender, n.given_name, n.family_name, p.person_id person_id,
-                 outcomes.moh_cum_outcome AS outcome, tesd.earliest_start_date art_start_date
+                 outcomes.moh_cum_outcome AS outcome, tesd.earliest_start_date art_start_date,
+                 DATE(tb_start.obs_datetime) tb_observation_date
           FROM person p
           INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
           INNER JOIN temp_patient_outcomes AS outcomes
@@ -94,6 +95,13 @@ module ArtService
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
           AND i.voided = 0 AND i.identifier_type = 4
           LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
+          LEFT JOIN obs tb_start ON tb_start.person_id = p.person_id
+            AND tb_start.concept_id = (
+              SELECT concept_id 
+              FROM concept_name 
+              WHERE name = 'TB status' 
+              LIMIT 1
+            )
           WHERE c.reporting_report_design_resource_id = #{id}
           GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
         SQL

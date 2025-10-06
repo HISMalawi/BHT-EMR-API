@@ -219,11 +219,27 @@ module ArtService
         tb_status:,
         height:,
         weight:,
-        bmi:
+        bmi:,
+        systolic_blood_pressure:,
+        diastolic_blood_pressure:
       }
     end
 
     private
+
+    def systolic_blood_pressure
+      Observation.where(concept: concept('Systolic blood pressure'), person: patient.person)
+                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                 .last
+                 &.value_numeric
+    end
+
+    def diastolic_blood_pressure
+      Observation.where(concept: concept('Diastolic blood pressure'), person: patient.person)
+                 .where('obs_datetime BETWEEN ? AND ?', *TimeUtils.day_bounds(date))
+                 .last
+                 &.value_numeric
+    end
 
     def viral_load_tests(sql_params = '=')
       viral_load_concept = ConceptName.where(name: 'HIV Viral Load').select(:concept_id)
@@ -244,23 +260,15 @@ module ArtService
     end
 
     def format_drug_name(drug)
-      moh_name = drug.alternative_names.first&.short_name
+      short_name = drug.alternative_names.first&.short_name
 
-      if moh_name && %r{^\d*[A-Z]+\s*\d+(\s*/\s*\d*[A-Z]+\s*\d+)*$}i.match(moh_name)
-        return moh_name.gsub(/\s+/, '')
-                       .gsub(/Isoniazid/i, 'INH')
+      return short_name.gsub(/\s+/, '') if short_name.present? && !Drug.arv_drugs.pluck(:drug_id).include?(drug.drug_id)
+
+      if %r{^\d*[A-Z]+\s*\d+(\s*/\s*\d*[A-Z]+\s*\d+)*$}i.match(short_name)
+        return short_name.gsub(/\s+/, '')
       end
 
-      # match = drug.name.match(/^(.+)\s*\(.*$/)
-      # name = match.nil? ? drug.name : match[1]
-      name = drug.name
-      if name.match?('Cotrimoxazole')
-        'CPT'
-      elsif name.match?('INH')
-        'INH'
-      else
-        name
-      end
+      drug.name
     end
   end
 end

@@ -238,12 +238,22 @@ class PatientService
   
     find_drug_orders(patient, last_visit.order.start_date, program_id)
   end
+
+  def dolutegravir
+    Drug.where('LOWER(name) LIKE ?', 'dolutegravir%')
+  end
+
+  def dtg_only_drug_order?(drug_order_query)
+    drug_order_query
+  end
   
   def find_last_visit(patient, date, program_id)
     DrugOrder.joins(order: :encounter).where(
       'orders.start_date <= ? AND orders.patient_id = ? AND quantity > 0 AND encounter.program_id = ?',
       TimeUtils.day_bounds(date)[1], patient.patient_id, program_id
-    ).order('orders.start_date DESC').first
+    ).where.not(drug: dolutegravir)
+    .order('orders.start_date DESC')
+    .first
   end
   
   def find_drug_orders(patient, start_date, program_id)

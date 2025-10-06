@@ -30,10 +30,10 @@ module ArtService
         def vl_maternal_status(patient_list)
           return { FP: [], FBf: [], FNP: [] } if patient_list.blank?
 
-          pregnant = pregnant_women(patient_list).map { |woman| woman['person_id'].to_i }
+          pregnant = maternal_status.pregnant_women(patient_list).map { |woman| woman['patient_id'].to_i }
           return { FP: pregnant, FBf: [], FNP: [] } if (patient_list - pregnant).blank?
 
-          feeding = breast_feeding(patient_list - pregnant).map { |woman| woman['person_id'].to_i }
+          feeding = maternal_status.breast_feeding(patient_list - pregnant).map { |woman| woman['patient_id'].to_i }
           not_pregnant = patient_list - pregnant - feeding
           {
             FP: pregnant,
@@ -191,39 +191,6 @@ module ArtService
 
         # rubocop:disable Metrics/AbcSize
         # rubocop:disable Metrics/MethodLength
-        def pregnant_women(patient_list)
-          ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT o.person_id, o.value_coded
-            FROM obs o
-            LEFT JOIN obs a ON a.person_id = o.person_id AND a.obs_datetime > o.obs_datetime AND a.concept_id IN (#{pregnant_concepts.to_sql}) AND a.voided = 0
-            AND a.obs_datetime >= DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND a.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
-            WHERE a.obs_id is null
-              AND o.obs_datetime >= DATE(#{ActiveRecord::Base.connection.quote(start_date)})
-              AND o.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
-              AND o.voided = 0
-              AND o.concept_id in (#{pregnant_concepts.to_sql})
-              AND o.person_id IN (#{patient_list.join(',')})
-              AND o.value_coded IN (#{yes_concepts.join(',')})
-            GROUP BY o.person_id
-          SQL
-        end
-
-        def breast_feeding(patient_list)
-          ActiveRecord::Base.connection.select_all <<~SQL
-            SELECT o.person_id, o.value_coded
-            FROM obs o
-            LEFT JOIN obs a ON a.person_id = o.person_id AND a.obs_datetime > o.obs_datetime AND a.concept_id IN (#{breast_feeding_concepts.to_sql}) AND a.voided = 0
-            AND a.obs_datetime >= DATE(#{ActiveRecord::Base.connection.quote(start_date)}) AND a.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
-            WHERE a.obs_id is null
-              AND o.obs_datetime >= DATE(#{ActiveRecord::Base.connection.quote(start_date)})
-              AND o.obs_datetime < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
-              AND o.voided = 0
-              AND o.concept_id IN (#{breast_feeding_concepts.to_sql})
-              AND o.person_id IN (#{patient_list.join(',')})
-              AND o.value_coded IN (#{yes_concepts.join(',')})
-            GROUP BY o.person_id
-          SQL
-        end
         # rubocop:enable Metrics/AbcSize
         # rubocop:enable Metrics/MethodLength
 
@@ -406,6 +373,14 @@ module ArtService
         def encounter_types
           @encounter_types ||= EncounterType.where(name: ['HIV CLINIC CONSULTATION', 'HIV STAGING'])
                                             .select(:encounter_type_id)
+        end
+
+        def maternal_status
+          ArtService::Reports::MaternalStatus.new(
+            start_date:,
+            end_date:,
+            occupation:
+          )
         end
       end
       # rubocop:enable Metrics/ClassLength

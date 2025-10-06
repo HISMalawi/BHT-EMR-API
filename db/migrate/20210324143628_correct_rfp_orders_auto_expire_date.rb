@@ -2,6 +2,8 @@
 
 class CorrectRfpOrdersAutoExpireDate < ActiveRecord::Migration[5.2]
   def up
+    return unless Encounter.respond_to?(:program_id)
+
     rifapentine_orders.each do |order|
       next unless order.drug_order.weekly_dose?
 
@@ -13,6 +15,8 @@ class CorrectRfpOrdersAutoExpireDate < ActiveRecord::Migration[5.2]
   end
 
   def down
+    return unless Encounter.respond_to?(:program_id)
+    
     rifapentine_orders.each do |order|
       next unless order.drug_order.weekly_dose?
 
