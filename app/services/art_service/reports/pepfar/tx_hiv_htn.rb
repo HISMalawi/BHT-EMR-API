@@ -86,7 +86,7 @@ module ArtService
 
             next unless systolic && diastolic
 
-            if (diagonised == 1) && (systolic < SYSTOLIC_THRESHOLD && diastolic < DIASTOLIC_THRESHOLD) && (had_previous_high_bp == 1)
+            if (diagonised == 1) && (had_previous_high_bp == 1)
               @report[age_group][gender][:controlled_htn] << id
               @report["All"][maternal_status][:controlled_htn] << id
             end
@@ -154,11 +154,12 @@ module ArtService
                 AND date_diagnosied.concept_id = #{concept("Hypertension diagnosis date").id}
             ) diagnosed ON diagnosed.patient_id = tesd.patient_id
             LEFT JOIN (
-              SELECT DISTINCT e.patient_id
+              SELECT e.patient_id
               FROM encounter e
               INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0
               WHERE e.voided = 0
                 AND e.encounter_type = #{encounter_type("VITALS").id}
+                AND DATE(e.encounter_datetime) >= #{ActiveRecord::Base.connection.quote(start_date)}
                 AND DATE(e.encounter_datetime) <= #{ActiveRecord::Base.connection.quote(end_date)}
                 AND ((o.concept_id = #{concept("Systolic blood pressure").id}
                 AND o.value_numeric >= #{SYSTOLIC_THRESHOLD})
