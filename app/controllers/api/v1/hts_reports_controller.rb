@@ -18,8 +18,8 @@ module Api
           render status: :no_content
         end
       end
-      def general_reports 
-        
+      def general_reports
+       render json: HtsService::GeneralReports.daily_statistics()
       end
 
       def daily_stats
