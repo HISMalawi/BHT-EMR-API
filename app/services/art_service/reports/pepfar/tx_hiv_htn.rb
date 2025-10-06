@@ -61,7 +61,7 @@ module ArtService
             date_diagnosed = p["date_diagnosed"]
             systolic = p["systolic"]
             diastolic = p["diastolic"]
-            had_previous_high_bp = p["had_previous_high_bp"]
+            controlled_htn = p["controlled_htn"]
             maternal_status = p["maternal_status"]
             gender = p["gender"]
             age_group = p["age_group"]
@@ -86,7 +86,7 @@ module ArtService
 
             next unless systolic && diastolic
 
-            if (diagonised == 1) && (had_previous_high_bp == 1)
+            if controlled_htn == 1
               @report[age_group][gender][:controlled_htn] << id
               @report["All"][maternal_status][:controlled_htn] << id
             end
@@ -113,7 +113,7 @@ module ArtService
               vitals.date_screened_for_htn,
               IF (diagnosed.patient_id IS NOT NULL, 1, 0) AS diagonised,
               DATE(diagnosed.date_diagonised) AS date_diagnosed,
-              IF (previous_high_bp.patient_id IS NOT NULL, 1, 0) AS had_previous_high_bp,
+              IF (controlled.patient_id IS NOT NULL, 1, 0) AS controlled_htn,
               IF (ms.maternal_status IS NOT NULL,
                 ms.maternal_status,
                 IF (tesd.gender = 'M', 'Male', 'FNP')) AS maternal_status
@@ -162,10 +162,11 @@ module ArtService
                 AND DATE(e.encounter_datetime) >= #{ActiveRecord::Base.connection.quote(start_date)}
                 AND DATE(e.encounter_datetime) <= #{ActiveRecord::Base.connection.quote(end_date)}
                 AND ((o.concept_id = #{concept("Systolic blood pressure").id}
-                AND o.value_numeric >= #{SYSTOLIC_THRESHOLD})
+                AND o.value_numeric < #{SYSTOLIC_THRESHOLD})
                 OR (o.concept_id = #{concept("Diastolic blood pressure").id}
-                AND o.value_numeric >= #{DIASTOLIC_THRESHOLD}))
-            ) previous_high_bp ON previous_high_bp.patient_id = tesd.patient_id
+                AND o.value_numeric < #{DIASTOLIC_THRESHOLD}))
+            ) controlled ON controlled.patient_id = diagnosed.patient_id
+              AND diagnosed.patient_id IS NOT NULL
             LEFT JOIN temp_maternal_status ms ON ms.patient_id = tesd.patient_id
             GROUP BY tesd.patient_id
           SQL
