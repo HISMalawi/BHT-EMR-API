@@ -42,7 +42,7 @@ module ArtService
             birthdate: demographics.birthdate,
             gender: demographics.gender,
             weight: demographics.weight,
-            drugs: regimen_drugs,
+            drugs: regimen_drugs(prescribed_drugs),
             regimen:
           }
         end
@@ -175,8 +175,8 @@ module ArtService
                    &.value_numeric
       end
 
-      def regimen_drugs
-        @regimen_drugs ||= Drug.where(drug_id: [736, 982]).map do |drug|
+      def regimen_drugs(drug_ids = [736, 982])
+        @regimen_drugs ||= Drug.where(drug_id: drug_ids).map do |drug|
           drug.alternative_names.first&.short_name || drug.name
         end.join(' + ')
       end
