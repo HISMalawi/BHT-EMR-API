@@ -3,6 +3,8 @@
 # model managing extra details for orders
 class OrderExtension < ApplicationRecord
   include Voidable
+  include Stream
+
   self.table_name = :order_extension
   self.primary_key = :order_extension_id
 

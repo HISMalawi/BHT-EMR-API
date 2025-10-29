@@ -18,10 +18,12 @@ module Stream
     end
   rescue StandardError => e
     Rails.logger.error("Error streaming: #{e.message}")
+    raise e
   end
 
-  def lab_result_encounter?
-    encounter_type&.name == 'LAB RESULTS'
+  def lab_encounter?
+    encounter_type&.name == 'LAB ORDERS' || \
+      order.encounter&.type&.name == 'LAB ORDERS'
   rescue StandardError
     false
   end
@@ -39,7 +41,7 @@ module Stream
 
     patient_state_change? || \
       patient_attributes_change? || \
-      lab_result_encounter? || \
+      lab_encounter? || \
       service.visit_complete?
   end
 
@@ -60,6 +62,7 @@ module Stream
     id = patient_id if respond_to?(:patient_id)
     id ||= patient_program.patient_id if respond_to?(:patient_program)
     id ||= person_id if respond_to?(:person_id)
+    id ||= order.patient.patient_id if respond_to?(:order)
     id
   end
 
