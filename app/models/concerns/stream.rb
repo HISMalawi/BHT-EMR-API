@@ -22,8 +22,8 @@ module Stream
   end
 
   def lab_encounter?
-    encounter_type&.name == 'LAB ORDERS' || \
-      order.encounter&.type&.name == 'LAB ORDERS'
+    return true if respond_to?(:encounter_type) && encounter_type&.name == 'LAB ORDERS'
+    return true if respond_to?(:order) && order&.order_type.id == OrderType.find_by_name('Lab').id
   rescue StandardError
     false
   end
@@ -38,7 +38,7 @@ module Stream
 
   def eligible_for_streaming?
     return false unless streaming_enabled?
-
+    debugger
     patient_state_change? || \
       patient_attributes_change? || \
       lab_encounter? || \
