@@ -38,7 +38,6 @@ module Stream
 
   def eligible_for_streaming?
     return false unless streaming_enabled?
-    debugger
     patient_state_change? || \
       patient_attributes_change? || \
       lab_encounter? || \
