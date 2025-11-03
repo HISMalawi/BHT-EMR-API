@@ -74,13 +74,13 @@ module Stream
 
   def get_date
     date = encounter_datetime if respond_to?(:encounter_datetime)
-    date ||= order.start_date if respond_to?(:order)
+    date ||= order.start_date.to_date if respond_to?(:order)
     date ||= obs_datetime if respond_to?(:obs_datetime)
     date ||= date_created if respond_to?(:date_created)
     date ||= Date.today
-    date ||= date.strftime('%Y-%m-%d') if date.blank?
 
-    date
+
+    date.strftime('%Y-%m-%d')
   end
 
   def streaming_enabled?
