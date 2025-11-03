@@ -78,7 +78,9 @@ module Stream
     date ||= obs_datetime if respond_to?(:obs_datetime)
     date ||= date_created if respond_to?(:date_created)
     date ||= Date.today
-    date.strftime('%Y-%m-%d')
+    date ||= date.strftime('%Y-%m-%d') if date.blank?
+
+    date
   end
 
   def streaming_enabled?
