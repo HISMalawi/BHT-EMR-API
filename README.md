@@ -116,10 +116,10 @@ chmod +x bin/setup_production_mode.sh
     - Create the new database specified in the queue section of the database.yml file.
     - Do same for development, production and test environments.
 
-Setup streaming  by running the following command:
+Setup streaming  by running the following command (ON your root directory):
 
 ```bash
-rails streaming:setup
+bash bin/setup_streaming.sh
 ```
 
 Done !! You can now test the streaming by going to `http://localhost:3000/streaming/`
