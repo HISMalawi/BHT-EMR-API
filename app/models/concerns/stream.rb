@@ -74,9 +74,9 @@ module Stream
 
   def get_date
     date = encounter_datetime if respond_to?(:encounter_datetime)
+    date ||= order.start_date if respond_to?(:order)
     date ||= obs_datetime if respond_to?(:obs_datetime)
     date ||= date_created if respond_to?(:date_created)
-    date ||= order.start_date if respond_to?(:order)
     date ||= Date.today
     date.strftime('%Y-%m-%d')
   end
