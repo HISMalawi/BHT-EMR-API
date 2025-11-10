@@ -1,0 +1,12 @@
+[
+  {
+    "key": "TestQuestion",
+    "labels": ["Label One", "Label Two"],
+    "values": ["ONE", "TWO"]
+  },
+  {
+    "key": "SecondQuestion",
+    "labels": ["Alpha"],
+    "values": ["A", ""]
+  }
+]
