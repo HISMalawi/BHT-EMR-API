@@ -86,7 +86,7 @@ class AncService::Reports::VisitsReport
     save_report visits
   end
 
-  def find_report
+  def find_report(**_kwargs)
     current_visit_statistics
 =begin
     /(@start_date..@end_date).each_with_object({}) do |date, parsed_report|

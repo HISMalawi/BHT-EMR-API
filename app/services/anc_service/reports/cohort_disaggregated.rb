@@ -23,7 +23,7 @@ module AncService
         ArtService::Reports::CohortBuilder.new.init_temporary_tables(start_date, end_date, '')
       end
 
-      def find_report
+      def find_report(**_kwargs)
         build_report
       end
 
