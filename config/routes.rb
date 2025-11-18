@@ -439,30 +439,24 @@ Rails.application.routes.draw do
   get '/api/v1/anc/deliveries', to: 'api/v1/anc#deliveries'
   get '/api/v1/anc/essentials', to: 'api/v1/anc#essentials'
 
-  # Neonatal Module Routes
-  # Enrollment endpoints
   post '/api/v1/neonatal/enroll', to: 'api/v1/neonatal#enroll'
   get '/api/v1/neonatal/enrolled/:patient_id', to: 'api/v1/neonatal#enrolled'
   put '/api/v1/neonatal/enrollment/:patient_id', to: 'api/v1/neonatal#update_enrollment'
   post '/api/v1/neonatal/exit', to: 'api/v1/neonatal#exit_program'
 
-  # Workflow endpoints
   get '/api/v1/neonatal/next_encounter/:patient_id', to: 'api/v1/neonatal#next_encounter'
   get '/api/v1/neonatal/remaining_encounters/:patient_id', to: 'api/v1/neonatal#remaining_encounters'
   get '/api/v1/neonatal/workflow_complete/:patient_id', to: 'api/v1/neonatal#workflow_complete'
 
-  # Patient data endpoints
   get '/api/v1/neonatal/patient/:patient_id', to: 'api/v1/neonatal#patient'
   get '/api/v1/neonatal/saved_encounters/:patient_id', to: 'api/v1/neonatal#saved_encounters'
   get '/api/v1/neonatal/labels/:patient_id', to: 'api/v1/neonatal#patient_labels'
 
-  # Patient listing endpoints
   get '/api/v1/neonatal/enrolled_patients', to: 'api/v1/neonatal#enrolled_patients'
   get '/api/v1/neonatal/search', to: 'api/v1/neonatal#search_patients'
   get '/api/v1/neonatal/visits', to: 'api/v1/neonatal#visits'
   get '/api/v1/neonatal/appointments', to: 'api/v1/neonatal#appointments'
 
-  # Statistics endpoints
   get '/api/v1/neonatal/statistics', to: 'api/v1/neonatal#statistics'
   get '/api/v1/neonatal/visit_summary', to: 'api/v1/neonatal#visit_summary'
   get '/api/v1/screened_for_tb', to: 'api/v1/reports#screened_for_tb'

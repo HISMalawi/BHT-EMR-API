@@ -91,18 +91,21 @@ module NeonatalService
     ##
     # Retrieves enrollment data for the patient
     #
-    # @return [Hash] Enrollment information
+    # @return [Hash, nil] Enrollment information or nil if not enrolled or no encounter
     def enrollment_data
-      return {} unless enrolled?
+      return nil unless enrolled?
 
       program = patient_program
       encounter = enrollment_encounter
+
+      # Return nil if there's no enrollment encounter (incomplete enrollment)
+      return nil unless encounter
 
       {
         patient_program_id: program.patient_program_id,
         date_enrolled: program.date_enrolled,
         location_id: program.location_id,
-        enrollment_encounter_id: encounter&.encounter_id,
+        enrollment_encounter_id: encounter.encounter_id,
         enrollment_observations: enrollment_observations(encounter)
       }
     end

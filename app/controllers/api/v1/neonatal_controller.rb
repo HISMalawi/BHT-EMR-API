@@ -133,7 +133,7 @@ module Api
         summary = patients_engine.patient(patient_id, date)
 
         render json: summary
-      end
+      end 
 
       def saved_encounters
         patient_id = params.require(:patient_id)
