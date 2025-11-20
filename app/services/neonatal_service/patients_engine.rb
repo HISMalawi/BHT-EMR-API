@@ -133,18 +133,23 @@ module NeonatalService
       end
     end
 
+    STAT_STATUSES = {
+      enrolled: 'In patient',
+      admitted: 'Admitted',
+      discharged: 'Discharged',
+      critical: 'Critical'
+    }.freeze
+
     ##
-    # Gets patient statistics
-    #
+    # Gets patient statistics with drill down data for landing page cards
     # @param date [Date] Date for statistics
     # @return [Hash] Statistics hash
     def statistics(date = Date.today)
       {
-        total_enrolled: total_enrolled_patients(date),
-        enrolled_today: patients_enrolled_on(date).count,
-        visited_today: patients_visited_on(date).count,
-        scheduled_appointments: patients_with_appointments_on(date).count,
-        active_patients: active_patients(date).count
+        enrolled: build_statistic_from_programs(patients_enrolled_on(date), date, STAT_STATUSES[:enrolled]),
+        admitted: build_statistic(patients_admitted_on(date), date, STAT_STATUSES[:admitted]),
+        discharged: build_statistic_from_programs(patients_discharged_on(date), date, STAT_STATUSES[:discharged]),
+        critical: build_statistic(critical_patients(date), date, STAT_STATUSES[:critical])
       }
     end
 
@@ -168,6 +173,20 @@ module NeonatalService
       PatientProgram.joins(:patient)
                     .where(program_id: @program.program_id)
                     .where('DATE(date_enrolled) = ?', date.to_date)
+                    .includes(patient: { person: :names })
+    end
+
+    ##
+    # Gets patients discharged on specific date
+    #
+    # @param date [Date]
+    # @return [ActiveRecord::Relation]
+    def patients_discharged_on(date)
+      PatientProgram.joins(:patient)
+                    .where(program_id: @program.program_id)
+                    .where.not(date_completed: nil)
+                    .where('DATE(date_completed) = ?', date.to_date)
+                    .includes(patient: { person: :names })
     end
 
     ##
@@ -281,6 +300,108 @@ module NeonatalService
     # @return [PatientSummary]
     def patient_summary(patient, date)
       NeonatalService::PatientSummary.new(patient, date, @program)
+    end
+
+    ##
+    # Fetches neonates with neonatal triage encounters on a date
+    #
+    # @param date [Date]
+    # @return [Array<Patient>]
+    def patients_admitted_on(date)
+      triage_type = EncounterType.find_by(name: 'NEONATAL TRIAGE')
+      return [] unless triage_type
+
+      Encounter.where(program_id: @program.program_id, encounter_type: triage_type.encounter_type_id, voided: 0)
+               .where('DATE(encounter_datetime) = ?', date.to_date)
+               .includes(:patient)
+               .map(&:patient)
+               .compact
+               .uniq { |patient| patient.patient_id }
+    end
+
+    ##
+    # Fetches neonates with emergency triage priority for a date
+    #
+    # @param date [Date]
+    # @return [Array<Patient>]
+    def critical_patients(date)
+      triage_concept = concept('Triage priority')
+      emergency_value = concept('Emergency')
+      return [] unless triage_concept && emergency_value
+
+      Observation.joins(:encounter)
+                 .where(encounter: { program_id: @program.program_id, voided: 0 })
+                 .where(voided: 0)
+                 .where(concept_id: triage_concept.concept_id, value_coded: emergency_value.concept_id)
+                 .where('DATE(obs_datetime) = ?', date.to_date)
+                 .includes(encounter: :patient)
+                 .map { |obs| obs.encounter.patient }
+                 .compact
+                 .uniq { |patient| patient.patient_id }
+    end
+
+    def build_statistic_from_programs(program_relation, date, status)
+      patients = program_relation.map(&:patient).compact
+      build_statistic(patients, date, status)
+    end
+
+    def build_statistic(patients, date, status)
+      unique_patients = patients.compact.uniq { |patient| patient.patient_id }
+      {
+        count: unique_patients.length,
+        neonates: unique_patients.map { |patient| format_neonate(patient, status, date) }
+      }
+    end
+
+    def format_neonate(patient, status, date)
+      person = patient.person
+      {
+        id: patient.patient_id,
+        name: formatted_name(person),
+        mrn: patient_identifier_value(patient),
+        age: format_age(person, date),
+        weight: format_weight(patient, date),
+        status: status
+      }
+    end
+
+    def formatted_name(person)
+      return 'Unknown Neonate' unless person
+
+      name = person.names.first
+      parts = [name&.given_name, name&.middle_name, name&.family_name].compact.map(&:strip).reject(&:blank?)
+      value = parts.join(' ')
+      value.present? ? value : 'Unknown Neonate'
+    end
+
+    def patient_identifier_value(patient)
+      identifier = patient.national_id
+      return identifier if identifier.present?
+
+      patient.patient_identifiers.order(:date_created).last&.identifier || 'N/A'
+    end
+
+    def format_age(person, date)
+      return 'Unknown' unless person&.birthdate
+
+      reference_date = date.to_date
+      age_days = (reference_date - person.birthdate).to_i
+      return 'Today' if age_days.zero?
+      return "#{age_days} day#{'s' unless age_days == 1} old" if age_days.positive? && age_days < 30
+
+      weeks = (age_days / 7.0).floor
+      if weeks.positive? && weeks < 4
+        "#{weeks} week#{'s' unless weeks == 1} old"
+      else
+        "#{age_days} day#{'s' unless age_days == 1} old"
+      end
+    end
+
+    def format_weight(patient, date)
+      value = patient.weight(today: date)
+      return nil unless value
+
+      format('%.2f Kg', value)
     end
 
     ##
