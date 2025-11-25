@@ -149,8 +149,97 @@ module NeonatalService
         enrolled: build_statistic_from_programs(patients_enrolled_on(date), date, STAT_STATUSES[:enrolled]),
         admitted: build_statistic(patients_admitted_on(date), date, STAT_STATUSES[:admitted]),
         discharged: build_statistic_from_programs(patients_discharged_on(date), date, STAT_STATUSES[:discharged]),
-        critical: build_statistic(critical_patients(date), date, STAT_STATUSES[:critical])
+        critical: build_statistic(critical_patients(date), date, STAT_STATUSES[:critical]),
+        recent_neonates: get_recent_neonates(date)
       }
+    end
+
+    ##
+    # Gets recent neonates based on recent encounters
+    # Returns neonates (babies ≤ 28 days old enrolled in neonatal program) with encounters in the last 7 days
+    #
+    # @param date [Date] Reference date (defaults to today)
+    # @param limit [Integer] Maximum number of neonates to return (default: 10)
+    # @return [Array<Hash>] Array of formatted neonate data
+    def get_recent_neonates(date = Date.today, limit = 10)
+      start_date = date.to_date - 7.days
+      end_date = date.to_date
+
+      # Get unique neonates (babies ≤ 28 days old) with NEONATAL encounters in the last 7 days
+      # Filter by:
+      # 1. Enrolled in neonatal program
+      # 2. Age ≤ 28 days (neonatal period) - CRITICAL to exclude mothers
+      # 3. Has encounters in the last 7 days
+      recent_patients = Encounter
+        .select('patient.*, person.birthdate, MAX(encounter.encounter_datetime) as last_encounter_time')
+        .joins(:patient)
+        .joins('INNER JOIN person ON person.person_id = patient.patient_id')
+        .joins("INNER JOIN patient_program ON patient_program.patient_id = patient.patient_id
+                AND patient_program.program_id = #{@program.program_id}
+                AND patient_program.voided = 0
+                AND (patient_program.date_completed IS NULL OR patient_program.date_completed >= '#{date.to_date}')")
+        .where('encounter.program_id = ?', @program.program_id)
+        .where('encounter.voided = ?', 0)
+        .where('DATE(encounter.encounter_datetime) BETWEEN ? AND ?', start_date, end_date)
+        .where('person.birthdate IS NOT NULL')
+        .where('DATEDIFF(?, person.birthdate) <= ?', date.to_date, 28)
+        .group('patient.patient_id')
+        .order('last_encounter_time DESC')
+        .limit(limit)
+        .map(&:patient)
+        .compact
+
+      # Format neonates with appropriate status
+      recent_patients.map do |patient|
+        status = determine_patient_status(patient, date)
+        format_neonate(patient, status, date)
+      end
+    end
+
+    ##
+    # Determines the current status of a patient
+    #
+    # @param patient [Patient]
+    # @param date [Date]
+    # @return [String] Patient status
+    def determine_patient_status(patient, date)
+      # Check if patient is discharged
+      program = PatientProgram.find_by(
+        patient_id: patient.patient_id,
+        program_id: @program.program_id
+      )
+
+      return STAT_STATUSES[:discharged] if program && program.date_completed && program.date_completed <= date
+
+      # Check if patient has critical/emergency triage
+      triage_concept = concept('Triage priority')
+      emergency_value = concept('Emergency')
+
+      if triage_concept && emergency_value
+        has_emergency = Observation
+          .joins(:encounter)
+          .where(encounter: { patient_id: patient.patient_id, program_id: @program.program_id, voided: 0 })
+          .where(voided: 0, concept_id: triage_concept.concept_id, value_coded: emergency_value.concept_id)
+          .where('DATE(obs_datetime) >= ?', date - 1.day)
+          .exists?
+
+        return STAT_STATUSES[:critical] if has_emergency
+      end
+
+      # Check if patient was admitted today (has triage encounter)
+      triage_type = EncounterType.find_by(name: 'NEONATAL TRIAGE')
+      if triage_type
+        has_triage_today = Encounter
+          .where(patient_id: patient.patient_id, program_id: @program.program_id)
+          .where(encounter_type: triage_type.encounter_type_id, voided: 0)
+          .where('DATE(encounter_datetime) = ?', date)
+          .exists?
+
+        return STAT_STATUSES[:admitted] if has_triage_today
+      end
+
+      # Default to enrolled/in patient
+      STAT_STATUSES[:enrolled]
     end
 
     ##

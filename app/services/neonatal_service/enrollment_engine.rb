@@ -193,7 +193,7 @@ module NeonatalService
     # @return [Encounter]
     def create_enrollment_encounter(enrollment_data)
       encounter = Encounter.create!(
-        encounter_type: encounter_type('NEONATAL ENROLLMENT'),
+        encounter_type: encounter_type('NEON ATAL ENROLLMENT'),
         patient_id: @patient.patient_id,
         program_id: @program.program_id,
         encounter_datetime: enrollment_data[:encounter_datetime] || Time.now,
