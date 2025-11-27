@@ -226,16 +226,25 @@ module NeonatalService
         return STAT_STATUSES[:critical] if has_emergency
       end
 
-      # Check if patient was admitted today (has triage encounter)
-      triage_type = EncounterType.find_by(name: 'NEONATAL TRIAGE')
-      if triage_type
-        has_triage_today = Encounter
+      admission_encounter_names = [
+        'NEONATAL SIGNS & SYMPTOMS',
+        'NEONATAL REVIEW OF SYSTEMS',
+        'PHYSICAL EXAMINATION BABY',
+        'NEONATAL GENERAL EXAMINATION',
+        'VITALS',
+        'NEONATAL VITALS',
+        'NEONATAL SYSTEMIC EXAMINATION'
+      ]
+
+      encounter_types = EncounterType.where(name: admission_encounter_names)
+      if encounter_types.any?
+        has_admission_encounter_today = Encounter
           .where(patient_id: patient.patient_id, program_id: @program.program_id)
-          .where(encounter_type: triage_type.encounter_type_id, voided: 0)
+          .where(encounter_type: encounter_types.pluck(:encounter_type_id), voided: 0)
           .where('DATE(encounter_datetime) = ?', date)
           .exists?
 
-        return STAT_STATUSES[:admitted] if has_triage_today
+        return STAT_STATUSES[:admitted] if has_admission_encounter_today
       end
 
       # Default to enrolled/in patient
@@ -392,15 +401,28 @@ module NeonatalService
     end
 
     ##
-    # Fetches neonates with neonatal triage encounters on a date
+    # Fetches neonates who went through at least one encounter of the admission workflow on a date
+    # Admission workflow encounters: NEONATAL SIGNS & SYMPTOMS, NEONATAL REVIEW OF SYSTEMS,
+    # PHYSICAL EXAMINATION BABY, NEONATAL GENERAL EXAMINATION, VITALS, NEONATAL VITALS,
+    # NEONATAL SYSTEMIC EXAMINATION
     #
     # @param date [Date]
     # @return [Array<Patient>]
     def patients_admitted_on(date)
-      triage_type = EncounterType.find_by(name: 'NEONATAL TRIAGE')
-      return [] unless triage_type
+      admission_encounter_names = [
+        'NEONATAL SIGNS & SYMPTOMS',
+        'NEONATAL REVIEW OF SYSTEMS',
+        'PHYSICAL EXAMINATION BABY',
+        'NEONATAL GENERAL EXAMINATION',
+        'VITALS',
+        'NEONATAL VITALS',
+        'NEONATAL SYSTEMIC EXAMINATION'
+      ]
 
-      Encounter.where(program_id: @program.program_id, encounter_type: triage_type.encounter_type_id, voided: 0)
+      encounter_types = EncounterType.where(name: admission_encounter_names)
+      return [] if encounter_types.empty?
+
+      Encounter.where(program_id: @program.program_id, encounter_type: encounter_types.pluck(:encounter_type_id), voided: 0)
                .where('DATE(encounter_datetime) = ?', date.to_date)
                .includes(:patient)
                .map(&:patient)

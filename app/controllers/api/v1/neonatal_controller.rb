@@ -79,53 +79,6 @@ module Api
         render json: { error: e.message }, status: :bad_request
       end
 
-      def next_encounter
-        patient_id = params.require(:patient_id)
-        patient = Patient.find(patient_id)
-        date = parse_date(params[:date])
-
-        encounter_type = workflow_engine(patient, date).next_encounter
-
-        if encounter_type
-          render json: {
-            encounter_type_id: encounter_type.encounter_type_id,
-            name: encounter_type.name,
-            description: encounter_type.description
-          }
-        else
-          render json: { message: 'No more encounters in workflow' }, status: :no_content
-        end
-      end
-
-      def remaining_encounters
-        patient_id = params.require(:patient_id)
-        patient = Patient.find(patient_id)
-        date = parse_date(params[:date])
-
-        encounters = workflow_engine(patient, date).remaining_encounters
-
-        render json: encounters.map { |e|
-          {
-            encounter_type_id: e.encounter_type_id,
-            name: e.name,
-            description: e.description
-          }
-        }
-      end
-
-      def workflow_complete
-        patient_id = params.require(:patient_id)
-        patient = Patient.find(patient_id)
-        date = parse_date(params[:date])
-
-        complete = workflow_engine(patient, date).workflow_complete?
-
-        render json: {
-          workflow_complete: complete,
-          completed_encounters: workflow_engine(patient, date).completed_encounters_today
-        }
-      end
-
       def patient
         patient_id = params.require(:patient_id)
         date = parse_date(params[:date])
@@ -197,24 +150,13 @@ module Api
         visits_summary = {
           date: date,
           total_visits: patients.count,
-          incomplete: 0,
-          complete: 0,
           patients: []
         }
 
         patients.each do |patient|
-          workflow_status = workflow_engine(patient, date).workflow_complete?
-
-          if workflow_status
-            visits_summary[:complete] += 1
-          else
-            visits_summary[:incomplete] += 1
-          end
-
           visits_summary[:patients] << {
             patient_id: patient.patient_id,
             patient: patient_basic_info(patient),
-            workflow_complete: workflow_status,
             encounters: patients_engine.saved_encounters(patient, date)
           }
         end
@@ -248,18 +190,10 @@ module Api
       def visit_summary
         date = parse_date(params[:date]) || Date.today
 
-        visits = {}
-        visits[:incomplete] = 0
-        visits[:complete] = 0
-        visits[:date] = date
-
-        find_visiting_patients(date).each do |patient|
-          if workflow_engine(patient, date).next_encounter
-            visits[:incomplete] += 1
-          else
-            visits[:complete] += 1
-          end
-        end
+        visits = {
+          date: date,
+          total_visits: find_visiting_patients(date).count
+        }
 
         render json: visits
       end
@@ -277,15 +211,6 @@ module Api
           patient: patient,
           program: neonatal_program,
           date: parse_date(params[:date])
-        )
-      end
-
-
-      def workflow_engine(patient, date = nil)
-        NeonatalService::WorkflowEngine.new(
-          patient: patient,
-          program: neonatal_program,
-          date: date || Date.today
         )
       end
 

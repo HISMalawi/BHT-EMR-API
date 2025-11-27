@@ -184,8 +184,7 @@ module NeonatalService
       {
         date: @date,
         visited: visited_today?,
-        encounters_today: encounters_today,
-        next_encounter: next_encounter_type
+        encounters_today: encounters_today
       }
     end
 
@@ -437,25 +436,6 @@ module NeonatalService
                .uniq
     end
 
-    ##
-    # Gets next encounter type in workflow
-    #
-    # @return [String, nil]
-    def next_encounter_type
-      workflow_engine.next_encounter&.name
-    end
-
-    ##
-    # Gets workflow engine
-    #
-    # @return [WorkflowEngine]
-    def workflow_engine
-      @workflow_engine ||= NeonatalService::WorkflowEngine.new(
-        patient: @patient,
-        program: @program,
-        date: @date
-      )
-    end
 
     ##
     # Gets patients engine

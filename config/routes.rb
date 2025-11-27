@@ -444,10 +444,6 @@ Rails.application.routes.draw do
   put '/api/v1/neonatal/enrollment/:patient_id', to: 'api/v1/neonatal#update_enrollment'
   post '/api/v1/neonatal/exit', to: 'api/v1/neonatal#exit_program'
 
-  get '/api/v1/neonatal/next_encounter/:patient_id', to: 'api/v1/neonatal#next_encounter'
-  get '/api/v1/neonatal/remaining_encounters/:patient_id', to: 'api/v1/neonatal#remaining_encounters'
-  get '/api/v1/neonatal/workflow_complete/:patient_id', to: 'api/v1/neonatal#workflow_complete'
-
   get '/api/v1/neonatal/patient/:patient_id', to: 'api/v1/neonatal#patient'
   get '/api/v1/neonatal/saved_encounters/:patient_id', to: 'api/v1/neonatal#saved_encounters'
   get '/api/v1/neonatal/labels/:patient_id', to: 'api/v1/neonatal#patient_labels'
