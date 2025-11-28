@@ -136,8 +136,7 @@ def save_specimen_types(nlims_code, test_name, specimen_types)
     specimen_type_name = specimen_type['name']
     specimen_type_nlims_code = specimen_type['nlims_code']
 
-    specimen_concept_id = ConceptName.find_by_name(specimen_type_name.strip)&.concept_id
-    specimen_concept_id ||= find_concept(specimen_type_name).concept_id
+    specimen_concept_id = find_concept(specimen_type_name).concept_id
 
     ConceptSet.create!(
       concept_set: specimen_type_id,
@@ -187,8 +186,7 @@ def save_measures(nlims_code, test_name, measures)
     measure_name = measure['name']
     measure_nlims_code = measure['nlims_code']
 
-    measure_concept_id = ConceptName.find_by_name(measure_name)&.concept_id
-    measure_concept_id ||= find_concept(measure_name).concept_id
+    measure_concept_id = find_concept(measure_name).concept_id
 
     # remove all measures for this test type
     sets = ConceptSet.where(
@@ -231,6 +229,29 @@ def save_measures(nlims_code, test_name, measures)
   end
 end
 
+def cleanup
+  # cleanup
+  ConceptAttribute.where(attribute_type: nlims_test_catalogue_name).group(:value_reference).having('count(*) > 1').each do |duplicate|
+    puts "Duplicate found for #{duplicate.value_reference}"
+    ConceptAttribute.where(
+      attribute_type: nlims_test_catalogue_name,
+      value_reference: duplicate.value_reference
+    )[1..].each do |attribute|
+      ConceptAttribute.find_by(concept_id: attribute.concept_id, attribute_type: nlims_test_catalogue_name)&.delete
+    end
+  end
+
+  ConceptAttribute.where(attribute_type: nlims_code_attribute_type).group(:value_reference).having('count(*) > 1').each do |duplicate|
+    puts "Duplicate found for #{duplicate.value_reference}"
+    ConceptAttribute.where(
+      attribute_type: nlims_code_attribute_type,
+      value_reference: duplicate.value_reference
+    )[1..].each do |attribute|
+      ConceptAttribute.find_by(concept_id: attribute.concept_id, attribute_type: nlims_code_attribute_type)&.delete
+    end
+  end
+end
+
 init_config
 
 ActiveRecord::Base.transaction do
@@ -243,4 +264,5 @@ ActiveRecord::Base.transaction do
     save_specimen_types(nlims_code, test_name, specimen_types)
     save_measures(nlims_code, test_name, measures)
   end
+  cleanup
 end
