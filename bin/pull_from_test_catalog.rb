@@ -116,28 +116,11 @@ end
 
 
 def save_specimen_types(nlims_code, test_name, specimen_types)
-  concept = ConceptAttribute.find_by(
-    attribute_type: nlims_code_attribute_type,
-    value_reference: nlims_code
-  )&.concept
-
   concept ||= find_concept(test_name)
 
   # remove all existing specimen types
   specimen_type_id = ConceptName.find_by_name('Specimen Type').concept_id
   test_type_id     = ConceptName.find_by_name('Test type').concept_id
-
-  sets = ConceptSet.where( 
-    concept_id: ConceptSet.where(concept_set: 
-      ConceptName.find_by_name('Specimen Type').concept_id
-    ).select(:concept_id), 
-    concept_set: ConceptSet.where(
-        concept_set: ConceptName.find_by_name('Test type').concept_id, 
-        concept_id: concept.concept_id 
-      ).select(:concept_id) 
-  ).pluck(:concept_set_id)
-  
-  ConceptSet.where(concept_set_id: sets).delete_all
 
   set_exists = ConceptSet.find_by(concept_set: test_type_id, concept_id: concept.concept_id).present?
   
@@ -186,11 +169,6 @@ def save_specimen_types(nlims_code, test_name, specimen_types)
 end
 
 def save_measures(nlims_code, test_name, measures)
-  concept = ConceptAttribute.find_by(
-    attribute_type: nlims_code_attribute_type,
-    value_reference: nlims_code
-  )&.concept
-
   concept ||= find_concept(test_name)
 
   lab_test_result_indicator_id = ConceptName.find_by_name('Lab test result indicator').concept_id
