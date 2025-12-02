@@ -325,8 +325,7 @@ module Api
         return nil unless national_id
 
         sex = "(#{person.gender})"
-        #address = person.addresses.first.to_s.strip[0..96].humanize
-        address = "Traditional Authority Chikumbu, Village Headman Mponda, Mzuzu City, Mzimba District, Northern Region, Malawi"
+        address = person.addresses.first.to_s.strip[0..96].humanize
 
         label = ZebraPrinter::Lib::StandardLabel.new
         label.font_size = 2
