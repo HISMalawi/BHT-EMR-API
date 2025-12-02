@@ -299,6 +299,7 @@ module ZebraPrinter # :nodoc:
           nil || '801,329'
         end.split(',').collect(&:to_i)
         super(dimensions.first, dimensions.last, 'T')
+        @column_width = 700
       end
     end
 
