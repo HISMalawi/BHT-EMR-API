@@ -106,12 +106,34 @@ def find_concept(name)
   add_to_concept_attributes(concept, name)
 end
 
-def nlims_test_catalogue_name
-  ConceptAttributeType.find_by_name('TEST CATALOGUE NAME')
+def nlims_code_attribute_type
+  # find or create the attribute type
+  attribute_type = ConceptAttributeType.find_or_initialize_by(name: 'NLIMS CODE')
+  return attribute_type unless attribute_type.new_record?
+
+  attribute_type.description = 'NLIMS CODE'
+  attribute_type.datatype = 'string'
+  attribute_type.preferred_handler = 'org.openmrs.handler.concept.ConceptAttributeTypeHandler'
+  attribute_type.min_occurs = 0
+  attribute_type.max_occurs = 1
+  attribute_type.save!
+  
+  attribute_type.reload
 end
 
-def nlims_code_attribute_type
-  ConceptAttributeType.find_by_name('NLIMS CODE')
+def nlims_test_catalogue_name
+  # find or create the attribute type
+  attribute_type = ConceptAttributeType.find_or_initialize_by(name: 'TEST CATALOGUE NAME')
+  return attribute_type unless attribute_type.new_record?
+
+  attribute_type.description = 'TEST CATALOGUE NAME'
+  attribute_type.datatype = 'string'
+  attribute_type.preferred_handler = 'org.openmrs.handler.concept.ConceptAttributeTypeHandler'
+  attribute_type.min_occurs = 0
+  attribute_type.max_occurs = 1
+  attribute_type.save!
+  
+  attribute_type.reload
 end
 
 
@@ -130,6 +152,12 @@ def save_specimen_types(nlims_code, test_name, specimen_types)
     creator: User.current.user_id,
     date_created: Time.now
   ) unless set_exists
+
+  ConceptAttribute.find_or_create_by!(
+    concept_id: concept.concept_id,
+    attribute_type: nlims_code_attribute_type,
+    value_reference: nlims_code
+  )
 
   # add the new specimen types
   specimen_types.each do |specimen_type|

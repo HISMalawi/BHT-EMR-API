@@ -47,7 +47,7 @@ gem 'rswag-ui'
 
 gem 'emr_ohsp_interface', '~> 2.2.5'
 
-gem 'his_emr_api_lab', git: 'https://github.com/EGPAFMalawiHIS/his_emr_api_lab.git', ref: 'a15b834ea70a0b7c91f6ec27243485f380312d02'
+gem 'his_emr_api_lab', git: 'https://github.com/EGPAFMalawiHIS/his_emr_api_lab.git', ref: '25a1517dec136ce3f3c1ab146b97aca719e2d8ef'
 
 # gem 'his_emr_api_radiology', '~> 1.0.9'
 
