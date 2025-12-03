@@ -28,6 +28,7 @@ class ApplicationController < ActionController::API
   end
 
   def check_client_version
+    return true
     if params[:no_client]
       return true
     end
