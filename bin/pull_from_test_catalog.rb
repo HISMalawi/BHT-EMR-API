@@ -59,24 +59,30 @@ def fetch_test_catalog
   json['catalog']['test_types']
 end
 
-def add_to_concept_attributes(concept, name)
-  ConceptAttribute.create!(
+def add_to_concept_attributes(concept, name, code)
+  ConceptAttribute.find_or_create_by!(
     concept:,
     attribute_type: nlims_test_catalogue_name,
     value_reference: name
   )
 
+  ConceptAttribute.find_or_create_by!(
+    concept:,
+    attribute_type: nlims_code_attribute_type,
+    value_reference: code
+  )
+
   concept
 end
 
-def find_concept(name)
+def find_concept(name, code)
   concept = ConceptName.find_by(name:)&.concept
   
   if concept.present?
     preffered = ConceptName.where(concept:, locale_preferred: 1).count
     ConceptName.where(concept:).first.update!(locale_preferred: 1) if preffered == 0
 
-    return add_to_concept_attributes(concept, name)
+    return add_to_concept_attributes(concept, name, code)
   end
 
   concept = Concept.create!(
@@ -96,14 +102,8 @@ def find_concept(name)
     creator: User.current.user_id,
     date_created: Time.now
   )
-
-  ConceptAttribute.create!(
-    concept:,
-    attribute_type: nlims_test_catalogue_name,
-    value_reference: name
-  )
   
-  add_to_concept_attributes(concept, name)
+  add_to_concept_attributes(concept, name, code)
 end
 
 def nlims_code_attribute_type
@@ -138,7 +138,7 @@ end
 
 
 def save_specimen_types(nlims_code, test_name, specimen_types)
-  concept ||= find_concept(test_name)
+  concept ||= find_concept(test_name, nlims_code)
 
   # remove all existing specimen types
   specimen_type_id = ConceptName.find_by_name('Specimen Type').concept_id
@@ -153,50 +153,51 @@ def save_specimen_types(nlims_code, test_name, specimen_types)
     date_created: Time.now
   ) unless set_exists
 
-  ConceptAttribute.find_or_create_by!(
-    concept_id: concept.concept_id,
-    attribute_type: nlims_code_attribute_type,
-    value_reference: nlims_code
-  )
+  # delete old specimen types
+  ConceptSet.where(
+    concept_id: ConceptSet.where(
+      concept_set: specimen_type_id
+    ).pluck(:concept_id), 
+    concept_set: ConceptSet.where(
+      concept_set: test_type_id, 
+      concept_id: concept.concept_id
+    ).select(:concept_id)
+  ).each(&:delete)
 
   # add the new specimen types
   specimen_types.each do |specimen_type|
     specimen_type_name = specimen_type['name']
     specimen_type_nlims_code = specimen_type['nlims_code']
 
-    specimen_concept_id = find_concept(specimen_type_name).concept_id
+    specimen_concept_id = find_concept(specimen_type_name, specimen_type_nlims_code).concept_id
 
-    ConceptSet.create!(
+    cs = ConceptSet.find_or_initialize_by(
       concept_set: specimen_type_id,
       concept_id: specimen_concept_id,
-      creator: User.current.user_id,
-      date_created: Time.now
     )
 
-    ConceptSet.create!(
+    if cs.new_record?
+      cs.creator = User.current.id
+      cs.date_created = Time.now
+    end
+
+    scs = ConceptSet.find_or_initialize_by(
       concept_set: concept.concept_id,
       concept_id: specimen_concept_id,
-      creator: User.current.user_id,
-      date_created: Time.now
     )
 
-    # add specimen nlims code to concept attributes
-    ConceptAttribute.create!(
-      concept_id: specimen_concept_id,
-      attribute_type: nlims_code_attribute_type,
-      value_reference: specimen_type_nlims_code
-    )
+    if scs.new_record?
+      scs.creator = User.current.id
+      scs.date_created = Time.now
+    end
 
-    ConceptAttribute.create!(
-      concept_id: specimen_concept_id,
-      attribute_type: nlims_test_catalogue_name,
-      value_reference: specimen_type_name
-    )
+    cs.save!
+    scs.save!
   end
 end
 
 def save_measures(nlims_code, test_name, measures)
-  concept ||= find_concept(test_name)
+  concept ||= find_concept(test_name, nlims_code)
 
   lab_test_result_indicator_id = ConceptName.find_by_name('Lab test result indicator').concept_id
   test_type_id = ConceptName.find_by_name('Test type').concept_id
@@ -214,7 +215,7 @@ def save_measures(nlims_code, test_name, measures)
     measure_name = measure['name']
     measure_nlims_code = measure['nlims_code']
 
-    measure_concept_id = find_concept(measure_name).concept_id
+    measure_concept_id = find_concept(measure_name, measure_nlims_code).concept_id
 
     # remove all measures for this test type
     sets = ConceptSet.where(
@@ -227,57 +228,46 @@ def save_measures(nlims_code, test_name, measures)
 
     ConceptSet.where(concept_set_id: sets).delete_all
 
-    ConceptSet.create!(
+    lcs = ConceptSet.find_or_initialize_by(
       concept_set: lab_test_result_indicator_id,
-      concept_id: measure_concept_id,
-      creator: User.current.user_id,
-      date_created: Time.now
+      concept_id: measure_concept_id
     )
 
-    ConceptSet.create!(
+    if lcs.new_record?
+      lcs.creator = User.current.id
+      lcs.date_created = Time.now
+    end
+
+    mcs = ConceptSet.find_or_initialize_by(
       concept_id: concept.concept_id,
-      concept_set: measure_concept_id,
-      creator: User.current.user_id,
-      date_created: Time.now
+      concept_set: measure_concept_id
     )
 
-    # add measure nlims code to concept attributes
-    ConceptAttribute.create!(
-      concept_id: measure_concept_id,
-      attribute_type: nlims_code_attribute_type,
-      value_reference: measure_nlims_code
-    )
+    if mcs.new_record?
+      mcs.creator = User.current.id
+      mcs.date_created = Time.now
+    end
 
-    # add measure name to concept attributes
-    ConceptAttribute.create!(
-      concept_id: measure_concept_id,
-      attribute_type: nlims_test_catalogue_name,
-      value_reference: measure_name
-    )
+    lcs.save!
+    mcs.save!
   end
 end
 
 def cleanup
-  # cleanup
-  ConceptAttribute.where(attribute_type: nlims_test_catalogue_name).group(:value_reference).having('count(*) > 1').each do |duplicate|
-    puts "Duplicate found for #{duplicate.value_reference}"
-    ConceptAttribute.where(
-      attribute_type: nlims_test_catalogue_name,
-      value_reference: duplicate.value_reference
-    )[1..].each do |attribute|
-      ConceptAttribute.find_by(concept_id: attribute.concept_id, attribute_type: nlims_test_catalogue_name)&.delete
+  ConceptAttribute.where(attribute_type: nlims_test_catalogue_name).group(:value_reference).having('count(*) > 1')
+    .each do |duplicate|
+      ConceptAttribute.where(
+        attribute_type: nlims_test_catalogue_name,
+        value_reference: duplicate.value_reference
+      )[1..].each(&:delete)
     end
-  end
-
-  ConceptAttribute.where(attribute_type: nlims_code_attribute_type).group(:value_reference).having('count(*) > 1').each do |duplicate|
-    puts "Duplicate found for #{duplicate.value_reference}"
-    ConceptAttribute.where(
-      attribute_type: nlims_code_attribute_type,
-      value_reference: duplicate.value_reference
-    )[1..].each do |attribute|
-      ConceptAttribute.find_by(concept_id: attribute.concept_id, attribute_type: nlims_code_attribute_type)&.delete
+  ConceptAttribute.where(attribute_type: nlims_code_attribute_type).group(:value_reference).having('count(*) > 1')
+    .each do |duplicate|
+      ConceptAttribute.where(
+        attribute_type: nlims_code_attribute_type,
+        value_reference: duplicate.value_reference
+      )[1..].each(&:delete)
     end
-  end
 end
 
 init_config
