@@ -13,7 +13,6 @@ class LocationXFacilities < ActiveRecord::Migration[7.0]
 
     # wrap in a txn
     ActiveRecord::Base.transaction do
-
       # run sql file
       sql_file_path = Rails.root.join('db', 'migrate', 'merge_locations_x_facilities.sql')
       sql_script = File.read(sql_file_path)
@@ -37,7 +36,6 @@ class LocationXFacilities < ActiveRecord::Migration[7.0]
       # disable referential integrity
       ActiveRecord::Base.connection.disable_referential_integrity do
         tables.each do |table|
-
           # get table type
           table_type = ActiveRecord::Base.connection.select_one <<~SQL
             SHOW FULL TABLES LIKE #{ActiveRecord::Base.connection.quote(table['TABLE_NAME'])}
@@ -67,21 +65,21 @@ class LocationXFacilities < ActiveRecord::Migration[7.0]
 
           ActiveRecord::Base.connection.execute <<~SQL
             UPDATE #{table['TABLE_NAME']} tl
-              INNER JOIN temp_facility_x_location_map flm ON tl.location_id = flm.facility_code
+              INNER JOIN temp_facility_x_location_map flm#{' '}
+              ON tl.location_id  = flm.facility_code
             SET tl.location_id = flm.location_id
           SQL
 
-
           # change column type to integer
           ActiveRecord::Base.connection.execute <<~SQL
-            ALTER TABLE #{table['TABLE_NAME']} 
+            ALTER TABLE #{table['TABLE_NAME']}#{' '}
               MODIFY COLUMN location_id INT
           SQL
 
           # update foreign key
           ActiveRecord::Base.connection.execute <<~SQL
-            ALTER TABLE #{table['TABLE_NAME']} 
-              ADD CONSTRAINT #{table['TABLE_NAME']}_location_id_fk 
+            ALTER TABLE #{table['TABLE_NAME']}#{' '}
+              ADD CONSTRAINT #{table['TABLE_NAME']}_location_id_fk#{' '}
               FOREIGN KEY (location_id) REFERENCES location (location_id)
           SQL
         end
