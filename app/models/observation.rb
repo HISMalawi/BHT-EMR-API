@@ -19,11 +19,14 @@ class Observation < VoidableRecord
     }
   }.freeze
 
+  
   after_void :after_void
-
+  
   self.table_name = :obs
   self.primary_key = :obs_id
-
+  
+  include Locatable
+  
   belongs_to :encounter, optional: true
   belongs_to :order, optional: true
   belongs_to :concept

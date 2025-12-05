@@ -328,6 +328,7 @@ Rails.application.routes.draw do
       get '/dde/patients/sync_npids', to: 'dde#sync_npids'
 
       get '/labels/location', to: 'locations#print_label'
+      get '/location_attribute/:id', to: 'location_attribute#show'
 
       # Search
       get '/search/given_name' => 'person_names#search_given_name'

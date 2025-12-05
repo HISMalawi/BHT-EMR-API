@@ -2,15 +2,17 @@
 
 class Patient < VoidableRecord
   include ModelUtils
+  
   attr_accessor :npid
   after_void :void_related_models
-
+  
   NPID_NAME = 'National id'
   LEGACY_NPID_NAME = 'Old national id'
-
+  
   self.table_name = 'patient'
   self.primary_key = 'patient_id'
-
+  
+  include Locatable
   has_one :person, foreign_key: :person_id
   has_many :patient_identifiers, foreign_key: :patient_id, dependent: :destroy
   has_many :patient_programs

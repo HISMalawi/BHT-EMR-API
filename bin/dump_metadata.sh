@@ -1,5 +1,7 @@
 #!/bin/bash
 
+METADATA_FILE=$1
+
 BIN_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ROOT_PATH="`dirname $BIN_PATH`"
 
@@ -14,7 +16,10 @@ if [ -z "$PORT" ]; then
   PORT=3306
 fi
 
-METADATA_FILE=${ROOT_PATH}/db/sql/openmrs_metadata_1_7.sql
+# if path is not set, use default path
+if [ -z "$METADATA_FILE" ]; then
+  METADATA_FILE=${ROOT_PATH}/db/sql/openmrs_metadata_1_7.sql
+fi
 
 mysqldump -u $USERNAME --password=$PASSWORD --host=$HOST --port=$PORT $ARGS $DATABASE \
   concept concept_name concept_set concept_answer concept_class concept_datatype \

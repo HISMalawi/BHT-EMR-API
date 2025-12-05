@@ -13,6 +13,7 @@
     - [DDE](#dde)
       - [Configuration](#configuration-1)
       - [Enabling DDE](#enabling-dde)
+    - [EMR to MAHIS Migration](#emr_mahis_migration)
     - [Updating Metadata](#updating-metadata)
     - [EMC to POC](#emc-to-poc)
     - [AIT Intergration](#ait-intergration)
@@ -199,6 +200,16 @@ curl -X POST -H "Authorization: AiJViSpF3spb" -H "Content-Type: application/json
     "value": "true"
 }' "http://127.0.0.1:3000/api/v1/properties"
 ```
+
+### EMR_Mahis_Migration
+
+- Set database you would like to migrate into Mahis under centralized_source_db: in config/database.yml if not there copy from config/database.yml.example
+- Make sure MAHIS is up to date
+- Run the migrations script using:
+
+  ```bash
+  rails r bin/emr_api_to_mahis_data_migrator.rb
+  ```
 
 ### Updating Metadata
 

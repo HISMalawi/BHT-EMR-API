@@ -5,12 +5,11 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby '~> 3.2.0'
 
-
 # Gems for managing background jobs
+gem 'activejob-uniqueness'
+gem 'redis'
 gem 'sidekiq'
 gem 'sidekiq-cron'
-gem 'redis'
-gem 'activejob-uniqueness'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 7.0.6'
@@ -63,7 +62,7 @@ gem 'his_emr_api_lab', '~> 2.0.9'
 gem 'parallel', '~> 1.20.1'
 gem 'time_difference'
 
-gem "audited"
+gem 'audited'
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
@@ -91,7 +90,13 @@ gem 'concurrent-ruby', '= 1.3.4'
 # gems for reading excel and csv files
 gem 'roo', '~> 2.8'
 
-#gem for object matching
+# gem for object matching
 gem 'whitesimilarity'
 
 gem 'mongoid', '~> 9.0', '>= 9.0.6'
+
+# gems for centralized migration
+gem 'sys-cpu'
+gem 'sys-filesystem'
+gem 'sys-memory'
+gem 'sys-proctable'

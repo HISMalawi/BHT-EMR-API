@@ -1,0 +1,586 @@
+location_id,location_name,location_district,facility_code,facility_name
+984,AHI Private Clinic (Zomba),Zomba,ZA230014,AHI Private Clinic (Zomba)
+5,Adventist Health Centre (Lilongwe),Lilongwe,LL040011,Adventist Health Centre (Lilongwe)
+706,Adventist Hospital (Blantyre),Blantyre,BT240084,Adventist Hospital (Blantyre)
+6,African Bible College Health Centre,Lilongwe,LL040007,African Bible College Health Centre
+857,Airwing Clinic (Lilongwe),Lilongwe,LL040016,Airwing Clinic (Lilongwe)
+1021,Akasale Private Cinic (Chiradzulu),Chiradzulu,CR260018,Akasale Private Cinic (Chiradzulu)
+1049,Alinafe Community Hospital (Kasungu),Kasungu,,Alinafe Community Hospital (Kasungu)
+7,Alinafe Rehabilitation Centre,Nkhotakota,NK100019,Alinafe Rehabilitation Centre
+890,Alliance One Clinic (Lilongwe),Lilongwe,LL040023,Alliance One Clinic (Lilongwe)
+914,Amalika Health Centre,Thyolo,TH310026,Amalika Health Centre
+1060,Amecca Chilaweni Health Centre,Blantyre,BT240028,Amecca Chilaweni Health Centre
+1127,Anchor Farm (Kasungu),Kasungu,KU070030,Anchor Farm (Kasungu)
+8,Area 18 Urban Health Centre,Lilongwe,LL040033,Area 18 Urban Health Centre
+9,Area 25 Banja La Mtsogolo Dispensary,Lilongwe,LL040036,Area 25 Banja La Mtsogolo Dispensary
+10,Area 25 Urban Health Centre,Lilongwe,LL040037,Area 25 Urban Health Centre
+836,Area 36 Private Clinic,Lilongwe,LL040457,Area 36 Private Clinic
+1076,Army Secondary School,MDFS,,Army Secondary School
+3,Assalaam Clinic,Mangochi,MG200045,Assalaam Clinic
+802,Atupele Health Centre,Karonga,KA150046,Atupele Health Centre
+845,Auction Holdings Limited Clinic (Kanengo),Lilongwe,LL040050,Auction Holdings Limited Clinic (Kanengo)
+1120,BLM Mchinji,Mchinji,MC010098,BLM Mchinji
+973,Balaka Banja La Mtsogolo Dispensary,Balaka,BK170052,Balaka Banja La Mtsogolo Dispensary
+11,Balaka District Health Office,Balaka,BK170053,Balaka District Health Office
+13,Balaka Health Area,Balaka,,Balaka Health Area
+14,Balaka Health District,Balaka,,Balaka Health District
+1077,Banja Care Private Clinic,BCPC,BT240061,Banja Care Private Clinic
+905,Bereu Health Post,Chikwawa,CK270069,Bereu Health Post
+838,Bethsaida Private Hospital,Lilongwe,LL040077,Bethsaida Private Hospital
+19,Bilal Dispensary,Chiradzulu,CR260079,Bilal Dispensary
+1015,Billy Riordan Memorial Health Clinic,Mangochi,MG200082,Billy Riordan Memorial Health Clinic
+22,Biriwiri Health Centre,Ntcheu,NT120081,Biriwiri Health Centre
+1123,Biwi Health Center,Lilongwe,LL041843,Biwi Health Center
+23,Blantyre Civic Centre Dispensary,Blantyre,BT240085,Blantyre Civic Centre Dispensary
+941,Blantyre Dream Project,Blantyre,BT240087,Blantyre Dream Project
+25,Blantyre Health Area,Blantyre,,Blantyre Health Area
+26,Blantyre Health District,Blantyre,,Blantyre Health District
+931,Blantyre Water Board Clinic,Blantyre,,Blantyre Water Board Clinic
+27,Bolero Rural Health Centre,Rumphi,RU140107,Bolero Rural Health Centre
+30,Bua Dispensary (Kasungu),Kasungu,KU071526,Bua Dispensary (Kasungu)
+31,Bua Health Centre (Nkhotakota),Nkhota-kota,NK100114,Bua Health Centre (Nkhotakota)
+33,Bulala Health Centre,Mzimba South,MZ160116,Bulala Health Centre
+858,Bunda College,Lilongwe,LL040119,Bunda College
+35,Bvumbwe-Makungwa Health Centre,Thyolo,TH310794,Bvumbwe-Makungwa Health Centre
+37,Bwengu Health Centre,Mzimba North,MZ160124,Bwengu Health Centre
+827,Care Medical Clinic,Mzimba North,MZ160126,Care Medical Clinic
+933,Carlsberg / Sobo Clinic (Blantyre),Blantyre,BT240129,Carlsberg / Sobo Clinic (Blantyre)
+856,Carlsberg / Sobo Clinic (Lilongwe),Lilongwe,LL040130,Carlsberg / Sobo Clinic (Lilongwe)
+943,Central East African Railways Clinic (Blantyre),Blantyre,BT240133,Central East African Railways Clinic (Blantyre)
+848,Central Health Clinic (Area 47),Lilongwe,LL040134,Central Health Clinic (Area 47)
+38,Chabvala Health Centre,Chikwawa,BT240136,Chabvala Health Centre
+1023,Chagunda Health Centre (Salima),Salima,SA090139,Chagunda Health Centre (Salima)
+1028,Chakhadza Health Centre (Dowa),Dowa,DA020140,Chakhadza Health Centre (Dowa)
+787,Chalasa Village,Lilongwe,,Chalasa Village
+41,Chamba Dispensary (Machinga),Machinga,MC190143,Chamba Dispensary (Machinga)
+42,Chamba Dispensary (Zomba),Zomba,,Chamba Dispensary (Zomba)
+991,Chamba Health Centre (Zomba),Zomba,ZA230144,Chamba Health Centre (Zomba)
+1126,Chambwe Health Center (Kasungu),Kasungu,KU071844,Chambwe Health Center (Kasungu)
+45,Chamwabvi Dispensary,Kasungu,KU070148,Chamwabvi Dispensary
+985,Chancellor College Clinic,Zomba,ZA230149,Chancellor College Clinic
+986,Changalume Barracks Clinic,Zomba,ZA230151,Changalume Barracks Clinic
+900,Changambika Health Centre,Chikwawa,CK270150,Changambika Health Centre
+1101,Charity Private Clinic,dowa,DA021753,Charity Private Clinic
+1131,Charity Private Clinic,Zomba,ZA230158,Charity Private Clinic
+51,Chezi Dispensary,Dowa,DA020166,Chezi Dispensary
+936,Chichiri ESCOM Clinic,Blantyre,BT240169,Chichiri ESCOM Clinic
+945,Chichiri Prison Clinic,Blantyre,BT240170,Chichiri Prison Clinic
+52,Chididi Health Centre (Nkhotakota),Nkhota-kota,NK100171,Chididi Health Centre (Nkhotakota)
+53,Chididi Health Centre (Nsanje),Nsanje,NS300172,Chididi Health Centre (Nsanje)
+58,Chikangawa Health Centre,Mzimba South,MZ160184,Chikangawa Health Centre
+59,Chikole Dispensary,Mangochi,MG200185,Chikole Dispensary
+1121,Chikowa Health Center,Ntcheu,NT120186,Chikowa Health Center
+60,Chikowa Health Centre (Blantyre),Blantyre,BT240187,Chikowa Health Centre (Blantyre)
+61,Chikowa Health Centre (Lilongwe),Lilongwe,LL040188,Chikowa Health Centre (Lilongwe)
+1078,Chikuli Private Clinic,CHPC,MU210189,Chikuli Private Clinic
+63,Chikwawa District Health Office,Chikwawa,CK270193,Chikwawa District Health Office
+65,Chikwawa Health Area,Chikwawa,,Chikwawa Health Area
+66,Chikwawa Health District,Chikwawa,CK270193,Chikwawa Health District
+71,Chileka Health Centre (Lilongwe),Lilongwe,LL040203,Chileka Health Centre (Lilongwe)
+72,Chileka SDQ Health Centre (Blantyre),Blantyre,BT240204,Chileka SDQ Health Centre (Blantyre)
+952,Chilimba City Clinic,Blantyre,BT240207,Chilimba City Clinic
+73,Chilipa Health Centre (Mangochi),Mangochi,MG200211,Chilipa Health Centre (Mangochi)
+74,Chilipa Health Centre (Zomba),Zomba,ZA230212,Chilipa Health Centre (Zomba)
+1018,Chilonga Health Centre (Mangochi),Mangochi,MG200218,Chilonga Health Centre (Mangochi)
+77,Chilumba Garrison Dispensary,Karonga,KA150220,Chilumba Garrison Dispensary
+969,Chimatilo Health Centre,Balaka,BK170224,Chimatilo Health Centre
+83,Chimvu Health Centre,Thyolo,TH310230,Chimvu Health Centre
+84,Chimwala Dispensary,Lilongwe,LL040231,Chimwala Dispensary
+1022,Chimwawa Health Centre (Chiradzulu),Chiradzulu,CR260233,Chimwawa Health Centre (Chiradzulu)
+987,Chinamwali Private Clinic (Zomba),Zomba,ZA230235,Chinamwali Private Clinic (Zomba)
+85,Ching'Oma Dispensary,Nsanje,NS300236,Ching'Oma Dispensary
+87,Chingazi Health Centre,Thyolo,TH310237,Chingazi Health Centre
+88,Chinguluwe Health Centre (Ntchisi),Ntchisi,NT080239,Chinguluwe Health Centre (Ntchisi)
+89,Chinguluwe Health Centre (Salima),Salima,SA090240,Chinguluwe Health Centre (Salima)
+91,Chinsapo Dispensary,Lilongwe,LL040244,Chinsapo Dispensary
+97,Chipini Health Centre,Zomba,ZA230254,Chipini Health Centre
+99,Chiponde Health Centre,Mangochi,MG200257,Chiponde Health Centre
+872,Chiponde Health Post,Lilongwe,,Chiponde Health Post
+102,Chipwanya St Josephs Health Centre,Dedza,,Chipwanya St Josephs Health Centre
+103,Chiradzulu District Health Office,Chiradzulu,,Chiradzulu District Health Office
+105,Chiradzulu Health Area,Chiradzulu,,Chiradzulu Health Area
+106,Chiradzulu Health District,Chiradzulu,CR260261,Chiradzulu Health District
+974,Chiringa CHAM Health Centre (Phalombe),Phalombe,PH220264,Chiringa CHAM Health Centre (Phalombe)
+107,Chiringa Dispensary,Phalombe,,Chiringa Dispensary
+977,Chiringa Health Centre (Phalombe),Phalombe,,Chiringa Health Centre (Phalombe)
+992,Chisi Health Centre (Zomba),Zomba,ZA230270,Chisi Health Centre (Zomba)
+111,Chisinga Dispensary,Kasungu,,Chisinga Dispensary
+115,Chitekesa Health Centre,Phalombe,PH220283,Chitekesa Health Centre
+899,Chithumba Dispensary,Chikwawa,CK270291,Chithumba Dispensary
+118,Chithumba Maternity,Chikwawa,,Chithumba Maternity
+120,Chitipa District Health Office,Chitipa,CP060293,Chitipa District Health Office
+122,Chitipa Health Area,Chitipa,,Chitipa Health Area
+123,Chitipa Health District,Chitipa,,Chitipa Health District
+125,Chiumbangame Health Centre,Mangochi,MG200296,Chiumbangame Health Centre
+1008,Chiunda Health Centre (Mangochi),Mangochi,MG200297,Chiunda Health Centre (Mangochi)
+1032,Chizolowondo Health Centre (Dowa),Dowa,DA020306,Chizolowondo Health Centre (Dowa)
+131,Choma Health Centre,Mzimba North,MZ160309,Choma Health Centre
+1124,Chombe dispensary Nkhatabay,Nkhatabay,KB050310,Chombe dispensary Nkhatabay
+133,Chongoni Health Centre,Dedza,DE030313,Chongoni Health Centre
+727,Chronic Cough,,,Chronic Cough
+135,City Assembly Dispensary,Lilongwe,LL040315,City Assembly Dispensary
+1057,City Centre Clinic (Blantyre),Blantyre,BT240088,City Centre Clinic (Blantyre)
+868,City Centre Clinic (Lilongwe),Lilongwe,LL040316,City Centre Clinic (Lilongwe)
+989,City Clinic (Zomba),Zomba,ZA230317,City Clinic (Zomba)
+136,Cobbe Barracks Hospital,Zomba,ZA230318,Cobbe Barracks Hospital
+711,College of Medicine,Blantyre,,College of Medicine
+1113,College of Medicine Pvt Clinic,Blantyre,,College of Medicine Pvt Clinic
+967,Comfort Clinic (Balaka),Balaka,BK170321,Comfort Clinic (Balaka)
+141,DGM Livingstonia Hospital,Rumphi,RU140702,DGM Livingstonia Hospital
+736,Dae-Yang Hospital,Lilongwe,LL040325,Dae-Yang Hospital
+699,Dalitso Clinic,Lilongwe,LL041255,Dalitso Clinic
+137,Dedza District Health Office,Dedza,DE030334,Dedza District Health Office
+139,Dedza Health Area,Dedza,,Dedza Health Area
+140,Dedza Health District,Dedza,,Dedza Health District
+146,Doviko Dispensary,Ntcheu,NT120349,Doviko Dispensary
+147,Dowa District Health Office,Dowa,DA020350,Dowa District Health Office
+149,Dowa Health Area,Dowa,,Dowa Health Area
+150,Dowa Health District,Dowa,,Dowa Health District
+865,Dr David Livingstone Memorial Clinic,Lilongwe,,Dr David Livingstone Memorial Clinic
+824,Dr Msachi's Clinic,Mzimba North,MZ160357,Dr Msachi's Clinic
+151,Dwambazi Health Centre,Nkhotakota,NK100360,Dwambazi Health Centre
+153,Dwangwa Cane Growers Association Clinic,Nkhota-kota,NK100362,Dwangwa Cane Growers Association Clinic
+154,Dwangwa Health Centre,Kasungu,KU070363,Dwangwa Health Centre
+155,Dzalanyama Dispensary,Lilongwe,LL040365,Dzalanyama Dispensary
+156,Dzeleka Refugee Camp Health Centre,Dowa,DA020366,Dzeleka Refugee Camp Health Centre
+157,Dzenje Maternity,Mulanje,MU210367,Dzenje Maternity
+160,Dziwe Dispensary,Balaka,BK170372,Dziwe Dispensary
+161,Dzonzi-Mvai Health Centre,Ntcheu,NT120374,Dzonzi-Mvai Health Centre
+163,Dzunje Dispensary,Ntcheu,NT120376,Dzunje Dispensary
+819,ESCOM Clinic Mzuzu,Mzimba North,MZ160395,ESCOM Clinic Mzuzu
+164,Edingeni Rural Hospital,Mzimba South,MZ160378,Edingeni Rural Hospital
+165,Ehehleni Dispensary,Mzimba South,MZ160379,Ehehleni Dispensary
+1089,Ekwendeni DIC,Mzimba East,MZ161809,Ekwendeni DIC
+167,Ekwendeni Hospital,Mzimba North,MZ160383,Ekwendeni Hospital
+960,El-Barakah Private Clinic,Blantyre,BT240384,El-Barakah Private Clinic
+168,Embangweni Hospital,Mzimba South,MZ160388,Embangweni Hospital
+169,Emfeni Health Centre,Mzimba South,MZ160389,Emfeni Health Centre
+170,Emsizini Health Centre,Mzimba North,MZ160390,Emsizini Health Centre
+171,Endindeni Health Centre,Mzimba South,MZ160391,Endindeni Health Centre
+1125,Engalaweni Dispensary Mzimba South,Mzimba South,MZ161733,Engalaweni Dispensary Mzimba South
+172,Engucwini Dispensary,Mzimba North,MZ160392,Engucwini Dispensary
+173,Enukweni Mission Health Centre,Mzimba North,MZ161535,Enukweni Mission Health Centre
+174,Euthini Rural Hospital,Mzimba South,MZ160397,Euthini Rural Hospital
+813,Eva Demaya Centre,Rumphi,RU140398,Eva Demaya Centre
+1031,FPAM Clinic Dowa,Dowa,,FPAM Clinic Dowa
+1048,FPAM Clinic Kasungu,Kasungu,,FPAM Clinic Kasungu
+834,FPAM Clinic Kawale,Lilongwe,,FPAM Clinic Kawale
+816,FPAM Clinic Mzuzu,Mzimba North,MZ161810,FPAM Clinic Mzuzu
+887,FPAM Clinic Ntcheu,Ntcheu,,FPAM Clinic Ntcheu
+175,Falls Banja La Mtsogolo Dispensary,Lilongwe,LL041850,Falls Banja La Mtsogolo Dispensary
+1054,Fidelity Private Clinic (Lilongwe),Lilongwe,LL040408,Fidelity Private Clinic (Lilongwe)
+981,Friends of Mulanje (FOMO),Mulanje,MU210409,Friends of Mulanje (FOMO)
+178,Ganya Maternity,Ntcheu,NT120416,Ganya Maternity
+1058,Gateway Clinic (Blantyre),Blantyre,BT240417,Gateway Clinic (Blantyre)
+181,Gola Health Centre,Chikwawa,CK270429,Gola Health Centre
+912,Gombe Health Centre,Chikwawa,,Gombe Health Centre
+183,Gombe Maternity,Thyolo,TH310431,Gombe Maternity
+185,Guilleme St Michaels Health Centre,Mchinji,MC011376,Guilleme St Michaels Health Centre
+874,Guillime Mission Hospital,Mchinji,,Guillime Mission Hospital
+875,Gumba Health Centre,Mchinji,MC010441,Gumba Health Centre
+988,H. Parker Sharp Health Centre (Domasi CCAP),Zomba,ZA230443,H. Parker Sharp Health Centre (Domasi CCAP)
+187,Hallena Oakley Ntambanyama Health Centre,Thyolo,TH310445,Hallena Oakley Ntambanyama Health Centre
+188,Hara Dispensary,Karonga,KA150446,Hara Dispensary
+189,Hoho Health Centre,Mzimba South,MZ160452,Hoho Health Centre
+1063,Holy family mission hospital,Phalombe,PH220453,Holy family mission hospital
+190,Iba Health Centre,Mangochi,MG200460,Iba Health Centre
+971,Ipyana Private Maternity (Balaka),Balaka,,Ipyana Private Maternity (Balaka)
+847,JTI Leaf Clinic (Kanengo),Lilongwe,LL040474,JTI Leaf Clinic (Kanengo)
+194,Jenda Health Centre,Mzimba South,MZ160471,Jenda Health Centre
+710,John Hopkins,Blantyre,,John Hopkins
+280,KTFT Dispensary (Mziza),Kasungu,KU070640,KTFT Dispensary (Mziza)
+195,Kabudula Health Area,Lilongwe,LL040479,Kabudula Health Area
+197,Kabuwa Health Centre,Mzimba South,MZ160480,Kabuwa Health Centre
+198,Kabwafu Health Centre,Mzimba North,MZ160481,Kabwafu Health Centre
+199,Kachale Health Centre,Blantyre,BT240074,Kachale Health Centre
+843,Kachere Private Clinic,Lilongwe,LL040483,Kachere Private Clinic
+1013,Kadango Dispensary (Mangochi),Mangochi,MG200488,Kadango Dispensary (Mangochi)
+202,Kafukule Health Centre,Mzimba North,MZ160493,Kafukule Health Centre
+205,Kalemba Health Centre,Nsanje,NS300496,Kalemba Health Centre
+206,Kalembo Dispensary,Balaka,BK170497,Kalembo Dispensary
+1047,Kalikeni Private Clinic (Kasungu),Kasungu,KU070498,Kalikeni Private Clinic (Kasungu)
+207,Kalikumbi Health Centre,Mzimba South,MZ160499,Kalikumbi Health Centre
+886,Kalimanjira Health Centre,Ntcheu,NT120500,Kalimanjira Health Centre
+208,Kalinde Dispensary,Phalombe,PH220502,Kalinde Dispensary
+978,Kalinde Health Centre (Phalombe),Phalombe,,Kalinde Health Centre (Phalombe)
+209,Kaloga Dispensary,Ntcheu,NT120505,Kaloga Dispensary
+1061,Kameza Macro,Blantyre,BT240756,Kameza Macro
+215,Kampanje Maternity,Ntcheu,NT120521,Kampanje Maternity
+216,Kamphata Dispensary,Nsanje,NS300522,Kamphata Dispensary
+218,Kamteteka Health Centre,Mzimba South,MZ160526,Kamteteka Health Centre
+219,Kamuzu Barracks Dispensary,Lilongwe,LL040528,Kamuzu Barracks Dispensary
+696,Kamuzu Central Hospital,City,LL040529,Kamuzu Central Hospital
+220,Kamwe Health Centre,Mzimba North,MZ160530,Kamwe Health Centre
+222,Kandeu Health Centre (Dispensary),Ntcheu,NT120534,Kandeu Health Centre (Dispensary)
+846,Kanengo Tobacco Processors Clinic,Lilongwe,LL040535,Kanengo Tobacco Processors Clinic
+948,Kanjedza Police Clinic,Blantyre,BT240540,Kanjedza Police Clinic
+1036,Kansonga Health Centre (Ntchisi),Ntchisi,,Kansonga Health Centre (Ntchisi)
+228,Kanyimbi Dispensary,Nsanje,NS300548,Kanyimbi Dispensary
+1068,Kaongizi Health Centre,KOZ,NK101536,Kaongizi Health Centre
+236,Kapichila (ESCOM) Health Centre,Kasungu,KU071925,Kapichila (ESCOM) Health Centre
+904,Kapichira ESCOM Clinic,Chikwawa,CK270561,Kapichira ESCOM Clinic
+1010,Kapire Dream Centre (Mangochi),Machinga,MG200563,Kapire Dream Centre (Mangochi)
+239,Kapiri Health Centre,Nkhotakota,NK100562,Kapiri Health Centre
+804,Karonga Banja La Mtsongolo Dispensary,Karonga,KA150569,Karonga Banja La Mtsongolo Dispensary
+241,Karonga District Health Office,Karonga,KA150570,Karonga District Health Office
+243,Karonga Health Area,Karonga,,Karonga Health Area
+244,Karonga Health District,Karonga,KA151248,Karonga Health District
+795,Karonga Prevention Study,Lilongwe,,Karonga Prevention Study
+1033,Kasese Health Centre (Dowa),Dowa,DA021755,Kasese Health Centre (Dowa)
+246,Kaseye St Michaels Health Centre,Chitipa,CP060579,Kaseye St Michaels Health Centre
+250,Kasitu Dispensary,Nkhotakota,NK100583,Kasitu Dispensary
+252,Kasiya Health Centre,Lilongwe,,Kasiya Health Centre
+253,Kasungu District Health Office,Kasungu,KU070588,Kasungu District Health Office
+255,Kasungu Health Area,Kasungu,,Kasungu Health Area
+256,Kasungu Health District,Kasungu,,Kasungu Health District
+1024,Katawa Health Centre (Salima),Salima,SA090592,Katawa Health Centre (Salima)
+258,Katete Rural Hospital,Mzimba South,MZ160596,Katete Rural Hospital
+833,Katimbira Health Centre,Nkhota-kota,NK100597,Katimbira Health Centre
+1090,Katoto DIC,Mzimba East,MZ161812,Katoto DIC
+1075,Kavuzi Cumnoc,Nkhata-bay,KB050608,Kavuzi Cumnoc
+806,Kavuzi Health Centre,Nkhata Bay,KB050606,Kavuzi Health Centre
+264,Kawale Banja La Mtsogolo Dispensary,Lilongwe,LL040095,Kawale Banja La Mtsogolo Dispensary
+265,Kawale Urban Health Centre,Lilongwe,LL040610,Kawale Urban Health Centre
+826,Kaweche Health Centre,Mzimba North,MZ160613,Kaweche Health Centre
+267,Kawinga Health Centre (Machinga),Machinga,MC190614,Kawinga Health Centre (Machinga)
+1116,Kazyozyo Health Centre,Mchinji,MC010618,Kazyozyo Health Centre
+269,Kazyozyo Maternity,Mchinji,,Kazyozyo Maternity
+270,Khasu Health Centre,,,Khasu Health Centre
+273,Khondowe Health Centre,Nkhata Bay,KB050627,Khondowe Health Centre
+276,Khosolo Health Centre,Mzimba South,MZ160632,Khosolo Health Centre
+823,Khuyukuyu Health Centre,Mzimba North,MZ161205,Khuyukuyu Health Centre
+278,Koche Health Centre,Mangochi,MG200636,Koche Health Centre
+966,Kukalanga Health Centre,Mangochi,MG200642,Kukalanga Health Centre
+934,Lafarge Cement Clinic (Blantyre),Blantyre,BT240651,Lafarge Cement Clinic (Blantyre)
+287,Lengwe Dispensary,Chikwawa,CK270656,Lengwe Dispensary
+910,Lengwe Health Centre,Chikwawa,CK271384,Lengwe Health Centre
+1027,Life Line Salima Health Centre,Salima,SA090660,Life Line Salima Health Centre
+1001,Lifune Dispensary (Machinga),Machinga,MC190661,Lifune Dispensary (Machinga)
+701,Lighthouse,Lilongwe,LL040664,Lighthouse
+702,Lighthouse HTC,Lilongwe,,Lighthouse HTC
+290,Likoma District Health Office,Likoma,,Likoma District Health Office
+291,Likoma Health Area,Likoma,,Likoma Health Area
+292,Likoma Health District,Likoma,,Likoma Health District
+293,Likuni Hospital,Lilongwe,LL040671,Likuni Hospital
+294,Lilongwe Bottom Hospital,Lilongwe,LL040122,Lilongwe Bottom Hospital
+295,Lilongwe Central Hospital,Lilongwe,,Lilongwe Central Hospital
+860,Lilongwe City Assembly (Chinsapo),Lilongwe,LL040672,Lilongwe City Assembly (Chinsapo)
+297,Lilongwe Health Area,Lilongwe,,Lilongwe Health Area
+870,Lilongwe Health Clinic,Lilongwe,LL040675,Lilongwe Health Clinic
+298,Lilongwe Health District,Lilongwe,,Lilongwe Health District
+937,Limbe Diagnostic Centre,Blantyre,BT240677,Limbe Diagnostic Centre
+862,Limbe Leaf Tobacco Clinic (Lilongwe),Lilongwe,LL040681,Limbe Leaf Tobacco Clinic (Lilongwe)
+942,Limbe Leaf Tobacco Clinic (Limbe),Blantyre,BT240680,Limbe Leaf Tobacco Clinic (Limbe)
+854,Lingadzi Private Clinic,Lilongwe,LL040694,Lingadzi Private Clinic
+302,Lisungwi Health Centre,Neno,NE290700,Lisungwi Health Centre
+815,Livingstonia Mission Hospital (Rumphi),Rumphi,RU140702,Livingstonia Mission Hospital (Rumphi)
+306,Lobi Rural Health Centre,Dedza,DE030708,Lobi Rural Health Centre
+307,Ludzi St Josephs Health Centre,Mchinji,MC010711,Ludzi St Josephs Health Centre
+315,Lunjika Health Centre,Mzimba South,MZ160727,Lunjika Health Centre
+1019,Lunzu Banja La Mtsogolo Dispensary,Blantyre,BT240097,Lunzu Banja La Mtsogolo Dispensary
+926,Lunzu DAPP Clinic,Blantyre,,Lunzu DAPP Clinic
+317,Luvwere Health Centre ,Mzimba North,MZ160736,Luvwere Health Centre 
+320,Luwawa Health Centre,Mzimba South,MZ160740,Luwawa Health Centre
+321,Luwerezi Health Centre,Mzimba South,MZ160741,Luwerezi Health Centre
+323,Luzi Health Centre,Mzimba North,MZ160743,Luzi Health Centre
+324,Lwazi Dispensary,Nkhatabay,KB050744,Lwazi Dispensary
+704,MACRO Blantyre,Blantyre,BT240756,MACRO Blantyre
+717,MACRO Mzuzu,Mzuzu,MZ160760,MACRO Mzuzu
+841,MASM Area 43,Lilongwe,LL040850,MASM Area 43
+820,MASM Medi Clinic Katoto,Mzimba North,MZ160849,MASM Medi Clinic Katoto
+863,MASM Medi Clinic Lilongwe,Lilongwe,LL040850,MASM Medi Clinic Lilongwe
+932,MASM Medi Clinic Limbe,Blantyre,BT240848,MASM Medi Clinic Limbe
+831,Mabiri Health Centre,Mzimba South,MZ160748,Mabiri Health Centre
+327,Machinga District Health Office,Machinga,MC190752,Machinga District Health Office
+329,Machinga Health Area,Machinga,,Machinga Health Area
+331,Machinga Health District,Machinga,MC190753,Machinga Health District
+332,Madede Health Centre,Mzimba South,MZ160765,Madede Health Centre
+333,Madisi Hospital,Dowa,DA020769,Madisi Hospital
+990,Maera Health Centre (Zomba),Zomba,ZA230771,Maera Health Centre (Zomba)
+335,Mafco Health Centre,Salima,SA090773,Mafco Health Centre
+1109,Maganga Dispensary,Mangochi,MG200777,Maganga Dispensary
+338,Magomero Health Centre,Zomba,ZA230779,Magomero Health Centre
+1071,Mahowe Health Centre,Chitipa,CP060781,Mahowe Health Centre
+906,Majete (Epicenter) Health Centre,Chikwawa,,Majete (Epicenter) Health Centre
+1056,Makadam Pvt Clinic (Blantyre),Blantyre,BT240088,Makadam Pvt Clinic (Blantyre)
+341,Makata Dispensary,Blanytyre,BT241554,Makata Dispensary
+956,Makata Health Centre (Lunzu),Blantyre,BT240788,Makata Health Centre (Lunzu)
+927,Makheta Youth Organization Clinic,Blantyre,BT240790,Makheta Youth Organization Clinic
+925,Makungwa Health Centre,Thyolo,TH310794,Makungwa Health Centre
+958,Malamulo Day Clinic,Blantyre,BT240802,Malamulo Day Clinic
+346,Malamulo Hospital,Thyolo,TH310803,Malamulo Hospital
+1012,Malawi Army Marine Camp Hospital,Mangochi,MG200800,Malawi Army Marine Camp Hospital
+1014,Maldeco Fisheries Clinic (Mangochi),Mangochi,MG200807,Maldeco Fisheries Clinic (Mangochi)
+350,Malembo Health Centre (Lilongwe),Lilongwe,LL040809,Malembo Health Centre (Lilongwe)
+1007,Malembo Health Centre (Mangochi),Mangochi,MG200808,Malembo Health Centre (Mangochi)
+351,Malidadi Health Centre,Mzimba North,MZ160812,Malidadi Health Centre
+947,Malmed Private Clinic,Blantyre,BT240815,Malmed Private Clinic
+354,Malombe Health Centre,Mangochi,MG200817,Malombe Health Centre
+1051,Malowa Health Centre (Nkhota-kota),Nkhota-kota,NK100819,Malowa Health Centre (Nkhota-kota)
+1017,Malukula Health Centre (Mangochi),Mangochi,MG200820,Malukula Health Centre (Mangochi)
+1011,Mama Khadija Private Clinic (Namwera),Mangochi,MG200824,Mama Khadija Private Clinic (Namwera)
+357,Mangamba Dispensary,Machinga,,Mangamba Dispensary
+1002,Mangamba Health Centre (Machinga),Mangochi,MC190827,Mangamba Health Centre (Machinga)
+1009,Mangochi Banja La Mtsogolo Dispensary,Mangochi,MG200828,Mangochi Banja La Mtsogolo Dispensary
+1098,Mangochi DIC,Mangochi,MG201858,Mangochi DIC
+358,Mangochi District Health Office,Mangochi,MG200829,Mangochi District Health Office
+1099,Mangochi FPAM,Mangochi,MG201857,Mangochi FPAM
+360,Mangochi Health Area,Mangochi,,Mangochi Health Area
+361,Mangochi Health District,Mangochi,,Mangochi Health District
+1106,Mangochi Medi Clinic,Mangochi,,Mangochi Medi Clinic
+1079,Mangochi Pakachere DIC,Mangochi,MG201562,Mangochi Pakachere DIC
+362,Mangunda Maternity,Thyolo,TH310780,Mangunda Maternity
+363,Manjawira Maternity,Ntcheu,NT120831,Manjawira Maternity
+821,Manolo Health Centre,Mzimba North,MZ161563,Manolo Health Centre
+364,Manyamula Health Centre,Mzimba South,MZ160834,Manyamula Health Centre
+366,Mapanga Maternity,Thyolo,TH310839,Mapanga Maternity
+700,Martin Preuss Centre,Lilongwe,LL040996,Martin Preuss Centre
+1130,Masasa Dispensary,Mangochi,MG201859,Masasa Dispensary
+368,Masasa Health Centre,Ntcheu,NT120844,Masasa Health Centre
+371,Matanda Health Centre (Dispensary),Ntcheu,NT120853,Matanda Health Centre (Dispensary)
+374,Matawale Urban Health Centre,Zomba,ZA230856,Matawale Urban Health Centre
+376,Matiya Health Centre,Zomba,ZA230861,Matiya Health Centre
+378,Matuli Health Centre,Mzimba North,MZ160863,Matuli Health Centre
+379,Matumba Health Centre,Dedza,DE030864,Matumba Health Centre
+810,Maula Health Centre (Nkhata Bay),Nkhata Bay,KB050865,Maula Health Centre (Nkhata Bay)
+794,Maula Prison Health Centre,Lilongwe,LL040866,Maula Prison Health Centre
+381,Mauwa Maternity,Chiradzulu,CR260867,Mauwa Maternity
+1052,Mazunga Private Clinic (Nkhota-kota),Nkhota-kota,NK101828,Mazunga Private Clinic (Nkhota-kota)
+385,Mbalachanda Health Centre,Mzimba South,MZ160873,Mbalachanda Health Centre
+386,Mbalanguzi Dispensary,Thyolo,TH310875,Mbalanguzi Dispensary
+1103,Mbanila Health Centre,Machinga,MC190879,Mbanila Health Centre
+957,Mbayani Health Centre,Blantyre,BT240881,Mbayani Health Centre
+393,Mbonechera Health Centre,Machinga,MC190888,Mbonechera Health Centre
+395,Mbulumbudzi Maternity,Chiradzulu,CR260889,Mbulumbudzi Maternity
+397,Mchacha Dispensary,Nsanje,NS300893,Mchacha Dispensary
+398,Mchinji District Health Office,Mchinji,MC010898,Mchinji District Health Office
+400,Mchinji Health Area,Mchinji,,Mchinji Health Area
+401,Mchinji Health District,Mchinji,,Mchinji Health District
+1038,Mdunga Health Centre (Kasungu),Kasungu,KU070902,Mdunga Health Centre (Kasungu)
+1055,Medicare City Centre Clinic (Blantyre),Blantyre,BT240904,Medicare City Centre Clinic (Blantyre)
+903,Mgabu Banja La Mtsogolo Dispensary,Chikwawa,,Mgabu Banja La Mtsogolo Dispensary
+405,Mhalaunda Health Centre,Mzimba South,MZ160912,Mhalaunda Health Centre
+757,Midzemba Health Centre,Lilongwe,NE290919,Midzemba Health Centre
+407,Migowi Health Centre,Phalombe,PH220920,Migowi Health Centre
+409,Mikondo Dispensary,Dedza,DE030923,Mikondo Dispensary
+982,Minimini Dispensary (Mulanje),Mulanje,MU210933,Minimini Dispensary (Mulanje)
+415,Misamvu Dispensary,Nsanje,NS300936,Misamvu Dispensary
+418,Mitsidi Dispensary,Blanytyre,BT240722,Mitsidi Dispensary
+419,Mitundu Rural Hospital,Lilongwe,LL040945,Mitundu Rural Hospital
+421,Mkango Dispensary,Nsanje,NS300948,Mkango Dispensary
+422,Mkhota Rural Growth Health Centre,Kasungu,KU070950,Mkhota Rural Growth Health Centre
+425,Mkoma Health Centre,Mzimba South,MZ160954,Mkoma Health Centre
+430,Mlambe Hospital,Blantyre,BT240962,Mlambe Hospital
+432,Mlangali Dispensary,Dedza,DE030964,Mlangali Dispensary
+434,Mlangeni Police Health Centre,Ntcheu,NT121930,Mlangeni Police Health Centre
+435,Mlodza SDA Dispensary,Lilongwe,LL040968,Mlodza SDA Dispensary
+436,Mlolo Dispensary,Nsanje,NS300970,Mlolo Dispensary
+999,Mmambo Health Centre (Zomba),Zomba,ZA230747,Mmambo Health Centre (Zomba)
+1044,Mnyanja Health Centre,Kasungu,KU070976,Mnyanja Health Centre
+1080,Monkey Bay Pakachere DIC,Mangochi,MG201729,Monkey Bay Pakachere DIC
+439,Monkey-Bay Health Centre,Mangochi,MG200982,Monkey-Bay Health Centre
+830,Moyale Barracks Health Centre,Mzimba North,MZ160986,Moyale Barracks Health Centre
+698,Moyo Clinic (Lilongwe),Lilongwe,,Moyo Clinic (Lilongwe)
+963,Moyo Private Clinic (Blantyre),Blantyre,BT240987,Moyo Private Clinic (Blantyre)
+441,Mpamantha Health Centre,Nkhota-kota,NK100991,Mpamantha Health Centre
+1043,Mpepa Health Centre (Kasungu),Kasungu,KU070272,Mpepa Health Centre (Kasungu)
+879,Mphati Health Centre,Dedza,DE031001,Mphati Health Centre
+448,Mpherembe Health Centre,Mzimba North,MZ161004,Mpherembe Health Centre
+449,Mpherere Health Centre,Ntchisi,NT081005,Mpherere Health Centre
+450,Mphopha Health Centre,,RU141007,Mphopha Health Centre
+1005,Mpondasi Health Centre (Mangochi),Mangochi,MG201012,Mpondasi Health Centre (Mangochi)
+458,Msese Health Centre,Mzimba South,MZ161019,Msese Health Centre
+788,Mtema 1,Lilongwe,,Mtema 1
+460,Mtende Health Centre,Mzimba South,MZ161029,Mtende Health Centre
+462,Mtengowanthenga Hospital,Dowa,DA021570,Mtengowanthenga Hospital
+468,Mtwalo Health Centre,Mzimba North,MZ161040,Mtwalo Health Centre
+469,Mua Mission Hospital,Dedza,DE031041,Mua Mission Hospital
+470,Mulanje District Health Office,Mulanje,MU211045,Mulanje District Health Office
+472,Mulanje Health Area,Mulanje,,Mulanje Health Area
+473,Mulanje Health District,Mulanje,,Mulanje Health District
+475,Mulibwanji Health Centre (Mangochi),Mangochi,MG201047,Mulibwanji Health Centre (Mangochi)
+478,Muluma Dispensary,Ntcheu,NT120973,Muluma Dispensary
+975,Mulungu Alinafe Clinic (Phalombe),Phalombe,PH221052,Mulungu Alinafe Clinic (Phalombe)
+1108,Mumbwe Private Clinic,Mzimba North,MZ161053,Mumbwe Private Clinic
+479,Municipality Assembly Dispensary,,,Municipality Assembly Dispensary
+480,Mvera Army Camp Dispensary,Dowa,DA021060,Mvera Army Camp Dispensary
+481,Mvera Mission Hospital,Dowa,DA021061,Mvera Mission Hospital
+996,Mwandama Health Centre (Zomba),Zomba,ZA231073,Mwandama Health Centre (Zomba)
+482,Mwanga Health Centre,Phalombe,PH221074,Mwanga Health Centre
+485,Mwanza District Health Office,Mwanza,,Mwanza District Health Office
+487,Mwanza Health Area,Mwanza,,Mwanza Health Area
+488,Mwanza Health District,Mwanza,MW281081,Mwanza Health District
+1128,Mwima Health Centre,Balaka,BK171089,Mwima Health Centre
+490,Mzalangwe Health Centre,Mzimba South,MZ161090,Mzalangwe Health Centre
+491,Mzambazi Rural Hospital,Rumphi,,Mzambazi Rural Hospital
+828,Mzimba Banja La Mtsongolo Dispensary,Mzimba South,MZ160101,Mzimba Banja La Mtsongolo Dispensary
+494,Mzimba District Health Office,Mzimba,,Mzimba District Health Office
+495,Mzimba District Hospital,Mzimba South,MZ161095,Mzimba District Hospital
+496,Mzimba Health Area,Mzimba,,Mzimba Health Area
+497,Mzimba Health District,Mzimba,,Mzimba Health District
+1046,Mziza Health Centre (Kasungu),Kasungu,KU070640,Mziza Health Centre (Kasungu)
+499,Mzuzu Central Hospital,Mzimba North,MZ161098,Mzuzu Central Hospital
+829,Mzuzu Central Prison,Mzimba North,MZ161099,Mzuzu Central Prison
+1105,Mzuzu DIC,Mzuzu,,Mzuzu DIC
+825,Mzuzu University Clinic,Mzimba North,MZ161103,Mzuzu University Clinic
+500,Mzuzu Urban Health Centre,Mzimba North,MZ161100,Mzuzu Urban Health Centre
+882,Nakalazi Health Centre,Dedza,DE031107,Nakalazi Health Centre
+502,Nalunga Mafika Health Centre,Dowa,DA021108,Nalunga Mafika Health Centre
+1000,Namadidi Health Centre (Zomba),Zomba,ZA231109,Namadidi Health Centre (Zomba)
+508,Namasalima Health Centre (Mulanje),Mulanje,MU211118,Namasalima Health Centre (Mulanje)
+509,Namasalima Health Centre (Zomba),Zomba,ZA231119,Namasalima Health Centre (Zomba)
+510,Nambazo Health Centre,Phalombe,PH221120,Nambazo Health Centre
+1133,Namfuse Health Center,Mchinji,,Namfuse Health Center
+512,Namikango Health Centre,Zomba,ZA231126,Namikango Health Centre
+516,Namizana Dispensary,Mchinji,MC011131,Namizana Dispensary
+877,Namizana Police Dispensary,Mchinji,MC011131,Namizana Police Dispensary
+708,Napham,Lilongwe,,Napham
+976,Nazombe Health Centre (Gogo Nazombe),Phalombe,PH221150,Nazombe Health Centre (Gogo Nazombe)
+1111,Nchalo Hunger,Chikwawa,CK271826,Nchalo Hunger
+532,Ndinda Dispensary,Ntchisi,NT080974,Ndinda Dispensary
+533,Ndirande Urban Health Centre,Blantyre,BT241158,Ndirande Urban Health Centre
+537,New State House Dispensary,Lilongwe,LL041162,New State House Dispensary
+538,Newa / Mpasazi Health Centre,Kasungu,KU071163,Newa / Mpasazi Health Centre
+1059,Ngabu SDA Health Centre,Neno,CK271168,Ngabu SDA Health Centre
+542,Ngapani Health Centre,Mangochi,MG201172,Ngapani Health Centre
+546,Nguludi St Josephs Hospital,Chiradzulu,CR261369,Nguludi St Josephs Hospital
+548,Njuyu Health Centre,Mzimba North,MZ161187,Njuyu Health Centre
+551,Nkhamenya Hospital,Kasungu,KU071191,Nkhamenya Hospital
+553,Nkhata Bay District Health Office,Nkhatabay,KB051193,Nkhata Bay District Health Office
+555,Nkhata Bay Health Area,Nkhatabay,,Nkhata Bay Health Area
+556,Nkhata Bay Health District,Nkhatabay,,Nkhata Bay Health District
+557,Nkhataombere Maternity,Thyolo,TH311195,Nkhataombere Maternity
+558,Nkhoma Hospital,Lilongwe,LL041197,Nkhoma Hospital
+559,Nkhorongo Health Centre,Mzimba North,MZ161200,Nkhorongo Health Centre
+560,Nkhotakota District Health Office,Nkhotakota,NK101202,Nkhotakota District Health Office
+562,Nkhotakota Health Area,Nkhotakota,,Nkhotakota Health Area
+563,Nkhotakota Health District,Nkhotakota,NK101784,Nkhotakota Health District
+564,Nkhulambe Health Centre,Phalombe,PH221203,Nkhulambe Health Centre
+972,Nkhwayi Health Centre (Phalombe),Phalombe,,Nkhwayi Health Centre (Phalombe)
+570,Nsabwe Dispensary,Thyolo,TH311212,Nsabwe Dispensary
+571,Nsambe Sda Health Centre,Neno,NE291214,Nsambe Sda Health Centre
+573,Nsanje District Health Office,Nsanje,,Nsanje District Health Office
+575,Nsanje Health Area,Nsanje,,Nsanje Health Area
+576,Nsanje Health District,Nsanje,NS301216,Nsanje Health District
+577,Nsaru Health Centre,Lilongwe,LL041213,Nsaru Health Centre
+578,Nsipe Health Centre,Ntcheu,NT121218,Nsipe Health Centre
+581,Ntcheu District Health Office,Ntcheu,NT121225,Ntcheu District Health Office
+583,Ntcheu Health Area,Ntcheu,,Ntcheu Health Area
+584,Ntcheu Health District,Ntcheu,,Ntcheu Health District
+585,Ntchisi District Health Office,Ntchisi,NT081226,Ntchisi District Health Office
+587,Ntchisi Health Area,Ntchisi,,Ntchisi Health Area
+588,Ntchisi Health District,Ntchisi,,Ntchisi Health District
+590,Nthenje Dispensary,Rumphi,RU141229,Nthenje Dispensary
+591,Nthondo Health Centre (Lilongwe),Lilongwe,LL041232,Nthondo Health Centre (Lilongwe)
+592,Nthondo Health Centre (Ntchisi),Ntchisi,NT081231,Nthondo Health Centre (Ntchisi)
+1037,Nthondo Health Centre (Ntchisi),Ntchisi,,Nthondo Health Centre (Ntchisi)
+946,Nyambadwe Private Hospital,Blantyre,BT241237,Nyambadwe Private Hospital
+597,Nzama Health Centre,Ntcheu,,Nzama Health Centre
+598,Ofesi Dispensary,Kasungu,KU071247,Ofesi Dispensary
+599,Old Maula Court Health Centre,,KB051249,Old Maula Court Health Centre
+1112,Osiyana Health Centre,Nsanje,NS301523,Osiyana Health Centre
+1114,Our Lady of Mount Carmel Community Hospital,Mchinji,MC011250,Our Lady of Mount Carmel Community Hospital
+1025,Parachute Battalion Clinic,Salima,SA091253,Parachute Battalion Clinic
+703,Partners in Hope,Lilongwe,LL041256,Partners in Hope
+1064,Partners in Hope - Dalitso Clinic,Lilongwe,LL041255,Partners in Hope - Dalitso Clinic
+953,Pensulo Health Centre,Blantyre,BT241260,Pensulo Health Centre
+600,Phalombe Dispensary,Phalombe,,Phalombe Dispensary
+601,Phalombe District Health Office,Phalombe,PH221549,Phalombe District Health Office
+602,Phalombe Health Area,Phalombe,,Phalombe Health Area
+603,Phalombe Health District,Phalombe,,Phalombe Health District
+604,Phalombe Mission Hospital,Phalombe,PH220453,Phalombe Mission Hospital
+608,Phokera Dispensary,Nsanje,NS301274,Phokera Dispensary
+610,Pirimiti Health Centre,Zomba,ZA231282,Pirimiti Health Centre
+611,Police (Area 30) Dispensary,Lilongwe,LL040038,Police (Area 30) Dispensary
+612,Police College Dispensary,Zomba,MZ161100,Police College Dispensary
+883,Police College Health Centre (Mua),Dedza,DE031539,Police College Health Centre (Mua)
+613,Police College Hospital (Zomba),Zomba,ZA231284,Police College Hospital (Zomba)
+939,Polytechnic Blantyre,Blantyre,BT240806,Polytechnic Blantyre
+1020,Providence Industrial Mission Health Centre,Chiradzulu,,Providence Industrial Mission Health Centre
+615,Raiply Dispensary Clinic,Mzimba South,MZ161296,Raiply Dispensary Clinic
+616,Ruarwe Dispensary,Nkhatabay,KB051300,Ruarwe Dispensary
+808,Rumphi Banja La Mtsogolo Dispensary,Rumphi,RU141301,Rumphi Banja La Mtsogolo Dispensary
+617,Rumphi District Health Office,Rumphi,RU141302,Rumphi District Health Office
+619,Rumphi Health Area,Rumphi,,Rumphi Health Area
+620,Rumphi Health District,Rumphi,,Rumphi Health District
+720,SOS Clinic,Lilongwe,LL041346,SOS Clinic
+655,SUCOMA Health Centre (Illovo),Chikwawa,CK271381,SUCOMA Health Centre (Illovo)
+621,Salima District Health Office,Salima,SA091312,Salima District Health Office
+623,Salima Health Area,Salima,,Salima Health Area
+624,Salima Health District,Salima,,Salima Health District
+950,Sanjika Clinic,Blantyre,BT241318,Sanjika Clinic
+924,Satemwa Clinic,Thyolo,TH311322,Satemwa Clinic
+628,Senga Bay Baptist Dispensary,Salima,SA091541,Senga Bay Baptist Dispensary
+630,Sharpe Valley Maternity,Ntcheu,NT121329,Sharpe Valley Maternity
+959,Shifa Private Clinic,Blantyre,BT241330,Shifa Private Clinic
+1041,Simulemba Health Centre,Kasungu,KU071332,Simulemba Health Centre
+632,Sinyala Health Centre,Mangochi,MG201333,Sinyala Health Centre
+1006,Sister Martha Hospital (Mangochi),Mangochi,MG201334,Sister Martha Hospital (Mangochi)
+633,Sister Teleza Health Centre,Ntcheu,NT121349,Sister Teleza Health Centre
+962,Soche Adventist Health Centre,Blantyre,BT241337,Soche Adventist Health Centre
+634,Soche Dispensary,Blantyre,,Soche Dispensary
+637,South Lunzu Dispensary,Blantyre,,South Lunzu Dispensary
+638,South Lunzu Health Centre,Blantyre,BT241347,South Lunzu Health Centre
+1040,St Andrews Clinic (Kasungu),Kasungu,KU071358,St Andrews Clinic (Kasungu)
+639,St Anne's Mission Hospital,Nkhota-kota,NK101351,St Anne's Mission Hospital
+640,St Annes Hospital,Nkhotakota,NK101360,St Annes Hospital
+641,St Gabriels Hospital,Lilongwe,LL041362,St Gabriels Hospital
+818,St John of God Clinic,Mzimba North,MZ161788,St John of God Clinic
+642,St Johns Mzuzu Hospital,Mzimba North,MZ161366,St Johns Mzuzu Hospital
+643,St Johns of God Mental Hospital,Lilongwe,LL041365,St Johns of God Mental Hospital
+644,St Josephs Mitengo Health Centre,Thyolo,TH310942,St Josephs Mitengo Health Centre
+645,St Lukes Hospital,Zomba,ZA231371,St Lukes Hospital
+646,St Marthas Health Centre,Mzuzu,,St Marthas Health Centre
+647,St Martin Hospital,Mangochi,MG201374,St Martin Hospital
+648,St Martins Health Centre,Mangochi,MG201374,St Martins Health Centre
+649,St Martins Molere Health Centre,Thyolo,TH310978,St Martins Molere Health Centre
+1129,St Marys Clinic,Mangochi,,St Marys Clinic
+130,St Marys Health Centre (Chizumulo),Likoma,LK181355,St Marys Health Centre (Chizumulo)
+651,St Patricks Rumphi Health Centre,Rumphi,RU141377,St Patricks Rumphi Health Centre
+653,St Peters Hospital,Likoma,LK180669,St Peters Hospital
+652,St Peters Mission Rural Hospital (Likoma) ,Likoma,,St Peters Mission Rural Hospital (Likoma) 
+1035,St Theresa Health Centre (Malambo),Ntchisi,,St Theresa Health Centre (Malambo)
+929,St Vincent Health Centre (Chadzunda),Blantyre,BT241357,St Vincent Health Centre (Chadzunda)
+1073,St. Faith Health Centre,Kasungu,KU071361,St. Faith Health Centre
+654,State House Dispensary,Lilongwe,LL041162,State House Dispensary
+656,Sukasanje Health Centre,Phalombe,PH221388,Sukasanje Health Centre
+822,Sunrise Private Clinic,Mzimba North,MZ161927,Sunrise Private Clinic
+657,Tcharo Dispensary,Rumphi,RU141395,Tcharo Dispensary
+894,Tedzani ESCOM Clinic,Neno,NE291396,Tedzani ESCOM Clinic
+663,Thembe Dispensary,Mulanje,,Thembe Dispensary
+980,Thembe Health Centre (Mulanje),Mulanje,MU211411,Thembe Health Centre (Mulanje)
+668,Thunduwike Health Centre,Mzimba North,MZ161425,Thunduwike Health Centre
+669,Thyolo District Health Office,Thyolo,TH311428,Thyolo District Health Office
+671,Thyolo Health Area,Thyolo,,Thyolo Health Area
+672,Thyolo Health District,Thyolo,,Thyolo Health District
+897,Tikondane Private Clinic,Nsanje,NS301431,Tikondane Private Clinic
+707,Tiyanjane,Blantyre,,Tiyanjane
+780,Tiyanjane clinic,Blantyre,,Tiyanjane clinic
+880,Tiyese Private Maternity,Dedza,DE031437,Tiyese Private Maternity
+673,Trinity - Fatima Hospital,Nsanje,NS301440,Trinity - Fatima Hospital
+881,Tsoyo Dispensary,Dedza,DE031445,Tsoyo Dispensary
+675,Tsoyo Maternity,Dedza,,Tsoyo Maternity
+714,UNC Project Area 18 Health Centre,Lilongwe,,UNC Project Area 18 Health Centre
+715,UNC Project Area 25 Health Centre,Lilongwe,,UNC Project Area 25 Health Centre
+712,UNC Project Bwaila Hospital,Lilongwe,,UNC Project Bwaila Hospital
+716,UNC Project Kawale Health Centre,Lilongwe,,UNC Project Kawale Health Centre
+713,UNC Project Tidziwe Centre,Lilongwe,,UNC Project Tidziwe Centre
+1062,Umunthu Foundation Clinic,Blantyre,BT241460,Umunthu Foundation Clinic
+832,Vibangala Dispensary,Mzimba South,MZ161470,Vibangala Dispensary
+682,Vibangalala Health Centre,Mzimba South,,Vibangalala Health Centre
+1117,Welliness Centre,Mchinji,,Welliness Centre
+817,Wezi Medical Centre,Mzimba North,MZ161487,Wezi Medical Centre
+1050,World Medical Fund,Nkhota-kota,NK101492,World Medical Fund
+1045,Yankho Private Clinic (Kasungu),Kasungu,KU071496,Yankho Private Clinic (Kasungu)
+896,Zalewa PIH,Neno,NE291499,Zalewa PIH
+997,Zilindo Health Centre (Zomba),Zomba,ZA231502,Zilindo Health Centre (Zomba)
+686,Zingwangwa Urban Health Centre,Blantyre,BT241504,Zingwangwa Urban Health Centre
+687,Zoa Dispensary,Thyolo,TH311506,Zoa Dispensary
+688,Zoa Maternity,Thyolo,,Zoa Maternity
+1091,Zolozolo DIC,Mzimba East,MZ161818,Zolozolo DIC
+1110,Zomba Airwing Clinic,Zomba,ZA231854,Zomba Airwing Clinic
+993,Zomba Banja La Mtsogolo Dispensary,Zomba,ZA231508,Zomba Banja La Mtsogolo Dispensary
+690,Zomba District Health Office,Zomba,ZA231512,Zomba District Health Office
+691,Zomba Forestry Dispensary,Zomba,,Zomba Forestry Dispensary
+692,Zomba Health Area,Zomba,,Zomba Health Area
+693,Zomba Health District,Zomba,,Zomba Health District

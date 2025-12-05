@@ -4,6 +4,8 @@ class Order < VoidableRecord
   self.table_name = :orders
   self.primary_key = :order_id
 
+  include Locatable
+
   after_void :void_records
 
   belongs_to :order_type

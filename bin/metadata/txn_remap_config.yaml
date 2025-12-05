@@ -1,0 +1,55 @@
+---
+# Remap configuration for transactional data
+drug_cms:
+  - column: drug_inventory_id
+    ref: drug
+
+alternative_drug_names:
+  - column: drug_inventory_id
+    ref: drug
+
+drug_order:
+  - column: drug_inventory_id
+    ref: drug
+
+encounter:
+  - column: encounter_type
+    ref: encounter_type
+  - column: program_id
+    ref: program
+
+obs:
+  - column: concept_id
+    ref: concept
+  - column: value_coded
+    ref: concept
+  - column: value_drug
+    ref: drug
+
+orders:
+  - column: concept_id
+    ref: concept
+
+patient_identifier: []
+
+patient_program: []
+
+program_workflow:
+  - column: concept_id
+    ref: concept
+
+program_workflow_state:
+  - column: concept_id
+    ref: concept
+
+users: []
+
+lims_acknowledgement_statuses:
+  - column: test
+    ref: concept
+
+concept_set:
+  - column: concept_id
+    ref: concept
+  - column: concept_set
+    ref: concept
