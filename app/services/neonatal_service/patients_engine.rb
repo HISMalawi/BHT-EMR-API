@@ -137,7 +137,8 @@ module NeonatalService
       enrolled: 'In patient',
       admitted: 'Admitted',
       discharged: 'Discharged',
-      critical: 'Critical'
+      critical: 'Critical',
+      triage_only: 'Triage Only - Pending Registration'
     }.freeze
 
     ##
@@ -150,6 +151,7 @@ module NeonatalService
         admitted: build_statistic(patients_admitted_on(date), date, STAT_STATUSES[:admitted]),
         discharged: build_statistic_from_programs(patients_discharged_on(date), date, STAT_STATUSES[:discharged]),
         critical: build_statistic(critical_patients(date), date, STAT_STATUSES[:critical]),
+        triage_only: build_statistic(triage_only_patients(date), date, STAT_STATUSES[:triage_only]),
         recent_neonates: get_recent_neonates(date)
       }
     end
@@ -449,6 +451,63 @@ module NeonatalService
                  .map { |obs| obs.encounter.patient }
                  .compact
                  .uniq { |patient| patient.patient_id }
+    end
+
+    ##
+    # Fetches patients who had NEONATAL_TRIAGE encounters but have minimal/incomplete registration
+    # These are patients created during emergency triage without full registration
+    # Identified by having minimal demographics (birthdate_estimated = 1 AND gender = 'U')
+    # AND only having NEONATAL_TRIAGE encounter (no other encounters indicating full admission)
+    #
+    # @param date [Date]
+    # @return [Array<Patient>]
+    def triage_only_patients(date)
+      triage_encounter_type = EncounterType.find_by(name: 'NEONATAL TRIAGE')
+      return [] unless triage_encounter_type
+
+      # Get all patients with NEONATAL TRIAGE encounters on the date
+      patients_with_triage = Encounter
+        .where(program_id: @program.program_id, encounter_type: triage_encounter_type.encounter_type_id, voided: 0)
+        .where('DATE(encounter_datetime) = ?', date.to_date)
+        .includes(:patient)
+        .map(&:patient)
+        .compact
+        .uniq { |patient| patient.patient_id }
+
+      # Filter to only those with minimal demographics (created via emergency triage)
+      # These patients have:
+      # 1. birthdate_estimated = 1 (estimated/temporary birthdate)
+      # 2. gender = 'U' (Unknown gender)
+      # 3. ONLY triage encounter (no enrollment/admission encounters)
+      patients_with_triage.select do |patient|
+        person = patient.person
+        next false unless person
+
+        # Check if has minimal demographics (created via emergency triage)
+        has_minimal_demographics = person.birthdate_estimated == 1 && person.gender == 'U'
+        next false unless has_minimal_demographics
+
+        # Check if patient ONLY has NEONATAL_TRIAGE encounter (no other neonatal encounters)
+        # Exclude patients who also have enrollment or other encounters
+        other_encounter_types = [
+          'NEONATAL ENROLLMENT',
+          'NEONATAL SIGNS & SYMPTOMS',
+          'NEONATAL REVIEW OF SYSTEMS',
+          'PHYSICAL EXAMINATION BABY',
+          'NEONATAL GENERAL EXAMINATION',
+          'NEONATAL VITALS',
+          'NEONATAL SYSTEMIC EXAMINATION'
+        ]
+
+        encounter_types = EncounterType.where(name: other_encounter_types)
+        has_other_encounters = Encounter
+          .where(patient_id: patient.patient_id, program_id: @program.program_id, voided: 0)
+          .where(encounter_type: encounter_types.pluck(:encounter_type_id))
+          .exists?
+
+        # Include only if patient has NO other encounters (truly triage-only)
+        !has_other_encounters
+      end
     end
 
     def build_statistic_from_programs(program_relation, date, status)
