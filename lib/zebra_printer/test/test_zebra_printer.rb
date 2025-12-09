@@ -172,13 +172,31 @@ class ZebraPrinterTest < Test::Unit::TestCase
 
   def test_should_print_very_long_word_between_other_words_clipped
     @label.draw_multi_text('Yo ThisIsAnExtremelyLongWordThatWontFitOntoASingleLineOfTextButShouldPrintAnywayOkayThanksBye yo')
-    assert_equal "\nN\nq801\nQ329,026\nZT\nA35,30,0,1,1,1,N,\"Yo\"\nA35,50,0,1,1,1,N,\"ThisIsAnExtremelyLongWordThatWontFitOntoASingleLineOfTextButShouldPrintAnywayOkayThanksBye\"\nA35,70,0,1,1,1,N,\"yo\"\n",
+    assert_equal "\n" +
+    "N\n" +
+    "q801\n" +
+    "Q329,026\n" +
+    "ZT\n" +
+    "A35,30,0,1,1,1,N,\"Yo\"\n" +
+    "A35,47,0,1,1,1,N,\"ThisIsAnExtremelyLongWordThatWontFitOntoASingleLineOfTextButShouldPrintAnywayOkayThanksBye\"\n" +
+    "A35,64,0,1,1,1,N,\"yo\"\n",
                  @label.output
   end
 
   def test_should_wrap_multi_text
     @label.draw_multi_text('Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.')
-    assert_equal "\nN\nq801\nQ329,026\nZT\nA35,30,0,1,1,1,N,\"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod\"\nA35,50,0,1,1,1,N,\"tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim\"\nA35,70,0,1,1,1,N,\"veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea\"\nA35,90,0,1,1,1,N,\"commodo consequat. Duis aute irure dolor in reprehenderit in voluptate\"\nA35,110,0,1,1,1,N,\"velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat\"\nA35,130,0,1,1,1,N,\"cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id\"\nA35,150,0,1,1,1,N,\"est laborum.\"\n",
+    assert_equal "\n" +
+    "N\n" +
+    "q801\n" +
+    "Q329,026\n" +
+    "ZT\n" +
+    "A35,30,0,1,1,1,N,\"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod\"\n" +
+    "A35,47,0,1,1,1,N,\"tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim\"\n" +
+    "A35,64,0,1,1,1,N,\"veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea\"\n" +
+    "A35,81,0,1,1,1,N,\"commodo consequat. Duis aute irure dolor in reprehenderit in voluptate\"\n" +
+    "A35,98,0,1,1,1,N,\"velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat\"\n" +
+    "A35,115,0,1,1,1,N,\"cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id\"\n" +
+    "A35,132,0,1,1,1,N,\"est laborum.\"\n",
                  @label.output
   end
 
@@ -188,7 +206,15 @@ class ZebraPrinterTest < Test::Unit::TestCase
                            "In the next line, it \"whispers through the trees;\"\n" \
                            "If crystal streams \"with pleasing murmurs creep,\"\n" \
                            "The reader's threatened (not in vain) with \"sleep.\"")
-    assert_equal "\nN\nq801\nQ329,026\nZT\nA35,30,0,1,1,1,N,\"Where-e\\\\'er you find \"the cooling western breeze,\"\"\nA35,50,0,1,1,1,N,\"In the next line, it \"whispers through the trees;\"\"\nA35,70,0,1,1,1,N,\"If crystal streams \"with pleasing murmurs creep,\"\"\nA35,90,0,1,1,1,N,\"The reader\\\\'s threatened (not in vain) with \"sleep.\"\"\n",
+    assert_equal "\n" +
+    "N\n" +
+    "q801\n" +
+    "Q329,026\n" +
+    "ZT\n" +
+    "A35,30,0,1,1,1,N,\"Where-e\\\\'er you find \"the cooling western breeze,\"\"\n" +
+    "A35,47,0,1,1,1,N,\"In the next line, it \"whispers through the trees;\"\"\n" +
+    "A35,64,0,1,1,1,N,\"If crystal streams \"with pleasing murmurs creep,\"\"\n" +
+    "A35,81,0,1,1,1,N,\"The reader\\\\'s threatened (not in vain) with \"sleep.\"\"\n",
                  @label.output
   end
 
@@ -198,7 +224,19 @@ class ZebraPrinterTest < Test::Unit::TestCase
     @label.column_spacing = 20
     @label.font_size = 4
     @label.draw_multi_text("1\n2\n3\n4\n5\n6\n7\n8\n")
-    assert_equal "\nN\nq801\nQ329,026\nZT\nA35,30,0,4,1,1,N,\"1\"\nA35,68,0,4,1,1,N,\"2\"\nA35,106,0,4,1,1,N,\"3\"\nA35,144,0,4,1,1,N,\"4\"\nA35,182,0,4,1,1,N,\"5\"\nA35,220,0,4,1,1,N,\"6\"\nA35,258,0,4,1,1,N,\"7\"\nA355,30,0,4,1,1,N,\"8\"\n",
+    assert_equal "\n" +
+    "N\n" +
+    "q801\n" +
+    "Q329,026\n" +
+    "ZT\n" +
+    "A35,30,0,4,1,1,N,\"1\"\n" +
+    "A35,65,0,4,1,1,N,\"2\"\n" +
+    "A35,100,0,4,1,1,N,\"3\"\n" +
+    "A35,135,0,4,1,1,N,\"4\"\n" +
+    "A35,170,0,4,1,1,N,\"5\"\n" +
+    "A35,205,0,4,1,1,N,\"6\"\n" +
+    "A35,240,0,4,1,1,N,\"7\"\n" +
+    "A355,30,0,4,1,1,N,\"8\"\n",
                  @label.output
   end
 
@@ -208,7 +246,26 @@ class ZebraPrinterTest < Test::Unit::TestCase
     @label.column_spacing = 20
     @label.font_size = 4
     @label.draw_multi_text("1\n2\n3\n4\n5\n6\n7\n8\n9")
-    assert_equal "\nN\nq801\nQ329,026\nZT\nA35,30,0,4,1,1,N,\"1\"\nA35,68,0,4,1,1,N,\"2\"\nA35,106,0,4,1,1,N,\"3\"\nA35,144,0,4,1,1,N,\"4\"\nA35,182,0,4,1,1,N,\"5\"\nA35,220,0,4,1,1,N,\"6\"\nA35,258,0,4,1,1,N,\"7\"\nP1\n\nN\nq801\nQ329,026\nZT\nA35,30,0,4,1,1,N,\"8\"\nA35,68,0,4,1,1,N,\"9\"\n",
+    assert_equal "\n" +
+    "N\n" +
+    "q801\n" +
+    "Q329,026\n" +
+    "ZT\n" +
+    "A35,30,0,4,1,1,N,\"1\"\n" +
+    "A35,65,0,4,1,1,N,\"2\"\n" +
+    "A35,100,0,4,1,1,N,\"3\"\n" +
+    "A35,135,0,4,1,1,N,\"4\"\n" +
+    "A35,170,0,4,1,1,N,\"5\"\n" +
+    "A35,205,0,4,1,1,N,\"6\"\n" +
+    "A35,240,0,4,1,1,N,\"7\"\n" +
+    "P1\n" +
+    "\n" +
+    "N\n" +
+    "q801\n" +
+    "Q329,026\n" +
+    "ZT\n" +
+    "A35,30,0,4,1,1,N,\"8\"\n" +
+    "A35,65,0,4,1,1,N,\"9\"\n",
                  @label.output
   end
 
@@ -220,7 +277,15 @@ class ZebraPrinterTest < Test::Unit::TestCase
     @label.draw_multi_text('In the next line, it "whispers through the trees;"')
     @label.draw_multi_text('If crystal streams "with pleasing murmurs creep,"')
     @label.draw_multi_text("The reader's threatened (not in vain) with \"sleep.\"")
-    assert_equal "\nN\nq801\nQ329,026\nZT\nA35,30,0,1,1,1,N,\"Where-e\\\\'er you find \"the cooling western breeze,\"\"\nA35,50,0,1,1,1,N,\"In the next line, it \"whispers through the trees;\"\"\nA35,70,0,1,1,1,N,\"If crystal streams \"with pleasing murmurs creep,\"\"\nA35,90,0,1,1,1,N,\"The reader\\\\'s threatened (not in vain) with \"sleep.\"\"\n",
+    assert_equal "\n" +
+    "N\n" +
+    "q801\n" +
+    "Q329,026\n" +
+    "ZT\n" +
+    "A35,30,0,1,1,1,N,\"Where-e\\\\'er you find \"the cooling western breeze,\"\"\n" +
+    "A35,47,0,1,1,1,N,\"In the next line, it \"whispers through the trees;\"\"\n" +
+    "A35,64,0,1,1,1,N,\"If crystal streams \"with pleasing murmurs creep,\"\"\n" +
+    "A35,81,0,1,1,1,N,\"The reader\\\\'s threatened (not in vain) with \"sleep.\"\"\n",
                  @label.output
   end
 end
