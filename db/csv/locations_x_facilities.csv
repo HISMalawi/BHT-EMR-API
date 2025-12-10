@@ -15,7 +15,7 @@ location_id,location_name,location_district,facility_code,facility_name
 9,Area 25 Banja La Mtsogolo Dispensary,Lilongwe,LL040036,Area 25 Banja La Mtsogolo Dispensary
 10,Area 25 Urban Health Centre,Lilongwe,LL040037,Area 25 Urban Health Centre
 836,Area 36 Private Clinic,Lilongwe,LL040457,Area 36 Private Clinic
-1076,Army Secondary School,MDFS,,Army Secondary School
+1076,Army Secondary School,Blantyre,BT240900,Army Secondary School
 3,Assalaam Clinic,Mangochi,MG200045,Assalaam Clinic
 802,Atupele Health Centre,Karonga,KA150046,Atupele Health Centre
 845,Auction Holdings Limited Clinic (Kanengo),Lilongwe,LL040050,Auction Holdings Limited Clinic (Kanengo)
@@ -96,17 +96,17 @@ location_id,location_name,location_district,facility_code,facility_name
 97,Chipini Health Centre,Zomba,ZA230254,Chipini Health Centre
 99,Chiponde Health Centre,Mangochi,MG200257,Chiponde Health Centre
 872,Chiponde Health Post,Lilongwe,,Chiponde Health Post
-102,Chipwanya St Josephs Health Centre,Dedza,,Chipwanya St Josephs Health Centre
+102,Chipwanya St Josephs Health Centre,Dedza,DE030253,Chipwanya St Josephs Health Centre
 103,Chiradzulu District Health Office,Chiradzulu,,Chiradzulu District Health Office
 105,Chiradzulu Health Area,Chiradzulu,,Chiradzulu Health Area
 106,Chiradzulu Health District,Chiradzulu,CR260261,Chiradzulu Health District
 974,Chiringa CHAM Health Centre (Phalombe),Phalombe,PH220264,Chiringa CHAM Health Centre (Phalombe)
-107,Chiringa Dispensary,Phalombe,,Chiringa Dispensary
+107,Chiringa Dispensary,Phalombe,PH220263,Chiringa Dispensary
 977,Chiringa Health Centre (Phalombe),Phalombe,,Chiringa Health Centre (Phalombe)
 992,Chisi Health Centre (Zomba),Zomba,ZA230270,Chisi Health Centre (Zomba)
 111,Chisinga Dispensary,Kasungu,,Chisinga Dispensary
 115,Chitekesa Health Centre,Phalombe,PH220283,Chitekesa Health Centre
-899,Chithumba Dispensary,Chikwawa,CK270291,Chithumba Dispensary
+899,Chithumba Dispensary,Chikwawa,CK270291,Chithumfba Dispensary
 118,Chithumba Maternity,Chikwawa,,Chithumba Maternity
 120,Chitipa District Health Office,Chitipa,CP060293,Chitipa District Health Office
 122,Chitipa Health Area,Chitipa,,Chitipa Health Area
@@ -124,7 +124,7 @@ location_id,location_name,location_district,facility_code,facility_name
 989,City Clinic (Zomba),Zomba,ZA230317,City Clinic (Zomba)
 136,Cobbe Barracks Hospital,Zomba,ZA230318,Cobbe Barracks Hospital
 711,College of Medicine,Blantyre,,College of Medicine
-1113,College of Medicine Pvt Clinic,Blantyre,,College of Medicine Pvt Clinic
+1113,College of Medicine Pvt Clinic,Blantyre,BT241816,College of Medicine Pvt Clinic
 967,Comfort Clinic (Balaka),Balaka,BK170321,Comfort Clinic (Balaka)
 141,DGM Livingstonia Hospital,Rumphi,RU140702,DGM Livingstonia Hospital
 736,Dae-Yang Hospital,Lilongwe,LL040325,Dae-Yang Hospital
@@ -136,7 +136,7 @@ location_id,location_name,location_district,facility_code,facility_name
 147,Dowa District Health Office,Dowa,DA020350,Dowa District Health Office
 149,Dowa Health Area,Dowa,,Dowa Health Area
 150,Dowa Health District,Dowa,,Dowa Health District
-865,Dr David Livingstone Memorial Clinic,Lilongwe,,Dr David Livingstone Memorial Clinic
+865,Dr David Livingstone Memorial Clinic,Lilongwe,LL040330,Dr David Livingstone Memorial Clinic
 824,Dr Msachi's Clinic,Mzimba North,MZ160357,Dr Msachi's Clinic
 151,Dwambazi Health Centre,Nkhotakota,NK100360,Dwambazi Health Centre
 153,Dwangwa Cane Growers Association Clinic,Nkhota-kota,NK100362,Dwangwa Cane Growers Association Clinic
@@ -162,18 +162,18 @@ location_id,location_name,location_district,facility_code,facility_name
 173,Enukweni Mission Health Centre,Mzimba North,MZ161535,Enukweni Mission Health Centre
 174,Euthini Rural Hospital,Mzimba South,MZ160397,Euthini Rural Hospital
 813,Eva Demaya Centre,Rumphi,RU140398,Eva Demaya Centre
-1031,FPAM Clinic Dowa,Dowa,,FPAM Clinic Dowa
-1048,FPAM Clinic Kasungu,Kasungu,,FPAM Clinic Kasungu
-834,FPAM Clinic Kawale,Lilongwe,,FPAM Clinic Kawale
+1031,FPAM Clinic Dowa,Dowa,DA020403,FPAM Clinic Dowa
+1048,FPAM Clinic Kasungu,Kasungu,KU070404,FPAM Clinic Kasungu
+834,FPAM Clinic Kawale,Lilongwe,LL040411,FPAM Clinic Kawale
 816,FPAM Clinic Mzuzu,Mzimba North,MZ161810,FPAM Clinic Mzuzu
-887,FPAM Clinic Ntcheu,Ntcheu,,FPAM Clinic Ntcheu
+887,FPAM Clinic Ntcheu,Ntcheu,NT120405,FPAM Clinic Ntcheu
 175,Falls Banja La Mtsogolo Dispensary,Lilongwe,LL041850,Falls Banja La Mtsogolo Dispensary
 1054,Fidelity Private Clinic (Lilongwe),Lilongwe,LL040408,Fidelity Private Clinic (Lilongwe)
 981,Friends of Mulanje (FOMO),Mulanje,MU210409,Friends of Mulanje (FOMO)
 178,Ganya Maternity,Ntcheu,NT120416,Ganya Maternity
 1058,Gateway Clinic (Blantyre),Blantyre,BT240417,Gateway Clinic (Blantyre)
 181,Gola Health Centre,Chikwawa,CK270429,Gola Health Centre
-912,Gombe Health Centre,Chikwawa,,Gombe Health Centre
+912,Gombe Health Centre,Thyolo,TH310431,Gombe Health Centre
 183,Gombe Maternity,Thyolo,TH310431,Gombe Maternity
 185,Guilleme St Michaels Health Centre,Mchinji,MC011376,Guilleme St Michaels Health Centre
 874,Guillime Mission Hospital,Mchinji,,Guillime Mission Hospital
@@ -202,7 +202,7 @@ location_id,location_name,location_district,facility_code,facility_name
 207,Kalikumbi Health Centre,Mzimba South,MZ160499,Kalikumbi Health Centre
 886,Kalimanjira Health Centre,Ntcheu,NT120500,Kalimanjira Health Centre
 208,Kalinde Dispensary,Phalombe,PH220502,Kalinde Dispensary
-978,Kalinde Health Centre (Phalombe),Phalombe,,Kalinde Health Centre (Phalombe)
+978,Kalinde Health Centre (Phalombe),Phalombe,PH220502,Kalinde Health Centre (Phalombe)
 209,Kaloga Dispensary,Ntcheu,NT120505,Kaloga Dispensary
 1061,Kameza Macro,Blantyre,BT240756,Kameza Macro
 215,Kampanje Maternity,Ntcheu,NT120521,Kampanje Maternity
@@ -214,7 +214,7 @@ location_id,location_name,location_district,facility_code,facility_name
 222,Kandeu Health Centre (Dispensary),Ntcheu,NT120534,Kandeu Health Centre (Dispensary)
 846,Kanengo Tobacco Processors Clinic,Lilongwe,LL040535,Kanengo Tobacco Processors Clinic
 948,Kanjedza Police Clinic,Blantyre,BT240540,Kanjedza Police Clinic
-1036,Kansonga Health Centre (Ntchisi),Ntchisi,,Kansonga Health Centre (Ntchisi)
+1036,Kansonga Health Centre (Ntchisi),Ntchisi,NT080525,Kansonga Health Centre (Ntchisi)
 228,Kanyimbi Dispensary,Nsanje,NS300548,Kanyimbi Dispensary
 1068,Kaongizi Health Centre,KOZ,NK101536,Kaongizi Health Centre
 236,Kapichila (ESCOM) Health Centre,Kasungu,KU071925,Kapichila (ESCOM) Health Centre
@@ -279,7 +279,7 @@ location_id,location_name,location_district,facility_code,facility_name
 315,Lunjika Health Centre,Mzimba South,MZ160727,Lunjika Health Centre
 1019,Lunzu Banja La Mtsogolo Dispensary,Blantyre,BT240097,Lunzu Banja La Mtsogolo Dispensary
 926,Lunzu DAPP Clinic,Blantyre,,Lunzu DAPP Clinic
-317,Luvwere Health Centre ,Mzimba North,MZ160736,Luvwere Health Centre 
+317,Luvwere Health Centre,Mzimba North,MZ160736,Luvwere Health Centre
 320,Luwawa Health Centre,Mzimba South,MZ160740,Luwawa Health Centre
 321,Luwerezi Health Centre,Mzimba South,MZ160741,Luwerezi Health Centre
 323,Luzi Health Centre,Mzimba North,MZ160743,Luzi Health Centre
@@ -301,7 +301,7 @@ location_id,location_name,location_district,facility_code,facility_name
 1109,Maganga Dispensary,Mangochi,MG200777,Maganga Dispensary
 338,Magomero Health Centre,Zomba,ZA230779,Magomero Health Centre
 1071,Mahowe Health Centre,Chitipa,CP060781,Mahowe Health Centre
-906,Majete (Epicenter) Health Centre,Chikwawa,,Majete (Epicenter) Health Centre
+906,Majete (Epicenter) Health Centre,Chikwawa,CK270459,Majete (Epicenter) Health Centre
 1056,Makadam Pvt Clinic (Blantyre),Blantyre,BT240088,Makadam Pvt Clinic (Blantyre)
 341,Makata Dispensary,Blanytyre,BT241554,Makata Dispensary
 956,Makata Health Centre (Lunzu),Blantyre,BT240788,Makata Health Centre (Lunzu)
@@ -358,7 +358,7 @@ location_id,location_name,location_district,facility_code,facility_name
 401,Mchinji Health District,Mchinji,,Mchinji Health District
 1038,Mdunga Health Centre (Kasungu),Kasungu,KU070902,Mdunga Health Centre (Kasungu)
 1055,Medicare City Centre Clinic (Blantyre),Blantyre,BT240904,Medicare City Centre Clinic (Blantyre)
-903,Mgabu Banja La Mtsogolo Dispensary,Chikwawa,,Mgabu Banja La Mtsogolo Dispensary
+903,Mgabu Banja La Mtsogolo Dispensary,Chikwawa,CK271166,Mgabu Banja La Mtsogolo Dispensary
 405,Mhalaunda Health Centre,Mzimba South,MZ160912,Mhalaunda Health Centre
 757,Midzemba Health Centre,Lilongwe,NE290919,Midzemba Health Centre
 407,Migowi Health Centre,Phalombe,PH220920,Migowi Health Centre
@@ -412,7 +412,7 @@ location_id,location_name,location_district,facility_code,facility_name
 488,Mwanza Health District,Mwanza,MW281081,Mwanza Health District
 1128,Mwima Health Centre,Balaka,BK171089,Mwima Health Centre
 490,Mzalangwe Health Centre,Mzimba South,MZ161090,Mzalangwe Health Centre
-491,Mzambazi Rural Hospital,Rumphi,,Mzambazi Rural Hospital
+491,Mzambazi Rural Hospital,Mzimba,MZ161092,Mzambazi Rural Hospital
 828,Mzimba Banja La Mtsongolo Dispensary,Mzimba South,MZ160101,Mzimba Banja La Mtsongolo Dispensary
 494,Mzimba District Health Office,Mzimba,,Mzimba District Health Office
 495,Mzimba District Hospital,Mzimba South,MZ161095,Mzimba District Hospital
@@ -430,7 +430,7 @@ location_id,location_name,location_district,facility_code,facility_name
 508,Namasalima Health Centre (Mulanje),Mulanje,MU211118,Namasalima Health Centre (Mulanje)
 509,Namasalima Health Centre (Zomba),Zomba,ZA231119,Namasalima Health Centre (Zomba)
 510,Nambazo Health Centre,Phalombe,PH221120,Nambazo Health Centre
-1133,Namfuse Health Center,Mchinji,,Namfuse Health Center
+1133,Namfuse Health Center,Mchinji,MC011907,Namfuse Health Center
 512,Namikango Health Centre,Zomba,ZA231126,Namikango Health Centre
 516,Namizana Dispensary,Mchinji,MC011131,Namizana Dispensary
 877,Namizana Police Dispensary,Mchinji,MC011131,Namizana Police Dispensary
@@ -456,7 +456,7 @@ location_id,location_name,location_district,facility_code,facility_name
 562,Nkhotakota Health Area,Nkhotakota,,Nkhotakota Health Area
 563,Nkhotakota Health District,Nkhotakota,NK101784,Nkhotakota Health District
 564,Nkhulambe Health Centre,Phalombe,PH221203,Nkhulambe Health Centre
-972,Nkhwayi Health Centre (Phalombe),Phalombe,,Nkhwayi Health Centre (Phalombe)
+972,Nkhwayi Health Centre (Phalombe),Phalombe,PH220952,Nkhwayi Health Centre (Phalombe)
 570,Nsabwe Dispensary,Thyolo,TH311212,Nsabwe Dispensary
 571,Nsambe Sda Health Centre,Neno,NE291214,Nsambe Sda Health Centre
 573,Nsanje District Health Office,Nsanje,,Nsanje District Health Office
@@ -475,7 +475,7 @@ location_id,location_name,location_district,facility_code,facility_name
 592,Nthondo Health Centre (Ntchisi),Ntchisi,NT081231,Nthondo Health Centre (Ntchisi)
 1037,Nthondo Health Centre (Ntchisi),Ntchisi,,Nthondo Health Centre (Ntchisi)
 946,Nyambadwe Private Hospital,Blantyre,BT241237,Nyambadwe Private Hospital
-597,Nzama Health Centre,Ntcheu,,Nzama Health Centre
+597,Nzama Health Centre,Ntcheu,NT121091,Nzama Health Centre
 598,Ofesi Dispensary,Kasungu,KU071247,Ofesi Dispensary
 599,Old Maula Court Health Centre,,KB051249,Old Maula Court Health Centre
 1112,Osiyana Health Centre,Nsanje,NS301523,Osiyana Health Centre
@@ -484,7 +484,7 @@ location_id,location_name,location_district,facility_code,facility_name
 703,Partners in Hope,Lilongwe,LL041256,Partners in Hope
 1064,Partners in Hope - Dalitso Clinic,Lilongwe,LL041255,Partners in Hope - Dalitso Clinic
 953,Pensulo Health Centre,Blantyre,BT241260,Pensulo Health Centre
-600,Phalombe Dispensary,Phalombe,,Phalombe Dispensary
+600,Phalombe Dispensary,Phalombe,PH221263,Phalombe Dispensary
 601,Phalombe District Health Office,Phalombe,PH221549,Phalombe District Health Office
 602,Phalombe Health Area,Phalombe,,Phalombe Health Area
 603,Phalombe Health District,Phalombe,,Phalombe Health District
@@ -496,7 +496,7 @@ location_id,location_name,location_district,facility_code,facility_name
 883,Police College Health Centre (Mua),Dedza,DE031539,Police College Health Centre (Mua)
 613,Police College Hospital (Zomba),Zomba,ZA231284,Police College Hospital (Zomba)
 939,Polytechnic Blantyre,Blantyre,BT240806,Polytechnic Blantyre
-1020,Providence Industrial Mission Health Centre,Chiradzulu,,Providence Industrial Mission Health Centre
+1020,Providence Industrial Mission Health Centre,Chiradzulu,CR261281,Providence Industrial Mission Health Centre
 615,Raiply Dispensary Clinic,Mzimba South,MZ161296,Raiply Dispensary Clinic
 616,Ruarwe Dispensary,Nkhatabay,KB051300,Ruarwe Dispensary
 808,Rumphi Banja La Mtsogolo Dispensary,Rumphi,RU141301,Rumphi Banja La Mtsogolo Dispensary
@@ -518,7 +518,7 @@ location_id,location_name,location_district,facility_code,facility_name
 1006,Sister Martha Hospital (Mangochi),Mangochi,MG201334,Sister Martha Hospital (Mangochi)
 633,Sister Teleza Health Centre,Ntcheu,NT121349,Sister Teleza Health Centre
 962,Soche Adventist Health Centre,Blantyre,BT241337,Soche Adventist Health Centre
-634,Soche Dispensary,Blantyre,,Soche Dispensary
+634,Soche Dispensary,Blantyre,BT241336,Soche Dispensary
 637,South Lunzu Dispensary,Blantyre,,South Lunzu Dispensary
 638,South Lunzu Health Centre,Blantyre,BT241347,South Lunzu Health Centre
 1040,St Andrews Clinic (Kasungu),Kasungu,KU071358,St Andrews Clinic (Kasungu)
@@ -534,12 +534,12 @@ location_id,location_name,location_district,facility_code,facility_name
 647,St Martin Hospital,Mangochi,MG201374,St Martin Hospital
 648,St Martins Health Centre,Mangochi,MG201374,St Martins Health Centre
 649,St Martins Molere Health Centre,Thyolo,TH310978,St Martins Molere Health Centre
-1129,St Marys Clinic,Mangochi,,St Marys Clinic
+1129,St Marys Clinic,Mangochi,MG201709,St Marys Clinic
 130,St Marys Health Centre (Chizumulo),Likoma,LK181355,St Marys Health Centre (Chizumulo)
 651,St Patricks Rumphi Health Centre,Rumphi,RU141377,St Patricks Rumphi Health Centre
 653,St Peters Hospital,Likoma,LK180669,St Peters Hospital
-652,St Peters Mission Rural Hospital (Likoma) ,Likoma,,St Peters Mission Rural Hospital (Likoma) 
-1035,St Theresa Health Centre (Malambo),Ntchisi,,St Theresa Health Centre (Malambo)
+652,St Peters Mission Rural Hospital (Likoma),Likoma,,St Peters Mission Rural Hospital (Likoma)
+1035,St Theresa Health Centre (Malambo),Ntchisi,NT080801,St Theresa Health Centre (Malambo)
 929,St Vincent Health Centre (Chadzunda),Blantyre,BT241357,St Vincent Health Centre (Chadzunda)
 1073,St. Faith Health Centre,Kasungu,KU071361,St. Faith Health Centre
 654,State House Dispensary,Lilongwe,LL041162,State House Dispensary
@@ -568,7 +568,7 @@ location_id,location_name,location_district,facility_code,facility_name
 1062,Umunthu Foundation Clinic,Blantyre,BT241460,Umunthu Foundation Clinic
 832,Vibangala Dispensary,Mzimba South,MZ161470,Vibangala Dispensary
 682,Vibangalala Health Centre,Mzimba South,,Vibangalala Health Centre
-1117,Welliness Centre,Mchinji,,Welliness Centre
+1117,Welliness Centre,Mchinji,MC011628,Welliness Centre
 817,Wezi Medical Centre,Mzimba North,MZ161487,Wezi Medical Centre
 1050,World Medical Fund,Nkhota-kota,NK101492,World Medical Fund
 1045,Yankho Private Clinic (Kasungu),Kasungu,KU071496,Yankho Private Clinic (Kasungu)
