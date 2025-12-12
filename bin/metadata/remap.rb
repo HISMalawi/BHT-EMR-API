@@ -197,7 +197,7 @@ def update_tx_tables
       unless table_exists
         log("Skipping #{table}.#{column} - no mapping table for #{ref}")
         next
-      end
+      end 
 
       log("Updating #{column} for table #{table}")
       sql = <<~SQL
