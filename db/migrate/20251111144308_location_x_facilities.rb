@@ -45,10 +45,19 @@ class LocationXFacilities < ActiveRecord::Migration[7.0]
           next if table_type['Table_type'] == 'VIEW'
 
           if table['TABLE_NAME'] == 'global_property'
-            # remove composite foreign key
-            ActiveRecord::Base.connection.execute <<~SQL
-              ALTER TABLE global_property DROP INDEX idx_global_property_property_location;
+            # remove composite foreign key index if it exists
+            index_exists = ActiveRecord::Base.connection.select_value(<<~SQL)
+              SELECT COUNT(1) FROM INFORMATION_SCHEMA.STATISTICS
+              WHERE TABLE_SCHEMA = #{ActiveRecord::Base.connection.quote(ActiveRecord::Base.connection.current_database)}
+              AND TABLE_NAME = 'global_property'
+              AND INDEX_NAME = 'idx_global_property_property_location'
             SQL
+
+            if index_exists.to_i > 0
+              ActiveRecord::Base.connection.execute <<~SQL
+                ALTER TABLE global_property DROP INDEX idx_global_property_property_location;
+              SQL
+            end
           end
 
           # remove foreign key
@@ -63,12 +72,21 @@ class LocationXFacilities < ActiveRecord::Migration[7.0]
             SET sql_mode = '';
           SQL
 
-          ActiveRecord::Base.connection.execute <<~SQL
-            UPDATE #{table['TABLE_NAME']} tl
-              INNER JOIN temp_facility_x_location_map flm#{' '}
-              ON tl.location_id  = flm.facility_code
-            SET tl.location_id = flm.location_id
+          # Get all facility code to location id mappings
+          facility_mappings = ActiveRecord::Base.connection.select_all <<~SQL
+            SELECT facility_code, location_id FROM temp_facility_x_location_map
+            WHERE CAST(facility_code AS CHAR) IN
+            (SELECT DISTINCT CAST(location_id AS CHAR) FROM #{table['TABLE_NAME']})
           SQL
+
+          # Update records for each facility code
+          facility_mappings.each do |mapping|
+            ActiveRecord::Base.connection.execute <<~SQL
+              UPDATE #{table['TABLE_NAME']}
+              SET location_id = #{ActiveRecord::Base.connection.quote(mapping['location_id'])}
+              WHERE location_id = #{ActiveRecord::Base.connection.quote(mapping['facility_code'])}
+            SQL
+          end
 
           # change column type to integer
           ActiveRecord::Base.connection.execute <<~SQL
