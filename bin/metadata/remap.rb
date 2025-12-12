@@ -185,19 +185,7 @@ def update_tx_tables
       column = c[:column]
       ref = c[:ref]
 
-      ref_table = "temp_remap_#{ref}"
-
-      # Check if mapping table exists before updating
-      table_exists = MasterBase.connection.select_value(
-        "SELECT COUNT(*) FROM information_schema.tables 
-         WHERE table_schema = '#{masterdb}' 
-         AND table_name = '#{ref_table}'"
-      ).to_i > 0
-
-      unless table_exists
-        log("Skipping #{table}.#{column} - no mapping table for #{ref}")
-        next
-      end 
+      ref = "temp_remap_#{ref}"
 
       log("Updating #{column} for table #{table}")
       sql = <<~SQL
@@ -210,7 +198,7 @@ def update_tx_tables
           SELECT old_id FROM %<masterdb>s.%<ref>s
         )#{'      '}
       SQL
-      formatted = format(sql, table:, column:, ref: ref_table, masterdb:)
+      formatted = format(sql, table:, column:, ref:, masterdb:)
       SlaveBase.connection.execute(formatted)
     end
   end
