@@ -5,5 +5,6 @@ class ConceptMap < ApplicationRecord
   self.primary_key = :concept_map_id
 
   belongs_to :concept
-  belongs_to :concept_source, class_name: 'ConceptSource', foreign_key: :source
+  belongs_to :concept_source, class_name: 'ConceptSource', foreign_key: :concept_source_id
+  belongs_to :concept_map_type, class_name: 'ConceptMapType', foreign_key: :concept_map_type_id
 end
