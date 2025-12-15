@@ -1,185 +1,173 @@
+# frozen_string_literal: true
+
 # app/services/facility_service.rb
 class FacilityService
-    def initialize(params = {})
-      @params = params
-    end
-  
-    def list_facilities
-      facilities = Facility.all
-  
-      facilities = apply_name_filter(facilities)
-      facilities = apply_district_filter(facilities)
-      facilities = apply_district_name_filter(facilities)
-      facilities = apply_status_filter(facilities)
-      facilities = apply_location_filter(facilities)
-      facilities = apply_sorting(facilities)
-  
+  def initialize(params = {})
+    @params = params
+  end
+
+  # List all facilities with optional filters and sorting
+  def list_facilities
+    facilities = Location.includes(:location_attributes).all
+
+    facilities = apply_name_filter(facilities)
+    facilities = apply_district_filter(facilities)
+    facilities = apply_district_name_filter(facilities)
+    facilities = apply_location_filter(facilities)
+    facilities = apply_sorting(facilities)
+
+    {
+      facilities: facilities,
+      total: facilities.size,
+      filters_applied: filters_applied
+    }
+  end
+
+  # List all distinct districts
+  def list_districts
+    Location.select('city_village')
+            .where.not(city_village: [nil, ''])
+            .distinct
+            .order(:city_village)
+            .map.with_index do |location, index|
       {
-        facilities: facilities,
-        total: facilities.size,
-        filters_applied: filters_applied
+        id: index + 1,
+        name: location.city_village,
+        display_name: location.city_village
       }
-    end
+    end.compact
+  end
 
-    def list_districts
-      # Use a subquery to get distinct districts
-      Facility.select('district')
-              .distinct
-              .order(:district)
-              .map.with_index do |facility, index|
-        {
-          id: index + 1,  # Incremental ID starting from 1
-          name: facility.district,
-          display_name: facility.district
-        }
-      end.compact
-    end
+  # Fetch facilities by district_name
+  def list_facilities_by_district(district_name)
+    sanitized_district_name = district_name.to_s.gsub('?', '')
+    facilities = Location.includes(:location_attributes).all
 
-    # Fetch facilities by district_name
-    def list_facilities_by_district(district_name)
-      sanitized_district_name = district_name.to_s.gsub('?', '')
+    facilities = facilities.where(city_village: sanitized_district_name)
 
-      facilities = Facility.where(district: sanitized_district_name)
+    {
+      facilities: facilities,
+      total: facilities.count,
+      filters_applied: { district_name: sanitized_district_name }
+    }
+  end
 
+  # Find nearby facilities from a given location
+  def find_nearby_facilities(location_id)
+    location = Location.find(location_id)
+    radius = @params[:radius].present? ? @params[:radius].to_f : 10
+
+    nearby = location.nearby_facilities(radius)
+    nearby = filter_nearby_facilities(nearby)
+
+    {
+      facilities: nearby,
+      total: nearby.size,
+      center_facility: location
+    }
+  end
+
+  # List all facility/location codes
+  def list_facility_codes
+    codes = Location.select('location_id, uuid')
+                    .distinct
+                    .order(:uuid)
+                    .map do |location|
       {
-        facilities: facilities,
-        total: facilities.count,
-        filters_applied: { district_name: sanitized_district_name }
+        location_id: location.location_id,
+        uuid: location.uuid,
+        name: location.name
       }
-    end
+    end.compact
 
-  
-    def find_nearby_facilities(facility_id)
-      facility = Facility.find(facility_id)
-      radius = @params[:radius].present? ? @params[:radius].to_f : 10
-  
-      nearby = facility.nearby_facilities(radius)
-      nearby = filter_nearby_facilities(nearby)
-  
-      {
-        facilities: nearby,
-        total: nearby.size,
-        center_facility: facility
-      }
-    end
-  
-    def create_facility(facility_params)
-      Facility.create!(facility_params)
-    end
-  
-    def update_facility(facility_id, facility_params)
-      facility = Facility.find(facility_id)
-      facility.update!(facility_params)
-      facility
-    end
-  
-    def delete_facility(facility_id)
-      facility = Facility.find(facility_id)
-      facility.destroy
-    end
+    {
+      facility_codes: codes,
+      total: codes.size
+    }
+  end
 
-    def list_facility_codes
-      # Get all unique facility codes ordered alphabetically
-      codes = Facility.select('code')
-                     .distinct
-                     .order(:code)
-                     .map do |facility|
-        {
-          code: facility.code,
-          name: Facility.find_by(code: facility.code)&.name
-        }
-      end.compact
-  
-      {
-        facility_codes: codes,
-        total: codes.size
-      }
-    end
-  
-    private
-  
-    def apply_name_filter(facilities)
-      return facilities unless @params[:name].present?
-  
-      name_query = "%#{@params[:name]}%"
-      facilities.where("name ILIKE ? OR common ILIKE ?", name_query, name_query)
-    end
-  
-    def apply_district_filter(facilities)
-      return facilities unless @params[:district].present?
-  
-      facilities.by_district(@params[:district])
-    end
-  
-    def apply_district_name_filter(facilities)
-      return facilities unless @params[:district_name].present?
-  
-      district_query = "%#{@params[:district_name]}%"
-      facilities.where("district ILIKE ?", district_query)
-    end
-  
-    def apply_status_filter(facilities)
-      return facilities unless @params[:status].present?
-  
-      facilities.by_status(@params[:status])
-    end
-  
-    def apply_location_filter(facilities)
-      return facilities unless @params[:latitude].present? && @params[:longitude].present?
-  
-      radius = @params[:radius].present? ? @params[:radius].to_f : 10
-      Facility.search_by_location(
-        @params[:latitude],
-        @params[:longitude],
-        radius
-      )
-    end
-  
-    def apply_sorting(facilities)
-      case @params[:sort_by]
-      when 'name'
-        facilities.order('name ASC')
-      when 'district'
-        facilities.order('district ASC, name ASC')
-      when 'created'
-        facilities.order('created_at DESC')
-      else
-        facilities.order('name ASC')
-      end
-    end
-  
-    def filter_nearby_facilities(facilities)
-      facilities = filter_by_name(facilities)
-      facilities = filter_by_district_name(facilities)
-      facilities
-    end
-  
-    def filter_by_name(facilities)
-      return facilities unless @params[:name].present?
-  
-      facilities.select do |f|
-        f.name.downcase.include?(@params[:name].downcase) ||
-          (f.common && f.common.downcase.include?(@params[:name].downcase))
-      end
-    end
-  
-    def filter_by_district_name(facilities)
-      return facilities unless @params[:district_name].present?
-  
-      district_query = @params[:district_name].downcase
-      facilities.select { |f| f.district&.downcase&.include?(district_query) }
-    end
-  
-    def filters_applied
-      {
-        name: @params[:name],
-        district: @params[:district],
-        district_name: @params[:district_name],
-        status: @params[:status],
-        latitude: @params[:latitude],
-        longitude: @params[:longitude],
-        radius: @params[:radius],
-        sort_by: @params[:sort_by]
-      }.compact
+  # Print location label using LocationService
+  def print_location_label(location)
+    LocationService.new.print_location_label(location)
+  end
+
+  private
+
+  def apply_name_filter(facilities)
+    return facilities unless @params[:name].present?
+
+    name_query = "%#{@params[:name]}%"
+    facilities.where('name LIKE ? OR description LIKE ?', name_query, name_query)
+  end
+
+  def apply_district_filter(facilities)
+    return facilities unless @params[:city_village].present?
+
+    facilities.where(city_village: @params[:city_village])
+  end
+
+  def apply_district_name_filter(facilities)
+    return facilities unless @params[:district_name].present?
+
+    district_query = "%#{@params[:district_name]}%"
+    facilities.where('city_village LIKE ?', district_query)
+  end
+
+  def apply_location_filter(facilities)
+    return facilities unless @params[:latitude].present? && @params[:longitude].present?
+
+    radius = @params[:radius].present? ? @params[:radius].to_f : 10
+    Location.search_by_coordinates(
+      @params[:latitude],
+      @params[:longitude],
+      radius
+    )
+  end
+
+  def apply_sorting(facilities)
+    case @params[:sort_by]
+    when 'name'
+      facilities.order('name ASC')
+    when 'district'
+      facilities.order('city_village ASC, name ASC')
+    when 'created'
+      facilities.order('date_created DESC')
+    else
+      facilities.order('name ASC')
     end
   end
+
+  def filter_nearby_facilities(facilities)
+    facilities = filter_by_name(facilities)
+    facilities = filter_by_district_name(facilities)
+    facilities
+  end
+
+  def filter_by_name(facilities)
+    return facilities unless @params[:name].present?
+
+    facilities.select do |f|
+      f.name.downcase.include?(@params[:name].downcase) ||
+        (f.description && f.description.downcase.include?(@params[:name].downcase))
+    end
+  end
+
+  def filter_by_district_name(facilities)
+    return facilities unless @params[:district_name].present?
+
+    district_query = @params[:district_name].downcase
+    facilities.select { |f| f.city_village&.downcase&.include?(district_query) }
+  end
+
+  def filters_applied
+    {
+      name: @params[:name],
+      district: @params[:city_village],
+      district_name: @params[:district_name],
+      latitude: @params[:latitude],
+      longitude: @params[:longitude],
+      radius: @params[:radius],
+      sort_by: @params[:sort_by]
+    }.compact
+  end
+end

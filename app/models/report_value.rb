@@ -3,6 +3,8 @@
 class ReportValue < RetirableRecord
   self.table_name = :reporting_report_design_resource
 
+  include Locatable
+
   belongs_to :report, foreign_key: :report_design_id
 
   validates_presence_of :name

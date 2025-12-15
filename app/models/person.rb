@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 class Person < VoidableRecord
+  
   after_void :void_related_models
-
+  
   self.table_name = 'person'
   self.primary_key = 'person_id'
-
+  
+  include Locatable
   has_one :patient, foreign_key: :patient_id
   has_many :names, class_name: 'PersonName', foreign_key: :person_id
   has_many :addresses, class_name: 'PersonAddress', foreign_key: :person_id

@@ -58,3 +58,7 @@ healthdata:
 #  password:
 #  host: localhost
 #  pool: 500
+
+centralized_source_db:
+  <<: *default
+  database: mpc

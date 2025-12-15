@@ -4,7 +4,10 @@ module Sync
     
     # Sync all facilities to CouchDB
     def perform(batch_size = 100)
-      sync_records_to_couchdb(Facility, 'facilities', batch_size)
+      sync_records_to_couchdb(Location, 'facilities', batch_size) do |model_class|
+        model_class.where(retired: false)
+                  .where.not(city_village: [nil, ""])
+      end
     end
     
     private
@@ -13,26 +16,18 @@ module Sync
       {
         "type" => "facility",
         "dde_activated" => false,
-        "facility_id" => facility.id,
-        "code" => facility.code,
+        "location_id" => facility.location_id,
         "name" => facility.name,
-        "common" => facility.common,
-        "ownership" => facility.ownership,
-        "facility_type" => facility.facility_type,
-        "status" => facility.status,
-        "regulatory_status" => facility.regulatory_status,
-        "district" => facility.district,
-        "date_opened" => facility.date_opened&.iso8601,
+        "district" => facility.city_village,
         "latitude" => facility.latitude,
         "longitude" => facility.longitude,
-        "created_at" => facility.created_at&.iso8601,
-        "updated_at" => facility.updated_at&.iso8601,
+        "date_created" => facility.date_created&.iso8601,
         "synced_at" => Time.current.iso8601
       }
     end
     
     def generate_document_id(facility)
-      "facility_#{facility.id}"
+      "facility_#{facility.location_id}"
     end
   end
 end

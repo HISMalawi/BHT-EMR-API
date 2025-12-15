@@ -20,21 +20,35 @@ module Api
         tag = params[:tag]
         city_village = params[:city_village]
       
-        locations = paginate(Location.order(:name))
+        # Eager load location_attributes to prevent N+1 queries
+        locations = paginate(Location.includes(:location_attributes).order(:name))
         
         locations = locations.where('name like ?', "%#{name}%") unless name.blank?
         locations = filter_locations_by_tag locations, tag if tag
         
         locations = locations.where('city_village like ?', "%#{city_village}%") unless city_village.blank?
       
-        render json: locations
+        # Pass 'include' option to trigger custom as_json and define fields
+        render json: locations, include: {
+          location_attributes: {
+            only: %i[location_attribute_id attribute_type_id value_reference]
+          }
+        }
       end
 
       # Retrieve single location by its id
       #
       # GET /locations/:id
       def show
-        render json: Facility.find_by(code: params[:id])
+        # Eager load location_attributes for the single record
+        location = Location.includes(:location_attributes).find_by(location_id: params[:id])
+
+        # Pass 'include' option to trigger custom as_json and define fields
+        render json: location, include: {
+          location_attributes: {
+            only: %i[location_attribute_id attribute_type_id value_reference]
+          }
+        }
       end
 
       # Retrieve the current configured facility
