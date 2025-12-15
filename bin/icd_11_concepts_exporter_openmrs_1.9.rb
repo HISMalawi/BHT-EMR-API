@@ -56,9 +56,6 @@ class ICD11Importer
 	end
 
   def handle_insert_icd11
-		puts @concept_source.inspect
-		puts @concept_map_type.inspect
-
     xlsx = Roo::Excelx.new(Rails.root.join('db/data/ICD_11', 'LinearizationMiniOutput-MMS-en.xlsx'))
     rows = xlsx.sheet(0).parse
 
@@ -123,31 +120,43 @@ class ICD11Importer
   private
 
   def create_concept(name, code = nil, klass = nil, is_set = 0, description = nil)
-    concept = Concept.create(
-      datatype_id: @icd11_concept_datatype.concept_datatype_id,
-      class_id:  @icd11_concept_class.concept_class_id,
-      is_set: is_set,
-			creator: User.current.user_id,
-      short_name: klass,
-      description: description,
-			date_created: Time.now
-    )
+		concept_name = ConceptName.find_by(name: name)
+		concept = concept_name&.concept
 
-    ConceptName.create(
-      name: name,
-      concept_id: concept.concept_id,
-      locale: LOCALE,
-      locale_preferred: LOCALE_PREFERRED,
-      concept_name_type: CONCEPT_NAME_TYPE,
-			creator: User.current.user_id
-    )
+		#Create new concept if concept name does not exist
+		if concept.blank?
+			concept = Concept.create!(
+				datatype_id: @icd11_concept_datatype.concept_datatype_id,
+				class_id:  @icd11_concept_class.concept_class_id,
+				is_set: is_set,
+				creator: User.current.user_id,
+				short_name: klass,
+				description: description,
+				date_created: Time.now
+			)
 
-		#if code is not nil, blank or empty string, create concept map
-		if code && !code.strip.empty?
-			create_concept_map(concept, code)
+			ConceptName.create!(
+				name: name,
+				concept_id: concept.concept_id,
+				locale: LOCALE,
+				locale_preferred: LOCALE_PREFERRED,
+				concept_name_type: CONCEPT_NAME_TYPE,
+				creator: User.current.user_id
+			)
+		else
+			concept.update!(
+				description: description, 
+				is_set: is_set, 
+				class_id: @icd11_concept_class.concept_class_id, 
+				datatype_id: @icd11_concept_datatype.concept_datatype_id,
+				date_changed: Time.now,
+				changed_by: User.current.id
+			)
 		end
 
-    concept
+		create_concept_map(concept, code) if code.present? && !code.strip.empty?
+
+		concept
   end
 
   def add_to_concept_set(concept_set, concept, sort_weight)
@@ -156,16 +165,12 @@ class ICD11Importer
     ConceptSet.create(
       concept_set: concept_set.concept_id,
       concept_id: concept.concept_id,
-      sort_weight: get_sort_weight(concept_set),
+      sort_weight: sort_weight,
 			creator: User.current.user_id,
-			date_created: Time.now
+			date_created: Time.now,
+			uuid: SecureRandom.uuid
     )
   end
-
-	def get_sort_weight(concept_set)
-		count = ConceptSet.where(concept_set: concept_set.concept_id).count
-		count + 1
-	end
 
   def get_last_category(concept_class, target_concept, sort_weight = nil)
     concepts = Concept.where(short_name: concept_class)
