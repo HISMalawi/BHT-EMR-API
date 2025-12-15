@@ -115,6 +115,9 @@ class ICD11Importer
         puts "Title as appears in the Excel sheet: #{title}"
       end
     end
+
+		normalize_concept_set_sort_weights
+		puts "ICD-11 Import completed successfully."
   end
 
   private
@@ -357,6 +360,20 @@ class ICD11Importer
 		conn.add_column :concept_source, :uuid, :string unless conn.column_exists?(:concept_source, :uuid)
 	end
 
+	def normalize_concept_set_sort_weights
+		ConceptSetMember
+			.select(:concept_set_id)
+			.distinct
+			.find_each do |row|
+
+			ConceptSetMember
+				.where(concept_set_id: row.concept_set_id)
+				.order(:concept_set_member_id)
+				.each_with_index do |member, index|
+					member.update_column(:sort_weight, index + 1)
+				end
+		end
+	end
 
 
 end
