@@ -158,7 +158,7 @@ class ICD11Importer
 
 		concept
   end
-
+=begin
   def add_to_concept_set(concept_set, concept, sort_weight)
     return unless concept_set
 
@@ -171,6 +171,20 @@ class ICD11Importer
 			uuid: SecureRandom.uuid
     )
   end
+=end
+	def add_to_concept_set(parent_concept, child_concept, sort_weight)
+		return if parent_concept.blank? || child_concept.blank?
+
+		ConceptSetMember.find_or_create_by(
+			concept_set_id: parent_concept.concept_id,
+			concept_id: child_concept.concept_id
+		) do |csm|
+			csm.sort_weight = sort_weight
+			csm.created_at 	= Time.now
+			csm.updated_at 	= Time.now
+			csm.uuid        = SecureRandom.uuid
+		end
+	end
 
   def get_last_category(concept_class, target_concept, sort_weight = nil)
     concepts = Concept.where(short_name: concept_class)
