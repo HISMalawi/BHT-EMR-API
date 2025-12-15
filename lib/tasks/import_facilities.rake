@@ -135,24 +135,33 @@ namespace :import do
         value.to_s.strip # Trim leading and trailing spaces
       end
 
+      def get_attribute_type_id(name)
+        @attribute_type_ids ||= {}
+        @attribute_type_ids[name] ||= ActiveRecord::Base.connection.execute(
+          "SELECT location_attribute_type_id FROM location_attribute_type WHERE name = '#{name}' LIMIT 1"
+        ).first&.first
+      end
+
       def find_location_by_code(code)
-        # Find location that has a location_attribute with attribute_type_id=1 and value_reference=code
-        location_attribute = LocationAttribute.find_by(attribute_type_id: 1, value_reference: code)
+        # Find location that has a location_attribute with attribute_type 'Facility Code' and value_reference=code
+        facility_code_type_id = get_attribute_type_id('Facility Code')
+        location_attribute = LocationAttribute.find_by(attribute_type_id: facility_code_type_id, value_reference: code)
         location_attribute&.location
       end
 
       def save_location_attributes(location_id, attributes_data)
-        # Save or update each attribute
-        save_or_update_attribute(location_id, 1, attributes_data[:code]) if attributes_data[:code].present?
-        save_or_update_attribute(location_id, 2, attributes_data[:common]) if attributes_data[:common].present?
-        save_or_update_attribute(location_id, 3, attributes_data[:ownership]) if attributes_data[:ownership].present?
-        save_or_update_attribute(location_id, 4, attributes_data[:facility_type]) if attributes_data[:facility_type].present?
-        save_or_update_attribute(location_id, 5, attributes_data[:status]) if attributes_data[:status].present?
-        save_or_update_attribute(location_id, 6, attributes_data[:regulatory_status]) if attributes_data[:regulatory_status].present?
-        save_or_update_attribute(location_id, 7, attributes_data[:date_opened]) if attributes_data[:date_opened].present?
+        # Save or update each attribute using named references
+        save_or_update_attribute(location_id, 'Facility Code', attributes_data[:code]) if attributes_data[:code].present?
+        save_or_update_attribute(location_id, 'Facility Common Name', attributes_data[:common]) if attributes_data[:common].present?
+        save_or_update_attribute(location_id, 'Facility Ownership', attributes_data[:ownership]) if attributes_data[:ownership].present?
+        save_or_update_attribute(location_id, 'Facility Type', attributes_data[:facility_type]) if attributes_data[:facility_type].present?
+        save_or_update_attribute(location_id, 'Facility Status', attributes_data[:status]) if attributes_data[:status].present?
+        save_or_update_attribute(location_id, 'Facility Regulatory Status', attributes_data[:regulatory_status]) if attributes_data[:regulatory_status].present?
+        save_or_update_attribute(location_id, 'Facility Date Opened', attributes_data[:date_opened]) if attributes_data[:date_opened].present?
       end
 
-      def save_or_update_attribute(location_id, attribute_type_id, value)
+      def save_or_update_attribute(location_id, attribute_type_name, value)
+        attribute_type_id = get_attribute_type_id(attribute_type_name)
         attribute = LocationAttribute.find_or_initialize_by(
           location_id: location_id,
           attribute_type_id: attribute_type_id
@@ -263,7 +272,16 @@ namespace :import do
       ActiveRecord::Base.transaction do
         # Clear existing location attributes for facilities
         location_ids = backup_data.map { |item| item['location']['location_id'] }.compact
-        LocationAttribute.where(location_id: location_ids, attribute_type_id: [1, 2, 3, 4, 5, 6, 7]).delete_all
+        
+        # Get attribute type IDs by name
+        attribute_type_ids = [
+          'Facility Code', 'Facility Common Name', 'Facility Ownership', 'Facility Type',
+          'Facility Status', 'Facility Regulatory Status', 'Facility Date Opened'
+        ].map { |name| ActiveRecord::Base.connection.execute(
+          "SELECT location_attribute_type_id FROM location_attribute_type WHERE name = '#{name}' LIMIT 1"
+        ).first&.first }.compact
+        
+        LocationAttribute.where(location_id: location_ids, attribute_type_id: attribute_type_ids).delete_all
         
         # Clear locations
         Location.where(location_id: location_ids).delete_all
