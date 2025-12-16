@@ -258,8 +258,8 @@ class PatientService
   
   def find_drug_orders(patient, start_date, program_id)
     DrugOrder.joins(order: :encounter).where(
-      'orders.start_date = ? AND orders.patient_id = ? AND quantity > 0 AND encounter.program_id = ?',
-      start_date, patient.patient_id, program_id
+      'DATE(orders.start_date) = DATE(?) AND orders.patient_id = ? AND quantity > 0 AND encounter.program_id = ?',
+      start_date.to_date.strftime('%Y-%m-%d'), patient.patient_id, program_id
     ).order('orders.start_date DESC')
   end
 
