@@ -7,6 +7,7 @@ module NeotreeMetadata
   class Loader
     DATA_DIR = Rails.root.join('lib', 'data').freeze
     FILE_NAMES = %w[admission.json discharge.json].freeze
+    DEFAULT_LOCALE = 'en'
 
     def initialize(paths: nil, creator_id: nil)
       @paths = Array(paths).compact.map { |path| Pathname.new(path) }
@@ -53,34 +54,81 @@ module NeotreeMetadata
     end
 
     def option_pairs(entry)
-      values = Array(entry['values']).map(&:to_s)
-      labels = Array(entry['labels']).map(&:to_s)
+      values = normalize_values(entry)
+      labels = Array(entry['labels']).map(&:to_s).map(&:strip)
       pairs = []
 
-      values.each_with_index do |value, index|
+      max_len = [values.length, labels.length].max
+      max_len.times do |index|
+        value = values[index]&.to_s&.strip
+        label = labels[index]&.to_s&.strip
+
+        value = label if value.blank? && label.present?
         next if value.blank?
 
-        label = labels[index]&.strip
-        pairs << [value.strip, label.presence]
+        pairs << [value, label.presence]
       end
 
       pairs
+    end
+
+    def normalize_values(entry)
+      values = Array(entry['values']).map(&:to_s).map(&:strip)
+      labels = Array(entry['labels']).map(&:to_s).map(&:strip)
+
+      # Some upstream scripts encode multiple values in a single semicolon-delimited string.
+      if values.length == 1 && values.first.include?(';') && labels.length > 1
+        values = values.first.split(';').map(&:strip).reject(&:blank?)
+      end
+
+      # Some scripts combine multiple codes into a single token (e.g. "HCTBA") while labels remain separate.
+      if values.length < labels.length
+        values = expand_compound_codes(values, needed: labels.length - values.length)
+      end
+
+      values
+    end
+
+    def expand_compound_codes(values, needed:)
+      expanded = values.dup
+      target_length = values.length + needed.to_i
+
+      needed.to_i.times do
+        break if expanded.empty?
+        break if expanded.length >= target_length
+
+        candidate_index = expanded.each_with_index
+                                  .select { |value, _index| value.match?(/\A[A-Z]{4,}\z/) }
+                                  .max_by { |value, _index| value.length }
+                                  &.last
+        break unless candidate_index
+
+        candidate = expanded[candidate_index]
+        split_point = candidate.length / 2
+        split_point = 2 if candidate.length.odd? && candidate.length >= 5
+        left = candidate[0, split_point]
+        right = candidate[split_point..]
+        break if left.blank? || right.blank?
+
+        expanded[candidate_index, 1] = [left, right]
+      end
+
+      expanded
     end
 
     def find_or_create_question_concept(key)
       concept_name = key.to_s.strip
       return unless concept_name.present?
 
-      existing = Concept.joins(:concept_names)
-                        .where(class_id: question_class_id)
-                        .where(concept_name: { name: concept_name })
-                        .first
-      return existing if existing
+      existing = find_concept_by_name(concept_name)
+      return existing.tap { |concept| align_neotree_question_metadata(concept, concept_name) } if existing
 
-      Concept.create!(datatype_id: na_datatype_id,
+      Concept.create!(datatype_id: coded_datatype_id,
                       class_id: question_class_id,
                       creator: resolved_creator_id,
                       date_created: Time.current,
+                      retired: 0,
+                      is_set: 0,
                       short_name: concept_name,
                       description: "NeoTree question #{concept_name}" ).tap do |concept|
         add_concept_name(concept, concept_name, 'FULLY_SPECIFIED')
@@ -91,10 +139,7 @@ module NeotreeMetadata
       choice = value.to_s.strip
       return if choice.blank?
 
-      existing = Concept.joins(:concept_names)
-                        .where(class_id: value_class_id)
-                        .where(concept_name: { name: choice })
-                        .first
+      existing = find_concept_by_name(choice)
       return existing if existing
 
       Concept.create!(datatype_id: na_datatype_id,
@@ -122,10 +167,26 @@ module NeotreeMetadata
       return unless name.present?
 
       ConceptName.find_or_create_by!(concept_id: concept.concept_id,
-                                     name:, locale: 'en', concept_name_type: type) do |record|
+                                     name:, locale: DEFAULT_LOCALE, concept_name_type: type) do |record|
         record.creator = resolved_creator_id
         record.date_created = Time.current
       end
+    end
+
+    def find_concept_by_name(name)
+      Concept.joins(:concept_names)
+             .where(concept_name: { name: name.to_s.strip })
+             .first
+    end
+
+    def align_neotree_question_metadata(concept, concept_name)
+      return unless concept.description == "NeoTree question #{concept_name}"
+
+      updates = {}
+      updates[:datatype_id] = coded_datatype_id if concept.datatype_id != coded_datatype_id
+      updates[:class_id] = question_class_id if concept.class_id != question_class_id
+
+      concept.update!(updates) if updates.any?
     end
 
     def question_class_id
@@ -138,6 +199,10 @@ module NeotreeMetadata
 
     def na_datatype_id
       na_datatype&.concept_datatype_id || raise('Missing ConceptDatatype N/A')
+    end
+
+    def coded_datatype_id
+      coded_datatype&.concept_datatype_id || raise('Missing ConceptDatatype Coded')
     end
 
     def resolved_creator_id
@@ -156,6 +221,10 @@ module NeotreeMetadata
 
     def na_datatype
       @na_datatype ||= ConceptDatatype.find_by(name: 'N/A')
+    end
+
+    def coded_datatype
+      @coded_datatype ||= ConceptDatatype.find_by(name: 'Coded')
     end
   end
 end
