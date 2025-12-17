@@ -1,0 +1,865 @@
+[
+    {
+        "key": "SexDis",
+        "labels": [
+            "-Female",
+            "Male",
+            "Unsure"
+        ],
+        "values": [
+            "F",
+            "M",
+            "U"
+        ]
+    },
+    {
+        "key": "NeoTreeOutcome",
+        "labels": [
+            "Discharged",
+            "Died",
+            "Death (at LESS than 24 hrs of age)",
+            "Death (at MORE than 24 hrs of age)",
+            "Discharged against medical advice",
+            "Absconded",
+            "Stillbirth",
+            "Transferred to other Hospital",
+            "Transferred to other ward",
+            "Discharged on Request",
+            "BID - Brought in dead"
+        ],
+        "values": [
+            "DC",
+            "NND",
+            "NND<24",
+            "NND>24",
+            "DAMA",
+            "ABS",
+            "STB",
+            "TRH",
+            "TRO",
+            "DCR",
+            "BID"
+        ]
+    },
+    {
+        "key": "MatOutcome",
+        "labels": [
+            "Alive",
+            "Deceased"
+        ],
+        "values": [
+            "A",
+            "D"
+        ]
+    },
+    {
+        "key": "ModeDelivery",
+        "labels": [
+            "Spontaneous vaginal delivery",
+            "Emergency caesarean section",
+            "Elective caesarean section",
+            "Ventouse",
+            "Forceps"
+        ],
+        "values": [
+            "SVD",
+            "ECS",
+            "ELCS",
+            "Vent",
+            "For"
+        ]
+    },
+    {
+        "key": "BirthPlace",
+        "labels": [
+            "Sally Mugabe Central Hospital",
+            "Other clinic in Harare",
+            "Other clinic outside Harare",
+            "Home"
+        ],
+        "values": [
+            "SMCH",
+            "OtH",
+            "OtC",
+            "H"
+        ]
+    },
+    {
+        "key": "AdmReason",
+        "labels": [
+            "Abdominal distension",
+            "Born before arrival",
+            "Convulsions",
+            "Difficulty breathing",
+            "Dumped baby",
+            "Fever",
+            "Feeding difficulties",
+            "Gastroschisis",
+            "Hypoxic ischaemic encephalopathy",
+            "HIV exposed",
+            "Jaundice",
+            "Low Birth Weight",
+            "Low Apgars",
+            "Possible meconium aspiration",
+            "Neural tube defect",
+            "Prematurity",
+            "Prematurity with RDS",
+            "Pneumonia",
+            "Omphalocele",
+            "Congenital abnormality",
+            "Macrosomia",
+            "Safekeeping",
+            "Risk factors for sepsis",
+            "Other"
+        ],
+        "values": [
+            "AD",
+            "BBA",
+            "Conv",
+            "DIB",
+            "DU",
+            "Fev",
+            "FD",
+            "G",
+            "BA",
+            "HIVX",
+            "J",
+            "LBW",
+            "Apg",
+            "Mec",
+            "NTD",
+            "Prem",
+            "PremRDS",
+            "SPn",
+            "OM",
+            "Cong",
+            "Mac",
+            "Safe",
+            "Risk",
+            "O"
+        ]
+    },
+    {
+        "key": "DIAGDIS1",
+        "labels": [
+            "Anaemia",
+            "Hypoxic ischaemic encephalopathy",
+            "Birth Injury",
+            "Born before arrival",
+            "Bowel Obstruction",
+            "Congenital Heart Disease",
+            "Dehydration",
+            "Feeding difficulties",
+            "Gastroschisis",
+            "HIV exposed High Risk",
+            "HIV Exposed Low Risk",
+            "Jaundice",
+            "Low birth Weight",
+            "Meconium Aspiration",
+            "Macrosomia",
+            "Musculoskeletal Abnormalities",
+            "Necrotising Enterocolitis",
+            "Neonatal Sepsis - Early Onset",
+            "Neonatal Sepsis - Late Onset",
+            "Normal Baby",
+            "Omphalocele",
+            "Other congenital abnormality",
+            "Prematurity",
+            "Prematurity with RDS",
+            "Pneumonia",
+            "Risk of sepsis",
+            "Safekeeping",
+            "Accompanying Twin",
+            "Transient Tachypnoea Newborn",
+            "Other"
+        ],
+        "values": [
+            "AN",
+            "HIE",
+            "BI",
+            "BBA",
+            "BO",
+            "CHD",
+            "DEHY",
+            "FD",
+            "G",
+            "HIVXH",
+            "HIVXL",
+            "JAUN",
+            "LBW",
+            "MA",
+            "Mac",
+            "MD",
+            "NEC",
+            "EONS",
+            "LONS",
+            "NB",
+            "OM",
+            "OCA",
+            "PR",
+            "PRRDS",
+            "PN",
+            "Ri",
+            "Safe",
+            "Twin",
+            "TTN",
+            "OTH"
+        ]
+    },
+    {
+        "key": "OthProbs",
+        "labels": [
+            "Anaemia",
+            "Hypoxic ischaemic encephalopathy",
+            "Birth Injury",
+            "Bowel Obstruction",
+            "Congenital Heart Disease",
+            "Dehydration",
+            "Feeding difficulties",
+            "Gastroschisis",
+            "HIV exposed",
+            "Jaundice",
+            "Low birth Weight",
+            "Meconium Aspiration",
+            "Musculoskeletal Abnormalities",
+            "Necrotising Enterocolitis",
+            "Neonatal Sepsis - Early Onset",
+            "Neonatal Sepsis - Late Onset",
+            "None",
+            "Omphalocele",
+            "Other congenital abnormality",
+            "Prematurity",
+            "Prematurity with RDS",
+            "Pneumonia",
+            "Transient Tachypnoea Newborn",
+            "Other"
+        ],
+        "values": [
+            "AN",
+            "HIE",
+            "BI",
+            "BO",
+            "CHD",
+            "DEHY",
+            "FD",
+            "G",
+            "HIVX",
+            "JAUN",
+            "LBW",
+            "MA",
+            "MD",
+            "NEC",
+            "EONS",
+            "LONS",
+            "NONE",
+            "OM",
+            "OCM",
+            "PR",
+            "PRRDS",
+            "PN",
+            "TTN",
+            "OTH"
+        ]
+    },
+    {
+        "key": "CauseDeath",
+        "labels": [
+            "Aspiration",
+            "Congenital abnormality incompatible with life",
+            "Hypoxic ischaemic encephalopathy",
+            "Gastroschisis",
+            "Necrotising Enterocolitis",
+            "Neonatal Sepsis- Early Onset",
+            "Neonatal Sepsis - Late Onset",
+            "Meconium Aspiration syndrome",
+            "Prematurity",
+            "Prematurity with RDS",
+            "Pneumonia",
+            "Other"
+        ],
+        "values": [
+            "ASP",
+            "CA",
+            "HIE",
+            "Gastro",
+            "NEC",
+            "EONS",
+            "LONS",
+            "MAS",
+            "PR",
+            "PRRDS",
+            "PN",
+            "OTH"
+        ]
+    },
+    {
+        "key": "ContCauseDeath",
+        "labels": [
+            "Anaemia",
+            "Hypoxic ischaemic encephalopathy",
+            "Birth Injury",
+            "Bowel Obstruction",
+            "Congenital Heart Disease",
+            "Convulsions",
+            "Dehydration",
+            "Feeding difficulties",
+            "Gastroschisis",
+            "HIV exposed",
+            "Low birth Weight",
+            "Meconium Aspiration",
+            "Musculoskeletal Abnormalities",
+            "Necrotising Enterocolitis",
+            "Neonatal Sepsis - Early Onset",
+            "Neonatal Sepsis - Late Onset",
+            "None",
+            "Omphalocele",
+            "Other congenital abnormality",
+            "Prematurity",
+            "Prematurity with RDS",
+            "Respiratory Distress",
+            "Pneumonia",
+            "Transient Tachypnoea Newborn",
+            "Other"
+        ],
+        "values": [
+            "AN",
+            "HIE",
+            "BI",
+            "BO",
+            "CHD",
+            "CONV",
+            "DEHY",
+            "FD",
+            "G",
+            "HIVX",
+            "LBW",
+            "MA",
+            "MD",
+            "NEC",
+            "EONS",
+            "LONS",
+            "NONE",
+            "OM",
+            "OCA",
+            "PR",
+            "PRRDS",
+            "RDS",
+            "PN",
+            "TTN",
+            "OTH"
+        ]
+    },
+    {
+        "key": "BC1R",
+        "labels": [
+            "No Growth",
+            "Likely Contaminant Organism",
+            "Bacillus Sp",
+            "Coagulase Negative Staphylicoccus",
+            "E.Coli"
+        ],
+        "values": [
+            "NO",
+            "CO",
+            "BS",
+            "CONS",
+            "EC"
+        ]
+    },
+    {
+        "key": "HIVPCRInfR",
+        "labels": [
+            "Positive",
+            "Negative",
+            "Indeterminate"
+        ],
+        "values": [
+            "P",
+            "N",
+            "I"
+        ]
+    },
+    {
+        "key": "MatRPRR",
+        "labels": [
+            "Positive",
+            "Negative",
+            "Indeterminate",
+            "Unknown"
+        ],
+        "values": [
+            "P",
+            "N",
+            "I",
+            "U"
+        ]
+    },
+    {
+        "key": "MatHIVPR",
+        "labels": [
+            "Code 1",
+            "Code 0",
+            "Indeterminate"
+        ],
+        "values": [
+            "P",
+            "N",
+            "I"
+        ]
+    },
+    {
+        "key": "BCSens",
+        "labels": [
+            "Amikacin",
+            "Amoxicillin",
+            "Ampicillin",
+            "Azithromycin",
+            "Cefepime",
+            "Cefoxitin",
+            "Cefpodoxime",
+            "Ceftazidime",
+            "Ceftriaxone",
+            "Ciprofloxacin",
+            "Chloramphenicol",
+            "Clindamycin",
+            "Cloxacillin",
+            "Co-amoxiclav",
+            "Cotrimoxazole",
+            "Erythromycin",
+            "Gentamicin",
+            "Imipenem",
+            "Meropenem",
+            "Mitrofurantoin",
+            "Oxacillin",
+            "Penicillin",
+            "Trimethoprim",
+            "Vancomycin",
+            "NONE"
+        ],
+        "values": [
+            "Amik",
+            "Amox",
+            "Amp",
+            "Azith",
+            "Cefep",
+            "Cefox",
+            "Cefpod",
+            "Ceftaz",
+            "Ceftriax",
+            "Cipro",
+            "Chlor",
+            "Clinda",
+            "Clox",
+            "Coam",
+            "Cotrim",
+            "Eryth",
+            "Gent",
+            "Imip",
+            "Mero",
+            "Nitro",
+            "Oxa",
+            "Pen",
+            "Trim",
+            "Vanc",
+            "None"
+        ]
+    },
+    {
+        "key": "BCResist",
+        "labels": [
+            "Amikacin",
+            "Amoxicillin",
+            "Ampicillin",
+            "Azithromycin",
+            "Cefepime",
+            "Cefoxitin",
+            "Cefpodoxime",
+            "Ceftazidime",
+            "Ceftriaxone",
+            "Ciprofloxacin",
+            "Chloramphenicol",
+            "Clindamycin",
+            "Cloxacillin",
+            "Co-amoxiclav",
+            "Cotrimoxazole",
+            "Erythromycin",
+            "Gentamicin",
+            "Imipenem",
+            "Meropenem",
+            "Mitrofurantoin",
+            "Oxacillin",
+            "Penicillin",
+            "Trimethoprim",
+            "Vancomycin",
+            "NONE"
+        ],
+        "values": [
+            "Amik",
+            "Amox",
+            "Amp",
+            "Azith",
+            "Cefep",
+            "Cefox",
+            "Cefpod",
+            "Ceftaz",
+            "Ceftriax",
+            "Cipro",
+            "Chlor",
+            "Clinda",
+            "Clox",
+            "Coam",
+            "Cotrim",
+            "Eryth",
+            "Gent",
+            "Imip",
+            "Mero",
+            "Nitro",
+            "Oxa",
+            "Pen",
+            "Trim",
+            "Vanc",
+            "None"
+        ]
+    },
+    {
+        "key": "MatPART",
+        "labels": [
+            "Yes",
+            "No",
+            "Unknown"
+        ],
+        "values": [
+            "Y",
+            "N",
+            "U"
+        ]
+    },
+    {
+        "key": "MatRPRT",
+        "labels": [
+            "Yes",
+            "No",
+            "Unknown"
+        ],
+        "values": [
+            "Y",
+            "N",
+            "U"
+        ]
+    },
+    {
+        "key": "TORCHRe",
+        "labels": [
+            "CMV positive",
+            "HSV positive",
+            "Rubella positive",
+            "Toxoplasma positive",
+            "Negative results"
+        ],
+        "values": [
+            "CM",
+            "HS",
+            "RU",
+            "TO",
+            "NE"
+        ]
+    },
+    {
+        "key": "LP",
+        "labels": [
+            "Yes and negative",
+            "Yes and positive",
+            "Not done"
+        ],
+        "values": [
+            "YesN",
+            "YesP",
+            "No"
+        ]
+    },
+    {
+        "key": "CSFOrg",
+        "labels": [
+            "Likely Contaminant Organism",
+            "Bacillus Sp",
+            "Coagulase Negative Staphylicoccus",
+            "E.Coli",
+            "Group B Streptococcus"
+        ],
+        "values": [
+            "CO",
+            "BS",
+            "CONS",
+            "EC",
+            "GBS"
+        ]
+    },
+    {
+        "key": "IMAGING",
+        "labels": [
+            "Chest X-Ray",
+            "Cranial Ultrasound Scan",
+            "Echocardiography",
+            "Abdominal X-ray",
+            "Limb X-ray",
+            "Other imaging",
+            "NONE"
+        ],
+        "values": [
+            "CXR",
+            "CUSS",
+            "ECHO",
+            "AXR",
+            "LXR",
+            "OTH",
+            "NONE"
+        ]
+    },
+    {
+        "key": "PHOTOTHERAPY",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "FeedsAdm",
+        "labels": [
+            "Breast Feeding",
+            "Cup feeds with breast milk",
+            "Cup feeds with formula",
+            "NG feeds with EBM",
+            "NG feeds with formula",
+            "Intravenous fluids",
+            "Bottle feeds with formula",
+            "NONE"
+        ],
+        "values": [
+            "BF",
+            "CUPEBM",
+            "CUPFOR",
+            "NGEBM",
+            "NGFORM",
+            "IVF",
+            "BOT",
+            "NONE"
+        ]
+    },
+    {
+        "key": "RESPSUP",
+        "labels": [
+            "Nasal cannulae oxygen",
+            "CPAP",
+            "Intubated and ventilated",
+            "Headbox oxygen",
+            "NONE"
+        ],
+        "values": [
+            "NCO2",
+            "CPAP",
+            "INTUB",
+            "HB",
+            "NONE"
+        ]
+    },
+    {
+        "key": "MedsGiven",
+        "labels": [
+            "X penicillin",
+            "Gentamicin",
+            "BCG Vaccine",
+            "Amoxicillin",
+            "Amikacin",
+            "Aminophylline",
+            "Ampicillin",
+            "AZT (Zidovudine)",
+            "Caffeine",
+            "Ceftriaxone",
+            "Chloramphenicol",
+            "Cloxacillin",
+            "Folate",
+            "Imipenem",
+            "Iron",
+            "Metronidazole",
+            "Nevirapine",
+            "Phenobarbitone",
+            "Procaine Penicillin",
+            "Tetanus Vaccine",
+            "Vancomycin",
+            "Vitamin D",
+            "Other",
+            "NONE"
+        ],
+        "values": [
+            "BP",
+            "GENT",
+            "BCG",
+            "AMOX",
+            "AMIK",
+            "AMIN",
+            "AMP",
+            "AZT",
+            "CAF",
+            "CEF",
+            "CHLO",
+            "CLOX",
+            "FOL",
+            "IMI",
+            "IRON",
+            "MET",
+            "NVP",
+            "PHEN",
+            "PROC",
+            "TTV",
+            "VAN",
+            "VITD",
+            "OTH",
+            "NONE"
+        ]
+    },
+    {
+        "key": "Transfusion",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "TransType",
+        "labels": [
+            "Packed Red Cells",
+            "FFP",
+            "Platelets",
+            "Exchange transfusion",
+            "More than one kinds"
+        ],
+        "values": [
+            "R",
+            "FFP",
+            "P",
+            "E",
+            "M"
+        ]
+    },
+    {
+        "key": "SPECREV",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "SPECREVTYP",
+        "labels": [
+            "Nephrology",
+            "Orthopaedic Surgery",
+            "Surgical",
+            "Ophtalmology",
+            "Maxillofacial Surgery"
+        ],
+        "values": [
+            "Neph",
+            "Ortho",
+            "Surg",
+            "Opth",
+            "MxFx"
+        ]
+    },
+    {
+        "key": "GoodProg",
+        "labels": [
+            "Admitted for observation and progressed well",
+            "Risk factors for sepsis and progressed well",
+            "Meconium exposuree and progressed well",
+            "Respiratory distress resolved with no treatment",
+            "Respiratory distress resolved with O2"
+        ],
+        "values": [
+            "OB",
+            "SE",
+            "ME",
+            "RE",
+            "REO"
+        ]
+    },
+    {
+        "key": "MEDSDIS",
+        "labels": [
+            "Amoxicillin",
+            "Folic acid",
+            "Iron (Ferrous sulphate)",
+            "Vitamin D",
+            "Intramuscular procaine penicillin (syphilis)",
+            "NVP (Nevirapine)",
+            "AZT (Zidovudine)",
+            "Other",
+            "None"
+        ],
+        "values": [
+            "AMOX",
+            "FOL",
+            "FE",
+            "VITD",
+            "PROC",
+            "NVP",
+            "AZT",
+            "OTH",
+            "NONE"
+        ]
+    },
+    {
+        "key": "REVCLIN",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "REVCLINTYP",
+        "labels": [
+            "Kangaroo clinic (Wednesday)",
+            "Neonatal clinic (Friday)",
+            "Local clinic",
+            "Surgical clinic",
+            "Orthopaedic clinic"
+        ],
+        "values": [
+            "KMC",
+            "NNC",
+            "LOC",
+            "SUR",
+            "ORTH"
+        ]
+    },
+    {
+        "key": "CadreDis",
+        "labels": [
+            "SRMO",
+            "SHO",
+            "Registrar",
+            "Senior Registrar"
+        ],
+        "values": [
+            "S",
+            "SH",
+            "R",
+            "SR"
+        ]
+    }
+]

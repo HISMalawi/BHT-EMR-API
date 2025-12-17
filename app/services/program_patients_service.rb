@@ -10,6 +10,7 @@ class ProgramPatientsService
     'CXCA PROGRAM' => CxcaService::PatientsEngine,
     'HTC PROGRAM' => HtsService::PatientsEngine,
     'NCD PROGRAM' => NcdService::PatientsEngine,
+    'NEONATAL PROGRAM' => NeonatalService::PatientsEngine,
   }.freeze
 
   def initialize(program:)

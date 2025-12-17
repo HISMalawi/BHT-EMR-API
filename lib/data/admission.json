@@ -1,0 +1,2300 @@
+[
+    {
+        "key": "BabyCryTriage",
+        "labels": [
+            "Baby is not crying ",
+            "Baby is crying "
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "DangerSigns",
+        "labels": [
+            "Grunting",
+            "Convulsions",
+            "Cyanosis",
+            "No danger signs"
+        ],
+        "values": [
+            "Grun",
+            "Conv",
+            "Cyan",
+            "None"
+        ]
+    },
+    {
+        "key": "DangerSigns2",
+        "labels": [
+            "Trunk feels cold",
+            "Weak or fast femoral pulses",
+            "Capillary refill time more than 3 seconds",
+            "No danger signs"
+        ],
+        "values": [
+            "Cold",
+            "WkPulse",
+            "PrCRT",
+            "None"
+        ]
+    },
+    {
+        "key": "Fontanelle",
+        "labels": [
+            "Flat, Not Tense (normal)",
+            "Bulging",
+            "Sunken"
+        ],
+        "values": [
+            "Flat",
+            "Bulg",
+            "Sunk"
+        ]
+    },
+    {
+        "key": "FurtherTriage",
+        "labels": [
+            "NOT BREATHING",
+            "Gasping",
+            "Normal breathing but HR <100",
+            "Very floppy (normal breathing and HR)",
+            "Stable"
+        ],
+        "values": [
+            "NotBr",
+            "Gasp",
+            "HRLow",
+            "Floppy",
+            "Stable"
+        ]
+    },
+    {
+        "key": "Readmission",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "Gender",
+        "labels": [
+            "Female",
+            "Male",
+            "Not sure",
+            "Female",
+            "Male",
+            "Not sure"
+        ],
+        "values": [
+            "F",
+            "M",
+            "NS",
+            "Female",
+            "Male",
+            "Not sure"
+        ]
+    },
+    {
+        "key": "MatAdmPlace",
+        "labels": [
+            "Postnatal A",
+            "Postnatal B",
+            "Labour Ward",
+            "ICU",
+            "Other"
+        ],
+        "values": [
+            "PostA",
+            "PostB",
+            "Labour",
+            "ICU",
+            "Other"
+        ]
+    },
+    {
+        "key": "AgeA",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "RiskCovid",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "AgeEstimate",
+        "labels": [
+            "Fresh newborn (< 2 hours old)",
+            "2 - 23 hours old",
+            "24 to under 48 hours old",
+            "48 hours to under 72 hours old",
+            "Between 3 days and 7 days"
+        ],
+        "values": [
+            "FNB",
+            "NB24",
+            "NB48",
+            "INF72",
+            "INF"
+        ]
+    },
+    {
+        "key": "TypeBirth",
+        "labels": [
+            "Singleton",
+            "Twin 1",
+            "Twin 2",
+            "Triplet 1",
+            "Triplet 2",
+            "Triplet 3",
+            "Other"
+        ],
+        "values": [
+            "s",
+            "Tw1",
+            "Tw2",
+            "Tr1",
+            "Tr2",
+            "Tr3",
+            "OT"
+        ]
+    },
+    {
+        "key": "MethodEstGest",
+        "labels": [
+            "Last menstrual period",
+            "Ultrasound",
+            "Fundal Height",
+            "Ballard Score"
+        ],
+        "values": [
+            "LMP",
+            "USS",
+            "FH",
+            "Bal"
+        ]
+    },
+    {
+        "key": "SuckReflex",
+        "labels": [
+            "Absent",
+            "Present and strong",
+            "Present but weak"
+        ],
+        "values": [
+            "Absent",
+            "Strong",
+            "Weak"
+        ]
+    },
+    {
+        "key": "Palate",
+        "labels": [
+            "Palate and lip intact",
+            "Cleft palate",
+            "Cleft lip",
+            "Cleft lip and palate"
+        ],
+        "values": [
+            "Palate",
+            "Cleft",
+            "Lip",
+            "LipPalate"
+        ]
+    },
+    {
+        "key": "HeadShape",
+        "labels": [
+            "Normal",
+            "Swelling",
+            "Moulding",
+            "Hydrocephalus",
+            "Microcephaly"
+        ],
+        "values": [
+            "Norm",
+            "Swell",
+            "Mold",
+            "Hydro",
+            "Micro"
+        ]
+    },
+    {
+        "key": "Dysmorphic",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "Tone",
+        "labels": [
+            "Normal tone, movement in all limbs",
+            "Reduced tone = Hypotonia (floppy)",
+            "Increased tone = Hypertonia (stiff)"
+        ],
+        "values": [
+            "Norm",
+            "High",
+            "Low"
+        ]
+    },
+    {
+        "key": "Spine",
+        "labels": [
+            "Normal",
+            "Neural Tube Defect / Spina Bifida",
+            "Other spinal abnormality"
+        ],
+        "values": [
+            "Norm",
+            "NTD",
+            "OAbn"
+        ]
+    },
+    {
+        "key": "Activity",
+        "labels": [
+            "Alert",
+            "Coma",
+            "Convulsions",
+            "Irritable",
+            "Lethargic"
+        ],
+        "values": [
+            "Alert",
+            "Coma",
+            "Convulsions",
+            "Irrit",
+            "Leth"
+        ]
+    },
+    {
+        "key": "HypoSxYN",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "SignsRD",
+        "labels": [
+            "Nasal Flaring",
+            "Grunting",
+            "Head nodding",
+            "Tracheal Tug",
+            "Gasping",
+            "Chest Indrawing",
+            "Stridor",
+            "None"
+        ],
+        "values": [
+            "NFL",
+            "GR",
+            "HN",
+            "TT",
+            "Gasp",
+            "CHI",
+            "ST",
+            "NONE"
+        ]
+    },
+    {
+        "key": "WOB",
+        "labels": [
+            "Mild",
+            "Moderate",
+            "Severe"
+        ],
+        "values": [
+            "Mild",
+            "Mod",
+            "Sev"
+        ]
+    },
+    {
+        "key": "ThompFeed",
+        "labels": [
+            "Normal",
+            "Poor",
+            "Absent or with bites"
+        ],
+        "values": [
+            "0",
+            "1",
+            "2"
+        ]
+    },
+    {
+        "key": "ThompFont",
+        "labels": [
+            "Normal fontanelle",
+            "Full, not tense",
+            "Tense"
+        ],
+        "values": [
+            "0",
+            "1",
+            "2"
+        ]
+    },
+    {
+        "key": "ThompMoro",
+        "labels": [
+            "Normal Moro",
+            "Partial",
+            "Absent"
+        ],
+        "values": [
+            "0",
+            "1",
+            "2"
+        ]
+    },
+    {
+        "key": "ThompRefl",
+        "labels": [
+            "Normal posture",
+            "Fisting, cycling",
+            "Strong distal flexion",
+            "Decerebrate"
+        ],
+        "values": [
+            "0",
+            "1",
+            "2",
+            "3"
+        ]
+    },
+    {
+        "key": "ThompResp",
+        "labels": [
+            "Normal breathing",
+            "Hyperventilation",
+            "Brief apnoea",
+            "Apnoea needing ventilatory support"
+        ],
+        "values": [
+            "0",
+            "1",
+            "2",
+            "3"
+        ]
+    },
+    {
+        "key": "ThompSeiz",
+        "labels": [
+            "None",
+            "2 or less per day",
+            "More than 2 per day"
+        ],
+        "values": [
+            "0",
+            "1",
+            "2"
+        ]
+    },
+    {
+        "key": "ThompTone",
+        "labels": [
+            "Normal",
+            "Hypertonia",
+            "Hypotonia",
+            "Flaccid"
+        ],
+        "values": [
+            "0",
+            "1",
+            "2",
+            "3"
+        ]
+    },
+    {
+        "key": "ThompAlert",
+        "labels": [
+            "Alert",
+            "Hyperalert/stare",
+            "lethargic",
+            "comatose"
+        ],
+        "values": [
+            "0",
+            "1",
+            "2",
+            "3"
+        ]
+    },
+    {
+        "key": "ThompGrasp",
+        "labels": [
+            "Normal grasp",
+            "Poor",
+            "Absent"
+        ],
+        "values": [
+            "0",
+            "1",
+            "2"
+        ]
+    },
+    {
+        "key": "ChestAusc",
+        "labels": [
+            "Chest is clear",
+            "Unequal air entry",
+            "Unilateral crackles",
+            "Unilateral Wheeze",
+            "Bilateral crackles/wheeze",
+            "Stridor"
+        ],
+        "values": [
+            "Clear",
+            "UeqAE",
+            "UniCr",
+            "UniWh",
+            "BilatCr",
+            "Strid"
+        ]
+    },
+    {
+        "key": "Colour",
+        "labels": [
+            "Pink",
+            "Blue",
+            "White",
+            "Yellow"
+        ],
+        "values": [
+            "Pink",
+            "Blue",
+            "White",
+            "Yell"
+        ]
+    },
+    {
+        "key": "CRT",
+        "labels": [
+            "Less than 3 seconds",
+            "3 or more seconds"
+        ],
+        "values": [
+            "Norm",
+            "Prol"
+        ]
+    },
+    {
+        "key": "SignsDehydrations",
+        "labels": [
+            "Prolonged skin pinch",
+            "Dry mucous membranes",
+            "Sunken eyes",
+            "NONE"
+        ],
+        "values": [
+            "PSP",
+            "DMM",
+            "SE",
+            "None"
+        ]
+    },
+    {
+        "key": "Abdomen",
+        "labels": [
+            "Abdominal Mass",
+            "Hepatomegaly",
+            "Splenomegaly",
+            "Prune Belly",
+            "Gastroschisis or Omphalocele",
+            "Omphalocele",
+            "Soft and normal",
+            "Distended",
+            "Abdominal wall defect"
+        ],
+        "values": [
+            "AbMass",
+            "HepMeg",
+            "SplenMeg",
+            "PrunB",
+            "GSchisOmph",
+            "Opmh",
+            "Norm",
+            "Dist",
+            "Defect"
+        ]
+    },
+    {
+        "key": "Umbilicus",
+        "labels": [
+            "Bleeding",
+            "Umbilical Hernia",
+            "Meconium stained",
+            "Healthy & clean",
+            "Red skin around umbilicus",
+            "Abnormal looking",
+            "Omphalocele"
+        ],
+        "values": [
+            "Bl",
+            "H",
+            "Mec",
+            "Norm",
+            "Inf",
+            "Abn",
+            "Omph"
+        ]
+    },
+    {
+        "key": "Genitalia",
+        "labels": [
+            "Normal Male genitalia",
+            "Normal Female genitalia",
+            "Abnormal Male genitalia",
+            "Abnormal Female genitalia",
+            "Ambiguous genitalia (not sure)"
+        ],
+        "values": [
+            "M",
+            "F",
+            "AM",
+            "AF",
+            "Amb"
+        ]
+    },
+    {
+        "key": "Anus2",
+        "labels": [
+            "Patent (Normal)",
+            "Imperforate",
+            "Abnormal"
+        ],
+        "values": [
+            "Pat",
+            "Imp",
+            "Abn"
+        ]
+    },
+    {
+        "key": "Ortolani",
+        "labels": [
+            "No clunk/click",
+            "There is a clunk or click",
+            "Abnormal Not done"
+        ],
+        "values": [
+            "NoOrto",
+            "YesOrto",
+            "NDOrto"
+        ]
+    },
+    {
+        "key": "MSKproblems",
+        "labels": [
+            "Birth injury (upper limbs)",
+            "Birth injury (lower limbs)",
+            "Musculoskeletal deformities",
+            "Leg length discrepancy",
+            "NONE"
+        ],
+        "values": [
+            "BTUL",
+            "BTLL",
+            "MSKD",
+            "Legs",
+            "None"
+        ]
+    },
+    {
+        "key": "TalipesSev",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "BSmonYN",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "BSUnit",
+        "labels": [
+            "mmol/L",
+            "mg/dL"
+        ],
+        "values": [
+            "Mol",
+            "Mg"
+        ]
+    },
+    {
+        "key": "YColour",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "Femorals",
+        "labels": [
+            "Palpable",
+            "Weak or absent",
+            "Difficult to feel"
+        ],
+        "values": [
+            "Present",
+            "Absent",
+            "Diff"
+        ]
+    },
+    {
+        "key": "Jaundice",
+        "labels": [
+            "Mild Jaundice",
+            "Deep Jaundice"
+        ],
+        "values": [
+            "MJ",
+            "DJ"
+        ]
+    },
+    {
+        "key": "Skin",
+        "labels": [
+            "Other skin rash",
+            "Pustules all over",
+            "Big boil/Abscess",
+            "Normal",
+            "Uneven skin folds on thighs",
+            "Mongolian blue spot",
+            "Other skin rash"
+        ],
+        "values": [
+            "Rash",
+            "PUST",
+            "BOIL",
+            "None",
+            "Folds",
+            "Mong",
+            "Rash"
+        ]
+    },
+    {
+        "key": "BrProbs",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "MotherDOBYN",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "RespSR",
+        "labels": [
+            "Apnoea",
+            "Blue episodes",
+            "Fast or laboured breathing",
+            "Noisy breathing",
+            "Cough"
+        ],
+        "values": [
+            "Apn",
+            "BE",
+            "DIB",
+            "NBr",
+            "Cough"
+        ]
+    },
+    {
+        "key": "Vomiting",
+        "labels": [
+            "Small milky possets after feeds (normal)",
+            "Vomiting all feeds",
+            "Vomiting with blood",
+            "Vomiting bright green",
+            "NONE"
+        ],
+        "values": [
+            "Poss",
+            "Yes",
+            "YesBl",
+            "YesGr",
+            "No"
+        ]
+    },
+    {
+        "key": "FeedingReview",
+        "labels": [
+            "Breast feeding normally",
+            "Needs help breast feeding",
+            "Bottle feeding",
+            "Needs cup or spoon",
+            "Requires IV fluids",
+            "Has not had a breast feed yet",
+            "Refusing all feeds: Needs NG"
+        ],
+        "values": [
+            "BF",
+            "BFH",
+            "BOT",
+            "CSP",
+            "IVF",
+            "NFY",
+            "NG"
+        ]
+    },
+    {
+        "key": "PassedMec",
+        "labels": [
+            "Passed meconium after delivery",
+            "Meconium present in the liquor",
+            "No meconium in 1st 24 hrs",
+            "Under 24 hours old and no meconium yet",
+            "Not sure"
+        ],
+        "values": [
+            "Mec24",
+            "MecLiq",
+            "NoMec",
+            "NoMec24",
+            "Unk"
+        ]
+    },
+    {
+        "key": "PUNewborn",
+        "labels": [
+            "Has passed urine in 1st 24 hours",
+            "Has not passed urine",
+            "Not sure"
+        ],
+        "values": [
+            "Yes",
+            "No",
+            "Not sure"
+        ]
+    },
+    {
+        "key": "$SymptomReviewNeurology",
+        "labels": [
+            "Fever",
+            "Convulsions",
+            "Crying less than usual",
+            "Crying more than usual",
+            "Floppy",
+            "Jittery",
+            "Jaundice",
+            "Stiff neck or limbs",
+            "Other",
+            "NONE"
+        ],
+        "values": [
+            "F",
+            "Convulsions",
+            "CL",
+            "CrM",
+            "Fl",
+            "Jit",
+            "JA",
+            "St",
+            "Oth",
+            "None"
+        ]
+    },
+    {
+        "key": "PUInfant",
+        "labels": [
+            "Passing urine normally",
+            "Not passing urine"
+        ],
+        "values": [
+            "Norm",
+            "NoPU"
+        ]
+    },
+    {
+        "key": "StoolsInfant",
+        "labels": [
+            "Opening bowels normally",
+            "Bowels not opening",
+            "Diarrhoea passing large watery stools",
+            "Bloody diarrhoea"
+        ],
+        "values": [
+            "Norm;BNO;Diarr;BlDi"
+        ]
+    },
+    {
+        "key": "InOrOut",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "AdmittedFrom",
+        "labels": [
+            "Admissions",
+            "Antenatal ward",
+            "Labour ward (LW)",
+            "Post Natal Ward (PNW)",
+            "Theatre",
+            "Casualty",
+            "Family and Child Health Dept",
+            "External Referral",
+            "Private ward",
+            "Kangaroo Mother Care (KMC)"
+        ],
+        "values": [
+            "ADM",
+            "ANC",
+            "LW",
+            "PNW",
+            "TH",
+            "Cas",
+            "FCH",
+            "ER",
+            "PVW",
+            "KMC"
+        ]
+    },
+    {
+        "key": "ReferredFrom2",
+        "labels": [
+            "Home - Self Referral",
+            "Other facility",
+            "Dumped Baby"
+        ],
+        "values": [
+            "H",
+            "F",
+            "DU"
+        ]
+    },
+    {
+        "key": "BirthPlaceSame",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "PlaceBirth",
+        "labels": [
+            "Hospital",
+            "Health Centre",
+            "Traditional birth attendant",
+            "Born on the way to hospital (in transit)",
+            "Home"
+        ],
+        "values": [
+            "Hosp",
+            "HCTBA",
+            "BBA",
+            "Home"
+        ]
+    },
+    {
+        "key": "ParityCOD",
+        "labels": [
+            "Abortion",
+            "Aneamia",
+            "Congenital Anomalies",
+            "Extreme Prematurity",
+            "Hypoglycemia",
+            "Meningitis",
+            "Pnemonia",
+            "Sepsis",
+            "Severe HIE",
+            "Severe Malaria",
+            "Shock",
+            "Tetanus",
+            "Other"
+        ],
+        "values": [
+            "AB",
+            "AN",
+            "CON",
+            "EPM",
+            "HYPO",
+            "MEN",
+            "PNE",
+            "SE",
+            "SHIE",
+            "SMA",
+            "SH",
+            "TE",
+            "OTH"
+        ]
+    },
+    {
+        "key": "MaritalStat",
+        "labels": [
+            "Married",
+            "Single",
+            "Divorced",
+            "Widowed"
+        ],
+        "values": [
+            "MAR",
+            "S",
+            "DIV",
+            "WID"
+        ]
+    },
+    {
+        "key": "Ethnicity",
+        "labels": [
+            "African/ African American",
+            "Other",
+            "Asian/Pacific Islander",
+            "White",
+            "NativeAmerican"
+        ],
+        "values": [
+            "AA",
+            "O",
+            "AS",
+            "W",
+            "NA"
+        ]
+    },
+    {
+        "key": "Religion",
+        "labels": [
+            "Anglican",
+            "Agnostic",
+            "Apostolic",
+            "Atheist",
+            "Baptist",
+            "Other Christian Protestant",
+            "Jewish",
+            "Jehovahs witness",
+            "Muslim",
+            "Other",
+            "Presbyterian",
+            "Pentecostal",
+            "Roman Catholic (Christian)",
+            "Seventh Day Adventist",
+            "Zionist"
+        ],
+        "values": [
+            "A",
+            "AG",
+            "AP",
+            "ATH",
+            "Ba",
+            "CP",
+            "J",
+            "JW",
+            "MU",
+            "O",
+            "P",
+            "PE",
+            "RC",
+            "SDA",
+            "Z"
+        ]
+    },
+    {
+        "key": "MatHIVtest",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "TestThisPreg",
+        "labels": [
+            "During this pregnancy",
+            "Before this pregnancy",
+            "After delivery",
+            "Unknown"
+        ],
+        "values": [
+            "Y",
+            "N",
+            "A",
+            "U"
+        ]
+    },
+    {
+        "key": "HIVtestResult",
+        "labels": [
+            "Non reactive HIV test (negative)",
+            "Reactive HIV test (positive)",
+            "Unknown"
+        ],
+        "values": [
+            "NR",
+            "R",
+            "U"
+        ]
+    },
+    {
+        "key": "HAART",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "HIVtestReport",
+        "labels": [
+            "Self-reported from mother",
+            "From her documentation"
+        ],
+        "values": [
+            "Self",
+            "Doc"
+        ]
+    },
+    {
+        "key": "ANVDRLReport",
+        "labels": [
+            "Self-reported from mother",
+            "From her documentation"
+        ],
+        "values": [
+            "Self",
+            "Doc"
+        ]
+    },
+    {
+        "key": "LengthHAART",
+        "labels": [
+            "1st trimester or earlier",
+            "2nd trimester or earlier",
+            "3rd trimester or earlier",
+            "Less than 1 month before delivery",
+            "Unknown"
+        ],
+        "values": [
+            "1stTrim",
+            "2ndTrim",
+            "3rdTrim",
+            "Late",
+            "U"
+        ]
+    },
+    {
+        "key": "VLKnown",
+        "labels": [
+            "Yes",
+            "No",
+            "Not applicable"
+        ],
+        "values": [
+            "Y",
+            "N",
+            "NA"
+        ]
+    },
+    {
+        "key": "NVPgiven",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "EnvTemp",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "Murmur",
+        "labels": [
+            "Murmur or extra sounds",
+            "Normal heart sounds",
+            "NotCon"
+        ],
+        "values": [
+            "Yes",
+            "No",
+            "I am not confident auscultating for murmurs"
+        ]
+    },
+    {
+        "key": "Hypoglycaemia1",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "NVPLR",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "NVPAZT",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "HIVPCR",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "ANVDRL",
+        "labels": [
+            "Yes",
+            "No",
+            "Yes",
+            "No",
+            "Unsure"
+        ],
+        "values": [
+            "Yes",
+            "No",
+            "Y",
+            "N",
+            "U"
+        ]
+    },
+    {
+        "key": "DateVDRLSameHIV",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "ANVDRLResult",
+        "labels": [
+            "Positive",
+            "Negative",
+            "Unknown"
+        ],
+        "values": [
+            "P",
+            "N",
+            "U"
+        ]
+    },
+    {
+        "key": "PartnerTrSyph",
+        "labels": [
+            "Yes",
+            "No",
+            "Unknown"
+        ],
+        "values": [
+            "Y",
+            "N",
+            "U"
+        ]
+    },
+    {
+        "key": "ANMatSyphTreat",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No"
+        ]
+    },
+    {
+        "key": "PregConditions",
+        "labels": [
+            "Anaemia",
+            "Diabetes",
+            "Heart disease",
+            "Hypertension or pre-eclampsia",
+            "Malaria",
+            "None",
+            "Other",
+            "Sexually transmitted disease other than HIV/syphilis",
+            "Thyroid disease/goitre",
+            "Tuberculosis",
+            "Unkown"
+        ],
+        "values": [
+            "AN",
+            "DM",
+            "HD",
+            "HTN",
+            "MAL",
+            "NONE",
+            "OTH",
+            "STD",
+            "THY",
+            "TU",
+            "U"
+        ]
+    },
+    {
+        "key": "BirthFacility",
+        "labels": [
+            "Parirenyatwa",
+            "Budiriro",
+            "Epworth",
+            "Glen View",
+            "Hatcliffe",
+            "Highfield",
+            "Kambuzuma",
+            "Kuwadzana",
+            "Mabvuku",
+            "Mbare",
+            "Rutsanana",
+            "Rujuko",
+            "Warren Park",
+            "Other"
+        ],
+        "values": [
+            "PA",
+            "BU",
+            "EP",
+            "GV",
+            "HC",
+            "HF",
+            "KA",
+            "KU",
+            "MA",
+            "MB",
+            "RS",
+            "RU",
+            "WP",
+            "O"
+        ]
+    },
+    {
+        "key": "TTV",
+        "labels": [
+            "Yes",
+            "No",
+            "Unknown",
+            "No TTV doses"
+        ],
+        "values": [
+            "Y",
+            "N",
+            "U",
+            "TTV0"
+        ]
+    },
+    {
+        "key": "Iron",
+        "labels": [
+            "Yes",
+            "No",
+            "Unknown"
+        ],
+        "values": [
+            "Y",
+            "N",
+            "U"
+        ]
+    },
+    {
+        "key": "Folate",
+        "labels": [
+            "Yes",
+            "No",
+            "Unknown"
+        ],
+        "values": [
+            "Y",
+            "N",
+            "U"
+        ]
+    },
+    {
+        "key": "ANSteroids",
+        "labels": [
+            "Yes",
+            "No",
+            "Unknown"
+        ],
+        "values": [
+            "Y",
+            "N",
+            "U"
+        ]
+    },
+    {
+        "key": "ProbsLab",
+        "labels": [
+            "Significant vaginal bleeding",
+            "Pre-eclampsia",
+            "Convulsions/ eclampsia",
+            "Polyhydramnios",
+            "Oligohydramnios",
+            "None"
+        ],
+        "values": [
+            "SVB",
+            "Pre",
+            "Conv",
+            "Poly",
+            "Olig",
+            "NONE"
+        ]
+    },
+    {
+        "key": "ROM",
+        "labels": [
+            "Yes",
+            "No",
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Yes",
+            "No",
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "ROMlength",
+        "labels": [
+            "< 18 hours",
+            "> 18 hours"
+        ],
+        "values": [
+            "NOPROM",
+            "PROM"
+        ]
+    },
+    {
+        "key": "RFSepsis",
+        "labels": [
+            "PROM > 18 hours",
+            "Maternal fever in labour",
+            "Offensive liquor",
+            "Prolonged 2nd stage",
+            "Born before arrival",
+            "Prematurity < 37 weeks",
+            "None"
+        ],
+        "values": [
+            "PROM",
+            "MF",
+            "OL",
+            "Pr2nd",
+            "BBA",
+            "Prem",
+            "NONE"
+        ]
+    },
+    {
+        "key": "ModeDelivery",
+        "labels": [
+            "Spontaneous vaginal delivery",
+            "Vacuum extraction",
+            "Forceps extraction",
+            "Elective Caesarean section",
+            "Emergency Caesarean section",
+            "Breech (vaginal)",
+            "Induced vaginal delivery"
+        ],
+        "values": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+        ]
+    },
+    {
+        "key": "Reason",
+        "labels": [
+            "Foetal distress",
+            "Malpresentation e.g. breech",
+            "Previous scars",
+            "Eclampsia",
+            "Pre-eclampsia",
+            "Fibroids",
+            "Big fundus",
+            "Multiple gestation",
+            "Prolonged labour",
+            "Post term",
+            "Cephalopelvic disproportion",
+            "Other"
+        ],
+        "values": [
+            "FD",
+            "Pres",
+            "Scar",
+            "E",
+            "PE",
+            "Fi",
+            "Fund",
+            "Mult",
+            "Pr",
+            "Post",
+            "CPD",
+            "O"
+        ]
+    },
+    {
+        "key": "Presentation",
+        "labels": [
+            "Vertex (head first)",
+            "Brow (crown first)",
+            "Breech (buttocks or feet first)",
+            "Face",
+            "Unknown"
+        ],
+        "values": [
+            "Vertex",
+            "Brow",
+            "Breech",
+            "Face",
+            "Unk"
+        ]
+    },
+    {
+        "key": "MecPresent",
+        "labels": [
+            "Yes",
+            "No",
+            "Unknown"
+        ],
+        "values": [
+            "Yes",
+            "No",
+            "Unknown"
+        ]
+    },
+    {
+        "key": "CryBirth",
+        "labels": [
+            "Yes",
+            "No",
+            "Unknown"
+        ],
+        "values": [
+            "Y",
+            "N",
+            "U"
+        ]
+    },
+    {
+        "key": "Resus",
+        "labels": [
+            "Stimulation",
+            "Suctioning",
+            "Oxygen",
+            "Bag valve mask ventilation",
+            "Cardiopulmonary resuscitation",
+            "Unknown",
+            "None"
+        ],
+        "values": [
+            "Stim",
+            "Suc",
+            "O2",
+            "BVM",
+            "CPR",
+            "Unk",
+            "None"
+        ]
+    },
+    {
+        "key": "Chlor",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "VitK",
+        "labels": [
+            "Yes",
+            "No",
+            "Not sure"
+        ],
+        "values": [
+            "Y",
+            "N",
+            "NS"
+        ]
+    },
+    {
+        "key": "TEO",
+        "labels": [
+            "Yes",
+            "No",
+            "Not sure"
+        ],
+        "values": [
+            "Y",
+            "N",
+            "NS"
+        ]
+    },
+    {
+        "key": "BBALoc",
+        "labels": [
+            "Home",
+            "In transport to clinic",
+            "By road",
+            "Toilet",
+            "Other"
+        ],
+        "values": [
+            "H",
+            "T",
+            "R",
+            "To",
+            "O"
+        ]
+    },
+    {
+        "key": "BBADel",
+        "labels": [
+            "Self",
+            "Father",
+            "Family member",
+            "Friend",
+            "Nurse in ambulance",
+            "Traditional birth attendant",
+            "Other"
+        ],
+        "values": [
+            "S",
+            "F",
+            "Fa",
+            "Fr",
+            "N",
+            "TBA",
+            "O"
+        ]
+    },
+    {
+        "key": "Cadre",
+        "labels": [
+            "Government Medical Officer",
+            "Hospital Medical Officer",
+            "Senior House Officer",
+            "Senior Resident Medical Officer",
+            "Healthcare Assistant",
+            "Medical Student",
+            "Nurse Midwife Technician",
+            "Nursing officer",
+            "Nurse Midwife Technician",
+            "Clinical Officer Student",
+            "Clinical Officer Internt",
+            "Clinical Officer",
+            "Paediatric Registrar",
+            "Neonatal Registrar",
+            "Medical Registrar",
+            "Paediatric Consultant",
+            "Neonatal Consultant"
+        ],
+        "values": [
+            "GMO",
+            "HMO",
+            "SHO",
+            "SRMO",
+            "HCA",
+            "MedST",
+            "NMT",
+            "NO",
+            "N",
+            "COSt",
+            "COI",
+            "CO",
+            "PaeReg",
+            "NeoRef",
+            "MedReg",
+            "PaeCon",
+            "NeoCon"
+        ]
+    },
+    {
+        "key": "Firm",
+        "labels": [
+            "Dr Gwen Chimhini",
+            "Dr Simba Chimhuya",
+            "Dr Lethile Madzudzo",
+            "Dr Marcia Mangiza",
+            "Dr Alex Stevenson"
+        ],
+        "values": [
+            "GC",
+            "SC",
+            "LM",
+            "MM",
+            "AS"
+        ]
+    },
+    {
+        "key": "Review",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "ReviewCadre",
+        "labels": [
+            "SHO",
+            "Registrar",
+            "Senior Registrar",
+            "Consultant"
+        ],
+        "values": [
+            "SHO",
+            "R",
+            "SR",
+            "C"
+        ]
+    },
+    {
+        "key": "AdmReason",
+        "labels": [
+            "Abdominal distension",
+            "Born before arrival",
+            "Congenital abnormality",
+            "Convulsions",
+            "Difficulty in breathing",
+            "Dumped baby",
+            "Fever",
+            "Not sucking / feeding difficulties",
+            "Gastroschisis",
+            "Neonatal encephalopathy",
+            "HIV exposed",
+            "Jaundice",
+            "Low Birth Weight",
+            "Low Apgars",
+            "Possible Meconium Aspiration",
+            "Neural Tube Defect / Spina Bifida",
+            "Prematurity",
+            "Prematurity with RDS",
+            "Severe Pneumonia",
+            "Omphalocele",
+            "Other congenital abnormality",
+            "Macrosomia",
+            "Safekeeping",
+            "Risk factors for sepsis",
+            "Other"
+        ],
+        "values": [
+            "AD",
+            "BBA",
+            "Cong",
+            "Convulsions",
+            "DIB",
+            "DU",
+            "Fev",
+            "FD",
+            "G",
+            "NE",
+            "HIVX",
+            "J",
+            "LowBirthWeight",
+            "Apg",
+            "Mec",
+            "NTD",
+            "Prem",
+            "PremRDS",
+            "SPn",
+            "OM",
+            "Cong",
+            "Mac",
+            "Safe",
+            "Risk",
+            "O"
+        ]
+    },
+    {
+        "key": "AdmReasonAdd",
+        "labels": [
+            "Other congenital abnormality",
+            "Abdominal distension",
+            "Born before arrival",
+            "Convulsions",
+            "Dumped baby",
+            "Fever",
+            "Feeding difficulties",
+            "Gastroschisis",
+            "HIE",
+            "HIV exposed",
+            "Jaundice",
+            "Low birth Weight",
+            "Possible meconium aspiration",
+            "Neural tube defect",
+            "Prematurity",
+            "Pneumonia",
+            "Respiratory distress",
+            "Other",
+            "None",
+            "Omphalocele"
+        ],
+        "values": [
+            "Cong",
+            "AD",
+            "BBA",
+            "Conv",
+            "DU",
+            "Fev",
+            "FD",
+            "G",
+            "HIE",
+            "HIVX",
+            "J",
+            "LBW",
+            "Mec",
+            "NTD",
+            "Prem",
+            "Pneum",
+            "RDS",
+            "OTH",
+            "NONE",
+            "OM"
+        ]
+    },
+    {
+        "key": "Plan",
+        "labels": [
+            "Nasal cannulae Oxygen",
+            "CPAP",
+            "Intubate and ventilate",
+            "Breast feeding",
+            "Breast feed with NG top ups",
+            "Breast feed with cup top ups",
+            "NG feed exclusively",
+            "OGT feed exclusively",
+            "Nil by mouth",
+            "Maintenance Iv fluids (add rate)",
+            "Keep warm with hat, bootees etc",
+            "Nurse in incubator",
+            "Kangaroo mother care",
+            "X penicillin and gentamicin",
+            "Ceftriaxone and metronidazole",
+            "Caffeine",
+            "Aminophylline",
+            "Nevirapine",
+            "AZT",
+            "Admit to ITU",
+            "Admit to Transit A",
+            "Admit to Prem",
+            "Admit to observation",
+            "Admit to surgical",
+            "Observations 4 hourly",
+            "Check glucose stat and then 4 hourly",
+            "Check full blood count",
+            "Blood culture",
+            "Check bilirubin",
+            "Check renal function",
+            "TORCH screen",
+            "DNA PCR for HIV",
+            "Maternal PITC",
+            "Maternal Syphilis testing",
+            "Guarded prognosis",
+            "Phototherapy",
+            "Other"
+        ],
+        "values": [
+            "NCO2",
+            "CPAP",
+            "IntVe",
+            "BF",
+            "NG",
+            "Cup",
+            "NGX",
+            "OGX",
+            "NPO",
+            "IVI",
+            "Warm",
+            "Incub",
+            "KMC",
+            "ABX",
+            "CefM",
+            "Caff",
+            "AMIN",
+            "NVP",
+            "AZT",
+            "ITU",
+            "TA",
+            "PREM",
+            "AdOb",
+            "Surg",
+            "Obs",
+            "Gluc",
+            "FBC",
+            "BC",
+            "SBR",
+            "Renal",
+            "TORCH",
+            "DNA",
+            "MAT",
+            "MatSy",
+            "GUA",
+            "PTX",
+            "OTH"
+        ]
+    },
+    {
+        "key": "NMPosture",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "NMSquare",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "NMArmR",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "NMPop",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "NMScarf",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "NMPop",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "NMHeelEar",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "NMLan",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "NMSkin",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "NMPlant",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "NMBreast",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "NMEye",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "NMGen",
+        "labels": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "values": [
+            "-1",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ]
+    },
+    {
+        "key": "GLUSTX",
+        "labels": [
+            "Yes",
+            "No"
+        ],
+        "values": [
+            "Y",
+            "N"
+        ]
+    },
+    {
+        "key": "MatAddrProvince",
+        "labels": [
+            "Harare",
+            "Bulawayo",
+            "Mashonaland Central",
+            "Mashonaland East",
+            "Mashonaland West",
+            "Manicaland",
+            "Masvingo",
+            "Matabeleland North",
+            "Matabeleland South",
+            "Midlands"
+        ],
+        "values": [
+            "HA",
+            "BU",
+            "MC",
+            "ME",
+            "MW",
+            "MA",
+            "MAS",
+            "MS",
+            "MN",
+            "MID"
+        ]
+    },
+    {
+        "key": "MatAddrHaDistrict",
+        "labels": [
+            "Avondale",
+            "Belvedere",
+            "Borrowdale",
+            "Budiriro",
+            "Chitungwiza",
+            "Dzivaresekwa",
+            "Epworth",
+            "Glen Norah",
+            "Glen View",
+            "Greendale",
+            "Hatfield",
+            "Hatcliffe",
+            "Harare Central",
+            "Highlands",
+            "Highfield",
+            "Hopley",
+            "Kambuzuma",
+            "Kuwadzana",
+            "Mabelreign",
+            "Marlborough",
+            "Mabvuku",
+            "Mbare",
+            "Mount Pleasant",
+            "Mufakose",
+            "Southerton",
+            "Sunningdale",
+            "Tafara",
+            "Warren Park",
+            "Waterfalls",
+            "Other"
+        ],
+        "values": [
+            "Av",
+            "Be",
+            "Bo",
+            "Bu",
+            "CH",
+            "Dz",
+            "EP",
+            "GLN",
+            "GLV",
+            "Gr",
+            "Ha",
+            "Hat",
+            "HC",
+            "Hi",
+            "Hif",
+            "Ho",
+            "Ka",
+            "Ku",
+            "Ma",
+            "Mar",
+            "Mab",
+            "Mb",
+            "Mo",
+            "Mu",
+            "So",
+            "Su",
+            "Ta",
+            "Wa",
+            "Wat",
+            "OT"
+        ]
+    }
+]
