@@ -1,0 +1,38 @@
+818	Fix: Drug Order Duplicate Cleanup Robustness	dominickasanga	2025-11-06T07:27:59Z	This PR modifies the drug_orders:remove_duplicates Rake task to resolve issues where the entire transaction would roll back if a single duplicate group failed to process.
+
+The change isolates the voiding of each duplicate group within its own transaction block, ensuring that successful removals are committed even if errors occur elsewhere in the process.
+
+Rake Task Execution Results
+
+The task successfully identified and voided 8,229 duplicate drug orders across 70 groups for 30 patients in a recent run.
+
+Key Change:
+
+Modified lib/tasks/remove_duplicate_drug_orders.rake to use localized transactions per duplicate group.
+812	Eir issues	dominickasanga	2025-10-08T09:36:03Z	
+811	modified:   app/services/build_patient_record_service.rb	dominickasanga	2025-10-07T18:17:57Z	
+795	modified:   app/controllers/api/v1/stages_controller.rb	dominickasanga	2025-07-28T16:36:28Z	for offline visits caching
+783	modified:   app/controllers/api/v1/users_controller.rb	dominickasanga	2025-07-07T17:38:57Z	
+782	Benutzerverwaltung	dominickasanga	2025-07-07T14:23:46Z	
+776	modified:   app/controllers/api/v1/visits_controller.rb	dominickasanga	2025-06-17T13:33:56Z	
+774	modified:   app/services/build_patient_record_service.rb	dominickasanga	2025-06-07T19:32:19Z	
+770	Fix art location	dominickasanga	2025-06-04T17:30:32Z	
+769	modified:   app/services/save_patient_record_service.rb	dominickasanga	2025-05-30T17:57:46Z	dispensing medication offline functionality
+768	modified:   app/services/patient_service.rb	dominickasanga	2025-05-29T08:30:41Z	
+767	modified:   app/services/art_service/patients_engine.rb	dominickasanga	2025-05-26T12:44:54Z	
+765	modified:   app/services/build_patient_record_service.rb	dominickasanga	2025-05-26T12:44:11Z	
+759	modified:   app/services/build_patient_record_service.rb	dominickasanga	2025-05-05T08:58:53Z	minor fix
+758	Total active patients drill down	dominickasanga	2025-04-29T13:02:09Z	
+753	Total active patients drill down	dominickasanga	2025-04-15T13:39:56Z	
+752	save offline outcome	dominickasanga	2025-04-10T07:49:13Z	
+745	modified:   app/controllers/api/v1/ncd_reports_controller.rb	dominickasanga	2025-04-03T07:13:42Z	
+744	new file:   app/controllers/api/v1/ncd_reports_controller.rb	dominickasanga	2025-03-27T16:50:12Z	
+742	modified:   app/controllers/api/v1/totals_controller.rb	dominickasanga	2025-03-12T02:37:24Z	count for OPD drugs
+741	Fix for hypertenstion count	dominickasanga	2025-03-11T11:32:51Z	
+740	modified:   app/services/immunization_service/reports/stats/immunizat…	dominickasanga	2025-03-07T07:22:57Z	
+737	modified:   app/services/patient_service.rb	dominickasanga	2025-02-25T13:48:14Z	
+734	Medication order	dominickasanga	2025-02-22T12:42:34Z	offline drug prescription
+728	modified:   lib/tasks/change_facility_code.rake	dominickasanga	2025-01-27T18:18:04Z	
+727	modified:   db/data/facilities/facilities.json	dominickasanga	2025-01-27T17:48:11Z	
+726	modified:   lib/tasks/update_location_id.rake	dominickasanga	2025-01-24T17:31:40Z	
+725	Users paginate	dominickasanga	2025-01-23T11:47:16Z	users paginate

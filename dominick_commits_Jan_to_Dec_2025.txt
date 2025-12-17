@@ -1,0 +1,105 @@
+37288567ab24648f1b4eef909853b912c4df8ae2	2025-12-02	Merge pull request #831 from HISMalawi/___offline_fix	🐛 fix(couchdb): fetch patient by identifier instead of patient_id
+43b5fd4b6ed438f9d80037f5eb24ba4766f863be	2025-11-05	modified:   lib/tasks/remove_duplicate_drug_orders.rake	
+081a754a2d7340d72c1ead7d999a8122ce17dd98	2025-11-05	new file:   lib/tasks/remove_duplicate_drug_orders.rake	
+7d23821abd539d9336d4689c899beaca74db94e3	2025-10-23	Merge pull request #814 from HISMalawi/referral	♻️ refactor(encounter): improve encounter data loading
+e2571b52a734fc0507067746171c312e406f62ff	2025-10-08	modified:   app/services/save_patient_record_service.rb	
+3cc41a717dfa9777d8abbfc993cb97094a16bcc6	2025-10-08	modified:   app/services/immunization_service/vaccine_schedule_service.rb modified:   app/services/save_patient_record_service.rb	
+7895aee3b4a944e900c7e167f3df768fe4c979d7	2025-10-07	modified:   app/services/build_patient_record_service.rb	
+28ac39b34401549e8e61a1048c1c33ce24c160fd	2025-10-07	modified:   app/services/build_patient_record_service.rb	
+23378798f79a8e6371c2c7ee34a96463d20b2d52	2025-09-30	Merge pull request #809 from HISMalawi/global_property	🐛 fix(global_property): retrieve site prefix by location
+06e1def7a7bffb2fa360730d4016215450c20e30	2025-08-03	Merge pull request #797 from HISMalawi/fix_lab_issue	Fix_lab_issue
+1f6535b35fead5942c526313b93c47da352393cf	2025-07-25	Merge pull request #794 from HISMalawi/fix_lab_issue	🐛 fix(dispensations): fix saved and unsaved dispensations data
+88060fdad4b876602c6249aad0daf5a2b80e66bf	2025-07-25	Merge pull request #793 from HISMalawi/fix_lab_issue	🐛 fix(patient): fix saved and unsaved dispensations
+3bbf9d80913e552af4cacd282c7d2551d6f0316d	2025-07-23	Merge pull request #791 from HISMalawi/fix_lab_issue	Fix lab issue
+a7abf32c0f13f72bb0ca6680820b0ed104a9de05	2025-07-21	Merge pull request #790 from HISMalawi/fix_lab_issue	Update gem dependencies: replace outdated gems with newer versions
+133f680117e3a05e313cd0a32ff693a859104eda	2025-07-20	Merge pull request #789 from HISMalawi/fix_save_patient_record	🐛 fix(observation): remove concept_name from observation parameters b…
+44a04fa96ef8866b181baaa92fcf4b2b7315c3d9	2025-07-15	Merge pull request #787 from HISMalawi/update_batch_saving_patient_record	Update batch saving patient record
+4d09d0b7b5ed971532657fd203135613f17e8c22	2025-07-13	Merge pull request #786 from HISMalawi/update_batch_saving_patient_record	Update batch saving patient record
+21c8dd691baeb80484d3de6e2cc0f96ae2027c66	2025-07-11	Merge pull request #785 from HISMalawi/update_batch_saving_patient_record	Update batch saving patient record
+8ae827734f247c3f6c2b897d8d65d81a128373c1	2025-07-07	Merge pull request #784 from HISMalawi/migrate_metadata	Migrate metadata
+0410518b1b61fc4cb292e1e2186452f9d2cf2a81	2025-07-07	modified:   app/controllers/api/v1/users_controller.rb	
+e35c6b13a497c00c474b266a0fd9ff2f5eafd1f2	2025-07-06	modified:   app/controllers/api/v1/users_controller.rb	
+e98afd83ab5ec07ad4fcccf415b5a3fa645003c1	2025-07-06	modified:   app/controllers/api/v1/users_controller.rb modified:   config/routes.rb	
+d0582cf25c1c74b5f9185d563cba389f896f75bf	2025-07-06	modified:   app/controllers/api/v1/users_controller.rb	
+bcfe1381a364fadcd16ad409c1203778adf34444	2025-07-02	modified:   config/routes.rb	
+c7c80b2f6a3816882994bcc931e89f12ee49c78f	2025-07-02	modified:   app/controllers/api/v1/users_controller.rb new file:   vendor/cache/date-3.4.1.gem new file:   vendor/cache/debug-1.11.0.gem new file:   vendor/cache/erb-5.0.1.gem new file:   vendor/cache/io-console-0.8.0.gem new file:   vendor/cache/irb-1.15.2.gem new file:   vendor/cache/language_server-protocol-3.17.0.5.gem new file:   vendor/cache/logger-1.7.0.gem new file:   vendor/cache/pp-0.6.2.gem new file:   vendor/cache/prettyprint-0.2.0.gem new file:   vendor/cache/prism-1.4.0.gem new file:   vendor/cache/psych-5.2.6.gem new file:   vendor/cache/rbs-3.9.4.gem new file:   vendor/cache/rdoc-6.14.0.gem new file:   vendor/cache/reline-0.6.1.gem new file:   vendor/cache/ruby-lsp-0.24.1.gem new file:   vendor/cache/ruby-lsp-rails-0.4.6.gem new file:   vendor/cache/sorbet-runtime-0.5.12184.gem new file:   vendor/cache/stringio-3.1.7.gem	
+de0311b5068e0c5ea3013df7fddfb9fa1e4e577a	2025-06-29	Merge pull request #778 from HISMalawi/migrate_metadata	saving of all observation ,add enhanced metadata migration script for concept mapping and fhir
+a1e45a22cbd870f84e29d2bd26e1c687a6e010f6	2025-06-18	modified:   app/controllers/api/v1/stages_controller.rb modified:   app/controllers/api/v1/visits_controller.rb modified:   config/routes.rb	
+0f5b8e2ef3de7f0d5cdb0e33f48e4cb1abd44854	2025-06-17	modified:   app/services/build_patient_record_service.rb	
+faebceb9f1b8d88bc0f72fb99f7989f90613c14c	2025-06-17	modified:   app/controllers/api/v1/stages_controller.rb modified:   config/routes.rb	
+3f41fcf8c4322ad409f126d6b6a582698ba7409f	2025-06-17	modified:   app/controllers/api/v1/stages_controller.rb	
+266bc2878def2049e6aaf15b60d61dab95f89606	2025-06-16	modified:   app/controllers/api/v1/visits_controller.rb	
+974e3e545d0a28a2f2928c9ea226cd6dd3b37530	2025-06-07	modified:   app/services/build_patient_record_service.rb	
+375dc5e2be7500cb577a74e614bdb823bc8389e9	2025-06-07	Merge pull request #772 from HISMalawi/fhir	Fhir
+2aad07955844619caab0f91731f487aea10464ab	2025-06-04	modified:   config/schedule.yml.example modified:   config/sidekiq.yml.example	
+e87d3affbd86be99a5bdbbacdff0c576f70c4fab	2025-06-04	modified:   app/jobs/ncd_active_clients_job.rb new file:   app/services/ncd_active_clients_finder_service.rb deleted:    app/services/ncd_service/ncd_active_clients_finder_service.rb	
+54ee27b23c4001184ff92cc3ae56b222b0e3be15	2025-06-03	modified:   app/jobs/ncd_active_clients_job.rb modified:   config/schedule.yml.example	
+20303ce4aa1c02f2b55b2a47dcdb76f00347e2ae	2025-06-03	modified:   app/controllers/api/v1/ncd_reports_controller.rb new file:   app/jobs/ncd_active_clients_job.rb modified:   app/services/facility_service.rb new file:   app/services/mongo_sync_service.rb new file:   app/services/ncd_service/ncd_active_clients_finder_service.rb modified:   config/schedule.yml.example	
+cc78b51365c68029af5dea6480cd46ac1be2f941	2025-06-03	modified:   app/controllers/api/v1/ncd_reports_controller.rb	
+6b008f66acccdaebf5b50ebf3df719a73ad943d9	2025-06-03	modified:   app/controllers/api/v1/ncd_reports_controller.rb modified:   config/routes.rb	
+6d6f47d9c25259951f2360901b7371641f98fa05	2025-06-02	modified:   app/controllers/api/v1/ncd_reports_controller.rb	
+c5727dd9cf016a405f114e911681d4a24c3f726e	2025-06-02	modified:   app/controllers/api/v1/ncd_reports_controller.rb new file:   app/models/ncd_active_patient.rb	
+52e44ae8c878b8894e4e49db1b86a507104e3e0e	2025-06-02	modified:   app/services/ncd_service/reports/ncd_dashboard.rb	
+42730986de07c2e763ad6c4f5e3233846e85d350	2025-05-30	modified:   app/services/save_patient_record_service.rb	
+cbddf48736abd96a73fa036fe6e755439a878ce2	2025-05-29	modified:   app/services/build_patient_record_service.rb	
+524d91b78e0abcfc899cfc68158bbce4f263d1d7	2025-05-29	modified:   app/services/patient_service.rb	
+0614efde8c75fa3dad1ce222d92b630b2f1f2eec	2025-05-26	modified:   app/services/art_service/patients_engine.rb	
+c18f827b8c3000487254f117c84ea2e340d772ea	2025-05-25	modified:   app/services/build_patient_record_service.rb	
+f9e130bcd7663037fc92fe01e578c622bf18796d	2025-05-24	Merge pull request #766 from HISMalawi/fix_cronjob	adding sync_status element when building patient record
+b52878bdfef28ae7c227b7f90c8b74f98be4f34f	2025-05-22	modified:   app/services/build_patient_record_service.rb modified:   app/services/save_patient_record_service.rb	
+25fc0ef662839fe9682709e9c1d2613e0830b547	2025-05-21	modified:   app/services/build_patient_record_service.rb modified:   app/services/save_patient_record_service.rb	
+057cead4156358e0059b912f18499db3739a57ba	2025-05-16	Merge pull request #762 from HISMalawi/fix_cronjob	Fix_cronjob
+e47ac1bc28d488cd91fc9172ee016c70d8dccf15	2025-04-29	modified:   app/services/build_patient_record_service.rb	
+413d3a2aaaf4721f19c08962cbb668df717c6c5f	2025-04-29	modified:   app/services/build_patient_record_service.rb	
+938d63ffa2f07803a344bc6c4b1380ed5e27777c	2025-04-29	modified:   app/services/build_patient_record_service.rb	
+8ead6ae95711002c337bf9922c8bf60970325675	2025-04-29	modified:   app/services/build_patient_record_service.rb	
+0dfd8d34a2d620f2c92d6156f3dae3d18fb4f587	2025-04-29	deleted:    config/sidekiq.yml copy.example	
+f0313d4bbbeb0e50d3d419e17c1378bf51df15e0	2025-04-29	modified:   app/controllers/api/v1/sync_patient_records_controller.rb modified:   app/services/build_patient_record_service.rb	
+6e6c5bbaa6665b19b58b0975e7d13fde932c34b9	2025-04-24	Merge pull request #755 from HISMalawi/mongo_db	fixing scheduling of jobs
+c26685fb7d216170e102a8603f90508621de8aad	2025-04-15	Merge pull request #754 from HISMalawi/mongo_db	Mongo db
+a602c448b0d08a483d0c479cb165ade856d9a2f5	2025-04-14	modified:   Dockerfile modified:   app/controllers/api/v1/dde_controller.rb	
+034cd30f118e7257cb7bb35c1979f31ac7d0a79e	2025-04-11	new file:   Docker-compose.yml new file:   Dockerfile	
+67e935689233a969a978d6fa93ce92f6b6e8230a	2025-04-09	modified:   app/services/build_patient_record_service.rb modified:   app/services/observation_service.rb modified:   app/services/save_patient_record_service.rb	
+016c1e7ff26095b8a68239d1383fcebd494f857c	2025-04-08	modified:   app/controllers/api/v1/totals_controller.rb	
+f9487fb6b8403d6a78c326a6b5878d10c75186c3	2025-04-08	Merge pull request #751 from HISMalawi/enrollment_offline	fix NCD number
+3b88b454b1ea9967b6a1bdb22f1d949a1d806d4a	2025-04-08	Merge pull request #750 from HISMalawi/enrollment_offline	saving enrollment data
+b7ba6ce69a75cd4b130301e30193557ee98e67cf	2025-04-06	Merge pull request #749 from HISMalawi/lab_orders	add visitsDates
+09c69b09b07f3452625f8093027cfb74265e056f	2025-04-06	Merge pull request #748 from HISMalawi/lab_orders	Lab orders
+b1195d945f7e01b82db602287d33ee703a7b47e0	2025-03-29	modified:   app/controllers/api/v1/ncd_reports_controller.rb	
+b01130faba51faa35fb8dba80b1f159295ad5de6	2025-03-24	new file:   app/controllers/api/v1/ncd_reports_controller.rb modified:   config/routes.rb	
+ad5cdd14481676b737693eb276623147d67aa488	2025-03-21	Merge pull request #743 from HISMalawi/fix_drug_dispensation	fix drug dispensation
+0606104bc60588131cbc3de41efd5c2d8d2a3d46	2025-03-11	modified:   app/controllers/api/v1/totals_controller.rb	
+5cfdc7555be074a6b1040f10cd2bad9fb2dabbba	2025-03-10	modified:   app/services/ncd_service/reports/ncd_dashboard.rb	
+b75086d1a29907b8c9f207bd3e46b5674a6a02c7	2025-03-10	modified:   app/services/ncd_service/reports/ncd_dashboard.rb	
+05b06596f4797df92d96c787519fe939bef43e12	2025-03-07	modified:   app/services/ncd_service/reports/ncd_dashboard.rb	
+aa33ec6d3fbcc5194e48d984b278a8442e7651be	2025-03-07	modified:   app/services/immunization_service/reports/stats/immunization_dashboard.rb modified:   app/services/ncd_service/reports/ncd_dashboard.rb	
+ad069eedac38087f068f5e411f30343a98678feb	2025-02-26	Merge pull request #738 from HISMalawi/fix_saving_patient	fix patient registration
+477d21c399da8793be5f2085459bba09e2ad5b71	2025-02-25	modified:   app/services/patient_service.rb	
+498f731bba28224c458ddede3e1a9b30c31b1299	2025-02-25	Merge pull request #736 from HISMalawi/fix_national_id	fix saving of IDs
+0d88cdfae42cc84a359e82f3f342464c9b664c73	2025-02-22	modified:   app/services/build_patient_record_service.rb	
+7b13432467f7186874d9345e1a4726189ba679b1	2025-02-22	added client drug orders to patient_record modified:   app/controllers/api/v1/sync_patient_records_controller.rb modified:   app/services/build_patient_record_service.rb modified:   app/services/drug_order_service.rb	
+3f79d3adc6a7a48b8c7056a70063bd8b99588ac4	2025-02-21	modified:   app/controllers/api/v1/sync_patient_records_controller.rb modified:   app/services/build_patient_record_service.rb	
+38b94c1a1c127c77115b9f037d537d9c2043f508	2025-02-21	modified:   app/services/build_patient_record_service.rb	
+49b5e8cac2b30978b2152dbd0e7dc712ec41dfce	2025-02-21	modified:   app/services/build_patient_record_service.rb	
+5bb7c4c2ae682b6bceb5b7d07b834b2c69a439f1	2025-02-20	modified:   app/services/build_patient_record_service.rb	
+de90e3ac5d62b676d568001f81af0fe151c9a591	2025-02-19	modified:   app/services/save_patient_record_service.rb	
+92a381928c7d02221256ad0111fad7837d803c8d	2025-02-18	modified:   app/services/save_patient_record_service.rb	
+34fa7817056a82c74ebd119bd70921be472d1bbe	2025-02-17	modified:   app/services/build_patient_record_service.rb modified:   app/services/save_patient_record_service.rb	
+725d39f9b92bac6d3cbaa8d60f124a98c9170fc5	2025-02-16	Merge pull request #732 from HISMalawi/adding_schema_pdf	Adding schema pdf
+1c43a3f3d04840135f6c6b6b2ce7030ca4f62cda	2025-02-10	Merge pull request #731 from HISMalawi/adding_schema_pdf	NCD offline
+20c22f2056ae99ebcb6fb265572792de688547cc	2025-01-31	Merge pull request #730 from HISMalawi/adding_schema_pdf	adding schema diagram
+20613417f48c1a4fac06105e862d50ab590246ee	2025-01-31	Merge pull request #729 from HISMalawi/offline_concepts	Offline concepts
+f0be05d66566134468d077fe945acd2df4b06761	2025-01-27	modified:   lib/tasks/change_facility_code.rake	
+3c37bc9d66b84d2c1de05b6631b6c08207cc9f9f	2025-01-27	modified:   db/data/facilities/facilities.json new file:   lib/tasks/change_facility_code.rake	
+2ffc45f8b573a693efed0a294af8ec23a1846a2d	2025-01-24	modified:   lib/tasks/update_location_id.rake	
+364411dbc0a075fc5875930d1e5d0a06e60027dc	2025-01-23	modified:   app/controllers/api/v1/users_controller.rb modified:   app/services/user_service.rb	
+aa87560d2bccaaf7dfebd999199a0496a6e1c4b5	2025-01-22	modified:   app/controllers/api/v1/users_controller.rb modified:   app/services/user_service.rb	
+3efeaf9ac6fea4a0ecf9e0297d1d3d7c6178e3e3	2025-01-22	Merge pull request #724 from HISMalawi/token_time	change token time expire period
+f47581c949a62bd4d9f4d3d05ecf0417b3bfebb3	2025-01-20	Merge pull request #722 from HISMalawi/offline_concepts	change authentication token validity period
+768a113e684cd1c8fcf221b73dc7e0ccee685282	2025-01-17	Merge pull request #721 from HISMalawi/offline_concepts	Offline concepts
+51a16f023f07cadad64ec1b7fb9ac414b4bc4e67	2025-01-14	Merge pull request #720 from HISMalawi/offline_concepts	adding server_patient_count when getting ids for offline
+581c7d812db7c32c005641d844300cffa36c44df	2025-01-13	Merge pull request #719 from HISMalawi/offline_concepts	remove total patient
+b3a27f9b12051eadfea6b6ec13347c609f1621ce	2025-01-13	Merge pull request #718 from HISMalawi/offline_concepts	stock fix
+173805b60046e21af5a508db6a7127d62b7d688c	2025-01-12	Merge pull request #717 from HISMalawi/offline_concepts	Offline concepts
+7b42278fd2378373ffaaa2d58f8a2343cb85f9a4	2025-01-07	Merge pull request #716 from HISMalawi/offline_concepts	Offline loading of villages fix
+661054b66f83e22cc7a8606e9fee6060d24769a3	2025-01-06	Merge pull request #715 from HISMalawi/offline_concepts	Offline concepts
