@@ -24,6 +24,16 @@ module Api
         render json: visits
       end
 
+      def saved_encounters
+        patient_id = params.require(:patient_id)
+        patient = Patient.find(patient_id)
+        date = parse_date(params[:date])
+
+        encounters = patients_engine.saved_encounters(patient, date)
+
+        render json: { encounters: encounters }
+      end
+
       private
 
       
