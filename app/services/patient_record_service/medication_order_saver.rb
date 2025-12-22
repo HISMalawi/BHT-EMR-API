@@ -36,7 +36,7 @@ module PatientRecordService
         permitted_data = build_permitted_data(patient_id, record, order_id, dispensation_data)
         return false unless permitted_data&.any?
 
-        process_dispensations(permitted_data)
+        process_dispensations(permitted_data,record)
         return true
       rescue StandardError => e
         log_error("Error in save_dispensation_data", e)
@@ -93,13 +93,13 @@ module PatientRecordService
       }]
     end
 
-    def process_dispensations(permitted_data)
+    def process_dispensations(permitted_data, record)
       permitted_data.each do |params|
-        process_single_dispensation(params)
+        process_single_dispensation(params, record)
       end
     end
 
-    def process_single_dispensation(params)
+    def process_single_dispensation(params, record)
       dispensations = params[:dispensations]
       program_id = params[:program_id]
       provider_id = params[:provider_id]
@@ -110,7 +110,7 @@ module PatientRecordService
 
       return unless program && provider
 
-      DispensationService.create(program, dispensations, provider)
+      DispensationService.create(program, dispensations, provider, record[:location_id])
     rescue ActiveRecord::RecordNotFound => e
       Rails.logger.error "Record not found while processing dispensation: #{e.message}"
     rescue StandardError => e

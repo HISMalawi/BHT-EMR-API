@@ -76,7 +76,8 @@ module AdministerVaccineService
       encounter = Encounter.find(encounter_id)
       obs_archetypes.map do |archetype|
         archetype[:location_id] = location_id
-        service.create_observation(encounter, archetype.permit!)
+        params = archetype.respond_to?(:permit!) ? archetype.permit! : archetype
+        service.create_observation(encounter, params)
       end
     end
 

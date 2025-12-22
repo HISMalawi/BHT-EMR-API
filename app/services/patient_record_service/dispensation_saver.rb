@@ -26,7 +26,7 @@ module PatientRecordService
             program = Program.find(program_id) if program_id
             provider = provider_id ? Person.find(provider_id) : User.current.person
 
-            DispensationService.create(program, dispensations, provider) if program && dispensations
+            DispensationService.create(program, dispensations, provider, record[:location_id]) if program && dispensations
           rescue ActiveRecord::RecordNotFound => e
             Rails.logger.error "Record not found while processing dispensation: #{e.message}"
             next

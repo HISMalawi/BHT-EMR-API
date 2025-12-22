@@ -145,7 +145,6 @@ class SavePatientRecordService
   end
 
   def build_and_save_patient_record(patient_id, patient_data, operation_results, overall_sync_status)
-
     # Fetch patient and encounter details once
     patient = BuildPatientRecordService.find_patient(patient_id)
     person = patient&.person
@@ -159,8 +158,11 @@ class SavePatientRecordService
     patient_data[:NcdID] = BuildPatientRecordService.patient_identifier(patient, 31)
     patient_data[:sync_status] = overall_sync_status 
     patient_data[:otherPersonInformation] = BuildPatientRecordService.build_other_person_info 
-    patient_data[:visits]  = BuildPatientRecordService.safe_get_visits(patient)
-    patient_data[:activePrograms]  = BuildPatientRecordService.fetch_active_programs(patient.patient_id)
+    patient_data[:visits] = BuildPatientRecordService.safe_get_visits(patient)
+    patient_data[:activePrograms] = BuildPatientRecordService.fetch_active_programs(patient.patient_id)
+    
+    # Track encounter types that need rebuilding
+    allowed_encounter_types = []
     
     # Update specific sections based on successful operations
     operation_results.each do |key, success|
@@ -171,62 +173,107 @@ class SavePatientRecordService
         name = person&.names&.first
         address = person&.addresses&.first
         patient_data[:personInformation] = BuildPatientRecordService.build(person, name, address, patient)
+        
       when :manage_guardian
         patient_data[:guardianInformation] = BuildPatientRecordService.build_guardian_data(patient_id)
+        
       when :enroll_program
         patient_data[:activePrograms] = BuildPatientRecordService.fetch_active_programs(patient_id)
+        
       when :save_birthday_data
         patient_data[:birthRegistration] = BuildPatientRecordService.build_observation_data(patient_id, 'REGISTRATION')
+        allowed_encounter_types << get_encounter_id('PATIENT REGISTRATION') 
+        
       when :save_vitals_data
         patient_data[:vitals] = BuildPatientRecordService.build_observation_data(patient_id, 'VITALS')
+        allowed_encounter_types << get_encounter_id('VITALS') 
+        
       when :save_diagnosis_data
         patient_data[:diagnosis] = BuildPatientRecordService.build_observation_data(patient_id, 'DIAGNOSIS')
+        allowed_encounter_types << get_encounter_id('DIAGNOSIS') 
+        
       when :save_substance_abuse_data
         patient_data[:substanceAbuse] = BuildPatientRecordService.build_observation_data(patient_id, 'ASSESSMENT')
+        allowed_encounter_types << get_encounter_id('ASSESSMENT') 
+        
       when :save_screening_data
         patient_data[:screening] = BuildPatientRecordService.build_screening_data(patient_id)
+        allowed_encounter_types << get_encounter_id('SCREENING')
+        
       when :save_lab_orders_data, :save_lab_results_data, :void_lab_order
         patient_data[:labOrders] = BuildPatientRecordService.build_lab_orders_data(patient_id)
+        allowed_encounter_types << get_encounter_id('LAB ORDERS') 
+        allowed_encounter_types << get_encounter_id('LAB RESULTS') 
+        
       when :save_vaccines, :void_vaccine
         patient_data[:vaccineAdministration] = BuildPatientRecordService.build_vaccine_administration_data(patient_id)
         patient_data[:vaccineSchedule] = BuildPatientRecordService.safe_get_vaccine_schedule(person)
+        
       when :save_appointments
         patient_data[:appointments] = BuildPatientRecordService.build_observation_data(patient_id, 'APPOINTMENT')
+        
       when :save_outcome
-        patient_data[:outCome] = BuildPatientRecordService.build_empty_data_structure 
+        patient_data[:outCome] = BuildPatientRecordService.build_empty_data_structure
+        allowed_encounter_types << get_encounter_id('PATIENT OUTCOME')
+        
       when :save_medication_order, :save_dispensation_data
         patient_data[:MedicationOrder] = BuildPatientRecordService.build_medication_data(patient_id)
-        # patient_data[:dispensations] = BuildPatientRecordService.build_dispensations_data(patient)
+        allowed_encounter_types << get_encounter_id('TREATMENT') 
+        
       when :create_ncd_identifier
         patient_data[:NcdID] = BuildPatientRecordService.patient_identifier(patient, 31)
+        
       when :save_notes_and_pharmalogical_notes
         patient_data[:notes] = BuildPatientRecordService.build_observation_data(patient_id, 'NOTES')
+        allowed_encounter_types << get_encounter_id('NOTES')
+        
       when :save_allergies
         patient_data[:allergies] = BuildPatientRecordService.build_observation_data(patient_id, 'MEDICAL HISTORY')
-      when :save_all_observations
-        allowed_encounter_types = patient_data[:observations]
-                                            .select { |e| e[:status] == "unsaved" }
-                                            .map { |e| e[:encounter_type] }
-                                            .uniq
+        allowed_encounter_types << get_encounter_id('MEDICAL HISTORY')
         
-        allowed_encounter_types = allowed_encounter_types.compact
-        if allowed_encounter_types.empty? ||allowed_encounter_types.nil? 
-          break 
-        end
+      when :save_all_observations
+        # Extract encounter types from observations that were marked as unsaved
+        unsaved_encounter_types = patient_data[:observations]
+                                    &.select { |e| e[:status] == "unsaved" }
+                                    &.map { |e| e[:encounter_type] }
+                                    &.uniq || []
+        allowed_encounter_types.concat(unsaved_encounter_types)
+      end
+    end
+    
+    # Rebuild observations for collected encounter types
+    rebuild_all_observations(patient_id, patient_data, allowed_encounter_types)
+    
+    # Return the patient data as JSON
+    patient_data.as_json
+  end
 
-         original_observations_map = patient_data[:observations]
+  def get_encounter_id(encounter_type)
+    EncounterType.find_by_name(encounter_type).encounter_type_id
+  end
+  
+  def rebuild_all_observations(patient_id, patient_data, allowed_encounter_types)
+    # Remove duplicates and filter out nil/empty values
+    allowed_encounter_types = allowed_encounter_types.compact.uniq
+    
+    # Exit early if no encounter types to rebuild
+    return if allowed_encounter_types.empty?
+    
+    # Create a map of original observations by encounter type
+    original_observations_map = (patient_data[:observations] || [])
                                   .each_with_object({}) do |obs, hash|
                                     hash[obs[:encounter_type]] = obs
                                   end
 
-        new_observations = BuildPatientRecordService.build_all_observations(patient_id, allowed_encounter_types)
-        updated_observations_hash = original_observations_map.merge(new_observations.index_by { |obs| obs[:encounter_type] })
-        patient_data[:observations] = updated_observations_hash.values.as_json
-
-      end
-    end
+    # Build new observations for the allowed encounter types
+    new_observations = BuildPatientRecordService.build_all_observations(patient_id, allowed_encounter_types)
     
-    # Return the patient data as JSON
-    patient_data.as_json
+    # Merge new observations into the original map (new observations override)
+    updated_observations_hash = original_observations_map.merge(
+      new_observations.index_by { |obs| obs[:encounter_type] }
+    )
+    
+    # Update patient_data with merged observations
+    patient_data[:observations] = updated_observations_hash.values.as_json
   end
 end

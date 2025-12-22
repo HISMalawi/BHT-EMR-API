@@ -61,7 +61,7 @@ class VisitsService
       patientId = patient_identifier[0][:patient_id]
     end
 
-    visit = Visit.find_by(patientId: patientId)
+    visit = Visit.find_by(patientId: patientId,closedDateTime: nil, location_id: visit_params[:location_id] || User.current.location_id)
 
     unless visit
       return
@@ -74,7 +74,6 @@ class VisitsService
     existing_stage.destroy if existing_stage
 
     closed_datetime = visit_params[:closedDateTime]
-    
     visit.update(closedDateTime: closed_datetime)
 
     visit_data = visit.attributes

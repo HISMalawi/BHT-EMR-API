@@ -73,7 +73,10 @@ module BuildPatientRecordService
               obs: [], 
             }
           end
-          encounter.observations.each do |observation|
+          
+          parent_observations = encounter.observations.where(obs_group_id: nil)
+          
+          parent_observations.each do |observation|
             obs_hash = safe_build_observation_hash(observation, encounter)
             aggregated_observations[encounter_type_name][:obs] << obs_hash if obs_hash
           end

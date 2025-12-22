@@ -27,9 +27,35 @@ module PatientRecordService
           tests = order.fetch(:tests)
           save_lab_results(:labResults, patient_id, record, order_params[:offline_id], tests[0][:id]) if order_params[:offline_id].present?
 
+          person_making_request = ConceptName.find_by(name: "Person making request")&.concept_id
+          test_type = ConceptName.find_by(name: "Test type")&.concept_id
+          reason_for_test = ConceptName.find_by(name: "Reason for test")&.concept_id
+          refer_to_HTC = ConceptName.find_by(name: "Refer to HTC")&.concept_id
+
+          create_observation(encounter_id, {
+            concept_id: person_making_request,
+            value_text: order_params[:requesting_clinician],
+            obs_datetime: record[:encounter_datetime],
+            location_id: record[:location_id]
+          })
+
+          create_observation(encounter_id, {
+            concept_id: test_type,
+            value_coded: tests[0][:concept_id],
+            obs_datetime: record[:encounter_datetime],
+            location_id: record[:location_id]
+          })
+
+          create_observation(encounter_id, {
+            concept_id: reason_for_test,
+            value_coded: order_params[:reason_for_test_id],
+            obs_datetime: record[:encounter_datetime],
+            location_id: record[:location_id]
+          })
+
           if order_params[:referral] == "referral"
-            create_referral_observation(encounter_id, {
-              concept_id: 7856,
+            create_observation(encounter_id, {
+              concept_id: refer_to_HTC,
               value_text: tests[0][:name],
               order_id: order.fetch(:order_id),
               obs_datetime: record[:encounter_datetime],
@@ -48,7 +74,7 @@ module PatientRecordService
       end
     end
 
-    def create_referral_observation(encounter_id, referral_params)
+    def create_observation(encounter_id, referral_params)
       encounter = Encounter.find(encounter_id)
       observation_service.create_observation(encounter, referral_params)
     end

@@ -43,3 +43,10 @@ namespace :sync do
     end
   end
 end
+
+
+# sync all records with couchDB
+# rails sync:all
+
+# Run only one job (e.g. StageSyncJob)
+# rails "sync:run[StageSyncJob]"
