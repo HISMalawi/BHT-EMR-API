@@ -2,7 +2,7 @@
 --
 -- Host: localhost    Database: nasawa
 -- ------------------------------------------------------
--- Server version	8.0.44-0ubuntu0.24.04.1
+-- Server version	8.0.44-0ubuntu0.24.04.2
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -1199,4 +1199,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-10 10:35:14
+-- Dump completed on 2025-12-22 12:23:33
