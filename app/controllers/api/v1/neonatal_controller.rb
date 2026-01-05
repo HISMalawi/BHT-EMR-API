@@ -27,7 +27,7 @@ module Api
       def saved_encounters
         patient_id = params.require(:patient_id)
         patient = Patient.find(patient_id)
-        date = parse_date(params[:date])
+        date = params[:date].present? ? parse_date(params[:date]) : nil
 
         encounters = patients_engine.saved_encounters(patient, date)
 

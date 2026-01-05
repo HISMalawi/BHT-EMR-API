@@ -37,10 +37,11 @@ module NeonatalService
     # @param patient [Patient] Patient object
     # @param date [Date] Date to check
     # @return [Array<String>] Array of encounter type names
-    def saved_encounters(patient, date)
+    def saved_encounters(patient, _date = nil)
+      patient_id = patient.patient_id || patient.id
+
       Encounter.joins(:type)
-               .where(program_id: @program.program_id, patient_id: patient.patient_id)
-               .where('DATE(encounter_datetime) = ?', date.to_date)
+               .where(program_id: @program.program_id, patient_id: patient_id, voided: 0)
                .order(:encounter_datetime)
                .pluck('encounter_type.name')
                .uniq
