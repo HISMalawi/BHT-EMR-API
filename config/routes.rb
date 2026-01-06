@@ -343,6 +343,8 @@ Rails.application.routes.draw do
   get '/api/v1/nid_utilization_report' => 'api/v1/reports#nid_utilization_report'
   get '/api/v1/dashboard_stats_for_syndromic_statistics' => 'api/v1/reports#syndromic_statistics'
   post '/api/v1/vl_maternal_status' => 'api/v1/reports#vl_maternal_status'
+  get '/api/v1/mentorship_vl_postponed_drill_down' => 'api/v1/reports#mentorship_vl_postponed_drill_down'
+  get '/api/v1/mentorship_dispensations_drill_down' => 'api/v1/reports#mentorship_dispensations_drill_down'
   post '/api/v1/patient_art_vl_dates' => 'api/v1/reports#patient_art_vl_dates'
 
   # SQA controller

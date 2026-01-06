@@ -59,7 +59,8 @@ module ArtService
       'NID_CUMULATIVE_REPORT' => ArtService::Reports::Clinic::NidCumulativeReport,
       'TX_HIV_HTN' => ArtService::Reports::Pepfar::TxHivHtn,
       'LAB_AUDIT_TRAIL' => ArtService::Reports::Clinic::LabAuditTrailReport,
-      'HTN_ENROLLMENT' => ArtService::Reports::Clinic::HtnEnrollment
+      'HTN_ENROLLMENT' => ArtService::Reports::Clinic::HtnEnrollment,
+      'MENTORSHIP' => ArtService::Reports::DataManagement::Mentorship
     }.freeze
 
     def generate_report(type:, **kwargs)
@@ -204,6 +205,16 @@ module ArtService
       REPORTS['MATERNAL_STATUS'].new(start_date: start_date.to_date,
                                      end_date: end_date.to_date,
                                      tx_curr_definition:, patient_ids:).find_report
+    end
+
+    def vl_postponed_drill_down(start_date, end_date, patient_ids)
+      REPORTS['MENTORSHIP'].new(start_date: start_date.to_date,
+                                end_date: end_date.to_date, patient_ids:).vl_postponed_drill_down
+    end
+
+    def dispensations_drill_down(start_date, end_date, patient_ids, creator)
+      REPORTS['MENTORSHIP'].new(start_date: start_date.to_date,
+                                end_date: end_date.to_date, patient_ids:).dispensations_drill_down(creator)
     end
 
     def patient_art_vl_dates(end_date, patient_ids)

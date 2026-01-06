@@ -214,6 +214,14 @@ class ReportService
     engine(@program).sc_arvdisp(start_date, end_date, rebuild_outcome, dsd)
   end
 
+  def vl_postponed_drill_down(start_date, end_date, patient_ids)
+    engine(@program).vl_postponed_drill_down(start_date, end_date, patient_ids)
+  end
+
+  def dispensations_drill_down(start_date, end_date, patient_ids, creator)
+    engine(@program).dispensations_drill_down(start_date, end_date, patient_ids, creator)
+  end
+
   private
 
   def engine(program)

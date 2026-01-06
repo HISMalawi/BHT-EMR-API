@@ -284,6 +284,14 @@ module Api
                                         params[:end_date], (params[:rebuild_outcome] == 'true'), params[:dsd])
       end
 
+      def mentorship_vl_postponed_drill_down
+        render json: service.vl_postponed_drill_down(params[:start_date], params[:end_date], params[:patient_ids])
+      end
+
+      def mentorship_dispensations_drill_down
+        render json: service.dispensations_drill_down(params[:start_date], params[:end_date], params[:patient_ids], params[:creator])
+      end
+
       private
 
       def service
