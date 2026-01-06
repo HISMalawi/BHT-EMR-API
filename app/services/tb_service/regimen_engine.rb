@@ -157,7 +157,7 @@ module TbService
       first_line_drugs(patient:)
     end
 
-    def find_regimens_by_patient(patient:)
+    def find_regimens_by_patient(patient:, date: Date.today)
       find_regimens(patient:)
     end
 

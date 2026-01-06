@@ -34,3 +34,7 @@ end
 every 1.minute do
   runner 'bin/idsr/notifiable_disease_conditions_report.rb', environment: 'development'
 end
+
+every 1.day at: '12:00 am' do
+  runner 'bin/deactivate_inactive_users.rb', environment: :development
+end
