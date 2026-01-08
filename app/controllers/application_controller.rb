@@ -134,9 +134,9 @@ class ApplicationController < ActionController::API
   end
 
   def render_zpl(data)
-    raw = params.permit(:raw)[:raw]
+    raw = params.require(:raw)
 
-    unless raw && raw == 'true'
+    unless raw && raw == true
       render json: data
       
       return
