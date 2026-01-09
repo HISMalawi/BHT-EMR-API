@@ -485,6 +485,7 @@ Rails.application.routes.draw do
 
   get '/api/v1/neonatal/statistics', to: 'api/v1/neonatal#statistics'
   get '/api/v1/neonatal/visit_summary', to: 'api/v1/neonatal#visit_summary'
+  get '/api/v1/neonatal/saved_encounters/:patient_id', to: 'api/v1/neonatal#saved_encounters'
   
   # EIR
   get '/api/v1/eir/schedule', to: 'api/v1/vaccine_schedule#vaccine_schedule'
