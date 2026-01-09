@@ -45,7 +45,7 @@ module Sync
 
     def get_patient_ids_to_sync(location_id, since_date)
       
-      query = Encounter.select(:patient_id).distinct
+      query = Encounter.unscoped.select(:patient_id).distinct
       
       # Add location filter if provided
       query = query.where(location_id: location_id) if location_id.present?
@@ -53,7 +53,7 @@ module Sync
       # Add date filter if provided
       if since_date.present?
         parsed_date = Time.zone.parse(since_date.to_s)
-        query = query.where('encounter.date_created >= ?', parsed_date)
+        query = query.where('encounter.date_created >= ? OR encounter.date_voided >= ?', parsed_date, parsed_date)
       end
       
       query.pluck(:patient_id)
