@@ -37,7 +37,7 @@
                         concept: concept('Transfer out to'))
                  .where('DATE(obs_datetime) = DATE(?)', @date)
                  .order(obs_datetime: :desc)
-                 .first&.answer_string
+                 .first&.answer_string || 'N/A'
     end
 
     private
