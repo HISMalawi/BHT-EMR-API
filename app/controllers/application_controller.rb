@@ -134,13 +134,8 @@ class ApplicationController < ActionController::API
   end
 
   def render_zpl(data)
-    raw = params.delete(:raw)
 
-    if raw && raw == true
-      render json: data
-      
-      return
-    end
+    return render json: data unless params.delete(:raw)&.casecmp?('true')      
 
     send_data data[:zpl], type: "application/label; charset=utf-8",
                    stream: false,
