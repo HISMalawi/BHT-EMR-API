@@ -7,7 +7,7 @@ module Api
       # GET /api/v1/program/{:program_id}/regimens
       def index
         if params[:patient_id]
-          render json: service.find_regimens_by_patient(patient:)
+          render json: service.find_regimens_by_patient(patient:, date:)
         elsif params[:weight]
           use_tb_dosage = params[:tb_dosage]&.casecmp?('true')
           render json: service.find_regimens(patient_weight: params[:weight], use_tb_dosage:)
@@ -54,6 +54,10 @@ module Api
       def patient(patient_id = nil)
         patient_id ||= params.require(:patient_id)
         Patient.find(patient_id)
+      end
+
+      def date
+        params[:date]&.to_date || Date.today
       end
 
       def service

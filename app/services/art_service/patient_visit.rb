@@ -142,11 +142,12 @@ module ArtService
         next unless drug
 
         drug_name = format_drug_name(drug)
-        pills_dispensed[drug_name] ||= 0
-        pills_dispensed[drug_name] += observation.value_numeric
+        pills_dispensed[drug_name] ||= { drug_name: drug_name, pills_dispensed: 0, runout_date: '' }
+        pills_dispensed[drug_name][:pills_dispensed] += observation.value_numeric
+        pills_dispensed[drug_name][:runout_date] = observation&.order&.auto_expire_date&.strftime('%d/%b/%Y')
       end
 
-      @pills_dispensed = @pills_dispensed.collect { |k, v| [k, v] }
+      @pills_dispensed = @pills_dispensed.map { |k, v| v.values }
     end
 
     def visit_by

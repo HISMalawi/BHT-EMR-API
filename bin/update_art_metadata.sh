@@ -18,6 +18,8 @@ set -x # turns on stacktrace mode which gives useful debug information
 export RAILS_ENV=$ENV
 rails db:environment:set RAILS_ENV=$ENV
 
+whenever --update-crontab
+
 USERNAME=`ruby -ryaml -e "puts YAML.safe_load(File.read('config/database.yml'), aliases: true)['${ENV}']['username']"`
 PASSWORD=`ruby -ryaml -e "puts YAML.safe_load(File.read('config/database.yml'), aliases: true)['${ENV}']['password']"`
 DATABASE=`ruby -ryaml -e "puts YAML.safe_load(File.read('config/database.yml'), aliases: true)['${ENV}']['database']"`

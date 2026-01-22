@@ -79,8 +79,8 @@ module ArtService
       ingredients.collect { |ingredient| ingredient_to_drug(ingredient) }
     end
 
-    def find_regimens_by_patient(patient:, lpv_drug_type: 'tabs')
-      use_tb_dosage = use_tb_patient_dosage?(dtg_drugs.first, patient)
+    def find_regimens_by_patient(patient:, date: Date.today, lpv_drug_type: 'tabs')
+      use_tb_dosage = use_tb_patient_dosage?(dtg_drugs.first, patient, date)
       find_regimens(patient_weight: patient.weight, use_tb_dosage:,
                     lpv_drug_type:)
     end
@@ -227,7 +227,7 @@ module ArtService
       }
     end
 
-    def use_tb_patient_dosage?(drug, patient)
+    def use_tb_patient_dosage?(drug, patient, date)
       dtg_concept_id = ConceptName.find_by(name: 'Dolutegravir').concept_id
 
       return false unless patient && drug.concept_id == dtg_concept_id
@@ -254,10 +254,25 @@ module ArtService
                                               .limit(1)
 
       return false if patient_is_on_tb_treatment.blank?
+      return true if eligible_for_extra_dtg_after_treatment_period?(patient, date)
       return false unless on_tb_treatment_concept_ids.include?(patient_is_on_tb_treatment.first.value_coded)
       return false if patient_stopped_tb_treatment?(patient, tb_status_max_datetime)
 
       drug.concept_id == dtg_concept_id
+    end
+
+    def eligible_for_extra_dtg_after_treatment_period?(patient, date)
+      tb_treatment_start_date_concept_id = ConceptName.where(name: 'TB treatment start date').collect(&:concept_id)
+      tb_treatment_period_concept_id = ConceptName.where(name: 'TB treatment period').collect(&:concept_id)
+      tb_treatment_period = Observation.where(person_id: patient.id,
+                                             concept_id: tb_treatment_period_concept_id)&.first
+      tb_treatment_start_date = Observation.where(person_id: patient.id,
+                                                concept_id: tb_treatment_start_date_concept_id)&.first
+      return false unless tb_treatment_period && tb_treatment_start_date
+      
+      treatment_end_date = tb_treatment_start_date.value_datetime + tb_treatment_period.value_numeric.to_i.months
+
+      (treatment_end_date + 14.days).to_date >= date.to_date
     end
 
     def patient_stopped_tb_treatment?(patient, tb_status_max_datetime)
