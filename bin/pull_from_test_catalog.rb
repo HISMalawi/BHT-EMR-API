@@ -45,7 +45,7 @@ def fetch_test_catalog
 
   consolelog "Getting test catalog from LIMS"
 
-  uri = URI(url + '/v2/test_catalog/v1')
+  uri = URI(url + '/v2/test_catalog/v5')
   
   http = Net::HTTP.new(uri.host, uri.port);
   request = Net::HTTP::Get.new(uri, headers)
