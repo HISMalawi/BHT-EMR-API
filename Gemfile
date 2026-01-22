@@ -47,7 +47,7 @@ gem 'rswag-ui'
 
 gem 'emr_ohsp_interface', '~> 2.2.5'
 
-gem 'his_emr_api_lab', '~> 2.1.3'
+gem 'his_emr_api_lab', '~> 2.1.4'
 
 # gem 'his_emr_api_radiology', '~> 1.0.9'
 
