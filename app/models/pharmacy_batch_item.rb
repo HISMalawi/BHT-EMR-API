@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class PharmacyBatchItem < VoidableRecord
+  include Locatable
+
   belongs_to :batch, class_name: 'PharmacyBatch', foreign_key: 'pharmacy_batch_id'
   belongs_to :drug
 

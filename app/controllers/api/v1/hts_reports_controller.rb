@@ -20,8 +20,7 @@ module Api
       end
 
       def daily_stats
-        filters = params.permit(%i[order_type_id patient_id accession_number date status])
-        render json: HtsService::Dashboard.dashboard_stats(filters)
+        render json: HtsService::Dashboard.dashboard_stats()
       end
 
       private

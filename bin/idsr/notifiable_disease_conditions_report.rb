@@ -1,3 +1,0 @@
-# frozen_string_literal: true
-
-EmrOhspInterface::EmrOhspInterfaceService.generate_notifiable_disease_conditions_report

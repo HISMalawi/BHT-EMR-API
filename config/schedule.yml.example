@@ -14,6 +14,13 @@ dde_ids_sync_job:
   class: "Sync::DdeIdsSyncJob"
   queue: default
 
+ncd_active_patients_for_each_facility:
+  cron: "0 0 1 * * *" # At 1:00 AM daily
+  class: "NcdActiveClientsJob"
+  args: [null, "Time.now.beginning_of_hour - 2.hours"]
+  queue: "ncd_active_patients"
+  description: "Find all NCD active patients for each facility"
+
 # notifiable_disease_job:
 #   cron: "* * * * *"  # Every minute
 #   class: "ScriptRunner"

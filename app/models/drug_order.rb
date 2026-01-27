@@ -4,6 +4,8 @@ class DrugOrder < ApplicationRecord
   self.table_name = :drug_order
   self.primary_key = :order_id
 
+  include Locatable
+
   belongs_to :drug, foreign_key: :drug_inventory_id
   belongs_to :order, foreign_key: :order_id
 

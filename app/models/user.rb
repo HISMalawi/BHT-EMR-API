@@ -4,6 +4,8 @@ class User < RetirableRecord
   self.table_name = :users
   self.primary_key = :user_id
 
+  include Locatable
+
   audited except: %i[date_changed authentication_token token_expiry_time]
 
   belongs_to :person, foreign_key: :person_id
@@ -35,10 +37,15 @@ class User < RetirableRecord
     Thread.current['current_user'] = user
   end
 
+  def current_location
+    Location.current
+  end
+
   def as_json(options = {})
     super(options.merge(
       except: %i[password salt secret_question secret_answer
                  authentication_token token_expiry_time],
+      methods: %i[current_location],
       include: {
         roles: { include: {} },
         programs: {},

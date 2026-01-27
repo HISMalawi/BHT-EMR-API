@@ -17,12 +17,22 @@ module Api
       def index
         filters = params.permit(%i[traditional_authority_id village_id name])
 
-        if filters.empty?
-          render json: paginate(Village.preload(:traditional_authority).select(:village_id, :name, :traditional_authority_id, :date_created)).order(:date_created)
-        else
-          inexact_filters = make_inexact_filters(filters, [:name])
-          render json: paginate(Village.where(*inexact_filters).order(:name))
+        traditional_authority_id, name, village_id = filters.values_at(:traditional_authority_id, :name, :village_id)
+        villages = Village.all
+
+        if traditional_authority_id
+          villages = villages.where(parent_location: traditional_authority_id)
         end
+
+        if name
+          villages = villages.where('name like ?', "%#{name}%")
+        end
+
+        if village_id
+          villages = villages.where(location_id: village_id)
+        end
+
+        render json: paginate(villages.order(:name))
       end
 
       def show

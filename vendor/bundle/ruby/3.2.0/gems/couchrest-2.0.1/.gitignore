@@ -1,8 +1,0 @@
-.DS_Store
-html/*
-pkg
-*.swp
-*.gem
-Gemfile.lock
-*.rvmrc
-.bundle

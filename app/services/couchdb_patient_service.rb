@@ -227,9 +227,7 @@ class CouchdbPatientService
       if couchdb_configured?
         begin
           # Try to fetch existing document
-          patient_identifier = PatientIdentifier.where(patient_id: patient_id, identifier_type: 3)
-          identifier = patient_identifier[0][:identifier]
-          response = RestClient.get("#{COUCHDB_URL}/#{PATIENTS_DB}/#{identifier}")
+          response = RestClient.get("#{COUCHDB_URL}/#{PATIENTS_DB}/#{patient_id}")
           JSON.parse(response.body)
         rescue RestClient::NotFound
           # Patient doesn't exist, build new record

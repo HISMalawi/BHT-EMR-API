@@ -6,10 +6,6 @@ module CouchdbSync
   CONFIG = YAML.safe_load(File.read(Rails.root.join('config', 'application.yml')))
   COUCHDB_URL = CONFIG['COUCHDB_URL']
 
-  def couchdb_configured?
-    COUCHDB_URL.present?
-  end
-
   def ensure_db_exists(db_name)
     RestClient.put("#{COUCHDB_URL}/#{db_name}", '')
   rescue RestClient::PreconditionFailed

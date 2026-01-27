@@ -16,13 +16,23 @@ module Api
 
       def index
         filters = params.permit(%i[region_id name district_id])
+        districts = District.all
 
-        if filters.empty?
-          render json: paginate(District.order(:name))
-        else
-          inexact_filters = make_inexact_filters(filters, [:name])
-          render json: paginate(District.where(*inexact_filters).order(:name))
+        region_id, name, district_id = filters.values_at(:region_id, :name, :district_id)
+
+        if region_id
+          districts = districts.where(parent_location: region_id)
         end
+
+        if name
+          districts = districts.where('name like ?', "%#{name}%")
+        end
+
+        if district_id
+          districts = districts.where(location_id: district_id)
+        end
+
+        render json: paginate(districts.order(:name))
       end
     end
   end

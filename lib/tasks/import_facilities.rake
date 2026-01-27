@@ -39,16 +39,21 @@ namespace :import do
         FileUtils.mkdir_p(@backup_dir)
         timestamp = Time.current.strftime('%Y%m%d_%H%M%S')
         @backup_path = File.join(@backup_dir, "facilities_backup_#{timestamp}.json")
+        @db_backup_path = File.join(@backup_dir, "db_backup_#{timestamp}.json")
         FileUtils.cp(@json_file_path, @backup_path)
         puts "Backup created at #{@backup_path}"
 
-        # Database backup
-        Facility.find_each.with_index do |facility, index|
-          facility_data = facility.attributes
-          File.open(File.join(@backup_dir, "db_backup_#{timestamp}.json"), 'a') do |f|
-            f.puts(facility_data.to_json)
-          end
+        # Database backup - backup locations with their attributes
+        backup_data = []
+        Location.includes(:location_attributes).find_each do |location|
+          backup_data << {
+            location: location.attributes,
+            attributes: location.location_attributes.map(&:attributes)
+          }
         end
+        
+        File.write(@db_backup_path, backup_data.to_json)
+        puts "Database backup created at #{@db_backup_path}"
       end
 
       def restore_from_backup
@@ -102,27 +107,70 @@ namespace :import do
       end
 
       def transform_facility_data(data)
-        transformed_data = {
-          code: clean_string(data['code']),
+        # Data for the location table
+        location_data = {
           name: clean_string(data['name']),
+          city_village: clean_string(data['district'])
+        }
+
+        # Only add latitude and longitude if they are valid
+        location_data[:latitude] = clean_string(data['latitude']) if valid_latitude?(data['latitude'])
+        location_data[:longitude] = clean_string(data['longitude']) if valid_longitude?(data['longitude'])
+
+        # Data for location_attributes table
+        attributes_data = {
+          code: clean_string(data['code']),
           common: clean_string(data['common']),
           ownership: clean_string(data['ownership']),
           facility_type: clean_string(data['type']),
           status: clean_string(data['status']),
           regulatory_status: clean_string(data['regulatoryStatus']),
-          district: clean_string(data['district']),
           date_opened: parse_date(data['dateOpened'])
         }
 
-        # Only add latitude and longitude if they are valid
-        transformed_data[:latitude] = clean_string(data['latitude']) if valid_latitude?(data['latitude'])
-        transformed_data[:longitude] = clean_string(data['longitude']) if valid_longitude?(data['longitude'])
-
-        transformed_data
+        { location: location_data, attributes: attributes_data }
       end
 
       def clean_string(value)
         value.to_s.strip # Trim leading and trailing spaces
+      end
+
+      def get_attribute_type_id(name)
+        @attribute_type_ids ||= {}
+        @attribute_type_ids[name] ||= ActiveRecord::Base.connection.execute(
+          "SELECT location_attribute_type_id FROM location_attribute_type WHERE name = '#{name}' LIMIT 1"
+        ).first&.first
+      end
+
+      def find_location_by_code(code)
+        # Find location that has a location_attribute with attribute_type 'Facility Code' and value_reference=code
+        facility_code_type_id = get_attribute_type_id('Facility Code')
+        location_attribute = LocationAttribute.find_by(attribute_type_id: facility_code_type_id, value_reference: code)
+        location_attribute&.location
+      end
+
+      def save_location_attributes(location_id, attributes_data)
+        # Save or update each attribute using named references
+        save_or_update_attribute(location_id, 'Facility Code', attributes_data[:code]) if attributes_data[:code].present?
+        save_or_update_attribute(location_id, 'Facility Common Name', attributes_data[:common]) if attributes_data[:common].present?
+        save_or_update_attribute(location_id, 'Facility Ownership', attributes_data[:ownership]) if attributes_data[:ownership].present?
+        save_or_update_attribute(location_id, 'Facility Type', attributes_data[:facility_type]) if attributes_data[:facility_type].present?
+        save_or_update_attribute(location_id, 'Facility Status', attributes_data[:status]) if attributes_data[:status].present?
+        save_or_update_attribute(location_id, 'Facility Regulatory Status', attributes_data[:regulatory_status]) if attributes_data[:regulatory_status].present?
+        save_or_update_attribute(location_id, 'Facility Date Opened', attributes_data[:date_opened]) if attributes_data[:date_opened].present?
+      end
+
+      def save_or_update_attribute(location_id, attribute_type_name, value)
+        attribute_type_id = get_attribute_type_id(attribute_type_name)
+        attribute = LocationAttribute.find_or_initialize_by(
+          location_id: location_id,
+          attribute_type_id: attribute_type_id
+        )
+        attribute.value_reference = value
+        attribute.creator = 1 if attribute.new_record?
+        attribute.date_created = Time.current if attribute.new_record?
+        attribute.voided = 0
+        attribute.save!
       end
 
       def import_facilities
@@ -154,25 +202,34 @@ namespace :import do
         begin
           # Transform data
           transformed_data = transform_facility_data(facility_data)
+          code = clean_string(facility_data['code'])
 
-          # Find or initialize facility
-          facility = Facility.find_by(code: transformed_data[:code]) || Facility.new
-
-          # Assign attributes and save
-          facility.assign_attributes(transformed_data)
-
-          if facility.save
-            @imported += 1
+          # Use a transaction to ensure atomicity
+          Location.transaction do
+            # Find existing location by code attribute or create new
+            location = find_location_by_code(code) || Location.new
             
-            # Log any validation warnings for this facility
-            if validation_warnings.any?
-              @validation_warnings << "Facility #{facility_data['code']}: #{validation_warnings.join(', ')}"
+            # Assign location attributes
+            location.assign_attributes(transformed_data[:location])
+            location.creator = 1 if location.new_record? # Set default creator
+            
+            if location.save
+              # Save location attributes
+              save_location_attributes(location.location_id, transformed_data[:attributes])
+              
+              @imported += 1
+              
+              # Log any validation warnings for this facility
+              if validation_warnings.any?
+                @validation_warnings << "Facility #{code}: #{validation_warnings.join(', ')}"
+              end
+              
+              print '.' if index % 10 == 0
+            else
+              @failed += 1
+              @validation_warnings << "Facility #{code}: #{location.errors.full_messages.join(', ')}"
+              raise ActiveRecord::Rollback
             end
-            
-            print '.' if index % 10 == 0
-          else
-            @failed += 1
-            @validation_warnings << "Facility #{facility_data['code']}: #{facility.errors.full_messages.join(', ')}"
           end
 
         rescue => e
@@ -192,7 +249,8 @@ namespace :import do
           @validation_warnings.each { |warning| puts "- #{warning}" }
         end
 
-        puts "\nBackup location: #{@backup_path}"
+        puts "\nFile backup location: #{@backup_path}"
+        puts "Database backup location: #{@db_backup_path}"
       end
     end
 
@@ -207,13 +265,36 @@ namespace :import do
 
     if latest_backup
       puts "Rolling back to backup: #{latest_backup}"
-      # Clear existing facilities
-      Facility.delete_all
+      
+      # Parse backup data
+      backup_data = JSON.parse(File.read(latest_backup))
+      
+      ActiveRecord::Base.transaction do
+        # Clear existing location attributes for facilities
+        location_ids = backup_data.map { |item| item['location']['location_id'] }.compact
+        
+        # Get attribute type IDs by name
+        attribute_type_ids = [
+          'Facility Code', 'Facility Common Name', 'Facility Ownership', 'Facility Type',
+          'Facility Status', 'Facility Regulatory Status', 'Facility Date Opened'
+        ].map { |name| ActiveRecord::Base.connection.execute(
+          "SELECT location_attribute_type_id FROM location_attribute_type WHERE name = '#{name}' LIMIT 1"
+        ).first&.first }.compact
+        
+        LocationAttribute.where(location_id: location_ids, attribute_type_id: attribute_type_ids).delete_all
+        
+        # Clear locations
+        Location.where(location_id: location_ids).delete_all
 
-      # Restore from backup
-      File.readlines(latest_backup).each do |line|
-        facility_data = JSON.parse(line)
-        Facility.create!(facility_data)
+        # Restore from backup
+        backup_data.each do |item|
+          location = Location.create!(item['location'])
+          
+          # Restore location attributes
+          item['attributes'].each do |attr|
+            LocationAttribute.create!(attr)
+          end
+        end
       end
 
       puts "Rollback completed successfully"

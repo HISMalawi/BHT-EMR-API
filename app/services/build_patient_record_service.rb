@@ -6,9 +6,11 @@ module BuildPatientRecordService
     include BuildPatientRecordService::ObservationExtractor
     include BuildPatientRecordService::LabOrderService
     include BuildPatientRecordService::DrugService
+    include BuildPatientRecordService::EncounterService
     include BuildPatientRecordService::GuardianService
     include BuildPatientRecordService::PatientIdentifierService
     include BuildPatientRecordService::PersonInformationBuilder
+    include BuildPatientRecordService::ScreeningService
     include BuildPatientRecordService::VaccineService
     include BuildPatientRecordService::VisitService
 
@@ -86,9 +88,18 @@ module BuildPatientRecordService
 
     def build_clinical_data(patient_id)
       {
+        birthRegistration: build_observation_data(patient_id, 'REGISTRATION'),
+        vitals: build_observation_data(patient_id, 'VITALS'),
         vaccineAdministration: build_vaccine_administration_data(patient_id),
+        appointments: build_observation_data(patient_id, 'APPOINTMENT'),
+        diagnosis: build_observation_data(patient_id, 'DIAGNOSIS'),
+        screening: build_observation_data(patient_id, 'SCREENING'),
+        substanceAbuse: build_observation_data(patient_id, 'ASSESSMENT'),
         labOrders: build_lab_orders_data(patient_id),
         MedicationOrder: build_medication_data(patient_id),
+        outCome: build_empty_data_structure,
+        notes: build_observation_data(patient_id, 'NOTES'),
+        allergies: build_observation_data(patient_id, 'MEDICAL HISTORY'),
         observations: build_all_observations(patient_id, allowed_encounter_types = nil, status = "saved")
       }
     end
@@ -106,6 +117,14 @@ module BuildPatientRecordService
         saveStatusPersonInformation: '',
         saveStatusGuardianInformation: '',
         saveStatusBirthRegistration: ''
+      }
+    end
+
+    # Helper methods for building specific data structures
+    def build_observation_data(patient_id, encounter_type)
+      {
+        saved: safe_extract_observations(patient_id, safe_find_encounter_type(encounter_type)),
+        unsaved: []
       }
     end
 
@@ -132,6 +151,12 @@ module BuildPatientRecordService
       }
     end
 
+    def build_screening_data(patient_id)
+      {
+        saved: safe_get_screening_data(patient_id),
+        unsaved: []
+      }
+    end
 
     def build_lab_orders_data(patient_id)
       {
@@ -144,6 +169,13 @@ module BuildPatientRecordService
     def build_medication_data(patient_id)
       {
         saved: get_client_drug_orders(patient_id),
+        unsaved: []
+      }
+    end
+
+    def build_empty_data_structure
+      {
+        saved: [],
         unsaved: []
       }
     end

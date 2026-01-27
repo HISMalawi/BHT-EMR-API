@@ -79,6 +79,7 @@ Rails.application.routes.draw do
       end
 
       resources :roles
+      resources :printer_configurations, only: [:index, :create, :destroy, :update]
 
       # Patients
       get '/get_patient_record' => 'patients#get_patient_record'
@@ -327,6 +328,7 @@ Rails.application.routes.draw do
       get '/dde/patients/sync_npids', to: 'dde#sync_npids'
 
       get '/labels/location', to: 'locations#print_label'
+      get '/location_attribute/:id', to: 'location_attribute#show'
 
       # Search
       get '/search/given_name' => 'person_names#search_given_name'
@@ -465,6 +467,7 @@ Rails.application.routes.draw do
   get '/api/v1/orders_made', to: 'api/v1/reports#orders_made'
   get '/api/v1/:program_id/external_consultation_clients', to: 'api/v1/reports#external_consultation_clients'
   get '/api/v1/ncd_active_patients', to: 'api/v1/ncd_reports#ncd_active_patients'
+  get '/api/v1/ncd_active_patients_from_mongo', to: 'api/v1/ncd_reports#ncd_active_patients_from_mongo'
 
   get '/api/v1/screened_for_cxca', to: 'api/v1/reports#cxca_reports'
   get '/api/v1/pepfar_cxca', to: 'api/v1/reports#cxca_reports'
@@ -483,10 +486,6 @@ Rails.application.routes.draw do
 
   post 'api/v1/sync_to_ait', to: 'api/v1/patients#sync_to_ait'
 
-  get '/api/v1/neonatal/statistics', to: 'api/v1/neonatal#statistics'
-  get '/api/v1/neonatal/visit_summary', to: 'api/v1/neonatal#visit_summary'
-  get '/api/v1/neonatal/saved_encounters/:patient_id', to: 'api/v1/neonatal#saved_encounters'
-  
   # EIR
   get '/api/v1/eir/schedule', to: 'api/v1/vaccine_schedule#vaccine_schedule'
   get '/api/v1/eir/schedule/generic', to: 'api/v1/vaccine_schedule#generic_schedule'

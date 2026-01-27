@@ -15,7 +15,11 @@ module Auditable
   extend ActiveSupport::Concern
 
   included do
-    audited if Audit.table_exists?
+    begin
+      audited if defined?(Audit) && ActiveRecord::Base.connection.table_exists?('audits')
+    rescue ActiveRecord::NoDatabaseError, Mysql2::Error
+      # Database doesn't exist yet, skip auditing setup
+    end
     
     before_save :update_change_trail
     before_create :update_create_trail

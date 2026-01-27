@@ -5,7 +5,8 @@ class PatientProgram < VoidableRecord
   self.primary_key = 'patient_program_id'
 
   after_void :after_void
-
+  include Locatable
+  
   belongs_to :patient
   belongs_to :program
   has_many :patient_states, class_name: 'PatientState', dependent: :destroy

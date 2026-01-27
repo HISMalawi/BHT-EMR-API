@@ -4,4 +4,5 @@
   - patient_sync
   - default
   - mailers
+  - ncd_active_patients
   - sync_offline_data

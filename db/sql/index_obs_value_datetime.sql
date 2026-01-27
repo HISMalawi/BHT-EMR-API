@@ -1,1 +1,0 @@
-ALTER TABLE obs ADD INDEX (value_datetime);
