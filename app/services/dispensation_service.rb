@@ -52,6 +52,8 @@ module DispensationService
                        'New patient'
                      elsif patient_type.value_coded == concept('New patient').concept_id
                        'New patient'
+                     elsif patient_type.value_coded == concept('Returning client').concept_id
+                       'New patient'
                      else
                        'External'
                      end

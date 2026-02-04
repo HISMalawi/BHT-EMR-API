@@ -26,12 +26,18 @@
     end
 
     def drugs_dispensed
-      drugs = patients_engine.drugs_dispensed_on_date(@patient, @date)
+      drugs = patients_engine.patient_last_drugs_received(@patient, @date)
       drugs_str(drugs)
     end
 
     def transferred_out_to
-      'N/A'
+      Observation.joins(:encounter)
+                 .where(encounter: { program: @program })
+                 .where(person: @patient.person,
+                        concept: concept('Transfer out to'))
+                 .where('DATE(obs_datetime) = DATE(?)', @date)
+                 .order(obs_datetime: :desc)
+                 .first&.answer_string || 'N/A'
     end
 
     private

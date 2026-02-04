@@ -47,9 +47,7 @@ gem 'rswag-ui'
 
 # gem 'emr_ohsp_interface', '~> 2.2.5'
 
-gem 'emr_ohsp_interface', '~> 3.0.0'
-
-gem 'his_emr_api_lab', '2.0.8.streaming'
+gem 'his_emr_api_lab', '= 2.1.5'
 
 # gem 'his_emr_api_radiology', '~> 1.0.9'
 
@@ -76,7 +74,7 @@ end
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: %i[mingw mswin x64_mingw jruby]
 
-gem 'whenever', '~> 1.0'
+gem 'whenever', '~> 1.1.2'
 
 gem 'concurrent-ruby', '= 1.3.4'
 
