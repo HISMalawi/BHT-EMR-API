@@ -68,7 +68,8 @@ class OpdService::VisitLabel
     title_font_top_bottom = { :font_reverse => false, :font_size => 4, :font_horizontal_multiplier => 1, :font_vertical_multiplier => 1 }
     title_font_bottom = { :font_reverse => false, :font_size => 2, :font_horizontal_multiplier => 1, :font_vertical_multiplier => 1 }
     units = { "WEIGHT" => "kg", "HT" => "cm" }
-    encs = patient.encounters.where("DATE(encounter_datetime) = ?", date).order(Arel.sql("encounter_datetime ASC"))
+    program_id = Program.find_by_name("OPD Program").id
+    encs = patient.encounters.where("DATE(encounter_datetime) = ? AND program_id = ?", date, program_id).order(Arel.sql("encounter_datetime ASC"))
     return nil if encs.blank?
 
     # Initialize the JSON object as a hash
