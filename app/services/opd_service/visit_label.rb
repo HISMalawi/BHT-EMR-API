@@ -132,8 +132,12 @@ class OpdService::VisitLabel
         lab_orders = []
         encounter.observations.each do |observation|
           concept_name = observation.concept.fullname
-          next if concept_name.match(/Workstation location/i)
-          lab_orders << observation.answer_string.to_s
+          next if concept_name.match(/Workstation location|Comment to fulfiller|Lab test result/i)
+          value = observation.answer_string.to_s
+          if(value.match(/=|>|</i)) 
+            lab_orders << concept_name
+          end
+          lab_orders << value
         end
         label.draw_multi_text("Lab orders: #{lab_orders.join(",")}", concepts_font)
         json_data[:lab_orders] << lab_orders.join(", ")
