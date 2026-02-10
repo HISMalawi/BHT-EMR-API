@@ -54,7 +54,7 @@ gem 'rswag-ui'
 
 gem 'emr_ohsp_interface', '~> 2.2.5'
 
-gem 'his_emr_api_lab', '~> 2.0.9'
+gem 'his_emr_api_lab', '~> 2.1.1'
 
 # gem 'emr_ohsp_interface', '~> 2.2.3'
 # gem 'his_emr_api_lab', '~> 2.0.5'
