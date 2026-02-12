@@ -107,7 +107,8 @@ class SavePatientRecordService
       medication_order_saver: PatientRecordService::MedicationOrderSaver.new,
       dispensation_saver: PatientRecordService::DispensationSaver.new,
       observation_saver: PatientRecordService::ObservationSaver.new,
-      void_encounters: PatientRecordService::VoidEncounters.new
+      void_encounters: PatientRecordService::VoidEncounters.new,
+      void_drug_orders: PatientRecordService::VoidDrugOrders.new
     }
   end
 
@@ -127,7 +128,8 @@ class SavePatientRecordService
       create_ncd_identifier: managers[:identity_manager].create_ncd_identifier(patient_id, record),
       save_dispensation_data: managers[:medication_order_saver].save_dispensation_data(patient_id, record),
       save_all_observations: managers[:observation_saver].save_all_observations(patient_id, record),
-      void_encounters: managers[:void_encounters].void_encounters(record)
+      void_encounters: managers[:void_encounters].void_encounters(record),
+      void_drug_orders: managers[:void_drug_orders].void_drug_orders(patient_id, record)
     }
   end
 
@@ -183,6 +185,9 @@ class SavePatientRecordService
         
       when :create_ncd_identifier
         patient_data[:NcdID] = BuildPatientRecordService.patient_identifier(patient, 31)
+
+      when :void_drug_orders
+        patient_data[:voidedDrugOders] = BuildPatientRecordService.build_voided_drug_orders_data(patient_id)
 
       when :void_encounters
         # Extract encounter types from voided encounters to rebuild them
