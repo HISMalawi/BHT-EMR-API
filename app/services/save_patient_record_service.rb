@@ -187,7 +187,7 @@ class SavePatientRecordService
         patient_data[:NcdID] = BuildPatientRecordService.patient_identifier(patient, 31)
 
       when :void_drug_orders
-        patient_data[:voidedDrugOders] = BuildPatientRecordService.build_voided_drug_orders_data(patient_id)
+        patient_data[:voidedDrugOders] = BuildPatientRecordService.build_voided_drug_orders_data(patient)
 
       when :void_encounters
         # Extract encounter types from voided encounters to rebuild them
