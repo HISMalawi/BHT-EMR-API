@@ -90,6 +90,7 @@ module BuildPatientRecordService
         vaccineAdministration: build_vaccine_administration_data(patient_id),
         labOrders: build_lab_orders_data(patient_id),
         MedicationOrder: build_medication_data(patient_id),
+        voidedDrugOders: build_voided_drug_orders_data(patient_id),
         observations: build_all_observations(patient_id, allowed_encounter_types = nil, status = "saved")
       }
     end
@@ -147,6 +148,40 @@ module BuildPatientRecordService
         saved: get_client_drug_orders(patient_id),
         unsaved: []
       }
+    end
+
+    def build_voided_drug_orders_data(patient_id)
+      {
+        saved: fetch_voided_drug_orders(patient_id),
+        unsaved: [] # Placeholder for the frontend to push new void requests
+      }
+    end
+
+    def fetch_voided_drug_orders(patient_id)
+      # 1. Get the concept ID safely
+      drug_order_concept = ConceptName.find_by_name('Drug orders')&.concept_id
+      return [] unless drug_order_concept
+
+      # 2. Use 'unscoped' on Order because the model likely hides voided records by default
+      Order.unscoped
+          .joins("INNER JOIN drug_order ON drug_order.order_id = orders.order_id")
+          .joins("INNER JOIN drug ON drug.drug_id = drug_order.drug_inventory_id")
+          .where(
+            orders: { 
+              patient_id: patient_id, 
+              concept_id: drug_order_concept, 
+              voided: 1 
+            }
+          )
+          .select(
+            'orders.order_id',
+            'orders.void_reason',
+            'orders.date_voided',
+            'orders.voided_by',
+            'drug.name AS drug_name'
+          )
+          .order('orders.date_voided DESC')
+          .as_json
     end
 
     def build_dispensations_data(patient)
