@@ -266,6 +266,37 @@ class PatientService
     query
   end
 
+  def build_voided_drug_orders_data(patient)
+    # 1. Fetch the records using the query we built
+    voided_records = DrugOrder.unscoped
+      .joins("INNER JOIN orders ON orders.order_id = drug_order.order_id")
+      .joins("INNER JOIN encounter ON encounter.encounter_id = orders.encounter_id")
+      .select('drug_order.*, orders.void_reason, orders.date_voided, encounter.program_id')
+      .where('orders.patient_id = ? AND orders.voided = 1', patient.patient_id)
+      .where(
+        'NOT EXISTS (
+          SELECT 1 FROM obs 
+          JOIN concept_name ON concept_name.concept_id = obs.concept_id
+          WHERE obs.order_id = orders.order_id
+          AND concept_name.name = "AMOUNT DISPENSED" 
+          AND obs.value_numeric IS NOT NULL
+        )'
+      )
+      .order('orders.date_voided DESC')
+
+    # 2. Map through and ensure associations can see voided parents
+    voided_records.map do |record|
+      # This allows the 'regimen' and 'duration' methods in drug_order.rb 
+      # to find the voided order and encounter without returning nil
+      record.instance_eval do
+        def order
+          Order.unscoped { super }
+        end
+      end
+      record.as_json
+    end
+  end
+
   def drugs_orders_by_program(patient, date, program_id: nil)
     last_visit = find_last_visit(patient, date, program_id)
     return [] unless last_visit
