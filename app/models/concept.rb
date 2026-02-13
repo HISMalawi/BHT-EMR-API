@@ -23,6 +23,8 @@ class Concept < RetirableRecord
   end
   has_many :drugs
   has_many :concept_members, class_name: 'ConceptSet', foreign_key: :concept_set
+  has_many :concept_attributes, foreign_key: :concept_id
+
 
   def self.find_by_name(concept_name)
     Concept.joins(:concept_names).where(['concept_name.name =?', concept_name.to_s]).first
@@ -47,6 +49,20 @@ class Concept < RetirableRecord
     rescue StandardError
       nil
     end
+  end
+
+  def nlims_code
+    self.concept_attributes
+        .where(
+            attribute_type: ConceptAttributeType.find_by_name('NLIMS CODE')
+          )&.first&.value_reference
+  end
+
+  def test_catalogue_name
+    self.concept_attributes
+        .where(
+            attribute_type: ConceptAttributeType.find_by_name('TEST CATALOGUE NAME')
+          )&.first&.value_reference
   end
 
   def fullname

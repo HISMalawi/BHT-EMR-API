@@ -68,7 +68,8 @@ class OpdService::VisitLabel
     title_font_top_bottom = { :font_reverse => false, :font_size => 4, :font_horizontal_multiplier => 1, :font_vertical_multiplier => 1 }
     title_font_bottom = { :font_reverse => false, :font_size => 2, :font_horizontal_multiplier => 1, :font_vertical_multiplier => 1 }
     units = { "WEIGHT" => "kg", "HT" => "cm" }
-    encs = patient.encounters.where("DATE(encounter_datetime) = ?", date).order(Arel.sql("encounter_datetime ASC"))
+    program_id = Program.find_by_name("OPD Program").id
+    encs = patient.encounters.where("DATE(encounter_datetime) = ? AND program_id = ?", date, program_id).order(Arel.sql("encounter_datetime ASC"))
     return nil if encs.blank?
 
     # Initialize the JSON object as a hash
@@ -132,8 +133,12 @@ class OpdService::VisitLabel
         lab_orders = []
         encounter.observations.each do |observation|
           concept_name = observation.concept.fullname
-          next if concept_name.match(/Workstation location/i)
-          lab_orders << observation.answer_string.to_s
+          next if concept_name.match(/Workstation location|Comment to fulfiller|Lab test result/i)
+          value = observation.answer_string.to_s
+          if(value.match(/=|>|</i)) 
+            lab_orders << concept_name
+          end
+          lab_orders << value
         end
         label.draw_multi_text("Lab orders: #{lab_orders.join(",")}", concepts_font)
         json_data[:lab_orders] << lab_orders.join(", ")

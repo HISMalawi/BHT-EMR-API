@@ -325,7 +325,8 @@ module Api
         return nil unless national_id
 
         sex = "(#{person.gender})"
-        address = person.addresses.first.to_s.strip[0..24].humanize
+        address = person.addresses.first.to_s.strip[0..96].humanize
+
         label = ZebraPrinter::Lib::StandardLabel.new
         label.font_size = 2
         label.font_horizontal_multiplier = 2
@@ -337,11 +338,19 @@ module Api
           label.draw_text(person.name.titleize, 35, 5, 0, 1, 2, 2, false)
           label.draw_text(patient.national_id_with_dashes, 35, 35, 0, 1, 2, 2, false)
           label.draw_text("#{person.birthdate} #{sex}", 35, 75, 0, 1, 2, 2, false)
-          label.draw_text(address, 35, 105, 0, 1, 2, 2, false)
+          label.font_size = 3
+          label.font_horizontal_multiplier = 1
+          label.font_vertical_multiplier = 1
+          label.left_margin = 35
+          label.draw_multi_text(address)
+          label.left_margin = 50
         else
           label.draw_barcode(50, 180, 0, 1, 5, 15, 120, false, national_id)
           label.draw_multi_text(person.name.titleize)
           label.draw_multi_text("#{patient.national_id_with_dashes} #{person.birthdate}#{sex}")
+          label.font_size = 4
+          label.font_horizontal_multiplier = 1
+          label.font_vertical_multiplier = 1
           label.draw_multi_text(address)
         end
 
@@ -350,7 +359,7 @@ module Api
           national_id: patient.national_id_with_dashes,
           birthdate: person.birthdate,
           sex:,
-          address: person.addresses.first.to_s.strip[0..24].humanize,
+          address: person.addresses.first.to_s.humanize,
           barcode: national_id
         }
 

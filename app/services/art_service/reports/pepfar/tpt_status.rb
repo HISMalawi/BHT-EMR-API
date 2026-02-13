@@ -114,11 +114,11 @@ module ArtService
             # 3HP is taken 1 dose per week
             # if client misses dose for less than a month, they are eligible
             # if client misses more than a month:
-            # check if they have been on ART for less than 3 months, they are eligible
+            # A client is eligible to restart anypoint during ART treatment if they haven't completed TPT  
             # if they have been on ART continuosly for more than 3 months, they are not eligible
             if diff_in_months <= 1 || art_start_date.blank?
               three_hp_eligible = true
-            elsif diff_in_months > 1 &&  difference_in_months(end_date.to_date, art_start_date.to_date) < 3
+            elsif diff_in_months > 1
               #  Patient defaulted for ART and TPT and was on ART for less than 3 months: patient TPT status is reset
               
               three_hp_eligible = true
@@ -135,7 +135,7 @@ module ArtService
             # if they have been on ART continuosly for more than 3 months, they are not eligible
             if diff_in_months <= 2 || art_start_date.blank? 
               six_h_eligible = true 
-            elsif diff_in_months > 2 && difference_in_months(end_date.to_date, art_start_date.to_date) < 3
+            elsif diff_in_months > 2
               #  Patient defaulted for ART and TPT and was on ART for less than 3 months: patient TPT status is reset
               three_hp_eligible = false
               six_h_eligible = true

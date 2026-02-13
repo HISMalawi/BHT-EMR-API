@@ -11,7 +11,20 @@ module TbService
 
     def print
       writelines
-      @printer.print(1)
+      { zpl: @printer.print(1),
+        data: {
+          health_center: health_center,
+          destination: @note.transferred_out_to,
+          demographics: demographics_str,
+          name: @patient.name,
+          age: @patient.age,
+          gender: @patient.gender,
+          tb_start_date: start_date,
+          transfer_out_date: transfer_date,
+          current_regimen: @note.current_regimen,
+          drugs_dispensed: @note.drugs_dispensed,
+        }
+      }
     end
 
     private

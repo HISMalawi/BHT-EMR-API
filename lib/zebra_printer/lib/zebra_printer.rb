@@ -21,7 +21,7 @@ module ZebraPrinter # :nodoc:
         @right_margin = 25
         @top_margin = 30
         @bottom_margin = 26
-        @line_spacing = 6
+        @line_spacing = 3
         @column_count = 1
         @content_width = @width - (@left_margin + @right_margin)
         @content_height = @height - (@top_margin + @bottom_margin)
@@ -299,6 +299,7 @@ module ZebraPrinter # :nodoc:
           nil || '801,329'
         end.split(',').collect(&:to_i)
         super(dimensions.first, dimensions.last, 'T')
+        @column_width = 700
       end
     end
 

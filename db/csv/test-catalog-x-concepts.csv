@@ -1,0 +1,94 @@
+EMR Test Name,Test Catalog Name,NLIMS_Code,Concept_id
+TB Microscopic Exam,TB Tests,NLIMS_TT_0010_MWI,10043
+GeneXpert,TB Tests,NLIMS_TT_0010_MWI,10044
+Gram stain,Gram Stain,NLIMS_TT_0003_MWI,7328
+Culture & Sensitivity,Culture and Sensitivity,NLIMS_TT_0004_MWI,10045
+Differential,Differential,NLIMS_TT_0007_MWI,1026
+TB Tests,TB Tests,NLIMS_TT_0010_MWI,10046
+Cell count,Cell Count,NLIMS_TT_0005_MWI,9119
+India ink,India Ink,NLIMS_TT_0006_MWI,NULL
+ESBL Test,ESBL Test,NLIMS_TT_0053_MWI,10047
+CrAg,Cryptococcus Antigen,NLIMS_TT_0023_MWI,10048
+Malaria Screening,Malaria Screening,NLIMS_TT_0015_MWI,10049
+Blood Parasites Screen,Blood Parasites Screen,NLIMS_TT_0322_MWI,10050
+Vdrl,Venereal Disease Research Laboratory,NLIMS_TT_0127_MWI,299
+Hepatitis B Test,Hepatitis B Test,NLIMS_TT_0020_MWI,10051
+Hepatitis C Test,Hepatitis C Test,NLIMS_TT_0021_MWI,10052
+Rheumatoid Factor Test,Rheumatoid Factor,NLIMS_TT_0022_MWI,10053
+Cryptococcus Antigen Test,Cryptococcus Antigen,NLIMS_TT_0023_MWI,10054
+Anti Streptolysis O,Antistreptolysin O Titre,NLIMS_TT_0024_MWI,10055
+C-reactive protein,C-reactive protein,NLIMS_TT_0025_MWI,10056
+Measles,Measles IgM antibody,NLIMS_TT_0252_MWI,63
+Rubella,Rubella Antibodies,NLIMS_TT_0304_MWI,7506
+CD4 count,CD 4 Cell Enumeration,NLIMS_TT_0028_MWI,5497
+ABO Blood Grouping,ABO And RhD Blood Grouping,NLIMS_TT_0029_MWI,10057
+Cross-match,Cross-match,NLIMS_TT_0030_MWI,10058
+Liver function tests,Liver Function Tests,NLIMS_TT_0032_MWI,953
+Renal Function Test,Kidney Function Tests,NLIMS_TT_0033_MWI,10060
+Lipogram,Lipogram,NLIMS_TT_0034_MWI,10061
+FBC,Full Blood Count,NLIMS_TT_0035_MWI,10062
+Serum glucose,Glucose,NLIMS_TT_0038_MWI,887
+International normalized ratio and prothrombin time lab result,International Normalized Ratio ,NLIMS_TT_0041_MWI,3374
+APTT,Activated partial Thromboplastin Time,NLIMS_TT_0040_MWI,10063
+ESR,Erythrocyte Sedimentation Rate,NLIMS_TT_0042_MWI,1477
+Sickling test,Sickling Test,NLIMS_TT_0043_MWI,6839
+Manual Differential & Cell Morphology,Manual Differential & Cell Morphology,NLIMS_TT_0045_MWI,10064
+Pancreatic Function Test,Pancreatic Function Test,NLIMS_TT_0046_MWI,10065
+Direct Coombs Test,Direct Antiglobulin Test ,NLIMS_TT_0047_MWI,10066
+Serum calcium,Calcium,NLIMS_TT_0048_MWI,3056
+Phosphorus,Phosphorus,NLIMS_TT_0049_MWI,9113
+Magnesium,Magnesium,NLIMS_TT_0050_MWI,10067
+Creatine kinase,Creatinine Kinase,NLIMS_TT_0051_MWI,1011
+Uric acid,Uric Acid,NLIMS_TT_0052_MWI,3055
+APTT Ratio,Activated partial Thromboplastin Time Ratio,NLIMS_TT_0054_MWI,10068
+Fibronogen,Fibronogen,NLIMS_TT_0055_MWI,10069
+50:50 Normal Plasma,50:50 Normal Plasma,NLIMS_TT_0056_MWI,10070
+50:50 Mix FVIII Deficient,50:50 Mix FVIII Deficient,NLIMS_TT_0057_MWI,10071
+50:50 Mix F-IX Deficient,50:50 Mix F-IX Deficient,NLIMS_TT_0058_MWI,10072
+Factor VIII Assay,Factor VIII Assay,NLIMS_TT_0059_MWI,10073
+Factor IX Assay,Factor IX Assay,NLIMS_TT_0060_MWI,10074
+TT,Thrombin Time,NLIMS_TT_0061_MWI,10075
+Cardiac Function Tests,Cardiac Function Tests,NLIMS_TT_0063_MWI,10077
+Minerals,Minerals,NLIMS_TT_0064_MWI,9104
+Iron Studies,Iron Studies,NLIMS_TT_0066_MWI,10079
+HbA1c,Haemoglobin A1c,NLIMS_TT_0067_MWI,6422
+Microalbumin,Microalbumin,NLIMS_TT_0068_MWI,10080
+Microprotein,Microprotein,NLIMS_TT_0069_MWI,10081
+Von Willebrand Factor,Von Willebrand Factor,NLIMS_TT_0070_MWI,10082
+HIV viral load,HIV Viral Load,NLIMS_TT_0071_MWI,856
+Urine Lam,Tuberculosis Lipoarabinomannan,NLIMS_TT_0121_MWI,10083
+Blood urea nitrogen,Blood Urea Nitrogen,NLIMS_TT_0128_MWI,857
+Serum creatinine,Kidney Function Tests,,790
+Serum glutamic-pyruvic transaminase,Liver Function Tests,NLIMS_TT_0032_MWI,654
+Serum glutamic-oxaloacetic transaminase,Liver Function Tests,NLIMS_TT_0032_MWI,653
+Wet prep,Wet Preparations,NLIMS_TT_0009_MWI,10087
+HVS analysis,HVS analysis,NLIMS_TT_0018_MWI,10088
+Stool Analysis,Stool Analysis,NLIMS_TT_0014_MWI,10091
+Urine Macroscopy,Urine Macroscopy,NLIMS_TT_0011_MWI,10092
+Urine microscopy,Urine Microscopy,NLIMS_TT_0012_MWI,56
+Urine chemistries,Urine Chemistries,NLIMS_TT_0013_MWI,9121
+B-HCG,Pregnancy Test,NLIMS_TT_0044_MWI,2473
+Urine dipstick,Urine Dipstick,NLIMS_TT_0318_MWI,6685
+Semen Analysis,Semen Analysis,NLIMS_TT_0017_MWI,10094
+FBS,Fasting Blood Sugar,NLIMS_TT_0130_MWI,10231
+D/Coombs,Direct Antiglobulin Test ,NLIMS_TT_0047_MWI,10232
+creat,Kidney Function Tests,,10233
+Widal,Typhoid Rapid Antigen Test,NLIMS_TT_0230_MWI,10234
+Urine micro,Urine Microscopy,NLIMS_TT_0012_MWI,10236
+ASOT,Antistreptolysin O Titre,NLIMS_TT_0024_MWI,10238
+Blood C/S,Culture and Sensitivity,NLIMS_TT_0004_MWI,10239
+Cryptococcal Ag,Cryptococcus Antigen,NLIMS_TT_0023_MWI,10240
+I/Ink,India Ink,NLIMS_TT_0006_MWI,10241
+Prot& Sugar,Urine Chemistries,NLIMS_TT_0013_MWI,10242
+C_S,Culture and Sensitivity,NLIMS_TT_0004_MWI,10243
+hep,Hepatitis C Test,NLIMS_TT_0021_MWI,10244
+Cryptococcal Antigen,Cryptococcus Antigen,NLIMS_TT_0023_MWI,10245
+Sickle,Sickling Test,NLIMS_TT_0043_MWI,10247
+Protein and Sugar,Urine Chemistries,NLIMS_TT_0013_MWI,10250
+White cell count,Peripheral blood film examination,NLIMS_TT_0111_MWI,10251
+RBS,Random Blood Sugar,NLIMS_TT_0225_MWI,10617
+Cerebrospinal fluid,India Ink,NLIMS_TT_0006_MWI,1594
+CSF CrAg,Cryptococcus Antigen,NLIMS_TT_0023_MWI,11567
+Serum Crag,Cryptococcus Antigen,NLIMS_TT_0023_MWI,11586
+SARS COV 2 RNA,COVID-19 Nucleic Acid Test,NLIMS_TT_0120_MWI,11884
+Cov-2,SARS COV-2 Rapid Antigen,NLIMS_TT_0102_MWI,11885
