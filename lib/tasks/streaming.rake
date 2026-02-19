@@ -47,7 +47,7 @@ namespace :streaming do
     ActiveRecord::Tasks::DatabaseTasks.create(config)
 
     # dump force the file, use raw commands
-    system("mysql -u #{config[:username]} -p#{config[:password]} -h #{config[:host]} #{config[:database]} < #{Rails.root.join('db', 'sql', 'solid_queue_schema.sql')}  -f")
+    system("mysql -u #{config[:username]} -p#{config[:password]} -h #{config[:host]} -P #{config[:port]} #{config[:database]} < #{Rails.root.join('db', 'sql', 'solid_queue_schema.sql')}  -f")
     
     # Enable Streaming in Global Properties
     use_db = <<~SQL
