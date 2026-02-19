@@ -57,7 +57,7 @@ Rails.application.configure do
   # Use the settings from the YAML file in Rails configuration
   host1 = settings['host1']
 
-  config.hosts << host1
+  config.hosts << "mahistest.health.gov.mw"
 
   # Store uploaded files on the local file system (see config/storage.yml for options)
   config.active_storage.service = :local
