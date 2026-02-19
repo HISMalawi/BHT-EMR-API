@@ -71,3 +71,7 @@ db/hts_metadata/*.json
 
 # f bups
 db/data/facilities/backups/
+
+config/environments/development.rb
+config/environments/production.rb
+config/environments/test.rb

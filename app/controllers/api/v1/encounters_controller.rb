@@ -84,7 +84,7 @@ module Api
           type: EncounterType.find(type_id),
           patient: Patient.find(patient_id),
           program: Program.find(program_id),
-          provider: params[:provider_id] ? Person.find(params[:provider_id]) : User.current.person,
+          provider: record[:provider_id] ? User.find(record[:provider_id])&.person : User.current.person,
           encounter_datetime: TimeUtils.retro_timestamp(params[:encounter_datetime]&.to_time || Time.now)
         )
 
