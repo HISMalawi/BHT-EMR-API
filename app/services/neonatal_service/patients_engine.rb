@@ -1,14 +1,5 @@
-# frozen_string_literal: true
 
 module NeonatalService
-  ##
-  # Handles patient-centric operations for neonatal service
-  #
-  # This engine provides:
-  # - Patient data retrieval
-  # - Patient summaries
-  # - Encounter history
-  # - Patient searches and filters
   class PatientsEngine
     include ModelUtils
 
@@ -20,23 +11,11 @@ module NeonatalService
       @program = program
     end
 
-    ##
-    # Gets full patient summary
-    #
-    # @param patient_id [Integer] Patient ID
-    # @param date [Date] Date for the summary
-    # @return [Hash] Full patient summary
     def patient(patient_id, date = Date.today)
       patient = Patient.find(patient_id)
       patient_summary(patient, date).full_summary
     end
 
-    ##
-    # Gets list of encounters saved for patient on a given date
-    #
-    # @param patient [Patient] Patient object
-    # @param date [Date] Date to check
-    # @return [Array<String>] Array of encounter type names
     def saved_encounters(patient, _date = nil)
       patient_id = patient.patient_id || patient.id
 
@@ -47,14 +26,6 @@ module NeonatalService
                .uniq
     end
 
-    ##
-    # Gets all patients enrolled in neonatal program
-    #
-    # @param filters [Hash] Optional filters
-    # @option filters [Date] :date Date filter
-    # @option filters [Integer] :page Page number for pagination
-    # @option filters [Integer] :per_page Records per page
-    # @return [ActiveRecord::Relation]
     def enrolled_patients(filters = {})
       relation = PatientProgram.joins(:patient)
                                .where(program_id: @program.program_id)
@@ -65,14 +36,6 @@ module NeonatalService
       paginate(relation, filters[:page], filters[:per_page])
     end
 
-    ##
-    # Searches for neonatal patients
-    #
-    # @param search_params [Hash] Search parameters
-    # @option search_params [String] :name Patient name
-    # @option search_params [String] :identifier Patient identifier
-    # @option search_params [Date] :date_enrolled Enrollment date
-    # @return [ActiveRecord::Relation]
     def search_patients(search_params = {})
       relation = PatientProgram.joins(:patient)
                                .where(program_id: @program.program_id)
@@ -96,11 +59,6 @@ module NeonatalService
       relation.distinct
     end
 
-    ##
-    # Gets patients who visited on a specific date
-    #
-    # @param date [Date] Visit date
-    # @return [Array<Patient>]
     def patients_visited_on(date)
       Patient.joins(:encounters)
              .where('encounter.program_id = ?', @program.program_id)
@@ -108,11 +66,6 @@ module NeonatalService
              .distinct
     end
 
-    ##
-    # Gets patients with appointments on a specific date
-    #
-    # @param date [Date] Appointment date
-    # @return [Array<Hash>] Patient appointments
     def patients_with_appointments_on(date)
       appointment_type = encounter_type('APPOINTMENT')
       return [] unless appointment_type
@@ -142,37 +95,69 @@ module NeonatalService
       triage_only: 'Triage Only - Pending Registration'
     }.freeze
 
-    ##
-    # Gets patient statistics with drill down data for landing page cards
-    # @param date [Date] Date for statistics
-    # @return [Hash] Statistics hash
+    CRITICAL_DIAGNOSIS_NAMES = [
+      'Suspected neonatal sepsis',
+      'Possible Meconium Aspiration',
+      'Convulsions',
+      'Hypoglycaemia (symptomatic)',
+      'Extremely Low Birth Weight (<1000g)',
+      'Severe Hypothermia',
+      'Extremely Premature (<28 weeks)',
+      'Hypoxic Ischaemic Encephalopathy',
+      'Prematurity with Respiratory Distress',
+      'Term baby with Respiratory Distress',
+      'NSep',
+      'MA',
+      'Conv',
+      'HypogSy',
+      'ExLBW',
+      'SHypo',
+      'ExPrem',
+      'HIE',
+      'PremRD',
+      'TermRD',
+      'RiHypog'
+    ].freeze
+
     def statistics(date = Date.today)
       {
         enrolled: build_statistic_from_programs(patients_enrolled_on(date), date, STAT_STATUSES[:enrolled]),
         admitted: build_statistic(patients_admitted_on(date), date, STAT_STATUSES[:admitted]),
         discharged: build_statistic_from_programs(patients_discharged_on(date), date, STAT_STATUSES[:discharged]),
         critical: build_statistic(critical_patients(date), date, STAT_STATUSES[:critical]),
+        critical_attention: build_statistic(critical_attention_patients(date), date, STAT_STATUSES[:critical]),
         triage_only: build_statistic(triage_only_patients(date), date, STAT_STATUSES[:triage_only]),
         recent_neonates: get_recent_neonates(date)
       }
     end
 
-    ##
-    # Gets recent neonates based on recent encounters
-    # Returns neonates (babies ≤ 28 days old enrolled in neonatal program) with encounters in the last 7 days
-    #
-    # @param date [Date] Reference date (defaults to today)
-    # @param limit [Integer] Maximum number of neonates to return (default: 10)
-    # @return [Array<Hash>] Array of formatted neonate data
+    def statistics_for_range(start_date, end_date)
+      start_date = start_date.to_date
+      end_date = end_date.to_date
+
+      enrolled = aggregate_patients_over_range(start_date, end_date) { |date| patients_enrolled_on(date).map(&:patient).compact }
+      admitted = aggregate_patients_over_range(start_date, end_date) { |date| patients_admitted_on(date) }
+      discharged = aggregate_patients_over_range(start_date, end_date) { |date| patients_discharged_on(date).map(&:patient).compact }
+      critical = aggregate_patients_over_range(start_date, end_date) { |date| critical_patients(date) }
+      critical_attention = aggregate_patients_over_range(start_date, end_date) { |date| critical_attention_patients(date) }
+      triage_only = aggregate_patients_over_range(start_date, end_date) { |date| triage_only_patients(date) }
+
+      {
+        enrolled: build_statistic(enrolled, end_date, STAT_STATUSES[:enrolled]),
+        admitted: build_statistic(admitted, end_date, STAT_STATUSES[:admitted]),
+        discharged: build_statistic(discharged, end_date, STAT_STATUSES[:discharged]),
+        critical: build_statistic(critical, end_date, STAT_STATUSES[:critical]),
+        critical_attention: build_statistic(critical_attention, end_date, STAT_STATUSES[:critical]),
+        triage_only: build_statistic(triage_only, end_date, STAT_STATUSES[:triage_only]),
+        recent_neonates: get_recent_neonates(end_date)
+      }
+    end
+
+
     def get_recent_neonates(date = Date.today, limit = 10)
       start_date = date.to_date - 7.days
       end_date = date.to_date
 
-      # Get unique neonates (babies ≤ 28 days old) with NEONATAL encounters in the last 7 days
-      # Filter by:
-      # 1. Enrolled in neonatal program
-      # 2. Age ≤ 28 days (neonatal period) - CRITICAL to exclude mothers
-      # 3. Has encounters in the last 7 days
       recent_patients = Encounter
         .select('patient.*, person.birthdate, MAX(encounter.encounter_datetime) as last_encounter_time')
         .joins(:patient)
@@ -188,21 +173,14 @@ module NeonatalService
         .map(&:patient)
         .compact
 
-      # Format neonates with appropriate status
       recent_patients.map do |patient|
         status = determine_patient_status(patient, date)
         format_neonate(patient, status, date)
       end
     end
 
-    ##
-    # Determines the current status of a patient
-    #
-    # @param patient [Patient]
-    # @param date [Date]
-    # @return [String] Patient status
+
     def determine_patient_status(patient, date)
-      # Check if patient is discharged
       program = PatientProgram.find_by(
         patient_id: patient.patient_id,
         program_id: @program.program_id
@@ -210,7 +188,6 @@ module NeonatalService
 
       return STAT_STATUSES[:discharged] if program && program.date_completed && program.date_completed <= date
 
-      # Check if patient has critical/emergency triage
       triage_concept = concept('Triage priority')
       emergency_value = concept('Emergency')
 
@@ -246,26 +223,17 @@ module NeonatalService
         return STAT_STATUSES[:admitted] if has_admission_encounter_today
       end
 
-      # Default to enrolled/in patient
       STAT_STATUSES[:enrolled]
     end
 
-    ##
-    # Gets total enrolled patients up to a date
-    #
-    # @param date [Date]
-    # @return [Integer]
+
     def total_enrolled_patients(date = Date.today)
       PatientProgram.where(program_id: @program.program_id)
                     .where('date_enrolled <= ?', date)
                     .count
     end
 
-    ##
-    # Gets patients enrolled on a specific date
-    #
-    # @param date [Date]
-    # @return [ActiveRecord::Relation]
+
     def patients_enrolled_on(date)
       PatientProgram.joins(:patient)
                     .where(program_id: @program.program_id)
@@ -273,11 +241,7 @@ module NeonatalService
                     .includes(patient: { person: :names })
     end
 
-    ##
-    # Gets patients discharged on specific date
-    #
-    # @param date [Date]
-    # @return [ActiveRecord::Relation]
+
     def patients_discharged_on(date)
       PatientProgram.joins(:patient)
                     .where(program_id: @program.program_id)
@@ -286,11 +250,7 @@ module NeonatalService
                     .includes(patient: { person: :names })
     end
 
-    ##
-    # Gets active patients (enrolled and not completed)
-    #
-    # @param date [Date]
-    # @return [ActiveRecord::Relation]
+
     def active_patients(date = Date.today)
       PatientProgram.joins(:patient)
                     .where(program_id: @program.program_id)
@@ -298,11 +258,6 @@ module NeonatalService
                     .where('date_completed IS NULL OR date_completed >= ?', date)
     end
 
-    ##
-    # Gets patient's next appointment
-    #
-    # @param patient [Patient]
-    # @return [Hash, nil] Appointment details or nil
     def next_appointment(patient)
       appointment_type = encounter_type('APPOINTMENT')
       return nil unless appointment_type
@@ -325,12 +280,6 @@ module NeonatalService
       }
     end
 
-    ##
-    # Gets patient visit history
-    #
-    # @param patient [Patient]
-    # @param limit [Integer] Number of visits to return
-    # @return [Array<Hash>] Visit history
     def visit_history(patient, limit = 10)
       Encounter.where(patient_id: patient.patient_id, program_id: @program.program_id)
                .order(encounter_datetime: :desc)
@@ -344,22 +293,15 @@ module NeonatalService
       end
     end
 
-    ##
-    # Gets patient labels/alerts
-    #
-    # @param patient [Patient]
-    # @param date [Date]
-    # @return [Array<String>] Array of label strings
+
     def patient_labels(patient, date = Date.today)
       labels = []
 
-      # Check if patient is enrolled
       unless enrolled?(patient)
         labels << 'NOT ENROLLED'
         return labels
       end
 
-      # Check age
       age_in_days = (date - patient.birthdate).to_i
       if age_in_days > 28
         labels << 'BEYOND NEONATAL PERIOD'
@@ -369,7 +311,6 @@ module NeonatalService
         labels << 'LATE NEONATAL'
       end
 
-      # Check if patient has appointments
       next_appt = next_appointment(patient)
       if next_appt
         if next_appt[:days_until_appointment].zero?
@@ -381,32 +322,17 @@ module NeonatalService
         end
       end
 
-      # Check if visited today
       labels << 'VISITED TODAY' if visited_today?(patient, date)
-
       labels
     end
 
     private
 
-    ##
-    # Creates a patient summary object
-    #
-    # @param patient [Patient]
-    # @param date [Date]
-    # @return [PatientSummary]
+
     def patient_summary(patient, date)
       NeonatalService::PatientSummary.new(patient, date, @program)
     end
 
-    ##
-    # Fetches neonates who went through at least one encounter of the admission workflow on a date
-    # Admission workflow encounters: NEONATAL SIGNS & SYMPTOMS, NEONATAL REVIEW OF SYSTEMS,
-    # PHYSICAL EXAMINATION BABY, NEONATAL GENERAL EXAMINATION, VITALS, NEONATAL VITALS,
-    # NEONATAL SYSTEMIC EXAMINATION
-    #
-    # @param date [Date]
-    # @return [Array<Patient>]
     def patients_admitted_on(date)
       admission_encounter_names = [
         'NEONATAL SIGNS & SYMPTOMS',
@@ -429,11 +355,6 @@ module NeonatalService
                .uniq { |patient| patient.patient_id }
     end
 
-    ##
-    # Fetches neonates with emergency triage priority for a date
-    #
-    # @param date [Date]
-    # @return [Array<Patient>]
     def critical_patients(date)
       triage_concept = concept('Triage priority')
       emergency_value = concept('Emergency')
@@ -450,19 +371,50 @@ module NeonatalService
                  .uniq { |patient| patient.patient_id }
     end
 
-    ##
-    # Fetches patients who had NEONATAL_TRIAGE encounters but have minimal/incomplete registration
-    # These are patients created during emergency triage without full registration
-    # Identified by having minimal demographics (birthdate_estimated = 1 AND gender = 'U')
-    # AND only having NEONATAL_TRIAGE encounter (no other encounters indicating full admission)
-    #
-    # @param date [Date]
-    # @return [Array<Patient>]
+    def critical_attention_patients(date)
+      primary_diagnosis = concept('Primary diagnosis')
+      secondary_diagnosis = concept('Secondary diagnosis')
+
+      diagnosis_ids = CRITICAL_DIAGNOSIS_NAMES.map { |name| concept(name)&.concept_id }.compact
+      return [] if diagnosis_ids.empty? || (!primary_diagnosis && !secondary_diagnosis)
+
+      parent_concept_ids = []
+      parent_concept_ids << primary_diagnosis.concept_id if primary_diagnosis
+      parent_concept_ids << secondary_diagnosis.concept_id if secondary_diagnosis
+
+      parent_obs_ids = Observation.joins(:encounter)
+                                  .where(encounter: { program_id: @program.program_id, voided: 0 })
+                                  .where(voided: 0)
+                                  .where(concept_id: parent_concept_ids)
+                                  .where('DATE(obs_datetime) = ?', date.to_date)
+                                  .pluck(:obs_id)
+
+      return [] if parent_obs_ids.empty?
+
+      Observation.joins(:encounter)
+                 .where(encounter: { program_id: @program.program_id, voided: 0 })
+                 .where(voided: 0)
+                 .where(obs_group_id: parent_obs_ids)
+                 .where(concept_id: diagnosis_ids)
+                 .where('DATE(obs_datetime) = ?', date.to_date)
+                 .includes(encounter: :patient)
+                 .map { |obs| obs.encounter.patient }
+                 .compact
+                 .uniq { |patient| patient.patient_id }
+    end
+
+    def aggregate_patients_over_range(start_date, end_date)
+      patients = []
+      (start_date..end_date).each do |date|
+        patients.concat(Array(yield(date)))
+      end
+      patients.compact.uniq { |patient| patient.patient_id }
+    end
+
     def triage_only_patients(date)
       triage_encounter_type = EncounterType.find_by(name: 'NEONATAL TRIAGE')
       return [] unless triage_encounter_type
 
-      # Get all patients with NEONATAL TRIAGE encounters on the date
       patients_with_triage = Encounter
         .where(program_id: @program.program_id, encounter_type: triage_encounter_type.encounter_type_id, voided: 0)
         .where('DATE(encounter_datetime) = ?', date.to_date)
@@ -471,21 +423,11 @@ module NeonatalService
         .compact
         .uniq { |patient| patient.patient_id }
 
-      # Filter to only those with minimal demographics (created via emergency triage)
-      # These patients have:
-      # 1. birthdate_estimated = 1 (estimated/temporary birthdate)
-      # 2. gender = 'U' (Unknown gender)
-      # 3. ONLY triage encounter (no enrollment/admission encounters)
       patients_with_triage.select do |patient|
         person = patient.person
         next false unless person
 
-        # Check if has minimal demographics (created via emergency triage)
-        # has_minimal_demographics = person.birthdate_estimated == 1 && person.gender == 'U'
-        # next false unless has_minimal_demographics
 
-        # Check if patient ONLY has NEONATAL_TRIAGE encounter (no other neonatal encounters)
-        # Exclude patients who also have enrollment or other encounters
         other_encounter_types = [
           'NEONATAL ENROLLMENT',
           'NEONATAL SIGNS & SYMPTOMS',
@@ -502,7 +444,6 @@ module NeonatalService
           .where(encounter_type: encounter_types.pluck(:encounter_type_id))
           .exists?
 
-        # Include only if patient has NO other encounters (truly triage-only)
         !has_other_encounters
       end
     end
@@ -571,11 +512,6 @@ module NeonatalService
       format('%.2f Kg', value)
     end
 
-    ##
-    # Checks if patient is enrolled in the program
-    #
-    # @param patient [Patient]
-    # @return [Boolean]
     def enrolled?(patient)
       PatientProgram.where(
         patient_id: patient.patient_id,
@@ -584,25 +520,12 @@ module NeonatalService
        .exists?
     end
 
-    ##
-    # Checks if patient visited today
-    #
-    # @param patient [Patient]
-    # @param date [Date]
-    # @return [Boolean]
     def visited_today?(patient, date)
       Encounter.where(patient_id: patient.patient_id, program_id: @program.program_id)
                .where('DATE(encounter_datetime) = ?', date.to_date)
                .exists?
     end
 
-    ##
-    # Paginates a relation
-    #
-    # @param relation [ActiveRecord::Relation]
-    # @param page [Integer]
-    # @param per_page [Integer]
-    # @return [ActiveRecord::Relation]
     def paginate(relation, page = nil, per_page = nil)
       return relation unless page && per_page
 

@@ -6,9 +6,23 @@ module Api
       include ModelUtils
 
       def statistics
-        date = parse_date(params[:date])
+        date = parse_date(params[:date]) || Date.today
+        filter = params[:filter].to_s.strip.downcase
 
-        stats = patients_engine.statistics(date)
+        stats = case filter
+                when '', 'today'
+                  patients_engine.statistics(date)
+                when 'yesterday'
+                  patients_engine.statistics(date - 1.day)
+                when 'this_week', 'week'
+                  start_date = date.beginning_of_week(:monday)
+                  patients_engine.statistics_for_range(start_date, date)
+                when 'this_month', 'month'
+                  start_date = date.beginning_of_month
+                  patients_engine.statistics_for_range(start_date, date)
+                else
+                  patients_engine.statistics(date)
+                end
 
         render json: stats
       end
