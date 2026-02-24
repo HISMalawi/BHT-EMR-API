@@ -226,13 +226,23 @@ class CouchdbPatientService
     def get_single_patient(patient_id)
       if couchdb_configured?
         begin
-          # Try to fetch existing document
-          patient_identifier = PatientIdentifier.where(patient_id: patient_id, identifier_type: 3)
-          identifier = patient_identifier[0][:identifier]
-          response = RestClient.get("#{COUCHDB_URL}/#{PATIENTS_DB}/#{identifier}")
+          # Try to fetch existing document using patient_id
+          response = RestClient.get("#{COUCHDB_URL}/#{PATIENTS_DB}/#{patient_id}")
           JSON.parse(response.body)
         rescue RestClient::NotFound
-          # Patient doesn't exist, build new record
+          # Patient doesn't exist in CouchDB, try to fetch by National ID if available
+          begin
+            patient_identifier = PatientIdentifier.where(patient_id: patient_id, identifier_type: 3).first
+            if patient_identifier && patient_identifier[:identifier].present?
+              identifier = patient_identifier[:identifier]
+              response = RestClient.get("#{COUCHDB_URL}/#{PATIENTS_DB}/#{identifier}")
+              return JSON.parse(response.body)
+            end
+          rescue RestClient::NotFound, NoMethodError
+            # Neither patient_id nor National ID found in CouchDB
+          end
+
+          # Build new record from database
           build_patient_record(patient_id)
         end
       else
