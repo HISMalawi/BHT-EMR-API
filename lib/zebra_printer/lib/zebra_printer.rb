@@ -34,7 +34,7 @@ module ZebraPrinter # :nodoc:
         @font_horizontal_multiplier = 1
         @font_vertical_multiplier = 1
         @font_reverse = false
-        @output = ''
+        @output = String.new
         header
       end
 
