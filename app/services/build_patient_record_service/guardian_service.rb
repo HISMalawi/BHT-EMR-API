@@ -48,7 +48,14 @@ module BuildPatientRecordService
         name = person.names&.first
         address = person.addresses&.first
 
+        patient = Patient.find_by_patient_id(person.person_id)
+
+        identifier =  if patient.present?
+                        BuildPatientRecordService::PatientIdentifierService.patient_identifier(patient, 3)
+                      end
+
         {
+          ID: identifier || '',
           person_id: person.person_id.to_s || '',
           given_name: name&.given_name || '',
           middle_name: name&.middle_name || '',

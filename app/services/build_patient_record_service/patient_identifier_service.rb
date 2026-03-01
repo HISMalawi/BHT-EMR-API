@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 module BuildPatientRecordService
   module PatientIdentifierService
+    extend self
     def patient_identifier(identifiers, identifier_type_id)
       begin
         if identifiers
