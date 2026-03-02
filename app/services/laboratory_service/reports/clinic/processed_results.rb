@@ -95,6 +95,7 @@ module LaboratoryService
               INNER JOIN concept USING (concept_id)
               WHERE concept.retired = 0
                 AND name NOT LIKE 'Lab test result'
+                AND name NOT LIKE 'Lab Test Status'
               GROUP BY concept_id
             ) AS measure_concept
               ON measure_concept.concept_id = measure.concept_id
