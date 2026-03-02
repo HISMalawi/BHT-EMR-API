@@ -79,7 +79,7 @@ Rails.application.routes.draw do
       end
 
       resources :roles
-      resources :printer_configurations, only: [:index, :create, :destroy, :update]
+      resources :printer_configurations, only: [:index, :show, :create, :destroy, :update]
       
       get '/find_relationships_with_details', to: 'person_relationships#find_relationships_with_details'
       # Patients
