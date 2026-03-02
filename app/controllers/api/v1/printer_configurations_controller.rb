@@ -4,7 +4,11 @@ module Api
     class PrinterConfigurationsController < ApplicationController
       # GET /api/v1/printer_configurations
       def index
-        @printer_configurations = CouchdbPrinterService.get_all_printers
+        if params[:location_id].present?
+          @printer_configurations = CouchdbPrinterService.find_by_location(params[:location_id])
+        else
+          @printer_configurations = CouchdbPrinterService.get_all_printers
+        end
         render json: @printer_configurations
       end
 
