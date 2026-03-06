@@ -1,13 +1,13 @@
--- MySQL dump 10.13  Distrib 9.4.0, for macos14.7 (arm64)
+-- MySQL dump 10.13  Distrib 5.6.16, for debian-linux-gnu (x86_64)
 --
--- Host: 127.0.0.1    Database: openmrs_dev
+-- Host: 127.0.0.1    Database: openmrs
 -- ------------------------------------------------------
--- Server version	9.4.0
+-- Server version	5.6.16-1~exp1
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
+/*!40101 SET NAMES utf8 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -21,23 +21,23 @@
 
 DROP TABLE IF EXISTS `concept`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept` (
-  `concept_id` int NOT NULL AUTO_INCREMENT,
-  `retired` smallint NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL AUTO_INCREMENT,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
   `short_name` varchar(255) DEFAULT NULL,
   `description` text,
   `form_text` text,
-  `datatype_id` int NOT NULL DEFAULT '0',
-  `class_id` int NOT NULL DEFAULT '0',
-  `is_set` smallint NOT NULL DEFAULT '0',
-  `creator` int NOT NULL DEFAULT '0',
+  `datatype_id` int(11) NOT NULL DEFAULT '0',
+  `class_id` int(11) NOT NULL DEFAULT '0',
+  `is_set` smallint(6) NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `default_charge` int DEFAULT NULL,
+  `default_charge` int(11) DEFAULT NULL,
   `version` varchar(50) DEFAULT NULL,
-  `changed_by` int DEFAULT NULL,
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
-  `retired_by` int DEFAULT NULL,
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE `concept` (
   CONSTRAINT `concept_datatypes` FOREIGN KEY (`datatype_id`) REFERENCES `concept_datatype` (`concept_datatype_id`),
   CONSTRAINT `user_who_changed_concept` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_concept` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13140 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=13140 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -73,21 +73,21 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_name`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_name` (
-  `concept_id` int DEFAULT NULL,
+  `concept_id` int(11) DEFAULT NULL,
   `name` varchar(255) NOT NULL DEFAULT '',
   `locale` varchar(50) NOT NULL DEFAULT '',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `concept_name_id` int NOT NULL AUTO_INCREMENT,
-  `voided` smallint NOT NULL DEFAULT '0',
-  `voided_by` int DEFAULT NULL,
+  `concept_name_id` int(11) NOT NULL AUTO_INCREMENT,
+  `voided` smallint(6) NOT NULL DEFAULT '0',
+  `voided_by` int(11) DEFAULT NULL,
   `date_voided` datetime DEFAULT NULL,
   `void_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   `concept_name_type` varchar(50) DEFAULT NULL,
-  `locale_preferred` smallint DEFAULT '0',
+  `locale_preferred` smallint(6) DEFAULT '0',
   PRIMARY KEY (`concept_name_id`),
   UNIQUE KEY `concept_name_id` (`concept_name_id`),
   UNIQUE KEY `concept_name_uuid_index` (`uuid`),
@@ -98,7 +98,7 @@ CREATE TABLE `concept_name` (
   CONSTRAINT `name_for_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `user_who_created_name` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_voided_this_name` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=108772 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=108772 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -119,13 +119,13 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_set`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_set` (
-  `concept_set_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int NOT NULL DEFAULT '0',
-  `concept_set` int NOT NULL DEFAULT '0',
+  `concept_set_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `concept_set` int(11) NOT NULL DEFAULT '0',
   `sort_weight` double DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`concept_set_id`),
@@ -136,7 +136,7 @@ CREATE TABLE `concept_set` (
   CONSTRAINT `has_a` FOREIGN KEY (`concept_set`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `is_a` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `user_who_created` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5919 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=5919 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,13 +155,13 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_answer`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_answer` (
-  `concept_answer_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int NOT NULL DEFAULT '0',
-  `answer_concept` int DEFAULT NULL,
-  `answer_drug` int DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `concept_answer_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `answer_concept` int(11) DEFAULT NULL,
+  `answer_drug` int(11) DEFAULT NULL,
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `uuid` char(38) NOT NULL,
   `sort_weight` double DEFAULT NULL,
@@ -173,7 +173,7 @@ CREATE TABLE `concept_answer` (
   CONSTRAINT `answer` FOREIGN KEY (`answer_concept`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `answer_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `answers_for_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10319 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=10319 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -192,15 +192,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_class`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_class` (
-  `concept_class_id` int NOT NULL AUTO_INCREMENT,
+  `concept_class_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `description` varchar(255) NOT NULL DEFAULT '',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -211,7 +211,7 @@ CREATE TABLE `concept_class` (
   KEY `concept_class_retired_status` (`retired`),
   CONSTRAINT `concept_class_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_concept_class` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -230,16 +230,16 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_datatype`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_datatype` (
-  `concept_datatype_id` int NOT NULL AUTO_INCREMENT,
+  `concept_datatype_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `hl7_abbreviation` varchar(3) DEFAULT NULL,
   `description` varchar(255) NOT NULL DEFAULT '',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -250,7 +250,7 @@ CREATE TABLE `concept_datatype` (
   KEY `concept_datatype_retired_status` (`retired`),
   CONSTRAINT `concept_datatype_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_concept_datatype` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -269,16 +269,16 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_derived`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_derived` (
-  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `rule` mediumtext,
   `compile_date` datetime DEFAULT NULL,
   `compile_status` varchar(255) DEFAULT NULL,
   `class_name` varchar(1024) DEFAULT NULL,
   PRIMARY KEY (`concept_id`),
   CONSTRAINT `derived_attributes` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -296,15 +296,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_description`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_description` (
-  `concept_description_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_description_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `description` text NOT NULL,
   `locale` varchar(50) NOT NULL DEFAULT '',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int DEFAULT NULL,
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`concept_description_id`),
@@ -315,7 +315,7 @@ CREATE TABLE `concept_description` (
   CONSTRAINT `description_for_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `user_who_changed_description` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_created_description` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7492 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=7492 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -335,15 +335,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_map`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_map` (
-  `concept_map_id` int NOT NULL AUTO_INCREMENT,
-  `source` int DEFAULT NULL,
+  `concept_map_id` int(11) NOT NULL AUTO_INCREMENT,
+  `source` int(11) DEFAULT NULL,
   `source_code` varchar(255) DEFAULT NULL,
   `comment` varchar(255) DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`concept_map_id`),
   UNIQUE KEY `concept_map_uuid_index` (`uuid`),
@@ -353,7 +353,7 @@ CREATE TABLE `concept_map` (
   CONSTRAINT `map_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `map_for_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `map_source` FOREIGN KEY (`source`) REFERENCES `concept_source` (`concept_source_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1843 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1843 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -372,15 +372,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_name_tag`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_name_tag` (
-  `concept_name_tag_id` int NOT NULL AUTO_INCREMENT,
+  `concept_name_tag_id` int(11) NOT NULL AUTO_INCREMENT,
   `tag` varchar(50) NOT NULL,
   `description` text NOT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `voided` smallint NOT NULL DEFAULT '0',
-  `voided_by` int DEFAULT NULL,
+  `voided` smallint(6) NOT NULL DEFAULT '0',
+  `voided_by` int(11) DEFAULT NULL,
   `date_voided` datetime DEFAULT NULL,
   `void_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -391,7 +391,7 @@ CREATE TABLE `concept_name_tag` (
   UNIQUE KEY `concept_name_tag_uuid_index` (`uuid`),
   KEY `user_who_created_name_tag` (`creator`),
   KEY `user_who_voided_name_tag` (`voided_by`)
-) ENGINE=InnoDB AUTO_INCREMENT=399 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=399 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -410,15 +410,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_name_tag_map`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_name_tag_map` (
-  `concept_name_id` int NOT NULL,
-  `concept_name_tag_id` int NOT NULL,
+  `concept_name_id` int(11) NOT NULL,
+  `concept_name_tag_id` int(11) NOT NULL,
   KEY `map_name` (`concept_name_id`),
   KEY `map_name_tag` (`concept_name_tag_id`),
   CONSTRAINT `mapped_concept_name` FOREIGN KEY (`concept_name_id`) REFERENCES `concept_name` (`concept_name_id`),
   CONSTRAINT `mapped_concept_name_tag` FOREIGN KEY (`concept_name_tag_id`) REFERENCES `concept_name_tag` (`concept_name_tag_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -437,9 +437,9 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_numeric`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_numeric` (
-  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `hi_absolute` double DEFAULT NULL,
   `hi_critical` double DEFAULT NULL,
   `hi_normal` double DEFAULT NULL,
@@ -447,10 +447,10 @@ CREATE TABLE `concept_numeric` (
   `low_critical` double DEFAULT NULL,
   `low_normal` double DEFAULT NULL,
   `units` varchar(50) DEFAULT NULL,
-  `precise` smallint NOT NULL DEFAULT '0',
+  `precise` smallint(6) NOT NULL DEFAULT '0',
   PRIMARY KEY (`concept_id`),
   CONSTRAINT `numeric_attributes` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -469,20 +469,20 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_proposal`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_proposal` (
-  `concept_proposal_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int DEFAULT NULL,
-  `encounter_id` int DEFAULT NULL,
+  `concept_proposal_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) DEFAULT NULL,
+  `encounter_id` int(11) DEFAULT NULL,
   `original_text` varchar(255) NOT NULL DEFAULT '',
   `final_text` varchar(255) DEFAULT NULL,
-  `obs_id` int DEFAULT NULL,
-  `obs_concept_id` int DEFAULT NULL,
+  `obs_id` int(11) DEFAULT NULL,
+  `obs_concept_id` int(11) DEFAULT NULL,
   `state` varchar(32) NOT NULL DEFAULT 'UNMAPPED' COMMENT 'Valid values are: UNMAPPED, SYNONYM, CONCEPT, REJECT',
   `comments` varchar(255) DEFAULT NULL COMMENT 'Comment from concept admin/mapper',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int DEFAULT NULL,
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
   `locale` varchar(50) NOT NULL DEFAULT '',
   `uuid` char(38) NOT NULL,
@@ -500,7 +500,7 @@ CREATE TABLE `concept_proposal` (
   CONSTRAINT `proposal_obs_id` FOREIGN KEY (`obs_id`) REFERENCES `obs` (`obs_id`),
   CONSTRAINT `user_who_changed_proposal` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_created_proposal` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -519,15 +519,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_proposal_tag_map`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_proposal_tag_map` (
-  `concept_proposal_id` int NOT NULL,
-  `concept_name_tag_id` int NOT NULL,
+  `concept_proposal_id` int(11) NOT NULL,
+  `concept_name_tag_id` int(11) NOT NULL,
   KEY `map_proposal` (`concept_proposal_id`),
   KEY `map_name_tag` (`concept_name_tag_id`),
   CONSTRAINT `mapped_concept_proposal` FOREIGN KEY (`concept_proposal_id`) REFERENCES `concept_proposal` (`concept_proposal_id`),
   CONSTRAINT `mapped_concept_proposal_tag` FOREIGN KEY (`concept_name_tag_id`) REFERENCES `concept_name_tag` (`concept_name_tag_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -545,13 +545,13 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_set_derived`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_set_derived` (
-  `concept_id` int NOT NULL DEFAULT '0',
-  `concept_set` int NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `concept_set` int(11) NOT NULL DEFAULT '0',
   `sort_weight` double DEFAULT NULL,
   PRIMARY KEY (`concept_id`,`concept_set`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -570,16 +570,16 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_source`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_source` (
-  `concept_source_id` int NOT NULL AUTO_INCREMENT,
+  `concept_source_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '',
   `description` text NOT NULL,
   `hl7_code` varchar(50) DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `retired` tinyint(1) NOT NULL,
-  `retired_by` int DEFAULT NULL,
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -590,7 +590,7 @@ CREATE TABLE `concept_source` (
   KEY `unique_hl7_code` (`hl7_code`,`retired`),
   CONSTRAINT `concept_source_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_concept_source` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -609,12 +609,12 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_state_conversion`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_state_conversion` (
-  `concept_state_conversion_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int DEFAULT '0',
-  `program_workflow_id` int DEFAULT '0',
-  `program_workflow_state_id` int DEFAULT '0',
+  `concept_state_conversion_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) DEFAULT '0',
+  `program_workflow_id` int(11) DEFAULT '0',
+  `program_workflow_state_id` int(11) DEFAULT '0',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`concept_state_conversion_id`),
   UNIQUE KEY `concept_state_conversion_uuid_index` (`uuid`),
@@ -625,7 +625,7 @@ CREATE TABLE `concept_state_conversion` (
   CONSTRAINT `concept_triggers_conversion` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `conversion_involves_workflow` FOREIGN KEY (`program_workflow_id`) REFERENCES `program_workflow` (`program_workflow_id`),
   CONSTRAINT `conversion_to_state` FOREIGN KEY (`program_workflow_state_id`) REFERENCES `program_workflow_state` (`program_workflow_state_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -643,19 +643,19 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_synonym`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_synonym` (
-  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `synonym` varchar(255) NOT NULL DEFAULT '',
   `locale` varchar(255) DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`synonym`,`concept_id`),
   KEY `synonym_for` (`concept_id`),
   KEY `synonym_creator` (`creator`),
   CONSTRAINT `synonym_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `synonym_for` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -674,20 +674,20 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_word`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_word` (
-  `concept_word_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_word_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `word` varchar(50) NOT NULL DEFAULT '',
   `locale` varchar(20) NOT NULL DEFAULT '',
-  `concept_name_id` int NOT NULL,
+  `concept_name_id` int(11) NOT NULL,
   PRIMARY KEY (`concept_word_id`),
   KEY `word_in_concept_name` (`word`),
   KEY `word_for_name` (`concept_name_id`),
   KEY `concept_word_concept_idx` (`concept_id`),
   CONSTRAINT `word_for` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `word_for_name` FOREIGN KEY (`concept_name_id`) REFERENCES `concept_name` (`concept_name_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37602 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=37602 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -707,15 +707,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `encounter_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `encounter_type` (
-  `encounter_type_id` int NOT NULL AUTO_INCREMENT,
+  `encounter_type_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '',
   `description` text,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -726,7 +726,7 @@ CREATE TABLE `encounter_type` (
   KEY `retired_status` (`retired`),
   CONSTRAINT `user_who_created_type` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_encounter_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=241 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=241 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -745,20 +745,20 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `patient_identifier_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `patient_identifier_type` (
-  `patient_identifier_type_id` int NOT NULL AUTO_INCREMENT,
+  `patient_identifier_type_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '',
   `description` text NOT NULL,
   `format` varchar(50) DEFAULT NULL,
-  `check_digit` smallint NOT NULL DEFAULT '0',
-  `creator` int NOT NULL DEFAULT '0',
+  `check_digit` smallint(6) NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `required` smallint NOT NULL DEFAULT '0',
+  `required` smallint(6) NOT NULL DEFAULT '0',
   `format_description` varchar(255) DEFAULT NULL,
   `validator` varchar(200) DEFAULT NULL,
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -769,7 +769,7 @@ CREATE TABLE `patient_identifier_type` (
   KEY `retired_status` (`retired`),
   CONSTRAINT `type_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_patient_identifier_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -788,15 +788,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `order_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `order_type` (
-  `order_type_id` int NOT NULL AUTO_INCREMENT,
+  `order_type_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `description` varchar(255) NOT NULL DEFAULT '',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -808,7 +808,7 @@ CREATE TABLE `order_type` (
   KEY `index_order_type_on_name` (`name`),
   CONSTRAINT `type_created_by` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_order_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -827,20 +827,20 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `person_attribute_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `person_attribute_type` (
-  `person_attribute_type_id` int NOT NULL AUTO_INCREMENT,
+  `person_attribute_type_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '',
   `description` text NOT NULL,
   `format` varchar(50) DEFAULT NULL,
-  `foreign_key` int DEFAULT NULL,
-  `searchable` smallint NOT NULL DEFAULT '0',
-  `creator` int NOT NULL DEFAULT '0',
+  `foreign_key` int(11) DEFAULT NULL,
+  `searchable` smallint(6) NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int DEFAULT NULL,
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `edit_privilege` varchar(255) DEFAULT NULL,
@@ -859,7 +859,7 @@ CREATE TABLE `person_attribute_type` (
   CONSTRAINT `attribute_type_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `privilege_which_can_edit` FOREIGN KEY (`edit_privilege`) REFERENCES `privilege` (`privilege`),
   CONSTRAINT `user_who_retired_person_attribute_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -878,15 +878,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `program`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `program` (
-  `program_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int NOT NULL DEFAULT '0',
-  `creator` int NOT NULL DEFAULT '0',
+  `program_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int DEFAULT NULL,
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
-  `retired` smallint NOT NULL DEFAULT '0',
+  `retired` smallint(6) NOT NULL DEFAULT '0',
   `name` varchar(50) NOT NULL,
   `description` varchar(500) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -898,7 +898,7 @@ CREATE TABLE `program` (
   CONSTRAINT `program_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `program_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_changed_program` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -917,15 +917,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `program_workflow`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `program_workflow` (
-  `program_workflow_id` int NOT NULL AUTO_INCREMENT,
-  `program_id` int NOT NULL DEFAULT '0',
-  `concept_id` int NOT NULL DEFAULT '0',
-  `creator` int NOT NULL DEFAULT '0',
+  `program_workflow_id` int(11) NOT NULL AUTO_INCREMENT,
+  `program_id` int(11) NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `changed_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`program_workflow_id`),
@@ -938,7 +938,7 @@ CREATE TABLE `program_workflow` (
   CONSTRAINT `workflow_changed_by` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `workflow_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `workflow_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -957,17 +957,17 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `program_workflow_state`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `program_workflow_state` (
-  `program_workflow_state_id` int NOT NULL AUTO_INCREMENT,
-  `program_workflow_id` int NOT NULL DEFAULT '0',
-  `concept_id` int NOT NULL DEFAULT '0',
-  `initial` smallint NOT NULL DEFAULT '0',
-  `terminal` smallint NOT NULL DEFAULT '0',
-  `creator` int NOT NULL DEFAULT '0',
+  `program_workflow_state_id` int(11) NOT NULL AUTO_INCREMENT,
+  `program_workflow_id` int(11) NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `initial` smallint(6) NOT NULL DEFAULT '0',
+  `terminal` smallint(6) NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `changed_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`program_workflow_state_id`),
@@ -980,7 +980,7 @@ CREATE TABLE `program_workflow_state` (
   CONSTRAINT `state_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `state_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `workflow_for_state` FOREIGN KEY (`program_workflow_id`) REFERENCES `program_workflow` (`program_workflow_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=201 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=201 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -999,19 +999,19 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `relationship_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `relationship_type` (
-  `relationship_type_id` int NOT NULL AUTO_INCREMENT,
+  `relationship_type_id` int(11) NOT NULL AUTO_INCREMENT,
   `a_is_to_b` varchar(50) NOT NULL,
   `b_is_to_a` varchar(50) NOT NULL,
-  `preferred` int NOT NULL DEFAULT '0',
-  `weight` int NOT NULL DEFAULT '0',
+  `preferred` int(11) NOT NULL DEFAULT '0',
+  `weight` int(11) NOT NULL DEFAULT '0',
   `description` varchar(255) NOT NULL DEFAULT '',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `uuid` char(38) NOT NULL,
   `retired` tinyint(1) NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`relationship_type_id`),
@@ -1020,7 +1020,7 @@ CREATE TABLE `relationship_type` (
   KEY `user_who_retired_relationship_type` (`retired_by`),
   CONSTRAINT `user_who_created_rel` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_relationship_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1039,22 +1039,22 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `drug`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `drug` (
-  `drug_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int NOT NULL DEFAULT '0',
+  `drug_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `name` text,
-  `combination` smallint NOT NULL DEFAULT '0',
-  `dosage_form` int DEFAULT NULL,
+  `combination` smallint(6) NOT NULL DEFAULT '0',
+  `dosage_form` int(11) DEFAULT NULL,
   `dose_strength` double DEFAULT NULL,
   `maximum_daily_dose` double DEFAULT NULL,
   `minimum_daily_dose` double DEFAULT NULL,
-  `route` int DEFAULT NULL,
+  `route` int(11) DEFAULT NULL,
   `units` varchar(50) DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -1070,7 +1070,7 @@ CREATE TABLE `drug` (
   CONSTRAINT `drug_retired_by` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `primary_drug_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `route_concept` FOREIGN KEY (`route`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1578 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1578 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1089,14 +1089,14 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `privilege`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `privilege` (
   `privilege` varchar(50) NOT NULL DEFAULT '',
   `description` varchar(250) NOT NULL DEFAULT '',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`privilege`),
   UNIQUE KEY `privilege_uuid_index` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1115,9 +1115,9 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `location`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `location` (
-  `location_id` int NOT NULL AUTO_INCREMENT,
+  `location_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `description` varchar(255) DEFAULT NULL,
   `address1` varchar(50) DEFAULT NULL,
@@ -1128,7 +1128,7 @@ CREATE TABLE `location` (
   `country` varchar(50) DEFAULT NULL,
   `latitude` varchar(50) DEFAULT NULL,
   `longitude` varchar(50) DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `county_district` varchar(50) DEFAULT NULL,
   `neighborhood_cell` varchar(50) DEFAULT NULL,
@@ -1136,11 +1136,11 @@ CREATE TABLE `location` (
   `subregion` varchar(50) DEFAULT NULL,
   `township_division` varchar(50) DEFAULT NULL,
   `retired` tinyint(1) NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
-  `location_type_id` int DEFAULT NULL,
-  `parent_location` int DEFAULT NULL,
+  `location_type_id` int(11) DEFAULT NULL,
+  `parent_location` int(11) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`location_id`),
   UNIQUE KEY `location_uuid_index` (`uuid`),
@@ -1154,7 +1154,7 @@ CREATE TABLE `location` (
   CONSTRAINT `parent_location` FOREIGN KEY (`parent_location`) REFERENCES `location` (`location_id`),
   CONSTRAINT `user_who_created_location` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_location` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1139 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1139 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1173,14 +1173,14 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `role`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `role` (
   `role` varchar(50) NOT NULL DEFAULT '',
   `description` varchar(255) NOT NULL DEFAULT '',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`role`),
   UNIQUE KEY `role_uuid_index` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1189,7 +1189,7 @@ CREATE TABLE `role` (
 
 LOCK TABLES `role` WRITE;
 /*!40000 ALTER TABLE `role` DISABLE KEYS */;
-INSERT INTO `role` VALUES ('Accompagnateur','Community health worker','ba46ff08-8d80-11d8-abbb-0024217bb78e'),('Accompagnateur Leader','Responsible for overseeing up to 30 Accompagnateurs','ba470228-8d80-11d8-abbb-0024217bb78e'),('Adults','OPD user group for adults entries','ba470340-8d80-11d8-abbb-0024217bb78e'),('Anonymous','Privileges for non-authenticated users.','774b2af3-6437-4e5a-a310-547554c7c65c'),('Authenticated','Privileges gained once authentication has been established.','f7fd42ef-880e-40c5-972d-e4ae7c990de2'),('Clinician','Users who are a part of direct patient care.','ba470606-8d80-11d8-abbb-0024217bb78e'),('Counselor','HTC Roles','ba4706ec-8d80-11d8-abbb-0024217bb78e'),('Data Assistant','Clerks who perform data entry.','ba470c96-8d80-11d8-abbb-0024217bb78e'),('Data Element Contributor','Role for users who contribute to the management of data elements in OpenMRS.','ba470d90-8d80-11d8-abbb-0024217bb78e'),('Data Manager','User who maintains clinical data stored within the OpenMRS repository.','ba470e80-8d80-11d8-abbb-0024217bb78e'),('Doctor','People in direct care of patient. According to the Malawian context, this is a user who has acquired medical training to level of MBBS.','ba470f66-8d80-11d8-abbb-0024217bb78e'),('General Registration Clerk','A General Registration Clerk','ba471060-8d80-11d8-abbb-0024217bb78e'),('Health Surveillance','putting in place systematic, regular and appropriate procedures to detect early signs of work related ill health and then acting upon the results.','935fe0ad-f691-4519-80fe-53d80f36c50f'),('HMIS lab order','OPD user group for HMIS lab order clerk entries','ba471150-8d80-11d8-abbb-0024217bb78e'),('HSA','Hotline Health Surveillance Assistant','ba471236-8d80-11d8-abbb-0024217bb78e'),('Informatics Manager','User who maintains the local installation of the OpenMRS repository.','ba471326-8d80-11d8-abbb-0024217bb78e'),('Lab','Lab technicians and assistants','ba471416-8d80-11d8-abbb-0024217bb78e'),('Medical Assistant','Medical Assistants','ba4714e8-8d80-11d8-abbb-0024217bb78e'),('Nurse','Nursing Officers and Technicians','ba4715ce-8d80-11d8-abbb-0024217bb78e'),('Paediatrics','OPD user group for paediatrics entries','ba4716b4-8d80-11d8-abbb-0024217bb78e'),('Pharmacist','A Pharmacist','ba47179a-8d80-11d8-abbb-0024217bb78e'),('Program Manager','Has permission to view most/all data, but no permission for entry or editing.','ba471876-8d80-11d8-abbb-0024217bb78e'),('Provider','Health care provider','8d94f280-c2cc-11de-8d13-0010c6dffd0f'),('Registration Clerk','This is a user responsible for registering patients at the patient registration station. mostly used in Baobab applications. This is probably an equivalent of Data Assistant.','ba471a4c-8d80-11d8-abbb-0024217bb78e'),('Social Worker','Social Worker','ba471b46-8d80-11d8-abbb-0024217bb78e'),('SPINE clinician','OPD user group for SPINE clinician entries','ba471c36-8d80-11d8-abbb-0024217bb78e'),('Superuser','This is a user who has access to all Baobab developed applications\' functionality','ba471d30-8d80-11d8-abbb-0024217bb78e'),('Superuser,Superuser,','Superuser','ba472032-8d80-11d8-abbb-0024217bb78e'),('Supervisor','HTC Supervision specialist','ba472122-8d80-11d8-abbb-0024217bb78e'),('System Developer','Developers of the OpenMRS .. have additional access to change fundamental structure of the database model.','8d94f852-c2cc-11de-8d13-0010c6dffd0f'),('Therapeutic Feeding Clerk','A clerk who just enters therapeutic feeding data.','ba4722ee-8d80-11d8-abbb-0024217bb78e'),('Vitals Clerk','A user who just enters vitals for patients. ','ba4723de-8d80-11d8-abbb-0024217bb78e');
+INSERT INTO `role` VALUES ('Accompagnateur','Community health worker','ba46ff08-8d80-11d8-abbb-0024217bb78e'),('Accompagnateur Leader','Responsible for overseeing up to 30 Accompagnateurs','ba470228-8d80-11d8-abbb-0024217bb78e'),('Adults','OPD user group for adults entries','ba470340-8d80-11d8-abbb-0024217bb78e'),('Anonymous','Privileges for non-authenticated users.','774b2af3-6437-4e5a-a310-547554c7c65c'),('Authenticated','Privileges gained once authentication has been established.','f7fd42ef-880e-40c5-972d-e4ae7c990de2'),('Clinician','Users who are a part of direct patient care.','ba470606-8d80-11d8-abbb-0024217bb78e'),('Counselor','HTC Roles','ba4706ec-8d80-11d8-abbb-0024217bb78e'),('Data Assistant','Clerks who perform data entry.','ba470c96-8d80-11d8-abbb-0024217bb78e'),('Data Element Contributor','Role for users who contribute to the management of data elements in OpenMRS.','ba470d90-8d80-11d8-abbb-0024217bb78e'),('Data Manager','User who maintains clinical data stored within the OpenMRS repository.','ba470e80-8d80-11d8-abbb-0024217bb78e'),('District Superuser','Managing ','39c5a47f-e086-4cf2-954c-8a5ac931c969'),('Doctor','People in direct care of patient. According to the Malawian context, this is a user who has acquired medical training to level of MBBS.','ba470f66-8d80-11d8-abbb-0024217bb78e'),('General Registration Clerk','A General Registration Clerk','ba471060-8d80-11d8-abbb-0024217bb78e'),('Health Surveillance','putting in place systematic, regular and appropriate procedures to detect early signs of work related ill health and then acting upon the results.','935fe0ad-f691-4519-80fe-53d80f36c50f'),('HMIS lab order','OPD user group for HMIS lab order clerk entries','ba471150-8d80-11d8-abbb-0024217bb78e'),('HSA','Hotline Health Surveillance Assistant','ba471236-8d80-11d8-abbb-0024217bb78e'),('Informatics Manager','User who maintains the local installation of the OpenMRS repository.','ba471326-8d80-11d8-abbb-0024217bb78e'),('Lab','Lab technicians and assistants','ba471416-8d80-11d8-abbb-0024217bb78e'),('Medical Assistant','Medical Assistants','ba4714e8-8d80-11d8-abbb-0024217bb78e'),('Nurse','Nursing Officers and Technicians','ba4715ce-8d80-11d8-abbb-0024217bb78e'),('Paediatrics','OPD user group for paediatrics entries','ba4716b4-8d80-11d8-abbb-0024217bb78e'),('Pharmacist','A Pharmacist','ba47179a-8d80-11d8-abbb-0024217bb78e'),('Program Manager','Has permission to view most/all data, but no permission for entry or editing.','ba471876-8d80-11d8-abbb-0024217bb78e'),('Provider','Health care provider','8d94f280-c2cc-11de-8d13-0010c6dffd0f'),('Registration Clerk','This is a user responsible for registering patients at the patient registration station. mostly used in Baobab applications. This is probably an equivalent of Data Assistant.','ba471a4c-8d80-11d8-abbb-0024217bb78e'),('Social Worker','Social Worker','ba471b46-8d80-11d8-abbb-0024217bb78e'),('SPINE clinician','OPD user group for SPINE clinician entries','ba471c36-8d80-11d8-abbb-0024217bb78e'),('Superuser','This is a user who has access to all Baobab developed applications\' functionality','ba471d30-8d80-11d8-abbb-0024217bb78e'),('Superuser,Superuser,','Superuser','ba472032-8d80-11d8-abbb-0024217bb78e'),('Supervisor','HTC Supervision specialist','ba472122-8d80-11d8-abbb-0024217bb78e'),('System Developer','Developers of the OpenMRS .. have additional access to change fundamental structure of the database model.','8d94f852-c2cc-11de-8d13-0010c6dffd0f'),('Therapeutic Feeding Clerk','A clerk who just enters therapeutic feeding data.','ba4722ee-8d80-11d8-abbb-0024217bb78e'),('Vitals Clerk','A user who just enters vitals for patients. ','ba4723de-8d80-11d8-abbb-0024217bb78e');
 /*!40000 ALTER TABLE `role` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -1202,4 +1202,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-02 14:01:37
+-- Dump completed on 2026-03-06 13:20:50
