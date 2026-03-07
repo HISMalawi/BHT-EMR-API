@@ -46,6 +46,19 @@ module AncService
       (women_with_4_plus_anc_contacts.to_f / total * 100).round(2)
     end
 
+    def clients_with_previous_uterine_scars
+      return 0 if anc_program_id.nil?
+      count = count_clients_with_previous_uterine_scars
+      LOGGER.info "[ANC DashboardStatsQueries] clients_with_previous_uterine_scars count=#{count}"
+      count
+    end
+
+    def percentage_clients_previous_uterine_scars
+      total = new_and_continuing_anc_clients
+      return 0.0 if total.zero?
+      (clients_with_previous_uterine_scars.to_f / total * 100).round(2)
+    end
+
     private
 
     def anc_program_id
@@ -116,6 +129,18 @@ module AncService
         ])
       )
       result ? result['cnt'].to_i : 0
+    end
+
+    def count_clients_with_previous_uterine_scars
+      scars_concept_id = ConceptName.find_by(name: 'Scar')&.concept_id
+      return 0 if scars_concept_id.nil?
+
+      Observation.joins(:encounter)
+                 .where(encounter: { program_id: anc_program_id, voided: 0 })
+                 .where(voided: 0, concept_id: scars_concept_id)
+                 .where('obs.value_text = ?', 'Present')
+                 .distinct
+                 .count(:person_id)
     end
   end
 end
