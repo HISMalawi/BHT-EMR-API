@@ -32,6 +32,11 @@ module AncService
       cohort.disaggregated(date, start_date, end_date)
     end
 
+    def dashboard_stats(_date = nil)
+      queries = AncService::DashboardStatsQueries.new
+      { new_and_continuing_anc_clients: queries.new_and_continuing_anc_clients }
+    end
+
     private
 
     def call_report_manager(method, type:, **kwargs)
