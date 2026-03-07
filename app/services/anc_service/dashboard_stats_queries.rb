@@ -6,6 +6,8 @@ module AncService
 
     LOGGER = Rails.logger
     ANC_ENROLLMENT_ENCOUNTER_TYPE_ID = 237.freeze
+    QUICK_CHECK_CONCEPT_ID = 206
+    MIN_ANC_CONTACTS_FOR_4_PLUS = 4
 
     def new_and_continuing_anc_clients
       return 0 if anc_program_id.nil?
@@ -29,6 +31,19 @@ module AncService
       total = new_and_continuing_anc_clients
       return 0.0 if total.zero?
       (women_with_ultrasound_scanning.to_f / total).round(4)
+    end
+
+    def women_with_4_plus_anc_contacts
+      return 0 if anc_program_id.nil?
+      count = count_women_with_4_plus_anc_contacts
+      LOGGER.info "[ANC DashboardStatsQueries] women_with_4_plus_anc_contacts count=#{count}"
+      count
+    end
+
+    def percentage_women_4_plus_anc_contacts
+      total = new_and_continuing_anc_clients
+      return 0.0 if total.zero?
+      (women_with_4_plus_anc_contacts.to_f / total * 100).round(2)
     end
 
     private
@@ -77,6 +92,30 @@ module AncService
       end
 
       scope.distinct.count(:person_id)
+    end
+
+    def count_women_with_4_plus_anc_contacts
+      sql = <<~SQL.squish
+        SELECT COUNT(*) AS cnt FROM (
+          SELECT obs.person_id
+          FROM obs
+          INNER JOIN encounter ON encounter.encounter_id = obs.encounter_id
+            AND encounter.program_id = ?
+            AND encounter.voided = 0
+          WHERE obs.voided = 0 AND obs.concept_id = ?
+          GROUP BY obs.person_id
+          HAVING MAX(COALESCE(obs.value_numeric, CAST(NULLIF(TRIM(obs.value_text), '') AS UNSIGNED), 0)) >= ?
+        ) t
+      SQL
+      result = Observation.connection.select_one(
+        ActiveRecord::Base.send(:sanitize_sql_array, [
+          sql,
+          anc_program_id,
+          QUICK_CHECK_CONCEPT_ID,
+          MIN_ANC_CONTACTS_FOR_4_PLUS
+        ])
+      )
+      result ? result['cnt'].to_i : 0
     end
   end
 end

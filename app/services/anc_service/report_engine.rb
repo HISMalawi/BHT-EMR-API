@@ -37,7 +37,9 @@ module AncService
       {
         new_and_continuing_anc_clients: queries.new_and_continuing_anc_clients,
         women_with_ultrasound_scanning: queries.women_with_ultrasound_scanning,
-        proportion_women_ultrasound_scanning: queries.proportion_women_ultrasound_scanning
+        proportion_women_ultrasound_scanning: queries.proportion_women_ultrasound_scanning,
+        women_with_4_plus_anc_contacts: queries.women_with_4_plus_anc_contacts,
+        percentage_women_4_plus_anc_contacts: queries.percentage_women_4_plus_anc_contacts
       }
     end
 
