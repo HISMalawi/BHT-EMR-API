@@ -6,6 +6,7 @@ module AncService
 
     LOGGER = Rails.logger
     ANC_ENROLLMENT_ENCOUNTER_TYPE_ID = 237.freeze
+    LAB_ENCOUNTER_TYPE_ID = 13
     QUICK_CHECK_CONCEPT_ID = 206
     MIN_ANC_CONTACTS_FOR_4_PLUS = 4
 
@@ -57,6 +58,52 @@ module AncService
       total = new_and_continuing_anc_clients
       return 0.0 if total.zero?
       (clients_with_previous_uterine_scars.to_f / total * 100).round(2)
+    end
+
+    def anc_hiv_positive_clients
+      return 0 if anc_program_id.nil?
+      count = count_anc_clients_with_lab_result('HIV Test', positive_only: true)
+      LOGGER.info "[ANC DashboardStatsQueries] anc_hiv_positive_clients count=#{count}"
+      count
+    end
+
+    def anc_hiv_positive_on_art
+      return 0 if anc_program_id.nil?
+      count = count_anc_hiv_positive_and_on_art
+      LOGGER.info "[ANC DashboardStatsQueries] anc_hiv_positive_on_art count=#{count}"
+      count
+    end
+
+    def percentage_anc_hiv_positive_on_art
+      total = anc_hiv_positive_clients
+      return 0.0 if total.zero?
+      (anc_hiv_positive_on_art.to_f / total * 100).round(2)
+    end
+
+    def women_tested_syphilis_during_anc
+      return 0 if anc_program_id.nil?
+      count = count_anc_clients_with_lab_result('Syphilis Test Result')
+      LOGGER.info "[ANC DashboardStatsQueries] women_tested_syphilis_during_anc count=#{count}"
+      count
+    end
+
+    def percentage_women_tested_syphilis_during_anc
+      total = new_and_continuing_anc_clients
+      return 0.0 if total.zero?
+      (women_tested_syphilis_during_anc.to_f / total * 100).round(2)
+    end
+
+    def women_tested_hepatitis_b_during_anc
+      return 0 if anc_program_id.nil?
+      count = count_anc_clients_with_lab_result('Hepatitis B')
+      LOGGER.info "[ANC DashboardStatsQueries] women_tested_hepatitis_b_during_anc count=#{count}"
+      count
+    end
+
+    def percentage_women_tested_hepatitis_b_during_anc
+      total = new_and_continuing_anc_clients
+      return 0.0 if total.zero?
+      (women_tested_hepatitis_b_during_anc.to_f / total * 100).round(2)
     end
 
     private
@@ -141,6 +188,71 @@ module AncService
                  .where('obs.value_text = ?', 'Present')
                  .distinct
                  .count(:person_id)
+    end
+
+    def hiv_status_concept_id
+      @hiv_status_concept_id ||= ConceptName.find_by(name: 'HIV Test')&.concept_id
+    end
+
+    def positive_concept_id
+      @positive_concept_id ||= ConceptName.find_by(name: 'Positive')&.concept_id
+    end
+
+    def count_anc_clients_with_obs_concept_value(concept_id, value_coded_id, value_text_fallback)
+      return 0 if concept_id.nil?
+      scope = Observation.joins(:encounter)
+                         .where(encounter: { program_id: anc_program_id, voided: 0 })
+                         .where(voided: 0, concept_id: concept_id)
+      if value_coded_id.present?
+        scope = scope.where('obs.value_text = ? OR obs.value_coded = ?', value_text_fallback, value_coded_id)
+      else
+        scope = scope.where('obs.value_text = ?', value_text_fallback)
+      end
+      scope.distinct.count(:person_id)
+    end
+
+    def count_anc_hiv_positive_and_on_art
+      return 0 if hiv_test_concept_id.nil? || positive_concept_id.nil?
+      hiv_positive_ids = lab_obs_scope
+                        .where(concept_id: hiv_test_concept_id)
+                        .where('obs.value_text = ? OR obs.value_coded = ?', 'Positive', positive_concept_id)
+                        .distinct
+                        .pluck(:person_id)
+      return 0 if hiv_positive_ids.blank?
+      Observation.joins(:encounter)
+                 .where(encounter: { program_id: anc_program_id, voided: 0 })
+                 .where(voided: 0, concept_id: on_art_concept_id)
+                 .where('obs.value_text = ? OR obs.value_coded = ?', 'Yes', yes_concept_id)
+                 .where(person_id: hiv_positive_ids)
+                 .distinct
+                 .count(:person_id)
+    end
+
+    def hiv_test_concept_id
+      @hiv_test_concept_id ||= ConceptName.find_by(name: 'HIV Test')&.concept_id
+    end
+
+    def lab_obs_scope
+      Observation.joins(:encounter).where(
+        encounter: {
+          program_id: anc_program_id,
+          encounter_type: LAB_ENCOUNTER_TYPE_ID,
+          voided: 0
+        }
+      ).where(voided: 0)
+    end
+
+    def count_anc_clients_with_lab_result(concept_name, positive_only: false)
+      concept_id = ConceptName.find_by(name: concept_name)&.concept_id
+      return 0 if concept_id.nil?
+      scope = lab_obs_scope.where(concept_id: concept_id)
+      if positive_only
+        return 0 if positive_concept_id.nil?
+        scope = scope.where('obs.value_text = ? OR obs.value_coded = ?', 'Positive', positive_concept_id)
+      else
+        scope = scope.where('obs.value_text IS NOT NULL OR obs.value_coded IS NOT NULL')
+      end
+      scope.distinct.count(:person_id)
     end
   end
 end

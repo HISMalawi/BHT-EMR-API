@@ -34,15 +34,24 @@ module AncService
 
     def dashboard_stats(_date = nil)
       queries = AncService::DashboardStatsQueries.new
-      {
+      stats = {
         new_and_continuing_anc_clients: queries.new_and_continuing_anc_clients,
         women_with_ultrasound_scanning: queries.women_with_ultrasound_scanning,
         proportion_women_ultrasound_scanning: queries.proportion_women_ultrasound_scanning,
         women_with_4_plus_anc_contacts: queries.women_with_4_plus_anc_contacts,
         percentage_women_4_plus_anc_contacts: queries.percentage_women_4_plus_anc_contacts,
         clients_with_previous_uterine_scars: queries.clients_with_previous_uterine_scars,
-        percentage_clients_previous_uterine_scars: queries.percentage_clients_previous_uterine_scars
+        percentage_clients_previous_uterine_scars: queries.percentage_clients_previous_uterine_scars,
+        anc_hiv_positive_clients: queries.anc_hiv_positive_clients,
+        anc_hiv_positive_on_art: queries.anc_hiv_positive_on_art,
+        percentage_anc_hiv_positive_on_art: queries.percentage_anc_hiv_positive_on_art,
+        women_tested_syphilis_during_anc: queries.women_tested_syphilis_during_anc,
+        percentage_women_tested_syphilis_during_anc: queries.percentage_women_tested_syphilis_during_anc,
+        women_tested_hepatitis_b_during_anc: queries.women_tested_hepatitis_b_during_anc,
+        percentage_women_tested_hepatitis_b_during_anc: queries.percentage_women_tested_hepatitis_b_during_anc
       }
+      LOGGER.info "[ANC ReportEngine] dashboard_stats stats=#{stats}"
+      stats
     end
 
     private
