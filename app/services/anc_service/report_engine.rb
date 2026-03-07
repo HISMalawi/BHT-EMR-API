@@ -39,7 +39,9 @@ module AncService
         women_with_ultrasound_scanning: queries.women_with_ultrasound_scanning,
         proportion_women_ultrasound_scanning: queries.proportion_women_ultrasound_scanning,
         women_with_4_plus_anc_contacts: queries.women_with_4_plus_anc_contacts,
-        percentage_women_4_plus_anc_contacts: queries.percentage_women_4_plus_anc_contacts
+        percentage_women_4_plus_anc_contacts: queries.percentage_women_4_plus_anc_contacts,
+        clients_with_previous_uterine_scars: queries.clients_with_previous_uterine_scars,
+        percentage_clients_previous_uterine_scars: queries.percentage_clients_previous_uterine_scars
       }
     end
 
