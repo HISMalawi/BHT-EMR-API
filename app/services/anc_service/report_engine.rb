@@ -34,7 +34,11 @@ module AncService
 
     def dashboard_stats(_date = nil)
       queries = AncService::DashboardStatsQueries.new
-      { new_and_continuing_anc_clients: queries.new_and_continuing_anc_clients }
+      {
+        new_and_continuing_anc_clients: queries.new_and_continuing_anc_clients,
+        women_with_ultrasound_scanning: queries.women_with_ultrasound_scanning,
+        proportion_women_ultrasound_scanning: queries.proportion_women_ultrasound_scanning
+      }
     end
 
     private
