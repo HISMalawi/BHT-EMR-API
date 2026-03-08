@@ -71,6 +71,20 @@ module LabourService
       obstetric_complication_counts.transform_values { |count| percentage_of(count, total) }
     end
 
+    def caesarean_section_count
+      return 0 if labour_program_id.nil?
+      @caesarean_section_count ||= count_caesarean_section
+    end
+
+    def total_deliveries_with_mode_recorded
+      return 0 if labour_program_id.nil?
+      @total_deliveries_with_mode_recorded ||= count_total_deliveries_with_mode_recorded
+    end
+
+    def percentage_caesarean_section
+      percentage_of(caesarean_section_count, total_deliveries_with_mode_recorded)
+    end
+
     def dashboard_stats_hash
       base = {
         mothers_delivered_by_skilled_attendant: mothers_delivered_by_skilled_attendant,
@@ -80,7 +94,10 @@ module LabourService
         clients_delivered_at_this_facility: clients_delivered_at_this_facility,
         total_deliveries_with_place_recorded: total_deliveries_with_place_recorded,
         percentage_delivered_at_this_facility: percentage_delivered_at_this_facility,
-        total_clients_with_obstetric_complications_recorded: total_clients_with_obstetric_complications_recorded
+        total_clients_with_obstetric_complications_recorded: total_clients_with_obstetric_complications_recorded,
+        caesarean_section_count: caesarean_section_count,
+        total_deliveries_with_mode_recorded: total_deliveries_with_mode_recorded,
+        percentage_caesarean_section: percentage_caesarean_section
       }
       counts = obstetric_complication_counts.transform_keys { |k| "obstetric_complication_#{k}_count".to_sym }
       percentages = obstetric_complication_percentages.transform_keys { |k| "obstetric_complication_#{k}_percentage".to_sym }
@@ -122,6 +139,14 @@ module LabourService
       @obstetric_complications_concept_id ||= concept_id_for('Obstetric complications')
     end
 
+    def mode_of_delivery_concept_id
+      @mode_of_delivery_concept_id ||= concept_id_for('Mode of delivery')
+    end
+
+    def caesarean_section_concept_id
+      @caesarean_section_concept_id ||= concept_id_for('Caesarean section')
+    end
+
     def condition_key(value)
       value.downcase.gsub(/[^a-z0-9]+/, '_').gsub(/\A_|_\z/, '')
     end
@@ -130,7 +155,7 @@ module LabourService
       scope = Observation.joins(:encounter).where(
         encounter: { program_id: labour_program_id, voided: 0 }
       ).where(voided: 0)
-      
+
       if @date.present?
         scope = scope.where(
           'encounter.encounter_datetime >= ? AND encounter.encounter_datetime <= ?',
@@ -191,6 +216,24 @@ module LabourService
       return 0 if obstetric_complications_concept_id.nil?
       labour_encounter_scope
         .where(concept_id: obstetric_complications_concept_id)
+        .where('obs.value_coded IS NOT NULL OR (obs.value_text IS NOT NULL AND obs.value_text != ?)', '')
+        .distinct
+        .count(:person_id)
+    end
+
+    def count_caesarean_section
+      return 0 if mode_of_delivery_concept_id.nil? || caesarean_section_concept_id.nil?
+      labour_encounter_scope
+        .where(concept_id: mode_of_delivery_concept_id)
+        .where('obs.value_coded = ?', caesarean_section_concept_id)
+        .distinct
+        .count(:person_id)
+    end
+
+    def count_total_deliveries_with_mode_recorded
+      return 0 if mode_of_delivery_concept_id.nil?
+      labour_encounter_scope
+        .where(concept_id: mode_of_delivery_concept_id)
         .where('obs.value_coded IS NOT NULL OR (obs.value_text IS NOT NULL AND obs.value_text != ?)', '')
         .distinct
         .count(:person_id)
