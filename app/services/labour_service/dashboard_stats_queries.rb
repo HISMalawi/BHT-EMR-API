@@ -7,6 +7,21 @@ module LabourService
     LOGGER = Rails.logger
     SKILLED_ATTENDANT_VALUE = 'Skilled health worker (Nurse midwife/community midwife assistant/medical assistant/clinical technician/medical doctor)'
 
+    OBSTETRIC_COMPLICATION_CONDITIONS = [
+      'None',
+      'Postpartum haemorrhage',
+      'Pre-Eclampsia',
+      'Eclampsia',
+      'Sepsis',
+      'Retained placenta',
+      'Perineal tear (2nd, 3rd or 4th degree)',
+      'Other'
+    ].freeze
+
+    def initialize(date = nil)
+      @date = date.respond_to?(:to_date) ? date.to_date : date
+    end
+
     def mothers_delivered_by_skilled_attendant
       return 0 if labour_program_id.nil?
       @mothers_delivered_by_skilled_attendant ||= count_deliveries_with_skilled_attendant
@@ -40,16 +55,36 @@ module LabourService
       percentage_of(clients_delivered_at_this_facility, total_deliveries_with_place_recorded)
     end
 
+    def total_clients_with_obstetric_complications_recorded
+      return 0 if labour_program_id.nil?
+      @total_clients_with_obstetric_complications_recorded ||= count_total_with_obstetric_complications_recorded
+    end
+
+    def obstetric_complication_counts
+      return {} if labour_program_id.nil?
+      @obstetric_complication_counts ||= count_obstetric_complications_by_condition
+    end
+
+    def obstetric_complication_percentages
+      total = total_clients_with_obstetric_complications_recorded
+      return {} if total.zero?
+      obstetric_complication_counts.transform_values { |count| percentage_of(count, total) }
+    end
+
     def dashboard_stats_hash
-      {
+      base = {
         mothers_delivered_by_skilled_attendant: mothers_delivered_by_skilled_attendant,
         total_deliveries_with_staff_recorded: total_deliveries_with_staff_recorded,
         percentage_delivered_by_skilled_attendants: percentage_delivered_by_skilled_attendants,
         clients_delivered_at_home_or_in_transit: clients_delivered_at_home_or_in_transit,
         clients_delivered_at_this_facility: clients_delivered_at_this_facility,
         total_deliveries_with_place_recorded: total_deliveries_with_place_recorded,
-        percentage_delivered_at_this_facility: percentage_delivered_at_this_facility
+        percentage_delivered_at_this_facility: percentage_delivered_at_this_facility,
+        total_clients_with_obstetric_complications_recorded: total_clients_with_obstetric_complications_recorded
       }
+      counts = obstetric_complication_counts.transform_keys { |k| "obstetric_complication_#{k}_count".to_sym }
+      percentages = obstetric_complication_percentages.transform_keys { |k| "obstetric_complication_#{k}_percentage".to_sym }
+      base.merge(counts).merge(percentages)
     end
 
     private
@@ -83,10 +118,27 @@ module LabourService
       @this_facility_concept_id ||= concept_id_for('This facility')
     end
 
+    def obstetric_complications_concept_id
+      @obstetric_complications_concept_id ||= concept_id_for('Obstetric complications')
+    end
+
+    def condition_key(value)
+      value.downcase.gsub(/[^a-z0-9]+/, '_').gsub(/\A_|_\z/, '')
+    end
+
     def labour_encounter_scope
-      Observation.joins(:encounter).where(
+      scope = Observation.joins(:encounter).where(
         encounter: { program_id: labour_program_id, voided: 0 }
       ).where(voided: 0)
+      
+      if @date.present?
+        scope = scope.where(
+          'encounter.encounter_datetime >= ? AND encounter.encounter_datetime <= ?',
+          @date.beginning_of_day,
+          @date.end_of_day
+        )
+      end
+      scope
     end
 
     def count_deliveries_with_skilled_attendant
@@ -133,6 +185,31 @@ module LabourService
         .where('obs.value_coded IS NOT NULL OR (obs.value_text IS NOT NULL AND obs.value_text != ?)', '')
         .distinct
         .count(:person_id)
+    end
+
+    def count_total_with_obstetric_complications_recorded
+      return 0 if obstetric_complications_concept_id.nil?
+      labour_encounter_scope
+        .where(concept_id: obstetric_complications_concept_id)
+        .where('obs.value_coded IS NOT NULL OR (obs.value_text IS NOT NULL AND obs.value_text != ?)', '')
+        .distinct
+        .count(:person_id)
+    end
+
+    def count_obstetric_complications_by_condition
+      return {} if obstetric_complications_concept_id.nil?
+      result = {}
+      OBSTETRIC_COMPLICATION_CONDITIONS.each do |value|
+        concept_id = concept_id_for(value)
+        next if concept_id.nil?
+        key = condition_key(value)
+        result[key] = labour_encounter_scope
+          .where(concept_id: obstetric_complications_concept_id)
+          .where('obs.value_coded = ?', concept_id)
+          .distinct
+          .count(:person_id)
+      end
+      result
     end
 
     def percentage_of(count, total)

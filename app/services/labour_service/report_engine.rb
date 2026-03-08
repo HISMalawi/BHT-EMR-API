@@ -11,9 +11,10 @@ module LabourService
       @program = program
     end
 
-    def dashboard_stats(_date = nil, **)
-      stats = LabourService::DashboardStatsQueries.new.dashboard_stats_hash
-      LOGGER.info "[Labour ReportEngine] dashboard_stats stats=#{stats}"
+    def dashboard_stats(date = nil, **)
+      stats = LabourService::DashboardStatsQueries.new(date).dashboard_stats_hash
+      stats[:date] = format_date_for_response(date) if date.present?
+      LOGGER.info "[Labour ReportEngine] dashboard_stats date=#{stats[:date]} stats=#{stats}"
       stats
     end
 
@@ -26,6 +27,10 @@ module LabourService
     end
 
     private
+
+    def format_date_for_response(date)
+      date.respond_to?(:to_date) ? date.to_date.iso8601 : date.to_s
+    end
 
     def call_report_manager(method, type:, **kwargs)
       report_class = REPORTS[type.to_s.upcase]
