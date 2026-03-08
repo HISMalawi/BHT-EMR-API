@@ -38,7 +38,7 @@ module MnhService
     end
 
     def labour_program?(name)
-      name == 'LABOUR PROGRAM'
+      name == 'LABOUR AND DELIVERY PROGRAM'
     end
 
     def format_date(date)
