@@ -21,11 +21,17 @@ module LabourService
       percentage_of(mothers_delivered_by_skilled_attendant, total_deliveries_with_staff_recorded)
     end
 
+    def clients_delivered_at_home_or_in_transit
+      return 0 if labour_program_id.nil?
+      @clients_delivered_at_home_or_in_transit ||= count_clients_delivered_at_home_or_in_transit
+    end
+
     def dashboard_stats_hash
       {
         mothers_delivered_by_skilled_attendant: mothers_delivered_by_skilled_attendant,
         total_deliveries_with_staff_recorded: total_deliveries_with_staff_recorded,
-        percentage_delivered_by_skilled_attendants: percentage_delivered_by_skilled_attendants
+        percentage_delivered_by_skilled_attendants: percentage_delivered_by_skilled_attendants,
+        clients_delivered_at_home_or_in_transit: clients_delivered_at_home_or_in_transit
       }
     end
 
@@ -35,8 +41,25 @@ module LabourService
       @labour_program_id ||= Program.find_by(name: 'LABOUR PROGRAM')&.id
     end
 
+    def concept_id_for(name)
+      @concept_ids_by_name ||= {}
+      @concept_ids_by_name[name] ||= ConceptName.find_by(name: name)&.concept_id
+    end
+
     def staff_conducting_delivery_concept_id
-      @staff_conducting_delivery_concept_id ||= ConceptName.find_by(name: 'Staff conducting delivery')&.concept_id
+      @staff_conducting_delivery_concept_id ||= concept_id_for('Staff conducting delivery')
+    end
+
+    def place_of_delivery_concept_id
+      @place_of_delivery_concept_id ||= concept_id_for('Place of delivery')
+    end
+
+    def home_concept_id
+      @home_concept_id ||= concept_id_for('Home')
+    end
+
+    def in_transit_concept_id
+      @in_transit_concept_id ||= concept_id_for('In transit')
     end
 
     def labour_encounter_scope
@@ -61,6 +84,16 @@ module LabourService
         .where('obs.value_text IS NOT NULL AND obs.value_text != ?', '')
         .distinct
         .count(:person_id)
+    end
+
+    def count_clients_delivered_at_home_or_in_transit
+      return 0 if place_of_delivery_concept_id.nil?
+      return 0 if home_concept_id.nil? && in_transit_concept_id.nil?
+
+      scope = labour_encounter_scope.where(concept_id: place_of_delivery_concept_id)
+      value_ids = [home_concept_id, in_transit_concept_id].compact
+      scope = scope.where('obs.value_coded IN (?)', value_ids) if value_ids.any?
+      scope.distinct.count(:person_id)
     end
 
     def percentage_of(count, total)
