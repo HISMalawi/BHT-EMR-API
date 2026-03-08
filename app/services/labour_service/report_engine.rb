@@ -12,10 +12,7 @@ module LabourService
     end
 
     def dashboard_stats(date = nil, **)
-      stats = LabourService::DashboardStatsQueries.new(date).dashboard_stats_hash
-      stats[:date] = format_date_for_response(date) if date.present?
-      LOGGER.info "[Labour ReportEngine] dashboard_stats date=#{stats[:date]} stats=#{stats}"
-      stats
+      MnhService::Engine.new.labour_stats(nil, date)
     end
 
     def generate_report(type:, **kwargs)
