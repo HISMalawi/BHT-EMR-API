@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module LabourService
-  class DashboardStatsQueries
+module MnhService
+  class LabourStatsQueries
     include ModelUtils
 
     LOGGER = Rails.logger
@@ -18,8 +18,28 @@ module LabourService
       'Other'
     ].freeze
 
-    def initialize(date = nil)
+    def initialize(program_id = nil, date = nil)
+      @program_id = program_id
       @date = date.respond_to?(:to_date) ? date.to_date : date
+    end
+
+    def stats_hash
+      base = {
+        mothers_delivered_by_skilled_attendant: mothers_delivered_by_skilled_attendant,
+        total_deliveries_with_staff_recorded: total_deliveries_with_staff_recorded,
+        percentage_delivered_by_skilled_attendants: percentage_delivered_by_skilled_attendants,
+        clients_delivered_at_home_or_in_transit: clients_delivered_at_home_or_in_transit,
+        clients_delivered_at_this_facility: clients_delivered_at_this_facility,
+        total_deliveries_with_place_recorded: total_deliveries_with_place_recorded,
+        percentage_delivered_at_this_facility: percentage_delivered_at_this_facility,
+        total_clients_with_obstetric_complications_recorded: total_clients_with_obstetric_complications_recorded,
+        caesarean_section_count: caesarean_section_count,
+        total_deliveries_with_mode_recorded: total_deliveries_with_mode_recorded,
+        percentage_caesarean_section: percentage_caesarean_section
+      }
+      counts = obstetric_complication_counts.transform_keys { |k| "obstetric_complication_#{k}_count".to_sym }
+      percentages = obstetric_complication_percentages.transform_keys { |k| "obstetric_complication_#{k}_percentage".to_sym }
+      base.merge(counts).merge(percentages)
     end
 
     def mothers_delivered_by_skilled_attendant
@@ -85,29 +105,10 @@ module LabourService
       percentage_of(caesarean_section_count, total_deliveries_with_mode_recorded)
     end
 
-    def dashboard_stats_hash
-      base = {
-        mothers_delivered_by_skilled_attendant: mothers_delivered_by_skilled_attendant,
-        total_deliveries_with_staff_recorded: total_deliveries_with_staff_recorded,
-        percentage_delivered_by_skilled_attendants: percentage_delivered_by_skilled_attendants,
-        clients_delivered_at_home_or_in_transit: clients_delivered_at_home_or_in_transit,
-        clients_delivered_at_this_facility: clients_delivered_at_this_facility,
-        total_deliveries_with_place_recorded: total_deliveries_with_place_recorded,
-        percentage_delivered_at_this_facility: percentage_delivered_at_this_facility,
-        total_clients_with_obstetric_complications_recorded: total_clients_with_obstetric_complications_recorded,
-        caesarean_section_count: caesarean_section_count,
-        total_deliveries_with_mode_recorded: total_deliveries_with_mode_recorded,
-        percentage_caesarean_section: percentage_caesarean_section
-      }
-      counts = obstetric_complication_counts.transform_keys { |k| "obstetric_complication_#{k}_count".to_sym }
-      percentages = obstetric_complication_percentages.transform_keys { |k| "obstetric_complication_#{k}_percentage".to_sym }
-      base.merge(counts).merge(percentages)
-    end
-
     private
 
     def labour_program_id
-      @labour_program_id ||= Program.find_by(name: 'LABOUR PROGRAM')&.id
+      @labour_program_id ||= @program_id.presence || Program.where(Program.arel_table[:name].lower.eq('labour program')).first&.id
     end
 
     def concept_id_for(name)
@@ -164,6 +165,10 @@ module LabourService
         )
       end
       scope
+    end
+
+    def percentage_of(count, total)
+      total.to_i.zero? ? 0.0 : (count.to_f / total * 100).round(2)
     end
 
     def count_deliveries_with_skilled_attendant
@@ -253,14 +258,6 @@ module LabourService
           .count(:person_id)
       end
       result
-    end
-
-    def percentage_of(count, total)
-      total.to_i.zero? ? 0.0 : (count.to_f / total * 100).round(2)
-    end
-
-    def percentage_ratio(count, total, decimals = 4)
-      total.to_i.zero? ? 0.0 : (count.to_f / total).round(decimals)
     end
   end
 end

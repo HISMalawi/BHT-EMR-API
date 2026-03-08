@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module AncService
-  class DashboardStatsQueries
+module MnhService
+  class AncStatsQueries
     include ModelUtils
 
     LOGGER = Rails.logger
@@ -9,6 +9,29 @@ module AncService
     LAB_ENCOUNTER_TYPE_ID = 13
     QUICK_CHECK_CONCEPT_ID = 206
     MIN_ANC_CONTACTS_FOR_4_PLUS = 4
+
+    def initialize(program_id = nil)
+      @program_id = program_id
+    end
+
+    def stats_hash(_date = nil)
+      {
+        new_and_continuing_anc_clients: new_and_continuing_anc_clients,
+        women_with_ultrasound_scanning: women_with_ultrasound_scanning,
+        proportion_women_ultrasound_scanning: proportion_women_ultrasound_scanning,
+        women_with_4_plus_anc_contacts: women_with_4_plus_anc_contacts,
+        percentage_women_4_plus_anc_contacts: percentage_women_4_plus_anc_contacts,
+        clients_with_previous_uterine_scars: clients_with_previous_uterine_scars,
+        percentage_clients_previous_uterine_scars: percentage_clients_previous_uterine_scars,
+        anc_hiv_positive_clients: anc_hiv_positive_clients,
+        anc_hiv_positive_on_art: anc_hiv_positive_on_art,
+        percentage_anc_hiv_positive_on_art: percentage_anc_hiv_positive_on_art,
+        women_tested_syphilis_during_anc: women_tested_syphilis_during_anc,
+        percentage_women_tested_syphilis_during_anc: percentage_women_tested_syphilis_during_anc,
+        women_tested_hepatitis_b_during_anc: women_tested_hepatitis_b_during_anc,
+        percentage_women_tested_hepatitis_b_during_anc: percentage_women_tested_hepatitis_b_during_anc
+      }
+    end
 
     def new_and_continuing_anc_clients
       return 0 if anc_program_id.nil?
@@ -87,7 +110,7 @@ module AncService
     end
 
     def anc_program_id
-      @anc_program_id ||= Program.find_by(name: 'ANC PROGRAM')&.id
+      @anc_program_id ||= @program_id.presence || Program.find_by(name: 'ANC PROGRAM')&.id
     end
 
     def anc_enrollment_encounter_type_id
@@ -186,6 +209,17 @@ module AncService
         .where('obs.value_text = ? OR obs.value_coded = ?', 'Positive', positive_concept_id)
         .distinct
         .pluck(:person_id)
+      on_art_concept_id = concept_id_for('On ART')
+      yes_concept_id = concept_id_for('Yes')
+      return hiv_positive_ids.size if on_art_concept_id.nil? || yes_concept_id.nil? || hiv_positive_ids.empty?
+
+      Observation.joins(:encounter).where(
+        encounter: { program_id: anc_program_id, voided: 0 }
+      ).where(voided: 0).where(person_id: hiv_positive_ids)
+        .where(concept_id: on_art_concept_id)
+        .where('obs.value_text = ? OR obs.value_coded = ?', 'Yes', yes_concept_id)
+        .distinct
+        .count(:person_id)
     end
 
     def count_anc_clients_with_lab_result(concept_name, positive_only: false)

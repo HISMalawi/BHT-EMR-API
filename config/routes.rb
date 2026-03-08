@@ -396,6 +396,7 @@ Rails.application.routes.draw do
   get '/api/v1/get_test_types' => 'api/v1/lab_test_types#get_test_types'
 
   get '/api/v1/dashboard_stats' => 'api/v1/reports#index'
+  get '/api/v1/mnh/stats' => 'api/v1/mnh#stats'
   get '/api/v1/mahis_dashboard' => 'api/v1/reports#mahis_dashboard'
   get '/api/v1/mahis_dashboard_indicators' => 'api/v1/reports#mahis_dashboard_indicators'
   get '/api/v1/dashboard_stats_for_syndromic_statistics' => 'api/v1/reports#syndromic_statistics'
