@@ -15,7 +15,9 @@ module MnhService
       {
         babies_receiving_bcg: babies_receiving_bcg,
         total_babies_with_immunisation_recorded: total_babies_with_immunisation_recorded,
-        percentage_babies_receiving_bcg: percentage_babies_receiving_bcg
+        percentage_babies_receiving_bcg: percentage_babies_receiving_bcg,
+        babies_receiving_polio_0: babies_receiving_polio_0,
+        percentage_babies_receiving_polio_0: percentage_babies_receiving_polio_0
       }
     end
 
@@ -31,6 +33,15 @@ module MnhService
 
     def percentage_babies_receiving_bcg
       percentage_of(babies_receiving_bcg, total_babies_with_immunisation_recorded)
+    end
+
+    def babies_receiving_polio_0
+      return 0 if pnc_program_id.nil?
+      @babies_receiving_polio_0 ||= count_babies_receiving_polio_0
+    end
+
+    def percentage_babies_receiving_polio_0
+      percentage_of(babies_receiving_polio_0, total_babies_with_immunisation_recorded)
     end
 
     private
@@ -56,6 +67,10 @@ module MnhService
       @bcg_concept_id ||= concept_id_for('BCG')
     end
 
+    def polio_0_concept_id
+      @polio_0_concept_id ||= concept_id_for('Polio 0')
+    end
+
     def pnc_obs_scope
       scope = Observation.joins(:encounter).where(
         encounter: { program_id: pnc_program_id, voided: 0 }
@@ -76,6 +91,15 @@ module MnhService
       pnc_obs_scope
         .where(concept_id: immunisation_given_concept_id)
         .where(value_coded: bcg_concept_id)
+        .distinct
+        .count(:person_id)
+    end
+
+    def count_babies_receiving_polio_0
+      return 0 if immunisation_given_concept_id.nil? || polio_0_concept_id.nil?
+      pnc_obs_scope
+        .where(concept_id: immunisation_given_concept_id)
+        .where(value_coded: polio_0_concept_id)
         .distinct
         .count(:person_id)
     end
