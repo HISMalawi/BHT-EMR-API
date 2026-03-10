@@ -20,7 +20,9 @@ module MnhService
         percentage_babies_receiving_polio_0: percentage_babies_receiving_polio_0,
         mothers_hiv_positive: mothers_hiv_positive,
         total_postnatal_mothers: total_postnatal_mothers,
-        percentage_postnatal_mothers_hiv_positive: percentage_postnatal_mothers_hiv_positive
+        percentage_postnatal_mothers_hiv_positive: percentage_postnatal_mothers_hiv_positive,
+        mothers_checked_within_seven_days: mothers_checked_within_seven_days,
+        percentage_postnatal_mothers_checked_within_seven_days: percentage_postnatal_mothers_checked_within_seven_days
       }
     end
 
@@ -61,6 +63,15 @@ module MnhService
       percentage_of(mothers_hiv_positive, total_postnatal_mothers)
     end
 
+    def mothers_checked_within_seven_days
+      return 0 if pnc_program_id.nil?
+      @mothers_checked_within_seven_days ||= count_mothers_checked_within_seven_days
+    end
+
+    def percentage_postnatal_mothers_checked_within_seven_days
+      percentage_of(mothers_checked_within_seven_days, total_postnatal_mothers)
+    end
+
     private
 
     def percentage_of(count, total)
@@ -94,6 +105,14 @@ module MnhService
 
     def yes_concept_id
       @yes_concept_id ||= concept_id_for('Yes')
+    end
+
+    def postnatal_check_period_concept_id
+      @postnatal_check_period_concept_id ||= concept_id_for('Postnatal check period')
+    end
+
+    def three_to_seven_days_concept_id
+      @three_to_seven_days_concept_id ||= concept_id_for('3-7 days')
     end
 
     def pnc_obs_scope
@@ -159,6 +178,15 @@ module MnhService
 
     def count_total_postnatal_mothers
       pnc_encounter_scope.distinct.count(:patient_id)
+    end
+
+    def count_mothers_checked_within_seven_days
+      return 0 if postnatal_check_period_concept_id.nil? || three_to_seven_days_concept_id.nil?
+      pnc_obs_scope
+        .where(concept_id: postnatal_check_period_concept_id)
+        .where(value_coded: three_to_seven_days_concept_id)
+        .distinct
+        .count(:person_id)
     end
   end
 end
