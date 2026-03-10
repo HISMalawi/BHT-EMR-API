@@ -22,7 +22,9 @@ module MnhService
         total_postnatal_mothers: total_postnatal_mothers,
         percentage_postnatal_mothers_hiv_positive: percentage_postnatal_mothers_hiv_positive,
         mothers_checked_within_seven_days: mothers_checked_within_seven_days,
-        percentage_postnatal_mothers_checked_within_seven_days: percentage_postnatal_mothers_checked_within_seven_days
+        percentage_postnatal_mothers_checked_within_seven_days: percentage_postnatal_mothers_checked_within_seven_days,
+        women_counselled_exclusive_breastfeeding: women_counselled_exclusive_breastfeeding,
+        percentage_women_counselled_exclusive_breastfeeding: percentage_women_counselled_exclusive_breastfeeding
       }
     end
 
@@ -72,6 +74,15 @@ module MnhService
       percentage_of(mothers_checked_within_seven_days, total_postnatal_mothers)
     end
 
+    def women_counselled_exclusive_breastfeeding
+      return 0 if pnc_program_id.nil?
+      @women_counselled_exclusive_breastfeeding ||= count_women_counselled_exclusive_breastfeeding
+    end
+
+    def percentage_women_counselled_exclusive_breastfeeding
+      percentage_of(women_counselled_exclusive_breastfeeding, total_postnatal_mothers)
+    end
+
     private
 
     def percentage_of(count, total)
@@ -113,6 +124,14 @@ module MnhService
 
     def three_to_seven_days_concept_id
       @three_to_seven_days_concept_id ||= concept_id_for('3-7 days')
+    end
+
+    def breast_feeding_concept_id
+      @breast_feeding_concept_id ||= concept_id_for('Breast feeding')
+    end
+
+    def breastfed_exclusively_concept_id
+      @breastfed_exclusively_concept_id ||= concept_id_for('Breastfed exclusively')
     end
 
     def pnc_obs_scope
@@ -185,6 +204,15 @@ module MnhService
       pnc_obs_scope
         .where(concept_id: postnatal_check_period_concept_id)
         .where(value_coded: three_to_seven_days_concept_id)
+        .distinct
+        .count(:person_id)
+    end
+
+    def count_women_counselled_exclusive_breastfeeding
+      return 0 if breast_feeding_concept_id.nil? || breastfed_exclusively_concept_id.nil?
+      pnc_obs_scope
+        .where(concept_id: breast_feeding_concept_id)
+        .where(value_coded: breastfed_exclusively_concept_id)
         .distinct
         .count(:person_id)
     end
