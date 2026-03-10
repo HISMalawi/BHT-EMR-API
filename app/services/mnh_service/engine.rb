@@ -12,8 +12,10 @@ module MnhService
         anc_stats(program_id, date)
       elsif labour_program?(name)
         labour_stats(program_id, date)
+      elsif pnc_program?(name)
+        pnc_stats(program_id, date)
       else
-        raise ArgumentError, "Program #{program_id} is not ANC or Labour (name: #{program.name})"
+        raise ArgumentError, "Program #{program_id} is not ANC, Labour or PNC (name: #{program.name})"
       end
     end
 
@@ -31,6 +33,13 @@ module MnhService
       result
     end
 
+    def pnc_stats(program_id = nil, date = nil)
+      result = MnhService::PncStatsQueries.new(program_id, date).stats_hash
+      result[:date] = format_date(date) if date.present?
+      LOGGER.info "[MnhService::Engine] pnc_stats program_id=#{program_id} date=#{date}"
+      result
+    end
+
     private
 
     def anc_program?(name)
@@ -38,7 +47,11 @@ module MnhService
     end
 
     def labour_program?(name)
-      name == 'LABOUR AND DELIVERY PROGRAM'
+      name == 'LABOUR PROGRAM' || name == 'LABOUR AND DELIVERY PROGRAM'
+    end
+
+    def pnc_program?(name)
+      name == 'PNC PROGRAM' || name == 'POSTNATAL CARE PROGRAM'
     end
 
     def format_date(date)
