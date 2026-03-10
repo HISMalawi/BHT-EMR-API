@@ -17,7 +17,10 @@ module MnhService
         total_babies_with_immunisation_recorded: total_babies_with_immunisation_recorded,
         percentage_babies_receiving_bcg: percentage_babies_receiving_bcg,
         babies_receiving_polio_0: babies_receiving_polio_0,
-        percentage_babies_receiving_polio_0: percentage_babies_receiving_polio_0
+        percentage_babies_receiving_polio_0: percentage_babies_receiving_polio_0,
+        mothers_hiv_positive: mothers_hiv_positive,
+        total_postnatal_mothers: total_postnatal_mothers,
+        percentage_postnatal_mothers_hiv_positive: percentage_postnatal_mothers_hiv_positive
       }
     end
 
@@ -42,6 +45,20 @@ module MnhService
 
     def percentage_babies_receiving_polio_0
       percentage_of(babies_receiving_polio_0, total_babies_with_immunisation_recorded)
+    end
+
+    def mothers_hiv_positive
+      return 0 if pnc_program_id.nil?
+      @mothers_hiv_positive ||= count_mothers_hiv_positive
+    end
+
+    def total_postnatal_mothers
+      return 0 if pnc_program_id.nil?
+      @total_postnatal_mothers ||= count_total_postnatal_mothers
+    end
+
+    def percentage_postnatal_mothers_hiv_positive
+      percentage_of(mothers_hiv_positive, total_postnatal_mothers)
     end
 
     private
@@ -71,6 +88,14 @@ module MnhService
       @polio_0_concept_id ||= concept_id_for('Polio 0')
     end
 
+    def mother_hiv_positive_concept_id
+      @mother_hiv_positive_concept_id ||= concept_id_for('Mother HIV positive')
+    end
+
+    def yes_concept_id
+      @yes_concept_id ||= concept_id_for('Yes')
+    end
+
     def pnc_obs_scope
       scope = Observation.joins(:encounter).where(
         encounter: { program_id: pnc_program_id, voided: 0 }
@@ -81,6 +106,16 @@ module MnhService
           'encounter.encounter_datetime >= ? AND encounter.encounter_datetime <= ?',
           @date.beginning_of_day,
           @date.end_of_day
+        )
+      end
+      scope
+    end
+
+    def pnc_encounter_scope
+      scope = Encounter.where(program_id: pnc_program_id, voided: 0)
+      if @date.present?
+        scope = scope.where(
+          encounter_datetime: @date.beginning_of_day..@date.end_of_day
         )
       end
       scope
@@ -111,6 +146,19 @@ module MnhService
         .where('obs.value_coded IS NOT NULL OR (obs.value_text IS NOT NULL AND obs.value_text != ?)', '')
         .distinct
         .count(:person_id)
+    end
+
+    def count_mothers_hiv_positive
+      return 0 if mother_hiv_positive_concept_id.nil? || yes_concept_id.nil?
+      pnc_obs_scope
+        .where(concept_id: mother_hiv_positive_concept_id)
+        .where(value_coded: yes_concept_id)
+        .distinct
+        .count(:person_id)
+    end
+
+    def count_total_postnatal_mothers
+      pnc_encounter_scope.distinct.count(:patient_id)
     end
   end
 end
