@@ -5,7 +5,7 @@ module MnhService
     include ModelUtils
 
     LOGGER = Rails.logger
-    SKILLED_ATTENDANT_VALUE = 'Skilled health worker (Nurse midwife/community midwife assistant/medical assistant/clinical technician/medical doctor)'
+    SKILLED_ATTENDANT_VALUE = 'Skilled health worker (Nurse midwife/community midwife assistant/medical assistant/clinical technician/medical doctor'
 
     OBSTETRIC_COMPLICATION_CONDITIONS = [
       'None',
@@ -25,6 +25,7 @@ module MnhService
 
     def stats_hash
       base = {
+        total_labour_mothers: total_labour_mothers,
         mothers_delivered_by_skilled_attendant: mothers_delivered_by_skilled_attendant,
         total_deliveries_with_staff_recorded: total_deliveries_with_staff_recorded,
         percentage_delivered_by_skilled_attendants: percentage_delivered_by_skilled_attendants,
@@ -53,7 +54,7 @@ module MnhService
     end
 
     def percentage_delivered_by_skilled_attendants
-      percentage_of(mothers_delivered_by_skilled_attendant, total_deliveries_with_staff_recorded)
+      percentage_of(mothers_delivered_by_skilled_attendant, total_labour_mothers)
     end
 
     def clients_delivered_at_home_or_in_transit
@@ -72,7 +73,7 @@ module MnhService
     end
 
     def percentage_delivered_at_this_facility
-      percentage_of(clients_delivered_at_this_facility, total_deliveries_with_place_recorded)
+      percentage_of(clients_delivered_at_this_facility, total_labour_mothers)
     end
 
     def total_clients_with_obstetric_complications_recorded
@@ -86,7 +87,7 @@ module MnhService
     end
 
     def obstetric_complication_percentages
-      total = total_clients_with_obstetric_complications_recorded
+      total = total_labour_mothers
       return {} if total.zero?
       obstetric_complication_counts.transform_values { |count| percentage_of(count, total) }
     end
@@ -102,7 +103,12 @@ module MnhService
     end
 
     def percentage_caesarean_section
-      percentage_of(caesarean_section_count, total_deliveries_with_mode_recorded)
+      percentage_of(caesarean_section_count, total_labour_mothers)
+    end
+
+    def total_labour_mothers
+      return 0 if labour_program_id.nil?
+      @total_labour_mothers ||= count_total_labour_mothers
     end
 
     private
@@ -165,6 +171,20 @@ module MnhService
         )
       end
       scope
+    end
+
+    def labour_encounters_scope
+      scope = Encounter.where(program_id: labour_program_id, voided: 0)
+      if @date.present?
+        scope = scope.where(
+          encounter_datetime: @date.beginning_of_day..@date.end_of_day
+        )
+      end
+      scope
+    end
+
+    def count_total_labour_mothers
+      labour_encounters_scope.distinct.count(:patient_id)
     end
 
     def percentage_of(count, total)
