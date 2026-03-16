@@ -4,23 +4,42 @@
 module PatientRecordService
   class PatientEnrollmentManager < BaseSaver
     def enroll_program(patient_id, record)
-      
-      if PatientProgram.where(program_id: record[:program_id], patient_id: patient_id).exists?
-        return false
+      enrollment = record[:activePrograms]
+      return false if enrollment.blank?
+
+      enrollments = enrollment.is_a?(Array) ? enrollment : [enrollment]
+
+      unsaved_enrollments = enrollments.select do |item|
+        item.present? && item[:status] == "unsaved"
       end
 
-      new_patient_program = PatientProgram.create!(
-        program_id: record[:program_id],
-        date_enrolled: record[:encounter_datetime] || Time.now,
-        location_id: record[:location_id],
-        patient_id: patient_id
-      )
-      if new_patient_program.errors.empty?
-        Rails.logger.info('Successfully created patient program')
+      return false if unsaved_enrollments.empty?
+
+      begin
+        ActiveRecord::Base.transaction do
+          unsaved_enrollments.each do |enroll|
+            next unless enroll
+
+            if PatientProgram.where(program_id: enroll[:program_id], patient_id: patient_id).exists?
+              Rails.logger.info("Patient #{patient_id} already enrolled in program #{enroll[:program_id]}, skipping")
+              next
+            end
+
+            PatientProgram.create!(
+              program_id: enroll[:program_id],
+              date_enrolled: enroll[:date_enrolled] || Time.now,
+              location_id: enroll[:location_id] ,
+              patient_id: patient_id
+            )
+
+            Rails.logger.info('Successfully created patient program')
+          end
+        end
+
         true
-      else
-        Rails.logger.error(new_patient_program.errors.full_messages)
-        return false
+      rescue StandardError => e
+        log_error("Failed to create patient enrollment", e)
+        raise
       end
     end
   end
