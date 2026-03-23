@@ -1,13 +1,13 @@
--- MySQL dump 10.13  Distrib 9.6.0, for macos26.2 (arm64)
+-- MySQL dump 10.13  Distrib 5.6.16, for debian-linux-gnu (x86_64)
 --
--- Host: 127.0.0.1    Database: openmrs_dev
+-- Host: 127.0.0.1    Database: openmrs
 -- ------------------------------------------------------
--- Server version	9.6.0
+-- Server version	5.6.16-1~exp1
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
+/*!40101 SET NAMES utf8 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -21,23 +21,23 @@
 
 DROP TABLE IF EXISTS `concept`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept` (
-  `concept_id` int NOT NULL AUTO_INCREMENT,
-  `retired` smallint NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL AUTO_INCREMENT,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
   `short_name` varchar(255) DEFAULT NULL,
   `description` text,
   `form_text` text,
-  `datatype_id` int NOT NULL DEFAULT '0',
-  `class_id` int NOT NULL DEFAULT '0',
-  `is_set` smallint NOT NULL DEFAULT '0',
-  `creator` int NOT NULL DEFAULT '0',
+  `datatype_id` int(11) NOT NULL DEFAULT '0',
+  `class_id` int(11) NOT NULL DEFAULT '0',
+  `is_set` smallint(6) NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `default_charge` int DEFAULT NULL,
+  `default_charge` int(11) DEFAULT NULL,
   `version` varchar(50) DEFAULT NULL,
-  `changed_by` int DEFAULT NULL,
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
-  `retired_by` int DEFAULT NULL,
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE `concept` (
   CONSTRAINT `concept_datatypes` FOREIGN KEY (`datatype_id`) REFERENCES `concept_datatype` (`concept_datatype_id`),
   CONSTRAINT `user_who_changed_concept` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_concept` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13378 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=13378 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -73,21 +73,21 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_name`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_name` (
-  `concept_id` int DEFAULT NULL,
+  `concept_id` int(11) DEFAULT NULL,
   `name` varchar(255) NOT NULL DEFAULT '',
   `locale` varchar(50) NOT NULL DEFAULT '',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `concept_name_id` int NOT NULL AUTO_INCREMENT,
-  `voided` smallint NOT NULL DEFAULT '0',
-  `voided_by` int DEFAULT NULL,
+  `concept_name_id` int(11) NOT NULL AUTO_INCREMENT,
+  `voided` smallint(6) NOT NULL DEFAULT '0',
+  `voided_by` int(11) DEFAULT NULL,
   `date_voided` datetime DEFAULT NULL,
   `void_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   `concept_name_type` varchar(50) DEFAULT NULL,
-  `locale_preferred` smallint DEFAULT '0',
+  `locale_preferred` smallint(6) DEFAULT '0',
   PRIMARY KEY (`concept_name_id`),
   UNIQUE KEY `concept_name_id` (`concept_name_id`),
   UNIQUE KEY `concept_name_uuid_index` (`uuid`),
@@ -98,7 +98,7 @@ CREATE TABLE `concept_name` (
   CONSTRAINT `name_for_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `user_who_created_name` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_voided_this_name` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=109010 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=109010 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -119,13 +119,13 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_set`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_set` (
-  `concept_set_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int NOT NULL DEFAULT '0',
-  `concept_set` int NOT NULL DEFAULT '0',
+  `concept_set_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `concept_set` int(11) NOT NULL DEFAULT '0',
   `sort_weight` double DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`concept_set_id`),
@@ -136,7 +136,7 @@ CREATE TABLE `concept_set` (
   CONSTRAINT `has_a` FOREIGN KEY (`concept_set`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `is_a` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `user_who_created` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5919 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=5919 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,13 +155,13 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_answer`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_answer` (
-  `concept_answer_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int NOT NULL DEFAULT '0',
-  `answer_concept` int DEFAULT NULL,
-  `answer_drug` int DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `concept_answer_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `answer_concept` int(11) DEFAULT NULL,
+  `answer_drug` int(11) DEFAULT NULL,
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `uuid` char(38) NOT NULL,
   `sort_weight` double DEFAULT NULL,
@@ -173,7 +173,7 @@ CREATE TABLE `concept_answer` (
   CONSTRAINT `answer` FOREIGN KEY (`answer_concept`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `answer_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `answers_for_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10319 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=10319 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -192,15 +192,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_class`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_class` (
-  `concept_class_id` int NOT NULL AUTO_INCREMENT,
+  `concept_class_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `description` varchar(255) NOT NULL DEFAULT '',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -211,7 +211,7 @@ CREATE TABLE `concept_class` (
   KEY `concept_class_retired_status` (`retired`),
   CONSTRAINT `concept_class_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_concept_class` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -230,16 +230,16 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_datatype`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_datatype` (
-  `concept_datatype_id` int NOT NULL AUTO_INCREMENT,
+  `concept_datatype_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `hl7_abbreviation` varchar(3) DEFAULT NULL,
   `description` varchar(255) NOT NULL DEFAULT '',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -250,7 +250,7 @@ CREATE TABLE `concept_datatype` (
   KEY `concept_datatype_retired_status` (`retired`),
   CONSTRAINT `concept_datatype_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_concept_datatype` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -269,16 +269,16 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_derived`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_derived` (
-  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `rule` mediumtext,
   `compile_date` datetime DEFAULT NULL,
   `compile_status` varchar(255) DEFAULT NULL,
   `class_name` varchar(1024) DEFAULT NULL,
   PRIMARY KEY (`concept_id`),
   CONSTRAINT `derived_attributes` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -296,15 +296,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_description`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_description` (
-  `concept_description_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_description_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `description` text NOT NULL,
   `locale` varchar(50) NOT NULL DEFAULT '',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int DEFAULT NULL,
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`concept_description_id`),
@@ -315,7 +315,7 @@ CREATE TABLE `concept_description` (
   CONSTRAINT `description_for_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `user_who_changed_description` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_created_description` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7492 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=7492 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -335,15 +335,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_map`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_map` (
-  `concept_map_id` int NOT NULL AUTO_INCREMENT,
-  `source` int DEFAULT NULL,
+  `concept_map_id` int(11) NOT NULL AUTO_INCREMENT,
+  `source` int(11) DEFAULT NULL,
   `source_code` varchar(255) DEFAULT NULL,
   `comment` varchar(255) DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`concept_map_id`),
   UNIQUE KEY `concept_map_uuid_index` (`uuid`),
@@ -353,7 +353,7 @@ CREATE TABLE `concept_map` (
   CONSTRAINT `map_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `map_for_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `map_source` FOREIGN KEY (`source`) REFERENCES `concept_source` (`concept_source_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1843 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1843 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -372,15 +372,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_name_tag`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_name_tag` (
-  `concept_name_tag_id` int NOT NULL AUTO_INCREMENT,
+  `concept_name_tag_id` int(11) NOT NULL AUTO_INCREMENT,
   `tag` varchar(50) NOT NULL,
   `description` text NOT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `voided` smallint NOT NULL DEFAULT '0',
-  `voided_by` int DEFAULT NULL,
+  `voided` smallint(6) NOT NULL DEFAULT '0',
+  `voided_by` int(11) DEFAULT NULL,
   `date_voided` datetime DEFAULT NULL,
   `void_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -391,7 +391,7 @@ CREATE TABLE `concept_name_tag` (
   UNIQUE KEY `concept_name_tag_uuid_index` (`uuid`),
   KEY `user_who_created_name_tag` (`creator`),
   KEY `user_who_voided_name_tag` (`voided_by`)
-) ENGINE=InnoDB AUTO_INCREMENT=399 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=399 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -410,15 +410,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_name_tag_map`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_name_tag_map` (
-  `concept_name_id` int NOT NULL,
-  `concept_name_tag_id` int NOT NULL,
+  `concept_name_id` int(11) NOT NULL,
+  `concept_name_tag_id` int(11) NOT NULL,
   KEY `map_name` (`concept_name_id`),
   KEY `map_name_tag` (`concept_name_tag_id`),
   CONSTRAINT `mapped_concept_name` FOREIGN KEY (`concept_name_id`) REFERENCES `concept_name` (`concept_name_id`),
   CONSTRAINT `mapped_concept_name_tag` FOREIGN KEY (`concept_name_tag_id`) REFERENCES `concept_name_tag` (`concept_name_tag_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -437,9 +437,9 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_numeric`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_numeric` (
-  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `hi_absolute` double DEFAULT NULL,
   `hi_critical` double DEFAULT NULL,
   `hi_normal` double DEFAULT NULL,
@@ -447,10 +447,10 @@ CREATE TABLE `concept_numeric` (
   `low_critical` double DEFAULT NULL,
   `low_normal` double DEFAULT NULL,
   `units` varchar(50) DEFAULT NULL,
-  `precise` smallint NOT NULL DEFAULT '0',
+  `precise` smallint(6) NOT NULL DEFAULT '0',
   PRIMARY KEY (`concept_id`),
   CONSTRAINT `numeric_attributes` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -469,20 +469,20 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_proposal`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_proposal` (
-  `concept_proposal_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int DEFAULT NULL,
-  `encounter_id` int DEFAULT NULL,
+  `concept_proposal_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) DEFAULT NULL,
+  `encounter_id` int(11) DEFAULT NULL,
   `original_text` varchar(255) NOT NULL DEFAULT '',
   `final_text` varchar(255) DEFAULT NULL,
-  `obs_id` int DEFAULT NULL,
-  `obs_concept_id` int DEFAULT NULL,
+  `obs_id` int(11) DEFAULT NULL,
+  `obs_concept_id` int(11) DEFAULT NULL,
   `state` varchar(32) NOT NULL DEFAULT 'UNMAPPED' COMMENT 'Valid values are: UNMAPPED, SYNONYM, CONCEPT, REJECT',
   `comments` varchar(255) DEFAULT NULL COMMENT 'Comment from concept admin/mapper',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int DEFAULT NULL,
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
   `locale` varchar(50) NOT NULL DEFAULT '',
   `uuid` char(38) NOT NULL,
@@ -500,7 +500,7 @@ CREATE TABLE `concept_proposal` (
   CONSTRAINT `proposal_obs_id` FOREIGN KEY (`obs_id`) REFERENCES `obs` (`obs_id`),
   CONSTRAINT `user_who_changed_proposal` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_created_proposal` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -519,15 +519,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_proposal_tag_map`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_proposal_tag_map` (
-  `concept_proposal_id` int NOT NULL,
-  `concept_name_tag_id` int NOT NULL,
+  `concept_proposal_id` int(11) NOT NULL,
+  `concept_name_tag_id` int(11) NOT NULL,
   KEY `map_proposal` (`concept_proposal_id`),
   KEY `map_name_tag` (`concept_name_tag_id`),
   CONSTRAINT `mapped_concept_proposal` FOREIGN KEY (`concept_proposal_id`) REFERENCES `concept_proposal` (`concept_proposal_id`),
   CONSTRAINT `mapped_concept_proposal_tag` FOREIGN KEY (`concept_name_tag_id`) REFERENCES `concept_name_tag` (`concept_name_tag_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -545,13 +545,13 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_set_derived`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_set_derived` (
-  `concept_id` int NOT NULL DEFAULT '0',
-  `concept_set` int NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `concept_set` int(11) NOT NULL DEFAULT '0',
   `sort_weight` double DEFAULT NULL,
   PRIMARY KEY (`concept_id`,`concept_set`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -570,16 +570,16 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_source`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_source` (
-  `concept_source_id` int NOT NULL AUTO_INCREMENT,
+  `concept_source_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '',
   `description` text NOT NULL,
   `hl7_code` varchar(50) DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `retired` tinyint(1) NOT NULL,
-  `retired_by` int DEFAULT NULL,
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -590,7 +590,7 @@ CREATE TABLE `concept_source` (
   KEY `unique_hl7_code` (`hl7_code`,`retired`),
   CONSTRAINT `concept_source_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_concept_source` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -609,12 +609,12 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_state_conversion`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_state_conversion` (
-  `concept_state_conversion_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int DEFAULT '0',
-  `program_workflow_id` int DEFAULT '0',
-  `program_workflow_state_id` int DEFAULT '0',
+  `concept_state_conversion_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) DEFAULT '0',
+  `program_workflow_id` int(11) DEFAULT '0',
+  `program_workflow_state_id` int(11) DEFAULT '0',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`concept_state_conversion_id`),
   UNIQUE KEY `concept_state_conversion_uuid_index` (`uuid`),
@@ -625,7 +625,7 @@ CREATE TABLE `concept_state_conversion` (
   CONSTRAINT `concept_triggers_conversion` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `conversion_involves_workflow` FOREIGN KEY (`program_workflow_id`) REFERENCES `program_workflow` (`program_workflow_id`),
   CONSTRAINT `conversion_to_state` FOREIGN KEY (`program_workflow_state_id`) REFERENCES `program_workflow_state` (`program_workflow_state_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -643,19 +643,19 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_synonym`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_synonym` (
-  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `synonym` varchar(255) NOT NULL DEFAULT '',
   `locale` varchar(255) DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`synonym`,`concept_id`),
   KEY `synonym_for` (`concept_id`),
   KEY `synonym_creator` (`creator`),
   CONSTRAINT `synonym_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `synonym_for` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -674,20 +674,20 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `concept_word`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `concept_word` (
-  `concept_word_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int NOT NULL DEFAULT '0',
+  `concept_word_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `word` varchar(50) NOT NULL DEFAULT '',
   `locale` varchar(20) NOT NULL DEFAULT '',
-  `concept_name_id` int NOT NULL,
+  `concept_name_id` int(11) NOT NULL,
   PRIMARY KEY (`concept_word_id`),
   KEY `word_in_concept_name` (`word`),
   KEY `word_for_name` (`concept_name_id`),
   KEY `concept_word_concept_idx` (`concept_id`),
   CONSTRAINT `word_for` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `word_for_name` FOREIGN KEY (`concept_name_id`) REFERENCES `concept_name` (`concept_name_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37602 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=37602 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -707,15 +707,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `encounter_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `encounter_type` (
-  `encounter_type_id` int NOT NULL AUTO_INCREMENT,
+  `encounter_type_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '',
   `description` text,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -726,7 +726,7 @@ CREATE TABLE `encounter_type` (
   KEY `retired_status` (`retired`),
   CONSTRAINT `user_who_created_type` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_encounter_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=241 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=243 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -735,7 +735,7 @@ CREATE TABLE `encounter_type` (
 
 LOCK TABLES `encounter_type` WRITE;
 /*!40000 ALTER TABLE `encounter_type` DISABLE KEYS */;
-INSERT INTO `encounter_type` VALUES (1,'ADULTINITIAL','Outpatient Adult Initial Visit',1,'2005-02-24 00:00:00',0,NULL,NULL,NULL,'8d5b27bc-c2cc-11de-8d13-0010c6dffd0f'),(2,'ADULTRETURN','Outpatient Adult Return Visit',1,'2005-02-24 00:00:00',0,NULL,NULL,NULL,'8d5b2be0-c2cc-11de-8d13-0010c6dffd0f'),(3,'PEDSINITIAL','Outpatient Pediatric Initial Visit',1,'2005-02-24 00:00:00',0,NULL,NULL,NULL,'8d5b2dde-c2cc-11de-8d13-0010c6dffd0f'),(4,'PEDSRETURN','Outpatient Pediatric Return Visit',1,'2005-02-24 00:00:00',0,NULL,NULL,NULL,'8d5b3108-c2cc-11de-8d13-0010c6dffd0f'),(5,'REGISTRATION','Patient Registration Encounter',1,'2008-05-02 16:03:48',0,1,'2019-11-05 08:18:31','Duplicate encounter with Patient Registration','ba05bf02-8d80-11d8-abbb-0024217bb78e'),(6,'VITALS','Vitals encounter',1,'2008-05-02 16:04:05',0,NULL,NULL,NULL,'ba05bfc0-8d80-11d8-abbb-0024217bb78e'),(7,'APPOINTMENT','New appointment encounter',1,'2008-05-02 16:04:20',0,NULL,NULL,NULL,'ba05c074-8d80-11d8-abbb-0024217bb78e'),(8,'OUTPATIENT DIAGNOSIS','Outpatient diagnosis encounter',1,'2008-05-02 16:04:54',0,NULL,NULL,NULL,'ba05c128-8d80-11d8-abbb-0024217bb78e'),(9,'HIV CLINIC REGISTRATION','Initial HIV clinic registration encounter',1,'2008-06-04 09:30:14',0,NULL,NULL,NULL,'ba05c1dc-8d80-11d8-abbb-0024217bb78e'),(10,'ART_FOLLOWUP','Followup visit for ART patient',1,'2008-06-04 09:30:36',0,NULL,NULL,NULL,'ba05c29a-8d80-11d8-abbb-0024217bb78e'),(11,'PART_INITIAL','Initial Pre-ART visit',1,'2008-06-04 09:31:08',0,NULL,NULL,NULL,'ba05c358-8d80-11d8-abbb-0024217bb78e'),(12,'PART_FOLLOWUP','Followup visit for Pre-ART patient',1,'2008-06-04 09:31:29',0,NULL,NULL,NULL,'ba05c40c-8d80-11d8-abbb-0024217bb78e'),(13,'LAB','Lab test',1,'2008-06-04 09:31:43',0,NULL,NULL,NULL,'ba05c4c0-8d80-11d8-abbb-0024217bb78e'),(14,'TB_INITIAL','Initial visit for TB Patient',1,'2008-07-15 10:00:14',0,NULL,NULL,NULL,'ba05c574-8d80-11d8-abbb-0024217bb78e'),(15,'TB_FOLLOWUP','Followup visit for TB Patient',1,'2008-07-15 10:00:39',0,NULL,NULL,NULL,'ba05c628-8d80-11d8-abbb-0024217bb78e'),(17,'PATIENT EVALUATION','Patient evaluation encounter',1,'2008-09-11 13:47:09',0,NULL,NULL,NULL,'ba05c6d2-8d80-11d8-abbb-0024217bb78e'),(20,'EID_INITIAL','Initial Early Infant Diagnosis (deprecated)',1,'2008-09-12 11:29:14',0,NULL,NULL,NULL,'ba05c786-8d80-11d8-abbb-0024217bb78e'),(21,'EID_FOLLOWUP','Followup Early Infant Diagnosis (deprecated)',1,'2008-09-12 11:29:33',0,NULL,NULL,NULL,'ba05c844-8d80-11d8-abbb-0024217bb78e'),(22,'Bacteriology Result','A smear or culture lab result wrapper.  Used by th',1,'2008-09-23 23:14:52',0,NULL,NULL,NULL,'ba05c902-8d80-11d8-abbb-0024217bb78e'),(23,'DST Result','A DST result wrapper.  Used by the mdrtb module.',1,'2008-09-23 23:15:25',0,NULL,NULL,NULL,'ba05ec0c-8d80-11d8-abbb-0024217bb78e'),(24,'CHEMOTHERAPY','Chemotherapy encounter',1,'2008-09-25 10:44:22',0,NULL,NULL,NULL,'ba05ece8-8d80-11d8-abbb-0024217bb78e'),(25,'TREATMENT','Treatment encounter',1,'2008-12-18 10:23:27',0,NULL,NULL,NULL,'ba05ed9c-8d80-11d8-abbb-0024217bb78e'),(26,'REQUEST','Used for forms for making a request (ie, a concept',1,'2009-09-05 10:10:42',0,NULL,NULL,NULL,'ba05ee50-8d80-11d8-abbb-0024217bb78e'),(27,'ADMINISTRATION','An administration encounter in which the patient w',1,'2009-10-29 16:25:32',0,NULL,NULL,NULL,'ba05ef0e-8d80-11d8-abbb-0024217bb78e'),(28,'EXAMINATION','EXAMINATION',1,'2009-11-10 09:23:58',0,NULL,NULL,NULL,'ba05efcc-8d80-11d8-abbb-0024217bb78e'),(29,'DIABETES HYPERTENSION INITIAL VISIT','Diabetes hypertension initial visit',1,'2009-11-10 09:42:25',0,NULL,NULL,NULL,'ba05f080-8d80-11d8-abbb-0024217bb78e'),(30,'MEDICAL HISTORY','Medical History',1,'2009-11-10 09:51:10',0,NULL,NULL,NULL,'ba05f13e-8d80-11d8-abbb-0024217bb78e'),(31,'COMPLICATIONS','Complications encounter',1,'2009-11-10 09:52:58',0,NULL,NULL,NULL,'ba05f1e8-8d80-11d8-abbb-0024217bb78e'),(32,'LAB RESULTS','LAB RESULTS',1,'2009-11-10 09:56:16',0,NULL,NULL,NULL,'ba05f29c-8d80-11d8-abbb-0024217bb78e'),(33,'EYE COMPLICATIONS','eye complications identified in the follow up visi',1,'2009-11-27 10:59:09',0,NULL,NULL,NULL,'ba05f346-8d80-11d8-abbb-0024217bb78e'),(34,'NEURALGIC COMPLICATIONS','numbness/tingling of extremities, non-healing sore',1,'2009-11-27 11:02:01',0,NULL,NULL,NULL,'ba05f404-8d80-11d8-abbb-0024217bb78e'),(35,'CARDIOVASCULAR COMPLICATIONS','Chest pain and shortness of breath',1,'2009-11-27 11:03:40',0,NULL,NULL,NULL,'ba05f79c-8d80-11d8-abbb-0024217bb78e'),(36,'RENAL COMPLICATIONS','decrease in urine output',1,'2009-11-27 11:04:57',0,NULL,NULL,NULL,'ba05f864-8d80-11d8-abbb-0024217bb78e'),(37,'ENDOCRINE COMPLICATIONS','hyperglycemia, hypoglycemia, sweating/feeling clam',1,'2009-11-27 11:13:51',0,NULL,NULL,NULL,'ba05f918-8d80-11d8-abbb-0024217bb78e'),(38,'DIABETES TEST','Tests carried out on a diabetic patient over a per',1,'2009-11-30 12:02:52',0,NULL,NULL,NULL,'ba05f9d6-8d80-11d8-abbb-0024217bb78e'),(39,'UPDATE HIV STATUS','update hiv patient status',1,'2009-11-30 12:41:26',0,NULL,NULL,NULL,'ba05fa94-8d80-11d8-abbb-0024217bb78e'),(40,'PATIENT OUTCOME','update patient outcome',1,'2009-11-30 12:43:13',0,NULL,NULL,NULL,'ba05fb48-8d80-11d8-abbb-0024217bb78e'),(41,'DIAGNOSIS','General patient diagnosis. Will mainly be used for',1,'2009-12-01 10:23:34',0,NULL,NULL,NULL,'ba05fbfc-8d80-11d8-abbb-0024217bb78e'),(42,'ADMIT PATIENT','This is an admit patient encounter',1,'2009-12-14 08:17:10',0,NULL,NULL,NULL,'ba05fcba-8d80-11d8-abbb-0024217bb78e'),(43,'DIABETES HISTORY','Diabetes History; the first time it was diagnosed',1,'2009-12-28 14:59:56',0,NULL,NULL,NULL,'ba05fd6e-8d80-11d8-abbb-0024217bb78e'),(44,'DIABETES TREATMENTS','Diabetes Treatments',1,'2009-12-28 15:15:29',0,NULL,NULL,NULL,'ba05fe2c-8d80-11d8-abbb-0024217bb78e'),(45,'HOSPITAL ADMISSIONS','Hospital Admissions due to Diabetes',1,'2009-12-28 15:37:40',1,1,'2019-11-04 14:22:44','Duplicate encounter with Admissions','ba05fed6-8d80-11d8-abbb-0024217bb78e'),(46,'PAST DIABETES MEDICAL HISTORY','Past Diabetes medical history\r\n',1,'2009-12-28 15:39:43',0,NULL,NULL,NULL,'ba05ff94-8d80-11d8-abbb-0024217bb78e'),(47,'INITIAL DIABETES COMPLICATIONS','Initial Diabetes complications\r\n',1,'2009-12-28 15:40:20',0,NULL,NULL,NULL,'ba060048-8d80-11d8-abbb-0024217bb78e'),(48,'HYPERTENSION MANAGEMENT','Hypertension management\r\n',1,'2009-12-28 15:41:03',0,NULL,NULL,NULL,'ba060106-8d80-11d8-abbb-0024217bb78e'),(49,'GENERAL HEALTH','General health. E.g. does the patient smoke?',1,'2009-12-28 15:42:19',0,NULL,NULL,NULL,'ba060fd4-8d80-11d8-abbb-0024217bb78e'),(51,'HIV RECEPTION','An HIV reception encounter, for program enrollment',1,'2010-01-10 23:32:11',0,NULL,NULL,NULL,'ba06109c-8d80-11d8-abbb-0024217bb78e'),(52,'HIV STAGING','Staging for a HIV patient done by a Clinician. ',1,'2010-01-10 23:38:23',0,NULL,NULL,NULL,'ba061150-8d80-11d8-abbb-0024217bb78e'),(53,'HIV CLINIC CONSULTATION','An HIV clinic consultation session with the nurse ',1,'2010-01-10 23:38:55',0,NULL,NULL,NULL,'ba06120e-8d80-11d8-abbb-0024217bb78e'),(54,'DISPENSING','A drug dispensing encounter',1,'2010-01-10 23:39:31',0,NULL,NULL,NULL,'ba0612c2-8d80-11d8-abbb-0024217bb78e'),(55,'LABEL SPECIMENS','Used to create observations about samples taken fr',23,'2010-02-06 11:24:23',0,NULL,NULL,NULL,'ba061628-8d80-11d8-abbb-0024217bb78e'),(56,'INFLUENZA DATA','For use in influenza data capture in Outpatient sy',1,'2002-01-31 11:59:18',0,NULL,NULL,NULL,'ba0616e6-8d80-11d8-abbb-0024217bb78e'),(57,'LAB ORDERS','Lab Test order',1,'2010-08-23 09:50:40',0,NULL,NULL,NULL,'ba0617ae-8d80-11d8-abbb-0024217bb78e'),(58,'CHRONIC CONDITIONS','Chronic conditions encounter type for influenza da',1,'2010-08-23 09:51:44',0,NULL,NULL,NULL,'ba061858-8d80-11d8-abbb-0024217bb78e'),(59,'MATERNITY DIAGNOSIS','Maternity diagnosis',1,'2010-09-03 10:09:26',0,NULL,NULL,NULL,'ba061916-8d80-11d8-abbb-0024217bb78e'),(61,'MARTENITY VISIT','Client Observations for maternity.',1,'2010-09-09 14:45:30',0,NULL,NULL,NULL,'ba0619c0-8d80-11d8-abbb-0024217bb78e'),(62,'IS PATIENT REFERRED?','Captures if a patient was referred in from another',1,'2002-04-10 09:30:26',0,NULL,NULL,NULL,'ba061a7e-8d80-11d8-abbb-0024217bb78e'),(63,'REFER PATIENT OUT?','Refer patient to another facility',1,'2010-11-02 16:39:32',0,NULL,NULL,NULL,'ba061b32-8d80-11d8-abbb-0024217bb78e'),(64,'ACTUAL DIAGNOSIS','Maternity actual diagnosis when sending client hom',1,'2010-11-03 16:18:23',0,NULL,NULL,NULL,'ba061bf0-8d80-11d8-abbb-0024217bb78e'),(65,'DIABETES INITIAL QUESTIONS','Questions asked to diabetes patients on registrati',1,'2011-01-06 14:48:21',0,NULL,NULL,NULL,'ba061ca4-8d80-11d8-abbb-0024217bb78e'),(66,'TRANSFER OUT','Indicate a full transfer out from one locations (d',1,'2011-01-11 13:37:39',0,NULL,NULL,NULL,'ba061d62-8d80-11d8-abbb-0024217bb78e'),(67,'CHRONIC CARE VISIT','Intake for Chronic Care patients',1,'2011-01-12 11:22:43',0,NULL,NULL,NULL,'ba061e16-8d80-11d8-abbb-0024217bb78e'),(68,'ART ADHERENCE','Capturing the adherence by the Nurse.',1,'2011-01-14 13:59:01',0,NULL,NULL,NULL,'ba061ed4-8d80-11d8-abbb-0024217bb78e'),(69,'CHRONIC_CARE_FOLLOWUP','Simple followup for chronic care appointments',1,'2011-02-10 22:12:07',0,NULL,NULL,NULL,'ba061f88-8d80-11d8-abbb-0024217bb78e'),(70,'SPUTUM SUBMISSION','An encounter at the TB sputum submission desk',1,'2011-02-21 14:24:48',0,NULL,NULL,NULL,'ba062302-8d80-11d8-abbb-0024217bb78e'),(71,'TIPS AND REMINDERS','An encounter for patient\'s enrolment for tips and ',1,'2011-04-01 10:34:10',0,NULL,NULL,NULL,'ba0623c0-8d80-11d8-abbb-0024217bb78e'),(72,'MATERNAL HEALTH SYMPTOMS','Maternal health symptoms',1,'2011-04-05 14:48:54',0,NULL,NULL,NULL,'ba062474-8d80-11d8-abbb-0024217bb78e'),(73,'CHILD HEALTH SYMPTOMS','Child health symptoms',1,'2011-04-07 15:46:53',0,NULL,NULL,NULL,'ba062532-8d80-11d8-abbb-0024217bb78e'),(74,'DEFAULTER TRACING START','Indicate the search of a defaulter tracing action',1,'2011-04-25 14:02:59',0,NULL,NULL,NULL,'ba0625e6-8d80-11d8-abbb-0024217bb78e'),(75,'DEFAULTER TRACING STOP','Captures the result of a defaulter tracing task',1,'2011-04-25 14:03:44',0,NULL,NULL,NULL,'ba0626a4-8d80-11d8-abbb-0024217bb78e'),(76,'UPDATE PREGNANCY STATUS','Update pregnancy status',1,'2011-05-23 13:15:40',0,NULL,NULL,NULL,'ba062758-8d80-11d8-abbb-0024217bb78e'),(77,'TB RECEPTION','A TB reception encounter, for program enrollment',1,'2011-06-02 09:15:17',0,NULL,NULL,NULL,'ba06373e-8d80-11d8-abbb-0024217bb78e'),(78,'TB REGISTRATION','A TB registration encounter',1,'2011-07-05 08:15:56',0,NULL,NULL,NULL,'ba063806-8d80-11d8-abbb-0024217bb78e'),(79,'ART Enrollment','Enrollment into ART program',1,'2011-07-14 10:46:11',0,NULL,NULL,NULL,'ba063b76-8d80-11d8-abbb-0024217bb78e'),(80,'OUTPATIENT RECEPTION','This occurs when a patient visits the Out-Patient ',1,'2011-07-25 14:25:38',0,NULL,NULL,NULL,'ba063c34-8d80-11d8-abbb-0024217bb78e'),(81,'CURRENT PREGNANCY','All issues pertaining to the current pregnancy in ',1,'2011-07-26 11:53:42',0,NULL,NULL,NULL,'ba063ce8-8d80-11d8-abbb-0024217bb78e'),(82,'OBSTETRIC HISTORY','Maternity encounter type',1,'2011-07-26 15:01:03',0,NULL,NULL,NULL,'ba063da6-8d80-11d8-abbb-0024217bb78e'),(83,'SURGICAL HISTORY','Ante-Natal clinic encounter type for a history of ',1,'2011-08-19 17:10:49',0,NULL,NULL,NULL,'ba063e50-8d80-11d8-abbb-0024217bb78e'),(84,'SOCIAL HISTORY','ANC encounter type',1,'2011-08-19 17:11:20',0,NULL,NULL,NULL,'ba063f0e-8d80-11d8-abbb-0024217bb78e'),(85,'TB VISIT','TB visit encounter',1,'2011-08-21 22:22:03',0,NULL,NULL,NULL,'ba063fb8-8d80-11d8-abbb-0024217bb78e'),(86,'TB CLINIC VISIT','TB clinic visit encounter',1,'2011-08-21 22:22:25',0,NULL,NULL,NULL,'ba064328-8d80-11d8-abbb-0024217bb78e'),(87,'TB ADHERENCE','Capturing the adherence by the Nurse/Clinician/TB ',1,'2011-08-24 14:10:33',0,NULL,NULL,NULL,'ba0643dc-8d80-11d8-abbb-0024217bb78e'),(88,'GIVE LAB RESULTS','An encounter type where care giver gives lab resul',1,'2011-09-03 19:48:53',0,NULL,NULL,NULL,'ba06449a-8d80-11d8-abbb-0024217bb78e'),(90,'BABY DELIVERY','This encounter occurs when a mother delivers a bab',1,'2011-09-05 19:42:35',0,NULL,NULL,NULL,'ba06454e-8d80-11d8-abbb-0024217bb78e'),(92,'EXPOSED_CHILD_INITIAL','HCC Initial for Exposed Child',1,'2011-09-07 14:57:56',0,NULL,NULL,NULL,'ba06460c-8d80-11d8-abbb-0024217bb78e'),(93,'EXPOSED_CHILD_FOLLOWUP','HCC Followup for Exposed Child',1,'2011-09-07 14:58:22',0,NULL,NULL,NULL,'ba064986-8d80-11d8-abbb-0024217bb78e'),(94,'SOURCE OF REFERRAL','The source of referral for a patient',1,'2011-09-13 16:10:16',0,NULL,NULL,NULL,'ba064cc4-8d80-11d8-abbb-0024217bb78e'),(95,'MATERNITY EXAMINATION','Maternity visit either to the nurse or clinician.',1,'2011-09-23 10:26:35',0,NULL,NULL,NULL,'ba064df0-8d80-11d8-abbb-0024217bb78e'),(97,'PATIENT ADMISSIONS','Allows management of patient admission details',1,'2011-09-27 10:28:35',0,NULL,NULL,NULL,'ba0651ec-8d80-11d8-abbb-0024217bb78e'),(98,'ANC EXAMINATION','ANC examination visit either to the nurse or clini',1,'2011-09-27 12:43:41',0,NULL,NULL,NULL,'ba06530e-8d80-11d8-abbb-0024217bb78e'),(99,'PROCEDURES DONE','Procedures done on a patient',1,'2011-10-14 12:13:18',0,NULL,NULL,NULL,'ba0656ec-8d80-11d8-abbb-0024217bb78e'),(100,'ADMISSION DIAGNOSIS','Diagnosis at admission',1,'2011-10-19 17:00:45',0,NULL,NULL,NULL,'ba065804-8d80-11d8-abbb-0024217bb78e'),(101,'DISCHARGE DIAGNOSIS','Diagnosis at discharge',1,'2011-10-19 17:01:12',0,NULL,NULL,NULL,'ba065bd8-8d80-11d8-abbb-0024217bb78e'),(102,'VAGINAL EXAMINATION','Maternity examination type',1,'2011-12-06 18:19:20',0,NULL,NULL,NULL,'ba065cdc-8d80-11d8-abbb-0024217bb78e'),(103,'PHYSICAL EXAMINATION','Maternity examination type',1,'2011-12-06 18:19:56',0,NULL,NULL,NULL,'ba0660c4-8d80-11d8-abbb-0024217bb78e'),(104,'PATIENT REGISTRATION','First encounter with patient at registration desk',1,'2011-12-08 16:22:01',0,NULL,NULL,NULL,'ba066498-8d80-11d8-abbb-0024217bb78e'),(105,'NOTES','Collect notes during a patient encounter',1,'2012-01-10 14:46:14',0,NULL,NULL,NULL,'ba067294-8d80-11d8-abbb-0024217bb78e'),(106,'DISCHARGE PATIENT','Discharging a patient',1,'2012-01-10 14:47:35',0,NULL,NULL,NULL,'ba06820c-8d80-11d8-abbb-0024217bb78e'),(107,'ANC VISIT TYPE','Type of ANC visit a client is making.',1,'2012-02-02 09:55:28',0,NULL,NULL,NULL,'ba06834c-8d80-11d8-abbb-0024217bb78e'),(111,'PREGNANCY STATUS','MNCH pregnancy status encounter',1,'2012-02-03 09:45:04',0,NULL,NULL,NULL,'ba0684a0-8d80-11d8-abbb-0024217bb78e'),(112,'FILM','Radiology film used in xray\r\n',1,'2012-02-03 10:50:09',0,NULL,NULL,NULL,'ba0685e0-8d80-11d8-abbb-0024217bb78e'),(113,'SCREENING','A frame for placing various screening observation ',1,'2012-05-01 16:51:15',0,NULL,NULL,NULL,'ba0687e8-8d80-11d8-abbb-0024217bb78e'),(114,'REFERRAL','Captures referral information when referring a pat',1,'2012-05-03 09:54:24',0,NULL,NULL,NULL,'ba068946-8d80-11d8-abbb-0024217bb78e'),(115,'CURRENT BBA DELIVERY','Current born before arrival delivery (Maternity)',1,'2012-06-05 14:52:25',0,NULL,NULL,NULL,'ba068a9a-8d80-11d8-abbb-0024217bb78e'),(116,'ABDOMINAL EXAMINATION','Maternity',1,'2012-06-05 14:52:58',0,NULL,NULL,NULL,'ba068bee-8d80-11d8-abbb-0024217bb78e'),(117,'PHYSICAL EXAMINATION BABY','Maternity',1,'2012-06-05 14:53:40',0,NULL,NULL,NULL,'ba068d2e-8d80-11d8-abbb-0024217bb78e'),(119,'EXIT FROM HIV CARE','Reason for ending HIV program',1,'2012-07-27 17:14:39',0,NULL,NULL,NULL,'ba068e64-8d80-11d8-abbb-0024217bb78e'),(121,'RADIOLOGY EXAMINATION','Radiology Examination',1,'2012-08-15 17:36:28',0,NULL,NULL,NULL,'ba068fb8-8d80-11d8-abbb-0024217bb78e'),(122,'PRESENTING COMPLAINTS','Presenting complaint from a patient',1,'2012-09-04 18:34:14',0,NULL,NULL,NULL,'ba069102-8d80-11d8-abbb-0024217bb78e'),(123,'SOCIAL DETERMINANTS','Social determinants for a patient',1,'2012-09-10 14:42:37',0,NULL,NULL,NULL,'ba069256-8d80-11d8-abbb-0024217bb78e'),(124,'REFERRAL DIAGNOSIS','Diagnosis made during a referral',1,'2012-10-02 09:59:03',0,NULL,NULL,NULL,'ba0693a0-8d80-11d8-abbb-0024217bb78e'),(125,'INPATIENT DIAGNOSIS','Diagnosis made for inpatients',1,'2012-10-02 11:48:54',0,NULL,NULL,NULL,'ba0694f4-8d80-11d8-abbb-0024217bb78e'),(126,'PATIENT SENT HOME','Patient not admitted but given treatment and sent ',1,'2002-02-14 15:41:38',1,1,'2019-11-04 14:26:32','This is an outcome not an encounter','ba06963e-8d80-11d8-abbb-0024217bb78e'),(127,'UPDATE BABY OUTCOME','For Maternity systems, a special encounter type fo',1,'2013-01-08 16:42:41',0,NULL,NULL,NULL,'ba069792-8d80-11d8-abbb-0024217bb78e'),(128,'KANGAROO REVIEW VISIT','Kangaroo review visit encounter',1,'2013-01-10 10:32:08',0,NULL,NULL,NULL,'ba0698dc-8d80-11d8-abbb-0024217bb78e'),(129,'PMTCT HISTORY','Maternity PMTCT history encounter',1,'2013-01-10 15:09:41',0,NULL,NULL,NULL,'ba069a26-8d80-11d8-abbb-0024217bb78e'),(130,'HIV STATUS AT ENROLLMENT','Patient HIV status at Early Infant Diagnosis enrol',1,'2013-01-10 15:42:14',0,NULL,NULL,NULL,'ba069b7a-8d80-11d8-abbb-0024217bb78e'),(131,'RAPID ANTIBODY TEST','Rapid antibody test encounter',1,'2013-01-10 16:00:05',0,NULL,NULL,NULL,'ba069cc4-8d80-11d8-abbb-0024217bb78e'),(132,'DNA-PCR TEST','DNA-PCR testing',1,'2013-01-10 16:00:48',0,NULL,NULL,NULL,'ba069e0e-8d80-11d8-abbb-0024217bb78e'),(133,'EID VISIT','Early Infant Diagnosis visit',1,'2013-01-10 17:02:18',0,NULL,NULL,NULL,'ba069ed6-8d80-11d8-abbb-0024217bb78e'),(134,'IMMUNIZATION RECORD','Under 5 Immunization record encounter',1,'2013-01-11 11:16:08',0,NULL,NULL,NULL,'ba069f94-8d80-11d8-abbb-0024217bb78e'),(135,'VITAMIN A SUPPLEMENTATION AND DE-WORMING SCHEDULE','Under 5 encounter',1,'2013-01-11 11:17:44',0,NULL,NULL,NULL,'ba06a05c-8d80-11d8-abbb-0024217bb78e'),(136,'REASON FOR SPECIAL CARE','Under 5 encounter',1,'2013-01-11 11:18:31',0,NULL,NULL,NULL,'ba06a12e-8d80-11d8-abbb-0024217bb78e'),(137,'INITIAL NEW-BORN RECORD','Under 5 encounter',1,'2013-01-11 11:19:00',0,NULL,NULL,NULL,'ba06afe8-8d80-11d8-abbb-0024217bb78e'),(138,'ASSESSMENT AT ONE WEEK POSTNATAL CHECK','Under 5 encounter',1,'2013-01-11 11:20:33',0,NULL,NULL,NULL,'ba06b0b0-8d80-11d8-abbb-0024217bb78e'),(139,'FAMILY MEDICAL HISTORY','Under 5 encounter',1,'2013-01-11 11:21:21',0,NULL,NULL,NULL,'ba06b178-8d80-11d8-abbb-0024217bb78e'),(140,'UNDER 5 VISIT','Under 5 encounter',1,'2013-01-11 11:22:24',0,NULL,NULL,NULL,'ba06b240-8d80-11d8-abbb-0024217bb78e'),(141,'ASSESSMENT','Hypertension Assessment',1,'2013-05-20 11:05:36',0,NULL,NULL,NULL,'ba06b2fe-8d80-11d8-abbb-0024217bb78e'),(142,'ASTHMA MEASURE','Assessment of patient\'s asthma',1,'2013-05-28 12:42:33',0,NULL,NULL,NULL,'ba06b3bc-8d80-11d8-abbb-0024217bb78e'),(143,'DRUGS GIVEN','Used for systems that are not point of care to rec',1,'2002-10-08 22:43:12',0,NULL,NULL,NULL,'ba06b484-8d80-11d8-abbb-0024217bb78e'),(144,'EPILEPSY CLINIC VISIT','Encounter for managing epilepsy clinic visits',1,'2002-11-20 19:09:00',0,NULL,NULL,NULL,'ba06b54c-8d80-11d8-abbb-0024217bb78e'),(145,'Referral Consent Confirmation','HTC Encounters',1,'2003-11-27 16:53:57',0,NULL,NULL,NULL,'ba06b61e-8d80-11d8-abbb-0024217bb78e'),(146,'HIV Testing','HTC Encounters',1,'2003-11-27 16:55:54',0,NULL,NULL,NULL,'ba06b6e6-8d80-11d8-abbb-0024217bb78e'),(147,'IN WAITING','HTC Encounters',1,'2003-11-27 16:57:55',0,NULL,NULL,NULL,'ba06b7a4-8d80-11d8-abbb-0024217bb78e'),(148,'IN SESSION','HTC Encounters',1,'2003-11-27 17:00:00',0,NULL,NULL,NULL,'ba06b862-8d80-11d8-abbb-0024217bb78e'),(149,'Counseling','HTC Encounters',1,'2003-11-27 17:01:09',0,NULL,NULL,NULL,'ba06b920-8d80-11d8-abbb-0024217bb78e'),(150,'BIRTH PLAN','This encounter specificies where and when the baby',1,'2004-01-07 16:30:31',0,NULL,NULL,NULL,'ba06b9d4-8d80-11d8-abbb-0024217bb78e'),(151,'ANC VISIT','Thise encounter records if a pregnant woman has at',1,'2004-01-07 16:33:00',0,NULL,NULL,NULL,'ba06baa6-8d80-11d8-abbb-0024217bb78e'),(152,'HSA VISIT','HSA visiting a patient encounter',1,'2004-01-07 16:38:34',0,NULL,NULL,NULL,'ba06bb6e-8d80-11d8-abbb-0024217bb78e'),(153,'QUALITY CONTROL TEST','For QC tests, mainly HTC test kit checks',1,'2004-01-17 15:47:56',0,NULL,NULL,NULL,'ba06bc36-8d80-11d8-abbb-0024217bb78e'),(154,'CERVICAL CANCER SCREENING','This is for managing cervical cancer patients - women',1,'2016-07-26 10:04:00',0,NULL,NULL,NULL,'82842828-5307-11e6-bc96-3863bba995db'),(155,'CERVICAL CANCER SCREENING','This is for managing cervical cancer patients - women',1,'2016-08-09 15:16:10',1,1,'2019-11-04 14:17:45','Duplicate Encounter','b9383624-4623-4cd1-bf5f-67accdbf709c'),(156,'FAST TRACK ASSESMENT','Fast Track Assessment Encounter ',1,'2016-08-22 12:31:39',0,NULL,NULL,NULL,'41877df2-896f-4a0d-b590-8b10e59c1d7c'),(157,'GENITAL EXAMINATION','VMMC encounter',1,'2017-11-09 11:33:59',0,NULL,NULL,NULL,'7d616e73-843b-4f34-9264-08acbdc22173'),(158,'CIRCUMCISION','VMMC encounter',1,'2017-11-09 11:36:11',0,NULL,NULL,NULL,'14392b18-e45b-4db7-9af0-709616d33796'),(159,'POST-OP REVIEW','VMMC encounter',1,'2017-11-09 11:37:17',0,NULL,NULL,NULL,'de6496e8-c980-4ae7-bce0-327a4c3c45cf'),(160,'FOLLOW UP','VMMC encounter',1,'2017-12-13 14:24:02',0,NULL,NULL,NULL,'19ee377a-e972-47d0-a111-281ed4e192c7'),(161,'SUMMARY ASSESSMENT','Assessment summary at each pre OP visit',1,'2018-02-19 11:11:18',0,NULL,NULL,NULL,'e5fec87c-9bea-42bb-a276-0469addccf99'),(162,'REGISTRATION CONSENT','Patient registration consent into a program',1,'2019-05-15 14:11:36',0,NULL,NULL,NULL,'50489d4c-3935-4277-9739-51df6d0fa338'),(163,'HTS Visit','Encounter for a regular HTS Visit',1,'2019-06-10 08:55:51',0,NULL,NULL,NULL,'4e7bfff4-3e00-40de-b0ba-0567eb4c9baf'),(164,'Confirmatory HIV Testing','Encounter for Confirmatory HIV Testing',1,'2019-06-10 08:57:39',0,NULL,NULL,NULL,'11125196-b7db-4d51-abec-fb74dc2b39a6'),(165,'POST-OP VITALS','VMMC Vitals entered during post-op review encounter',1,'2019-06-19 08:57:11',0,NULL,NULL,NULL,'30e3d37f-1545-45e1-b44a-c0a2e1a87202'),(166,'SECOND POST-OP REVIEW','VMMC second post-op review encounter',1,'2019-09-20 14:28:21',0,NULL,NULL,NULL,'b84dbf27-19d0-4ae4-8581-854b1c83e60e'),(167,'THIRD POST-OP REVIEW','VMMC third post op review after completion of second post op review encounter',1,'2019-09-20 14:30:01',0,NULL,NULL,NULL,'ea725a27-972f-4bf9-b419-01f87566d832'),(168,'General Consultation','An encounter that acts as an entry for the patients before the actual diagnosis',1,'2019-11-05 08:37:37',0,NULL,NULL,NULL,'be9daed0-47fb-4b1c-991c-901103da9a22'),(169,'Obstetrics and Gynecology','OB/GYN encounter',1,'2019-11-05 08:43:08',0,NULL,NULL,NULL,'93e84b4c-a962-4ea5-84a9-6487218e6e44'),(170,'ORTHOPEDIC VISIT','Encounter for patients accessing bones services',1,'2019-11-05 09:25:08',0,NULL,NULL,NULL,'e9e62819-d8ae-4137-bedb-e94b2c0ae186'),(171,'PRESCRIPTION','Patient Prescriptions',1,'2019-11-05 09:27:51',0,NULL,NULL,NULL,'88564b30-abaf-4744-8ea6-6e1c15465d9e'),(172,'SKIN VISIT','Patient accessing skin care service',1,'2019-11-05 09:28:29',0,NULL,NULL,NULL,'2d3dfd41-25ed-494f-b062-ad5eff4b0803'),(173,'INTENSIVE CARE UNIT','ICU',1,'2019-11-05 09:30:53',0,NULL,NULL,NULL,'c73c649d-52a6-48d2-a9be-dc66ce461d92'),(174,'DENTAL VISIT','Patient Dental visit',1,'2019-11-05 09:31:48',0,NULL,NULL,NULL,'6ce47917-1705-4b9d-8aea-c53e6e092e75'),(175,'ART VISIT','Client ART Visit',1,'2019-11-05 09:32:19',0,NULL,NULL,NULL,'3c50a67d-3c8c-4df0-95bc-d235aad959df'),(176,'VMMC VISIT','Male client accessing VMMC services',1,'2019-11-05 09:33:26',0,NULL,NULL,NULL,'c9015286-aacd-4046-9705-7a41e0c282ef'),(177,'UNDER_FIVE VISIT','Baby Under 5 visit',1,'2019-11-05 09:35:01',0,NULL,NULL,NULL,'3875ed80-fb39-4d56-b978-6ba26de6d230'),(178,'EXIT FROM CARE','patient exit from care',1,'2002-04-10 08:35:48',0,NULL,NULL,NULL,'656a424f-2931-4d3a-8c2f-6694b673bfb3'),(179,'REGIMEN INITIAL','Encounter for new regimens',1,'2002-05-30 04:10:20',0,NULL,NULL,NULL,'5b71cc70-02a4-47d1-8197-3d4ac5ac5b21'),(180,'REGIMEN CHANGE','Regimen change for TB MDR patients',1,'2002-06-09 23:04:44',0,NULL,NULL,NULL,'4380dc7a-3926-4b5d-8021-5d553b79bee0'),(181,'CxCa test',NULL,1,'2021-03-26 10:30:06',0,NULL,NULL,NULL,'b922377f-7a84-40d8-844e-cd8d9398e54e'),(182,'CxCa treatment',NULL,1,'2021-03-26 10:30:06',0,NULL,NULL,NULL,'590dab6e-c90f-4141-9939-650d924a5990'),(183,'CxCa reception',NULL,1,'2021-03-26 10:30:06',0,NULL,NULL,NULL,'39e7703d-e723-4458-b4e2-9bb4cf722bd0'),(184,'CxCa referral feedback',NULL,1,'2021-03-26 10:30:06',0,NULL,NULL,NULL,'a65a1232-d406-47b1-a248-15e3ff7dbee6'),(185,'CxCa results',NULL,1,'2021-03-26 10:30:06',0,NULL,NULL,NULL,'9d1475d4-5ac0-4d40-8a16-d31762365250'),(186,'CxCa screening result',NULL,1,'2021-03-26 10:30:06',0,NULL,NULL,NULL,'5e9f206a-082a-4525-b7a5-31024d98bb95'),(187,'CxCa test',NULL,1,'2021-03-27 09:39:57',0,NULL,NULL,NULL,'5123a5ec-0abb-436b-b8cd-1eff9893e60d'),(188,'CxCa treatment',NULL,1,'2021-03-27 09:39:57',0,NULL,NULL,NULL,'b706da06-88d8-46c8-81d6-2b8eb24c363c'),(189,'CxCa reception',NULL,1,'2021-03-27 09:39:57',0,NULL,NULL,NULL,'bf4386d7-8de0-458c-990f-6c71774214bf'),(190,'CxCa referral feedback',NULL,1,'2021-03-27 09:39:57',1,NULL,NULL,NULL,'0bf0b369-edfc-4fe0-aaf5-28c84cf73af1'),(191,'CxCa results',NULL,1,'2021-03-27 09:39:57',0,NULL,NULL,NULL,'010c23cb-17ad-4521-a30c-3e08cb03fc2d'),(192,'CxCa screening result',NULL,1,'2021-03-27 09:39:57',0,NULL,NULL,NULL,'b70cdded-5b40-44e1-ac45-43a14ce488ce'),(193,'TRIAGE PRESENTING COMPLAINTS',NULL,1,'2022-03-21 11:12:00',0,NULL,NULL,NULL,'0f3efa73-a8f7-11ec-929a-0242ac110003'),(194,'Partner Reception','HTS Partner Reception',1,'2022-08-29 06:59:24',0,NULL,NULL,NULL,'1d64e13b-2768-11ed-a571-0242ac110003'),(195,'HTS Contact','HTS Contact',1,'2022-08-29 06:59:24',0,NULL,NULL,NULL,'1d64e34a-2768-11ed-a571-0242ac110003'),(196,'ITEMS GIVEN','ITEMS GIVEN',1,'2022-11-15 07:50:22',0,NULL,NULL,NULL,'2855262b-64ba-11ed-b200-0242ac110003'),(197,'Testing','HTS Testing',1,'2022-11-29 09:35:40',0,NULL,NULL,NULL,'30612354-6fc9-11ed-9ffa-0242ac110003'),(198,'RECENCY','recency testing for HTS',1,'2022-11-29 09:35:45',0,NULL,NULL,NULL,'31612354-6fc9-11ed-9ffa-0242ac110003'),(199,'DBS ORDER','dbs order for HTS',1,'2023-04-17 00:00:00',0,NULL,NULL,NULL,'31612354-6fc9-11ed-9ffa-0242ac110011'),(200,'SYMPTOM SCREENING','AHD screening encounter',1,'2024-05-02 10:40:13',0,NULL,NULL,NULL,'52253a1f-0870-11ef-86fd-005056ad6577'),(201,'AHD SCREENING','AHD screening encounter',1,'2024-05-02 10:41:32',0,NULL,NULL,NULL,'93a9f20a-0870-11ef-86fd-005056ad6577'),(202,'AHD LAB RESULTS','AHD LAB RESULTS',1,'2024-05-22 08:45:32',0,NULL,NULL,NULL,'a64d51d0-1817-11ef-b0b6-005056ad6577'),(203,'IMMUNIZATION FOLLOWUP','followup of immunization patients',1,'2024-06-27 16:59:22',0,NULL,NULL,NULL,'ca1a745a-3a93-466b-852e-ef3f7bcfbcf8'),(204,'PNC VISIT','Postnatal care visit',1,'2024-08-29 10:09:05',0,NULL,NULL,NULL,'209cd2b9-5252-4068-bceb-3f7ce237339e'),(205,'Labour and delivery visit','Labour and delivery visit encounter',1,'2024-08-29 10:10:28',0,NULL,NULL,NULL,'726c684e-1f66-4712-96c6-05d7e060e3b0'),(206,'QUICK CHECK','Encounter for checking the patient',1,'2024-08-29 10:18:05',0,NULL,NULL,NULL,'bb92e4ad-95e3-4cc5-9b83-8cd08423a8aa'),(207,'MEDICATIONS','Encounter for ANC medications',1,'2024-08-29 10:20:23',0,NULL,NULL,NULL,'270f7f94-0766-4b53-ab8c-e5dcd8790235'),(208,'PAST MEDICAL HISTORY','MNH encounter for medical and surgical history',1,'2024-08-29 10:27:45',0,NULL,NULL,NULL,'a5c7254c-8976-46ce-a191-52585b6c7b99'),(209,'WOMAN BEHAVIOUR','Encounter for woman behaviour',1,'2024-08-29 10:29:37',0,NULL,NULL,NULL,'44228526-3dd5-46f8-8e0a-525a0abbab5c'),(210,'PRESENTING SIGNS FOR IPV','Encounter for signs for IPV',1,'2024-08-29 10:36:39',0,NULL,NULL,NULL,'05972c4c-4b61-4990-a536-8472178ae5ef'),(211,'POSTNATAL DETAILS','Encounter for postnatal details',1,'2024-08-29 11:35:52',0,NULL,NULL,NULL,'fdc136a5-30cc-43f8-864a-24db2799d268'),(212,'ROUTINE WARD MONITORING AND MANAGEMENT','Encounter routine ward monitoring and management for PNC',1,'2024-08-29 11:37:39',0,NULL,NULL,NULL,'b2ce99bb-f9af-4119-ab0d-dc9e64242385'),(213,'DISCHARGE WOMAN','Encounter for discharging woman in PNC program',1,'2024-08-29 11:39:14',0,NULL,NULL,NULL,'36fe5308-3721-4784-9ddf-20562b6215c3'),(214,'END PNC PROGRAM','Encounter to close PNC program',1,'2024-08-29 11:40:42',0,NULL,NULL,NULL,'3f8aba80-c942-4b5f-9e74-9f9984817a62'),(215,'Postnatal Details','Postnatal details for PNC programs',1,'2024-09-10 12:43:45',1,1,'2024-09-10 12:45:11','Duplicates','e2181754-e7f8-4c05-bf34-9b20365866de'),(216,'POSTNATAL WARD STAY MOTHER','Postnatal ward stay mother encounter for PNC\r\n',1,'2024-09-10 12:46:12',0,NULL,NULL,NULL,'496ec3f3-21e3-4c0e-83d2-9b413cd9a88b'),(217,'POSTNATAL WARD STAY BABY','Postnatal ward stay for baby',1,'2024-09-10 12:53:15',0,NULL,NULL,NULL,'76845932-60a2-4a34-bb07-6a9b4daaeb0a'),(218,'POSTNATAL VISIT','Postnatal visit for encounter type',1,'2024-09-10 12:56:57',0,NULL,NULL,NULL,'f9c8927d-3362-4f82-b204-67940df11ab9'),(219,'LABOUR ASSESSMENT','Labour assessment encounter type',1,'2024-09-10 13:08:54',0,NULL,NULL,NULL,'e2582f60-f69e-4339-9b15-5d84a915457f'),(220,'Delivery Details','Delivery details for PNC encounter type',1,'2024-09-10 13:14:55',0,NULL,NULL,NULL,'e177fa70-a046-4170-88e8-aaf78d5a804e'),(221,'IMMEDIATE POSTNATAL CHECKS','immediate postnatal check encounter type',1,'2024-09-10 13:25:36',0,NULL,NULL,NULL,'8467d093-95fa-429a-9dcf-3987e4894b40'),(222,'Continous Monitoring','Continuous monitoring encounter type for PNC',1,'2024-09-10 13:27:12',0,NULL,NULL,NULL,'fe8a134d-80df-46af-badb-0b6e324be18c'),(223,'END LABOUR PROGRAM','Encounter type for PNC end labour program',1,'2024-09-10 13:31:58',0,NULL,NULL,NULL,'99a1b48d-2986-4da6-82ec-3b9e74f4ebac'),(224,'VISIT','Visit type',1,'2025-11-17 09:17:30',0,NULL,NULL,NULL,'346eb15b-ac5d-4895-b732-aff26fb417b7'),(225,'AHD PRESENTING COMPLAINTS','Presenting complaint from a patient',1,'2025-11-17 09:19:56',0,NULL,NULL,NULL,'2464561c-f79a-40cc-a1ad-06af6c814ca4'),(226,'AHD PAST MEDICAL HISTORY','past medical history for AHD patient',1,'2025-11-17 09:21:35',0,NULL,NULL,NULL,'057a2abf-71f2-4249-8711-3d4c9d3255c3'),(227,'AHD LAB ORDERS','Lab test order for AHD',1,'2025-11-17 09:25:31',0,NULL,NULL,NULL,'aeb71fff-d0ce-4e66-8118-a2d177a4040a'),(228,'AHD HIV STAGING','AHD HIV STAGING',1,'2025-11-17 09:30:39',0,NULL,NULL,NULL,'ad8f01ef-7166-427e-9841-c3ec445b6316'),(229,'NEONATAL SYSTEMIC EXAMINATION','neonatal systemic examination',1,'2025-12-17 10:11:43',0,NULL,NULL,NULL,'7792c1d9-1f80-4125-888d-becae5b1ed2e'),(230,'NEONATAL SIGNS SYMPTOMS','neonatal',1,'2025-12-17 10:12:08',0,NULL,NULL,NULL,'47fe37c0-09eb-4381-a721-2cb943c5cf2e'),(231,'NEONATAL REVIEW OF SYSTEMS','neonatal',1,'2025-12-17 10:13:04',0,NULL,NULL,NULL,'b152a264-3237-4023-b050-a0fc8c68eda9'),(232,'NEONATAL EMERGENCY TRIAGE','neonatal',1,'2025-12-17 10:13:28',0,NULL,NULL,NULL,'5c0d30e7-21f7-4bb3-9c89-3bd9d482310c'),(233,'NEONATAL TRIAGE','neonatal',1,'2025-12-17 10:13:51',0,NULL,NULL,NULL,'adddc90f-d59e-488a-8c92-d6d11ce30292'),(234,'NEONATAL ADMISSION OUTCOMES','neonatal',1,'2025-12-17 10:14:33',0,NULL,NULL,NULL,'d1fa70b5-34f6-438b-b824-62e5e03e7ba5'),(235,'NEONATAL DISCHARGE','neonatal',1,'2025-12-17 10:21:01',0,NULL,NULL,NULL,'7b2ff44d-bd30-406a-a69a-238be3fc4e0a'),(236,'NEONATAL ENROLMENT','neonatal',1,'2025-12-17 10:21:27',0,NULL,NULL,NULL,'6f7b5498-aa4e-4b80-92bd-5d68be6e2f88'),(237,'IMMEDIATE POSTNATAL CHECKS CHILD','PNC',1,'2026-02-11 15:24:22',0,NULL,NULL,NULL,'e7fa1bd7-e202-4a04-9d1f-b61a8dba1a6f'),(238,'KNOWN MEDICAL CONDITION','medical',1,'2026-02-11 15:25:13',0,NULL,NULL,NULL,'56541420-65f5-4f7c-9a93-12230effcf2e'),(239,'LABOUR PROFILE','labour',1,'2026-02-11 15:25:33',0,NULL,NULL,NULL,'05c999bf-b86b-4fc0-9f22-eed57402513e'),(240,'PNC MONITOR BABY','PNC',1,'2026-02-11 15:25:51',0,NULL,NULL,NULL,'7f1b92af-9621-4373-90fe-736df6943cf6');
+INSERT INTO `encounter_type` VALUES (1,'ADULTINITIAL','Outpatient Adult Initial Visit',1,'2005-02-24 00:00:00',0,NULL,NULL,NULL,'8d5b27bc-c2cc-11de-8d13-0010c6dffd0f'),(2,'ADULTRETURN','Outpatient Adult Return Visit',1,'2005-02-24 00:00:00',0,NULL,NULL,NULL,'8d5b2be0-c2cc-11de-8d13-0010c6dffd0f'),(3,'PEDSINITIAL','Outpatient Pediatric Initial Visit',1,'2005-02-24 00:00:00',0,NULL,NULL,NULL,'8d5b2dde-c2cc-11de-8d13-0010c6dffd0f'),(4,'PEDSRETURN','Outpatient Pediatric Return Visit',1,'2005-02-24 00:00:00',0,NULL,NULL,NULL,'8d5b3108-c2cc-11de-8d13-0010c6dffd0f'),(5,'REGISTRATION','Patient Registration Encounter',1,'2008-05-02 16:03:48',0,1,'2019-11-05 08:18:31','Duplicate encounter with Patient Registration','ba05bf02-8d80-11d8-abbb-0024217bb78e'),(6,'VITALS','Vitals encounter',1,'2008-05-02 16:04:05',0,NULL,NULL,NULL,'ba05bfc0-8d80-11d8-abbb-0024217bb78e'),(7,'APPOINTMENT','New appointment encounter',1,'2008-05-02 16:04:20',0,NULL,NULL,NULL,'ba05c074-8d80-11d8-abbb-0024217bb78e'),(8,'OUTPATIENT DIAGNOSIS','Outpatient diagnosis encounter',1,'2008-05-02 16:04:54',0,NULL,NULL,NULL,'ba05c128-8d80-11d8-abbb-0024217bb78e'),(9,'HIV CLINIC REGISTRATION','Initial HIV clinic registration encounter',1,'2008-06-04 09:30:14',0,NULL,NULL,NULL,'ba05c1dc-8d80-11d8-abbb-0024217bb78e'),(10,'ART_FOLLOWUP','Followup visit for ART patient',1,'2008-06-04 09:30:36',0,NULL,NULL,NULL,'ba05c29a-8d80-11d8-abbb-0024217bb78e'),(11,'PART_INITIAL','Initial Pre-ART visit',1,'2008-06-04 09:31:08',0,NULL,NULL,NULL,'ba05c358-8d80-11d8-abbb-0024217bb78e'),(12,'PART_FOLLOWUP','Followup visit for Pre-ART patient',1,'2008-06-04 09:31:29',0,NULL,NULL,NULL,'ba05c40c-8d80-11d8-abbb-0024217bb78e'),(13,'LAB','Lab test',1,'2008-06-04 09:31:43',0,NULL,NULL,NULL,'ba05c4c0-8d80-11d8-abbb-0024217bb78e'),(14,'TB_INITIAL','Initial visit for TB Patient',1,'2008-07-15 10:00:14',0,NULL,NULL,NULL,'ba05c574-8d80-11d8-abbb-0024217bb78e'),(15,'TB_FOLLOWUP','Followup visit for TB Patient',1,'2008-07-15 10:00:39',0,NULL,NULL,NULL,'ba05c628-8d80-11d8-abbb-0024217bb78e'),(17,'PATIENT EVALUATION','Patient evaluation encounter',1,'2008-09-11 13:47:09',0,NULL,NULL,NULL,'ba05c6d2-8d80-11d8-abbb-0024217bb78e'),(20,'EID_INITIAL','Initial Early Infant Diagnosis (deprecated)',1,'2008-09-12 11:29:14',0,NULL,NULL,NULL,'ba05c786-8d80-11d8-abbb-0024217bb78e'),(21,'EID_FOLLOWUP','Followup Early Infant Diagnosis (deprecated)',1,'2008-09-12 11:29:33',0,NULL,NULL,NULL,'ba05c844-8d80-11d8-abbb-0024217bb78e'),(22,'Bacteriology Result','A smear or culture lab result wrapper.  Used by th',1,'2008-09-23 23:14:52',0,NULL,NULL,NULL,'ba05c902-8d80-11d8-abbb-0024217bb78e'),(23,'DST Result','A DST result wrapper.  Used by the mdrtb module.',1,'2008-09-23 23:15:25',0,NULL,NULL,NULL,'ba05ec0c-8d80-11d8-abbb-0024217bb78e'),(24,'CHEMOTHERAPY','Chemotherapy encounter',1,'2008-09-25 10:44:22',0,NULL,NULL,NULL,'ba05ece8-8d80-11d8-abbb-0024217bb78e'),(25,'TREATMENT','Treatment encounter',1,'2008-12-18 10:23:27',0,NULL,NULL,NULL,'ba05ed9c-8d80-11d8-abbb-0024217bb78e'),(26,'REQUEST','Used for forms for making a request (ie, a concept',1,'2009-09-05 10:10:42',0,NULL,NULL,NULL,'ba05ee50-8d80-11d8-abbb-0024217bb78e'),(27,'ADMINISTRATION','An administration encounter in which the patient w',1,'2009-10-29 16:25:32',0,NULL,NULL,NULL,'ba05ef0e-8d80-11d8-abbb-0024217bb78e'),(28,'EXAMINATION','EXAMINATION',1,'2009-11-10 09:23:58',0,NULL,NULL,NULL,'ba05efcc-8d80-11d8-abbb-0024217bb78e'),(29,'DIABETES HYPERTENSION INITIAL VISIT','Diabetes hypertension initial visit',1,'2009-11-10 09:42:25',0,NULL,NULL,NULL,'ba05f080-8d80-11d8-abbb-0024217bb78e'),(30,'MEDICAL HISTORY','Medical History',1,'2009-11-10 09:51:10',0,NULL,NULL,NULL,'ba05f13e-8d80-11d8-abbb-0024217bb78e'),(31,'COMPLICATIONS','Complications encounter',1,'2009-11-10 09:52:58',0,NULL,NULL,NULL,'ba05f1e8-8d80-11d8-abbb-0024217bb78e'),(32,'LAB RESULTS','LAB RESULTS',1,'2009-11-10 09:56:16',0,NULL,NULL,NULL,'ba05f29c-8d80-11d8-abbb-0024217bb78e'),(33,'EYE COMPLICATIONS','eye complications identified in the follow up visi',1,'2009-11-27 10:59:09',0,NULL,NULL,NULL,'ba05f346-8d80-11d8-abbb-0024217bb78e'),(34,'NEURALGIC COMPLICATIONS','numbness/tingling of extremities, non-healing sore',1,'2009-11-27 11:02:01',0,NULL,NULL,NULL,'ba05f404-8d80-11d8-abbb-0024217bb78e'),(35,'CARDIOVASCULAR COMPLICATIONS','Chest pain and shortness of breath',1,'2009-11-27 11:03:40',0,NULL,NULL,NULL,'ba05f79c-8d80-11d8-abbb-0024217bb78e'),(36,'RENAL COMPLICATIONS','decrease in urine output',1,'2009-11-27 11:04:57',0,NULL,NULL,NULL,'ba05f864-8d80-11d8-abbb-0024217bb78e'),(37,'ENDOCRINE COMPLICATIONS','hyperglycemia, hypoglycemia, sweating/feeling clam',1,'2009-11-27 11:13:51',0,NULL,NULL,NULL,'ba05f918-8d80-11d8-abbb-0024217bb78e'),(38,'DIABETES TEST','Tests carried out on a diabetic patient over a per',1,'2009-11-30 12:02:52',0,NULL,NULL,NULL,'ba05f9d6-8d80-11d8-abbb-0024217bb78e'),(39,'UPDATE HIV STATUS','update hiv patient status',1,'2009-11-30 12:41:26',0,NULL,NULL,NULL,'ba05fa94-8d80-11d8-abbb-0024217bb78e'),(40,'PATIENT OUTCOME','update patient outcome',1,'2009-11-30 12:43:13',0,NULL,NULL,NULL,'ba05fb48-8d80-11d8-abbb-0024217bb78e'),(41,'DIAGNOSIS','General patient diagnosis. Will mainly be used for',1,'2009-12-01 10:23:34',0,NULL,NULL,NULL,'ba05fbfc-8d80-11d8-abbb-0024217bb78e'),(42,'ADMIT PATIENT','This is an admit patient encounter',1,'2009-12-14 08:17:10',0,NULL,NULL,NULL,'ba05fcba-8d80-11d8-abbb-0024217bb78e'),(43,'DIABETES HISTORY','Diabetes History; the first time it was diagnosed',1,'2009-12-28 14:59:56',0,NULL,NULL,NULL,'ba05fd6e-8d80-11d8-abbb-0024217bb78e'),(44,'DIABETES TREATMENTS','Diabetes Treatments',1,'2009-12-28 15:15:29',0,NULL,NULL,NULL,'ba05fe2c-8d80-11d8-abbb-0024217bb78e'),(45,'HOSPITAL ADMISSIONS','Hospital Admissions due to Diabetes',1,'2009-12-28 15:37:40',1,1,'2019-11-04 14:22:44','Duplicate encounter with Admissions','ba05fed6-8d80-11d8-abbb-0024217bb78e'),(46,'PAST DIABETES MEDICAL HISTORY','Past Diabetes medical history\r\n',1,'2009-12-28 15:39:43',0,NULL,NULL,NULL,'ba05ff94-8d80-11d8-abbb-0024217bb78e'),(47,'INITIAL DIABETES COMPLICATIONS','Initial Diabetes complications\r\n',1,'2009-12-28 15:40:20',0,NULL,NULL,NULL,'ba060048-8d80-11d8-abbb-0024217bb78e'),(48,'HYPERTENSION MANAGEMENT','Hypertension management\r\n',1,'2009-12-28 15:41:03',0,NULL,NULL,NULL,'ba060106-8d80-11d8-abbb-0024217bb78e'),(49,'GENERAL HEALTH','General health. E.g. does the patient smoke?',1,'2009-12-28 15:42:19',0,NULL,NULL,NULL,'ba060fd4-8d80-11d8-abbb-0024217bb78e'),(51,'HIV RECEPTION','An HIV reception encounter, for program enrollment',1,'2010-01-10 23:32:11',0,NULL,NULL,NULL,'ba06109c-8d80-11d8-abbb-0024217bb78e'),(52,'HIV STAGING','Staging for a HIV patient done by a Clinician. ',1,'2010-01-10 23:38:23',0,NULL,NULL,NULL,'ba061150-8d80-11d8-abbb-0024217bb78e'),(53,'HIV CLINIC CONSULTATION','An HIV clinic consultation session with the nurse ',1,'2010-01-10 23:38:55',0,NULL,NULL,NULL,'ba06120e-8d80-11d8-abbb-0024217bb78e'),(54,'DISPENSING','A drug dispensing encounter',1,'2010-01-10 23:39:31',0,NULL,NULL,NULL,'ba0612c2-8d80-11d8-abbb-0024217bb78e'),(55,'LABEL SPECIMENS','Used to create observations about samples taken fr',23,'2010-02-06 11:24:23',0,NULL,NULL,NULL,'ba061628-8d80-11d8-abbb-0024217bb78e'),(56,'INFLUENZA DATA','For use in influenza data capture in Outpatient sy',1,'2002-01-31 11:59:18',0,NULL,NULL,NULL,'ba0616e6-8d80-11d8-abbb-0024217bb78e'),(57,'LAB ORDERS','Lab Test order',1,'2010-08-23 09:50:40',0,NULL,NULL,NULL,'ba0617ae-8d80-11d8-abbb-0024217bb78e'),(58,'CHRONIC CONDITIONS','Chronic conditions encounter type for influenza da',1,'2010-08-23 09:51:44',0,NULL,NULL,NULL,'ba061858-8d80-11d8-abbb-0024217bb78e'),(59,'MATERNITY DIAGNOSIS','Maternity diagnosis',1,'2010-09-03 10:09:26',0,NULL,NULL,NULL,'ba061916-8d80-11d8-abbb-0024217bb78e'),(61,'MARTENITY VISIT','Client Observations for maternity.',1,'2010-09-09 14:45:30',0,NULL,NULL,NULL,'ba0619c0-8d80-11d8-abbb-0024217bb78e'),(62,'IS PATIENT REFERRED?','Captures if a patient was referred in from another',1,'2002-04-10 09:30:26',0,NULL,NULL,NULL,'ba061a7e-8d80-11d8-abbb-0024217bb78e'),(63,'REFER PATIENT OUT?','Refer patient to another facility',1,'2010-11-02 16:39:32',0,NULL,NULL,NULL,'ba061b32-8d80-11d8-abbb-0024217bb78e'),(64,'ACTUAL DIAGNOSIS','Maternity actual diagnosis when sending client hom',1,'2010-11-03 16:18:23',0,NULL,NULL,NULL,'ba061bf0-8d80-11d8-abbb-0024217bb78e'),(65,'DIABETES INITIAL QUESTIONS','Questions asked to diabetes patients on registrati',1,'2011-01-06 14:48:21',0,NULL,NULL,NULL,'ba061ca4-8d80-11d8-abbb-0024217bb78e'),(66,'TRANSFER OUT','Indicate a full transfer out from one locations (d',1,'2011-01-11 13:37:39',0,NULL,NULL,NULL,'ba061d62-8d80-11d8-abbb-0024217bb78e'),(67,'CHRONIC CARE VISIT','Intake for Chronic Care patients',1,'2011-01-12 11:22:43',0,NULL,NULL,NULL,'ba061e16-8d80-11d8-abbb-0024217bb78e'),(68,'ART ADHERENCE','Capturing the adherence by the Nurse.',1,'2011-01-14 13:59:01',0,NULL,NULL,NULL,'ba061ed4-8d80-11d8-abbb-0024217bb78e'),(69,'CHRONIC_CARE_FOLLOWUP','Simple followup for chronic care appointments',1,'2011-02-10 22:12:07',0,NULL,NULL,NULL,'ba061f88-8d80-11d8-abbb-0024217bb78e'),(70,'SPUTUM SUBMISSION','An encounter at the TB sputum submission desk',1,'2011-02-21 14:24:48',0,NULL,NULL,NULL,'ba062302-8d80-11d8-abbb-0024217bb78e'),(71,'TIPS AND REMINDERS','An encounter for patient\'s enrolment for tips and ',1,'2011-04-01 10:34:10',0,NULL,NULL,NULL,'ba0623c0-8d80-11d8-abbb-0024217bb78e'),(72,'MATERNAL HEALTH SYMPTOMS','Maternal health symptoms',1,'2011-04-05 14:48:54',0,NULL,NULL,NULL,'ba062474-8d80-11d8-abbb-0024217bb78e'),(73,'CHILD HEALTH SYMPTOMS','Child health symptoms',1,'2011-04-07 15:46:53',0,NULL,NULL,NULL,'ba062532-8d80-11d8-abbb-0024217bb78e'),(74,'DEFAULTER TRACING START','Indicate the search of a defaulter tracing action',1,'2011-04-25 14:02:59',0,NULL,NULL,NULL,'ba0625e6-8d80-11d8-abbb-0024217bb78e'),(75,'DEFAULTER TRACING STOP','Captures the result of a defaulter tracing task',1,'2011-04-25 14:03:44',0,NULL,NULL,NULL,'ba0626a4-8d80-11d8-abbb-0024217bb78e'),(76,'UPDATE PREGNANCY STATUS','Update pregnancy status',1,'2011-05-23 13:15:40',0,NULL,NULL,NULL,'ba062758-8d80-11d8-abbb-0024217bb78e'),(77,'TB RECEPTION','A TB reception encounter, for program enrollment',1,'2011-06-02 09:15:17',0,NULL,NULL,NULL,'ba06373e-8d80-11d8-abbb-0024217bb78e'),(78,'TB REGISTRATION','A TB registration encounter',1,'2011-07-05 08:15:56',0,NULL,NULL,NULL,'ba063806-8d80-11d8-abbb-0024217bb78e'),(79,'ART Enrollment','Enrollment into ART program',1,'2011-07-14 10:46:11',0,NULL,NULL,NULL,'ba063b76-8d80-11d8-abbb-0024217bb78e'),(80,'OUTPATIENT RECEPTION','This occurs when a patient visits the Out-Patient ',1,'2011-07-25 14:25:38',0,NULL,NULL,NULL,'ba063c34-8d80-11d8-abbb-0024217bb78e'),(81,'CURRENT PREGNANCY','All issues pertaining to the current pregnancy in ',1,'2011-07-26 11:53:42',0,NULL,NULL,NULL,'ba063ce8-8d80-11d8-abbb-0024217bb78e'),(82,'OBSTETRIC HISTORY','Maternity encounter type',1,'2011-07-26 15:01:03',0,NULL,NULL,NULL,'ba063da6-8d80-11d8-abbb-0024217bb78e'),(83,'SURGICAL HISTORY','Ante-Natal clinic encounter type for a history of ',1,'2011-08-19 17:10:49',0,NULL,NULL,NULL,'ba063e50-8d80-11d8-abbb-0024217bb78e'),(84,'SOCIAL HISTORY','ANC encounter type',1,'2011-08-19 17:11:20',0,NULL,NULL,NULL,'ba063f0e-8d80-11d8-abbb-0024217bb78e'),(85,'TB VISIT','TB visit encounter',1,'2011-08-21 22:22:03',0,NULL,NULL,NULL,'ba063fb8-8d80-11d8-abbb-0024217bb78e'),(86,'TB CLINIC VISIT','TB clinic visit encounter',1,'2011-08-21 22:22:25',0,NULL,NULL,NULL,'ba064328-8d80-11d8-abbb-0024217bb78e'),(87,'TB ADHERENCE','Capturing the adherence by the Nurse/Clinician/TB ',1,'2011-08-24 14:10:33',0,NULL,NULL,NULL,'ba0643dc-8d80-11d8-abbb-0024217bb78e'),(88,'GIVE LAB RESULTS','An encounter type where care giver gives lab resul',1,'2011-09-03 19:48:53',0,NULL,NULL,NULL,'ba06449a-8d80-11d8-abbb-0024217bb78e'),(90,'BABY DELIVERY','This encounter occurs when a mother delivers a bab',1,'2011-09-05 19:42:35',0,NULL,NULL,NULL,'ba06454e-8d80-11d8-abbb-0024217bb78e'),(92,'EXPOSED_CHILD_INITIAL','HCC Initial for Exposed Child',1,'2011-09-07 14:57:56',0,NULL,NULL,NULL,'ba06460c-8d80-11d8-abbb-0024217bb78e'),(93,'EXPOSED_CHILD_FOLLOWUP','HCC Followup for Exposed Child',1,'2011-09-07 14:58:22',0,NULL,NULL,NULL,'ba064986-8d80-11d8-abbb-0024217bb78e'),(94,'SOURCE OF REFERRAL','The source of referral for a patient',1,'2011-09-13 16:10:16',0,NULL,NULL,NULL,'ba064cc4-8d80-11d8-abbb-0024217bb78e'),(95,'MATERNITY EXAMINATION','Maternity visit either to the nurse or clinician.',1,'2011-09-23 10:26:35',0,NULL,NULL,NULL,'ba064df0-8d80-11d8-abbb-0024217bb78e'),(97,'PATIENT ADMISSIONS','Allows management of patient admission details',1,'2011-09-27 10:28:35',0,NULL,NULL,NULL,'ba0651ec-8d80-11d8-abbb-0024217bb78e'),(98,'ANC EXAMINATION','ANC examination visit either to the nurse or clini',1,'2011-09-27 12:43:41',0,NULL,NULL,NULL,'ba06530e-8d80-11d8-abbb-0024217bb78e'),(99,'PROCEDURES DONE','Procedures done on a patient',1,'2011-10-14 12:13:18',0,NULL,NULL,NULL,'ba0656ec-8d80-11d8-abbb-0024217bb78e'),(100,'ADMISSION DIAGNOSIS','Diagnosis at admission',1,'2011-10-19 17:00:45',0,NULL,NULL,NULL,'ba065804-8d80-11d8-abbb-0024217bb78e'),(101,'DISCHARGE DIAGNOSIS','Diagnosis at discharge',1,'2011-10-19 17:01:12',0,NULL,NULL,NULL,'ba065bd8-8d80-11d8-abbb-0024217bb78e'),(102,'VAGINAL EXAMINATION','Maternity examination type',1,'2011-12-06 18:19:20',0,NULL,NULL,NULL,'ba065cdc-8d80-11d8-abbb-0024217bb78e'),(103,'PHYSICAL EXAMINATION','Maternity examination type',1,'2011-12-06 18:19:56',0,NULL,NULL,NULL,'ba0660c4-8d80-11d8-abbb-0024217bb78e'),(104,'PATIENT REGISTRATION','First encounter with patient at registration desk',1,'2011-12-08 16:22:01',0,NULL,NULL,NULL,'ba066498-8d80-11d8-abbb-0024217bb78e'),(105,'NOTES','Collect notes during a patient encounter',1,'2012-01-10 14:46:14',0,NULL,NULL,NULL,'ba067294-8d80-11d8-abbb-0024217bb78e'),(106,'DISCHARGE PATIENT','Discharging a patient',1,'2012-01-10 14:47:35',0,NULL,NULL,NULL,'ba06820c-8d80-11d8-abbb-0024217bb78e'),(107,'ANC VISIT TYPE','Type of ANC visit a client is making.',1,'2012-02-02 09:55:28',0,NULL,NULL,NULL,'ba06834c-8d80-11d8-abbb-0024217bb78e'),(111,'PREGNANCY STATUS','MNCH pregnancy status encounter',1,'2012-02-03 09:45:04',0,NULL,NULL,NULL,'ba0684a0-8d80-11d8-abbb-0024217bb78e'),(112,'FILM','Radiology film used in xray\r\n',1,'2012-02-03 10:50:09',0,NULL,NULL,NULL,'ba0685e0-8d80-11d8-abbb-0024217bb78e'),(113,'SCREENING','A frame for placing various screening observation ',1,'2012-05-01 16:51:15',0,NULL,NULL,NULL,'ba0687e8-8d80-11d8-abbb-0024217bb78e'),(114,'REFERRAL','Captures referral information when referring a pat',1,'2012-05-03 09:54:24',0,NULL,NULL,NULL,'ba068946-8d80-11d8-abbb-0024217bb78e'),(115,'CURRENT BBA DELIVERY','Current born before arrival delivery (Maternity)',1,'2012-06-05 14:52:25',0,NULL,NULL,NULL,'ba068a9a-8d80-11d8-abbb-0024217bb78e'),(116,'ABDOMINAL EXAMINATION','Maternity',1,'2012-06-05 14:52:58',0,NULL,NULL,NULL,'ba068bee-8d80-11d8-abbb-0024217bb78e'),(117,'PHYSICAL EXAMINATION BABY','Maternity',1,'2012-06-05 14:53:40',0,NULL,NULL,NULL,'ba068d2e-8d80-11d8-abbb-0024217bb78e'),(119,'EXIT FROM HIV CARE','Reason for ending HIV program',1,'2012-07-27 17:14:39',0,NULL,NULL,NULL,'ba068e64-8d80-11d8-abbb-0024217bb78e'),(121,'RADIOLOGY EXAMINATION','Radiology Examination',1,'2012-08-15 17:36:28',0,NULL,NULL,NULL,'ba068fb8-8d80-11d8-abbb-0024217bb78e'),(122,'PRESENTING COMPLAINTS','Presenting complaint from a patient',1,'2012-09-04 18:34:14',0,NULL,NULL,NULL,'ba069102-8d80-11d8-abbb-0024217bb78e'),(123,'SOCIAL DETERMINANTS','Social determinants for a patient',1,'2012-09-10 14:42:37',0,NULL,NULL,NULL,'ba069256-8d80-11d8-abbb-0024217bb78e'),(124,'REFERRAL DIAGNOSIS','Diagnosis made during a referral',1,'2012-10-02 09:59:03',0,NULL,NULL,NULL,'ba0693a0-8d80-11d8-abbb-0024217bb78e'),(125,'INPATIENT DIAGNOSIS','Diagnosis made for inpatients',1,'2012-10-02 11:48:54',0,NULL,NULL,NULL,'ba0694f4-8d80-11d8-abbb-0024217bb78e'),(126,'PATIENT SENT HOME','Patient not admitted but given treatment and sent ',1,'2002-02-14 15:41:38',1,1,'2019-11-04 14:26:32','This is an outcome not an encounter','ba06963e-8d80-11d8-abbb-0024217bb78e'),(127,'UPDATE BABY OUTCOME','For Maternity systems, a special encounter type fo',1,'2013-01-08 16:42:41',0,NULL,NULL,NULL,'ba069792-8d80-11d8-abbb-0024217bb78e'),(128,'KANGAROO REVIEW VISIT','Kangaroo review visit encounter',1,'2013-01-10 10:32:08',0,NULL,NULL,NULL,'ba0698dc-8d80-11d8-abbb-0024217bb78e'),(129,'PMTCT HISTORY','Maternity PMTCT history encounter',1,'2013-01-10 15:09:41',0,NULL,NULL,NULL,'ba069a26-8d80-11d8-abbb-0024217bb78e'),(130,'HIV STATUS AT ENROLLMENT','Patient HIV status at Early Infant Diagnosis enrol',1,'2013-01-10 15:42:14',0,NULL,NULL,NULL,'ba069b7a-8d80-11d8-abbb-0024217bb78e'),(131,'RAPID ANTIBODY TEST','Rapid antibody test encounter',1,'2013-01-10 16:00:05',0,NULL,NULL,NULL,'ba069cc4-8d80-11d8-abbb-0024217bb78e'),(132,'DNA-PCR TEST','DNA-PCR testing',1,'2013-01-10 16:00:48',0,NULL,NULL,NULL,'ba069e0e-8d80-11d8-abbb-0024217bb78e'),(133,'EID VISIT','Early Infant Diagnosis visit',1,'2013-01-10 17:02:18',0,NULL,NULL,NULL,'ba069ed6-8d80-11d8-abbb-0024217bb78e'),(134,'IMMUNIZATION RECORD','Under 5 Immunization record encounter',1,'2013-01-11 11:16:08',0,NULL,NULL,NULL,'ba069f94-8d80-11d8-abbb-0024217bb78e'),(135,'VITAMIN A SUPPLEMENTATION AND DE-WORMING SCHEDULE','Under 5 encounter',1,'2013-01-11 11:17:44',0,NULL,NULL,NULL,'ba06a05c-8d80-11d8-abbb-0024217bb78e'),(136,'REASON FOR SPECIAL CARE','Under 5 encounter',1,'2013-01-11 11:18:31',0,NULL,NULL,NULL,'ba06a12e-8d80-11d8-abbb-0024217bb78e'),(137,'INITIAL NEW-BORN RECORD','Under 5 encounter',1,'2013-01-11 11:19:00',0,NULL,NULL,NULL,'ba06afe8-8d80-11d8-abbb-0024217bb78e'),(138,'ASSESSMENT AT ONE WEEK POSTNATAL CHECK','Under 5 encounter',1,'2013-01-11 11:20:33',0,NULL,NULL,NULL,'ba06b0b0-8d80-11d8-abbb-0024217bb78e'),(139,'FAMILY MEDICAL HISTORY','Under 5 encounter',1,'2013-01-11 11:21:21',0,NULL,NULL,NULL,'ba06b178-8d80-11d8-abbb-0024217bb78e'),(140,'UNDER 5 VISIT','Under 5 encounter',1,'2013-01-11 11:22:24',0,NULL,NULL,NULL,'ba06b240-8d80-11d8-abbb-0024217bb78e'),(141,'ASSESSMENT','Hypertension Assessment',1,'2013-05-20 11:05:36',0,NULL,NULL,NULL,'ba06b2fe-8d80-11d8-abbb-0024217bb78e'),(142,'ASTHMA MEASURE','Assessment of patient\'s asthma',1,'2013-05-28 12:42:33',0,NULL,NULL,NULL,'ba06b3bc-8d80-11d8-abbb-0024217bb78e'),(143,'DRUGS GIVEN','Used for systems that are not point of care to rec',1,'2002-10-08 22:43:12',0,NULL,NULL,NULL,'ba06b484-8d80-11d8-abbb-0024217bb78e'),(144,'EPILEPSY CLINIC VISIT','Encounter for managing epilepsy clinic visits',1,'2002-11-20 19:09:00',0,NULL,NULL,NULL,'ba06b54c-8d80-11d8-abbb-0024217bb78e'),(145,'Referral Consent Confirmation','HTC Encounters',1,'2003-11-27 16:53:57',0,NULL,NULL,NULL,'ba06b61e-8d80-11d8-abbb-0024217bb78e'),(146,'HIV Testing','HTC Encounters',1,'2003-11-27 16:55:54',0,NULL,NULL,NULL,'ba06b6e6-8d80-11d8-abbb-0024217bb78e'),(147,'IN WAITING','HTC Encounters',1,'2003-11-27 16:57:55',0,NULL,NULL,NULL,'ba06b7a4-8d80-11d8-abbb-0024217bb78e'),(148,'IN SESSION','HTC Encounters',1,'2003-11-27 17:00:00',0,NULL,NULL,NULL,'ba06b862-8d80-11d8-abbb-0024217bb78e'),(149,'Counseling','HTC Encounters',1,'2003-11-27 17:01:09',0,NULL,NULL,NULL,'ba06b920-8d80-11d8-abbb-0024217bb78e'),(150,'BIRTH PLAN','This encounter specificies where and when the baby',1,'2004-01-07 16:30:31',0,NULL,NULL,NULL,'ba06b9d4-8d80-11d8-abbb-0024217bb78e'),(151,'ANC VISIT','Thise encounter records if a pregnant woman has at',1,'2004-01-07 16:33:00',0,NULL,NULL,NULL,'ba06baa6-8d80-11d8-abbb-0024217bb78e'),(152,'HSA VISIT','HSA visiting a patient encounter',1,'2004-01-07 16:38:34',0,NULL,NULL,NULL,'ba06bb6e-8d80-11d8-abbb-0024217bb78e'),(153,'QUALITY CONTROL TEST','For QC tests, mainly HTC test kit checks',1,'2004-01-17 15:47:56',0,NULL,NULL,NULL,'ba06bc36-8d80-11d8-abbb-0024217bb78e'),(154,'CERVICAL CANCER SCREENING','This is for managing cervical cancer patients - women',1,'2016-07-26 10:04:00',0,NULL,NULL,NULL,'82842828-5307-11e6-bc96-3863bba995db'),(155,'CERVICAL CANCER SCREENING','This is for managing cervical cancer patients - women',1,'2016-08-09 15:16:10',1,1,'2019-11-04 14:17:45','Duplicate Encounter','b9383624-4623-4cd1-bf5f-67accdbf709c'),(156,'FAST TRACK ASSESMENT','Fast Track Assessment Encounter ',1,'2016-08-22 12:31:39',0,NULL,NULL,NULL,'41877df2-896f-4a0d-b590-8b10e59c1d7c'),(157,'GENITAL EXAMINATION','VMMC encounter',1,'2017-11-09 11:33:59',0,NULL,NULL,NULL,'7d616e73-843b-4f34-9264-08acbdc22173'),(158,'CIRCUMCISION','VMMC encounter',1,'2017-11-09 11:36:11',0,NULL,NULL,NULL,'14392b18-e45b-4db7-9af0-709616d33796'),(159,'POST-OP REVIEW','VMMC encounter',1,'2017-11-09 11:37:17',0,NULL,NULL,NULL,'de6496e8-c980-4ae7-bce0-327a4c3c45cf'),(160,'FOLLOW UP','VMMC encounter',1,'2017-12-13 14:24:02',0,NULL,NULL,NULL,'19ee377a-e972-47d0-a111-281ed4e192c7'),(161,'SUMMARY ASSESSMENT','Assessment summary at each pre OP visit',1,'2018-02-19 11:11:18',0,NULL,NULL,NULL,'e5fec87c-9bea-42bb-a276-0469addccf99'),(162,'REGISTRATION CONSENT','Patient registration consent into a program',1,'2019-05-15 14:11:36',0,NULL,NULL,NULL,'50489d4c-3935-4277-9739-51df6d0fa338'),(163,'HTS Visit','Encounter for a regular HTS Visit',1,'2019-06-10 08:55:51',0,NULL,NULL,NULL,'4e7bfff4-3e00-40de-b0ba-0567eb4c9baf'),(164,'Confirmatory HIV Testing','Encounter for Confirmatory HIV Testing',1,'2019-06-10 08:57:39',0,NULL,NULL,NULL,'11125196-b7db-4d51-abec-fb74dc2b39a6'),(165,'POST-OP VITALS','VMMC Vitals entered during post-op review encounter',1,'2019-06-19 08:57:11',0,NULL,NULL,NULL,'30e3d37f-1545-45e1-b44a-c0a2e1a87202'),(166,'SECOND POST-OP REVIEW','VMMC second post-op review encounter',1,'2019-09-20 14:28:21',0,NULL,NULL,NULL,'b84dbf27-19d0-4ae4-8581-854b1c83e60e'),(167,'THIRD POST-OP REVIEW','VMMC third post op review after completion of second post op review encounter',1,'2019-09-20 14:30:01',0,NULL,NULL,NULL,'ea725a27-972f-4bf9-b419-01f87566d832'),(168,'General Consultation','An encounter that acts as an entry for the patients before the actual diagnosis',1,'2019-11-05 08:37:37',0,NULL,NULL,NULL,'be9daed0-47fb-4b1c-991c-901103da9a22'),(169,'Obstetrics and Gynecology','OB/GYN encounter',1,'2019-11-05 08:43:08',0,NULL,NULL,NULL,'93e84b4c-a962-4ea5-84a9-6487218e6e44'),(170,'ORTHOPEDIC VISIT','Encounter for patients accessing bones services',1,'2019-11-05 09:25:08',0,NULL,NULL,NULL,'e9e62819-d8ae-4137-bedb-e94b2c0ae186'),(171,'PRESCRIPTION','Patient Prescriptions',1,'2019-11-05 09:27:51',0,NULL,NULL,NULL,'88564b30-abaf-4744-8ea6-6e1c15465d9e'),(172,'SKIN VISIT','Patient accessing skin care service',1,'2019-11-05 09:28:29',0,NULL,NULL,NULL,'2d3dfd41-25ed-494f-b062-ad5eff4b0803'),(173,'INTENSIVE CARE UNIT','ICU',1,'2019-11-05 09:30:53',0,NULL,NULL,NULL,'c73c649d-52a6-48d2-a9be-dc66ce461d92'),(174,'DENTAL VISIT','Patient Dental visit',1,'2019-11-05 09:31:48',0,NULL,NULL,NULL,'6ce47917-1705-4b9d-8aea-c53e6e092e75'),(175,'ART VISIT','Client ART Visit',1,'2019-11-05 09:32:19',0,NULL,NULL,NULL,'3c50a67d-3c8c-4df0-95bc-d235aad959df'),(176,'VMMC VISIT','Male client accessing VMMC services',1,'2019-11-05 09:33:26',0,NULL,NULL,NULL,'c9015286-aacd-4046-9705-7a41e0c282ef'),(177,'UNDER_FIVE VISIT','Baby Under 5 visit',1,'2019-11-05 09:35:01',0,NULL,NULL,NULL,'3875ed80-fb39-4d56-b978-6ba26de6d230'),(178,'EXIT FROM CARE','patient exit from care',1,'2002-04-10 08:35:48',0,NULL,NULL,NULL,'656a424f-2931-4d3a-8c2f-6694b673bfb3'),(179,'REGIMEN INITIAL','Encounter for new regimens',1,'2002-05-30 04:10:20',0,NULL,NULL,NULL,'5b71cc70-02a4-47d1-8197-3d4ac5ac5b21'),(180,'REGIMEN CHANGE','Regimen change for TB MDR patients',1,'2002-06-09 23:04:44',0,NULL,NULL,NULL,'4380dc7a-3926-4b5d-8021-5d553b79bee0'),(181,'CxCa test',NULL,1,'2021-03-26 10:30:06',0,NULL,NULL,NULL,'b922377f-7a84-40d8-844e-cd8d9398e54e'),(182,'CxCa treatment',NULL,1,'2021-03-26 10:30:06',0,NULL,NULL,NULL,'590dab6e-c90f-4141-9939-650d924a5990'),(183,'CxCa reception',NULL,1,'2021-03-26 10:30:06',0,NULL,NULL,NULL,'39e7703d-e723-4458-b4e2-9bb4cf722bd0'),(184,'CxCa referral feedback',NULL,1,'2021-03-26 10:30:06',0,NULL,NULL,NULL,'a65a1232-d406-47b1-a248-15e3ff7dbee6'),(185,'CxCa results',NULL,1,'2021-03-26 10:30:06',0,NULL,NULL,NULL,'9d1475d4-5ac0-4d40-8a16-d31762365250'),(186,'CxCa screening result',NULL,1,'2021-03-26 10:30:06',0,NULL,NULL,NULL,'5e9f206a-082a-4525-b7a5-31024d98bb95'),(187,'CxCa test',NULL,1,'2021-03-27 09:39:57',0,NULL,NULL,NULL,'5123a5ec-0abb-436b-b8cd-1eff9893e60d'),(188,'CxCa treatment',NULL,1,'2021-03-27 09:39:57',0,NULL,NULL,NULL,'b706da06-88d8-46c8-81d6-2b8eb24c363c'),(189,'CxCa reception',NULL,1,'2021-03-27 09:39:57',0,NULL,NULL,NULL,'bf4386d7-8de0-458c-990f-6c71774214bf'),(190,'CxCa referral feedback',NULL,1,'2021-03-27 09:39:57',1,NULL,NULL,NULL,'0bf0b369-edfc-4fe0-aaf5-28c84cf73af1'),(191,'CxCa results',NULL,1,'2021-03-27 09:39:57',0,NULL,NULL,NULL,'010c23cb-17ad-4521-a30c-3e08cb03fc2d'),(192,'CxCa screening result',NULL,1,'2021-03-27 09:39:57',0,NULL,NULL,NULL,'b70cdded-5b40-44e1-ac45-43a14ce488ce'),(193,'TRIAGE PRESENTING COMPLAINTS',NULL,1,'2022-03-21 11:12:00',0,NULL,NULL,NULL,'0f3efa73-a8f7-11ec-929a-0242ac110003'),(194,'Partner Reception','HTS Partner Reception',1,'2022-08-29 06:59:24',0,NULL,NULL,NULL,'1d64e13b-2768-11ed-a571-0242ac110003'),(195,'HTS Contact','HTS Contact',1,'2022-08-29 06:59:24',0,NULL,NULL,NULL,'1d64e34a-2768-11ed-a571-0242ac110003'),(196,'ITEMS GIVEN','ITEMS GIVEN',1,'2022-11-15 07:50:22',0,NULL,NULL,NULL,'2855262b-64ba-11ed-b200-0242ac110003'),(197,'Testing','HTS Testing',1,'2022-11-29 09:35:40',0,NULL,NULL,NULL,'30612354-6fc9-11ed-9ffa-0242ac110003'),(198,'RECENCY','recency testing for HTS',1,'2022-11-29 09:35:45',0,NULL,NULL,NULL,'31612354-6fc9-11ed-9ffa-0242ac110003'),(199,'DBS ORDER','dbs order for HTS',1,'2023-04-17 00:00:00',0,NULL,NULL,NULL,'31612354-6fc9-11ed-9ffa-0242ac110011'),(200,'SYMPTOM SCREENING','AHD screening encounter',1,'2024-05-02 10:40:13',0,NULL,NULL,NULL,'52253a1f-0870-11ef-86fd-005056ad6577'),(201,'AHD SCREENING','AHD screening encounter',1,'2024-05-02 10:41:32',0,NULL,NULL,NULL,'93a9f20a-0870-11ef-86fd-005056ad6577'),(202,'AHD LAB RESULTS','AHD LAB RESULTS',1,'2024-05-22 08:45:32',0,NULL,NULL,NULL,'a64d51d0-1817-11ef-b0b6-005056ad6577'),(203,'IMMUNIZATION FOLLOWUP','followup of immunization patients',1,'2024-06-27 16:59:22',0,NULL,NULL,NULL,'ca1a745a-3a93-466b-852e-ef3f7bcfbcf8'),(204,'PNC VISIT','Postnatal care visit',1,'2024-08-29 10:09:05',0,NULL,NULL,NULL,'209cd2b9-5252-4068-bceb-3f7ce237339e'),(205,'Labour and delivery visit','Labour and delivery visit encounter',1,'2024-08-29 10:10:28',0,NULL,NULL,NULL,'726c684e-1f66-4712-96c6-05d7e060e3b0'),(206,'QUICK CHECK','Encounter for checking the patient',1,'2024-08-29 10:18:05',0,NULL,NULL,NULL,'bb92e4ad-95e3-4cc5-9b83-8cd08423a8aa'),(207,'MEDICATIONS','Encounter for ANC medications',1,'2024-08-29 10:20:23',0,NULL,NULL,NULL,'270f7f94-0766-4b53-ab8c-e5dcd8790235'),(208,'PAST MEDICAL HISTORY','MNH encounter for medical and surgical history',1,'2024-08-29 10:27:45',0,NULL,NULL,NULL,'a5c7254c-8976-46ce-a191-52585b6c7b99'),(209,'WOMAN BEHAVIOUR','Encounter for woman behaviour',1,'2024-08-29 10:29:37',0,NULL,NULL,NULL,'44228526-3dd5-46f8-8e0a-525a0abbab5c'),(210,'PRESENTING SIGNS FOR IPV','Encounter for signs for IPV',1,'2024-08-29 10:36:39',0,NULL,NULL,NULL,'05972c4c-4b61-4990-a536-8472178ae5ef'),(211,'POSTNATAL DETAILS','Encounter for postnatal details',1,'2024-08-29 11:35:52',0,NULL,NULL,NULL,'fdc136a5-30cc-43f8-864a-24db2799d268'),(212,'ROUTINE WARD MONITORING AND MANAGEMENT','Encounter routine ward monitoring and management for PNC',1,'2024-08-29 11:37:39',0,NULL,NULL,NULL,'b2ce99bb-f9af-4119-ab0d-dc9e64242385'),(213,'DISCHARGE WOMAN','Encounter for discharging woman in PNC program',1,'2024-08-29 11:39:14',0,NULL,NULL,NULL,'36fe5308-3721-4784-9ddf-20562b6215c3'),(214,'END PNC PROGRAM','Encounter to close PNC program',1,'2024-08-29 11:40:42',0,NULL,NULL,NULL,'3f8aba80-c942-4b5f-9e74-9f9984817a62'),(215,'Postnatal Details','Postnatal details for PNC programs',1,'2024-09-10 12:43:45',1,1,'2024-09-10 12:45:11','Duplicates','e2181754-e7f8-4c05-bf34-9b20365866de'),(216,'POSTNATAL WARD STAY MOTHER','Postnatal ward stay mother encounter for PNC\r\n',1,'2024-09-10 12:46:12',0,NULL,NULL,NULL,'496ec3f3-21e3-4c0e-83d2-9b413cd9a88b'),(217,'POSTNATAL WARD STAY BABY','Postnatal ward stay for baby',1,'2024-09-10 12:53:15',0,NULL,NULL,NULL,'76845932-60a2-4a34-bb07-6a9b4daaeb0a'),(218,'POSTNATAL VISIT','Postnatal visit for encounter type',1,'2024-09-10 12:56:57',0,NULL,NULL,NULL,'f9c8927d-3362-4f82-b204-67940df11ab9'),(219,'LABOUR ASSESSMENT','Labour assessment encounter type',1,'2024-09-10 13:08:54',0,NULL,NULL,NULL,'e2582f60-f69e-4339-9b15-5d84a915457f'),(220,'Delivery Details','Delivery details for PNC encounter type',1,'2024-09-10 13:14:55',0,NULL,NULL,NULL,'e177fa70-a046-4170-88e8-aaf78d5a804e'),(221,'IMMEDIATE POSTNATAL CHECKS','immediate postnatal check encounter type',1,'2024-09-10 13:25:36',0,NULL,NULL,NULL,'8467d093-95fa-429a-9dcf-3987e4894b40'),(222,'Continous Monitoring','Continuous monitoring encounter type for PNC',1,'2024-09-10 13:27:12',0,NULL,NULL,NULL,'fe8a134d-80df-46af-badb-0b6e324be18c'),(223,'END LABOUR PROGRAM','Encounter type for PNC end labour program',1,'2024-09-10 13:31:58',0,NULL,NULL,NULL,'99a1b48d-2986-4da6-82ec-3b9e74f4ebac'),(224,'VISIT','Visit type',1,'2025-11-17 09:17:30',0,NULL,NULL,NULL,'346eb15b-ac5d-4895-b732-aff26fb417b7'),(225,'AHD PRESENTING COMPLAINTS','Presenting complaint from a patient',1,'2025-11-17 09:19:56',0,NULL,NULL,NULL,'2464561c-f79a-40cc-a1ad-06af6c814ca4'),(226,'AHD PAST MEDICAL HISTORY','past medical history for AHD patient',1,'2025-11-17 09:21:35',0,NULL,NULL,NULL,'057a2abf-71f2-4249-8711-3d4c9d3255c3'),(227,'AHD LAB ORDERS','Lab test order for AHD',1,'2025-11-17 09:25:31',0,NULL,NULL,NULL,'aeb71fff-d0ce-4e66-8118-a2d177a4040a'),(228,'AHD HIV STAGING','AHD HIV STAGING',1,'2025-11-17 09:30:39',0,NULL,NULL,NULL,'ad8f01ef-7166-427e-9841-c3ec445b6316'),(229,'NEONATAL SYSTEMIC EXAMINATION','neonatal systemic examination',1,'2025-12-17 10:11:43',0,NULL,NULL,NULL,'7792c1d9-1f80-4125-888d-becae5b1ed2e'),(230,'NEONATAL SIGNS SYMPTOMS','neonatal',1,'2025-12-17 10:12:08',0,NULL,NULL,NULL,'47fe37c0-09eb-4381-a721-2cb943c5cf2e'),(231,'NEONATAL REVIEW OF SYSTEMS','neonatal',1,'2025-12-17 10:13:04',0,NULL,NULL,NULL,'b152a264-3237-4023-b050-a0fc8c68eda9'),(232,'NEONATAL EMERGENCY TRIAGE','neonatal',1,'2025-12-17 10:13:28',0,NULL,NULL,NULL,'5c0d30e7-21f7-4bb3-9c89-3bd9d482310c'),(233,'NEONATAL TRIAGE','neonatal',1,'2025-12-17 10:13:51',0,NULL,NULL,NULL,'adddc90f-d59e-488a-8c92-d6d11ce30292'),(234,'NEONATAL ADMISSION OUTCOMES','neonatal',1,'2025-12-17 10:14:33',0,NULL,NULL,NULL,'d1fa70b5-34f6-438b-b824-62e5e03e7ba5'),(235,'NEONATAL DISCHARGE','neonatal',1,'2025-12-17 10:21:01',0,NULL,NULL,NULL,'7b2ff44d-bd30-406a-a69a-238be3fc4e0a'),(236,'NEONATAL ENROLMENT','neonatal',1,'2025-12-17 10:21:27',0,NULL,NULL,NULL,'6f7b5498-aa4e-4b80-92bd-5d68be6e2f88'),(237,'IMMEDIATE POSTNATAL CHECKS CHILD','PNC',1,'2026-02-11 15:24:22',0,NULL,NULL,NULL,'e7fa1bd7-e202-4a04-9d1f-b61a8dba1a6f'),(238,'KNOWN MEDICAL CONDITION','medical',1,'2026-02-11 15:25:13',0,NULL,NULL,NULL,'56541420-65f5-4f7c-9a93-12230effcf2e'),(239,'LABOUR PROFILE','labour',1,'2026-02-11 15:25:33',0,NULL,NULL,NULL,'05c999bf-b86b-4fc0-9f22-eed57402513e'),(240,'PNC MONITOR BABY','PNC',1,'2026-02-11 15:25:51',0,NULL,NULL,NULL,'7f1b92af-9621-4373-90fe-736df6943cf6'),(241,'LABOUR ENROLLMENT','enrollment',1,'2026-03-17 09:56:39',0,NULL,NULL,NULL,'92e01abf-438b-4d01-a633-a4c443c8b41d'),(242,'PNC ENROLLMENT','enrollment ',1,'2026-03-17 09:57:19',0,NULL,NULL,NULL,'1ccf59b1-f940-43b8-ae13-771d32585f05');
 /*!40000 ALTER TABLE `encounter_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -745,20 +745,20 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `patient_identifier_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `patient_identifier_type` (
-  `patient_identifier_type_id` int NOT NULL AUTO_INCREMENT,
+  `patient_identifier_type_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '',
   `description` text NOT NULL,
   `format` varchar(50) DEFAULT NULL,
-  `check_digit` smallint NOT NULL DEFAULT '0',
-  `creator` int NOT NULL DEFAULT '0',
+  `check_digit` smallint(6) NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `required` smallint NOT NULL DEFAULT '0',
+  `required` smallint(6) NOT NULL DEFAULT '0',
   `format_description` varchar(255) DEFAULT NULL,
   `validator` varchar(200) DEFAULT NULL,
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -769,7 +769,7 @@ CREATE TABLE `patient_identifier_type` (
   KEY `retired_status` (`retired`),
   CONSTRAINT `type_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_patient_identifier_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -788,15 +788,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `order_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `order_type` (
-  `order_type_id` int NOT NULL AUTO_INCREMENT,
+  `order_type_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `description` varchar(255) NOT NULL DEFAULT '',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -808,7 +808,7 @@ CREATE TABLE `order_type` (
   KEY `index_order_type_on_name` (`name`),
   CONSTRAINT `type_created_by` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_order_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -827,20 +827,20 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `person_attribute_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `person_attribute_type` (
-  `person_attribute_type_id` int NOT NULL AUTO_INCREMENT,
+  `person_attribute_type_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '',
   `description` text NOT NULL,
   `format` varchar(50) DEFAULT NULL,
-  `foreign_key` int DEFAULT NULL,
-  `searchable` smallint NOT NULL DEFAULT '0',
-  `creator` int NOT NULL DEFAULT '0',
+  `foreign_key` int(11) DEFAULT NULL,
+  `searchable` smallint(6) NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int DEFAULT NULL,
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `edit_privilege` varchar(255) DEFAULT NULL,
@@ -859,7 +859,7 @@ CREATE TABLE `person_attribute_type` (
   CONSTRAINT `attribute_type_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `privilege_which_can_edit` FOREIGN KEY (`edit_privilege`) REFERENCES `privilege` (`privilege`),
   CONSTRAINT `user_who_retired_person_attribute_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -878,15 +878,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `program`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `program` (
-  `program_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int NOT NULL DEFAULT '0',
-  `creator` int NOT NULL DEFAULT '0',
+  `program_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `changed_by` int DEFAULT NULL,
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
-  `retired` smallint NOT NULL DEFAULT '0',
+  `retired` smallint(6) NOT NULL DEFAULT '0',
   `name` varchar(50) NOT NULL,
   `description` varchar(500) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -898,7 +898,7 @@ CREATE TABLE `program` (
   CONSTRAINT `program_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `program_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_changed_program` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -917,15 +917,15 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `program_workflow`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `program_workflow` (
-  `program_workflow_id` int NOT NULL AUTO_INCREMENT,
-  `program_id` int NOT NULL DEFAULT '0',
-  `concept_id` int NOT NULL DEFAULT '0',
-  `creator` int NOT NULL DEFAULT '0',
+  `program_workflow_id` int(11) NOT NULL AUTO_INCREMENT,
+  `program_id` int(11) NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `changed_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`program_workflow_id`),
@@ -938,7 +938,7 @@ CREATE TABLE `program_workflow` (
   CONSTRAINT `workflow_changed_by` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `workflow_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `workflow_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -957,17 +957,17 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `program_workflow_state`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `program_workflow_state` (
-  `program_workflow_state_id` int NOT NULL AUTO_INCREMENT,
-  `program_workflow_id` int NOT NULL DEFAULT '0',
-  `concept_id` int NOT NULL DEFAULT '0',
-  `initial` smallint NOT NULL DEFAULT '0',
-  `terminal` smallint NOT NULL DEFAULT '0',
-  `creator` int NOT NULL DEFAULT '0',
+  `program_workflow_state_id` int(11) NOT NULL AUTO_INCREMENT,
+  `program_workflow_id` int(11) NOT NULL DEFAULT '0',
+  `concept_id` int(11) NOT NULL DEFAULT '0',
+  `initial` smallint(6) NOT NULL DEFAULT '0',
+  `terminal` smallint(6) NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `changed_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `changed_by` int(11) DEFAULT NULL,
   `date_changed` datetime DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`program_workflow_state_id`),
@@ -980,7 +980,7 @@ CREATE TABLE `program_workflow_state` (
   CONSTRAINT `state_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `state_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `workflow_for_state` FOREIGN KEY (`program_workflow_id`) REFERENCES `program_workflow` (`program_workflow_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=201 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=201 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -999,19 +999,19 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `relationship_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `relationship_type` (
-  `relationship_type_id` int NOT NULL AUTO_INCREMENT,
+  `relationship_type_id` int(11) NOT NULL AUTO_INCREMENT,
   `a_is_to_b` varchar(50) NOT NULL,
   `b_is_to_a` varchar(50) NOT NULL,
-  `preferred` int NOT NULL DEFAULT '0',
-  `weight` int NOT NULL DEFAULT '0',
+  `preferred` int(11) NOT NULL DEFAULT '0',
+  `weight` int(11) NOT NULL DEFAULT '0',
   `description` varchar(255) NOT NULL DEFAULT '',
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `uuid` char(38) NOT NULL,
   `retired` tinyint(1) NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`relationship_type_id`),
@@ -1020,7 +1020,7 @@ CREATE TABLE `relationship_type` (
   KEY `user_who_retired_relationship_type` (`retired_by`),
   CONSTRAINT `user_who_created_rel` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_relationship_type` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1039,22 +1039,22 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `drug`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `drug` (
-  `drug_id` int NOT NULL AUTO_INCREMENT,
-  `concept_id` int NOT NULL DEFAULT '0',
+  `drug_id` int(11) NOT NULL AUTO_INCREMENT,
+  `concept_id` int(11) NOT NULL DEFAULT '0',
   `name` text,
-  `combination` smallint NOT NULL DEFAULT '0',
-  `dosage_form` int DEFAULT NULL,
+  `combination` smallint(6) NOT NULL DEFAULT '0',
+  `dosage_form` int(11) DEFAULT NULL,
   `dose_strength` double DEFAULT NULL,
   `maximum_daily_dose` double DEFAULT NULL,
   `minimum_daily_dose` double DEFAULT NULL,
-  `route` int DEFAULT NULL,
+  `route` int(11) DEFAULT NULL,
   `units` varchar(50) DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `retired` smallint NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired` smallint(6) NOT NULL DEFAULT '0',
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
@@ -1070,7 +1070,7 @@ CREATE TABLE `drug` (
   CONSTRAINT `drug_retired_by` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `primary_drug_concept` FOREIGN KEY (`concept_id`) REFERENCES `concept` (`concept_id`),
   CONSTRAINT `route_concept` FOREIGN KEY (`route`) REFERENCES `concept` (`concept_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1578 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1578 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1089,14 +1089,14 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `privilege`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `privilege` (
   `privilege` varchar(50) NOT NULL DEFAULT '',
   `description` varchar(250) NOT NULL DEFAULT '',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`privilege`),
   UNIQUE KEY `privilege_uuid_index` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1115,9 +1115,9 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `location`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `location` (
-  `location_id` int NOT NULL AUTO_INCREMENT,
+  `location_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `description` varchar(255) DEFAULT NULL,
   `address1` varchar(50) DEFAULT NULL,
@@ -1128,7 +1128,7 @@ CREATE TABLE `location` (
   `country` varchar(50) DEFAULT NULL,
   `latitude` varchar(50) DEFAULT NULL,
   `longitude` varchar(50) DEFAULT NULL,
-  `creator` int NOT NULL DEFAULT '0',
+  `creator` int(11) NOT NULL DEFAULT '0',
   `date_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `county_district` varchar(50) DEFAULT NULL,
   `neighborhood_cell` varchar(50) DEFAULT NULL,
@@ -1136,11 +1136,11 @@ CREATE TABLE `location` (
   `subregion` varchar(50) DEFAULT NULL,
   `township_division` varchar(50) DEFAULT NULL,
   `retired` tinyint(1) NOT NULL DEFAULT '0',
-  `retired_by` int DEFAULT NULL,
+  `retired_by` int(11) DEFAULT NULL,
   `date_retired` datetime DEFAULT NULL,
   `retire_reason` varchar(255) DEFAULT NULL,
-  `location_type_id` int DEFAULT NULL,
-  `parent_location` int DEFAULT NULL,
+  `location_type_id` int(11) DEFAULT NULL,
+  `parent_location` int(11) DEFAULT NULL,
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`location_id`),
   UNIQUE KEY `location_uuid_index` (`uuid`),
@@ -1154,7 +1154,7 @@ CREATE TABLE `location` (
   CONSTRAINT `parent_location` FOREIGN KEY (`parent_location`) REFERENCES `location` (`location_id`),
   CONSTRAINT `user_who_created_location` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `user_who_retired_location` FOREIGN KEY (`retired_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1139 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1139 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1173,14 +1173,14 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `role`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `role` (
   `role` varchar(50) NOT NULL DEFAULT '',
   `description` varchar(255) NOT NULL DEFAULT '',
   `uuid` char(38) NOT NULL,
   PRIMARY KEY (`role`),
   UNIQUE KEY `role_uuid_index` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1202,4 +1202,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-09 19:09:33
+-- Dump completed on 2026-03-17  9:57:37

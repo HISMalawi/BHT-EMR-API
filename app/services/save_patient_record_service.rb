@@ -117,7 +117,7 @@ class SavePatientRecordService
       update_person_info: managers[:identity_manager].update_person_information(patient_id, record),
       manage_guardian: managers[:guardian_manager].manage_guardian(patient_id, record),
       create_relationship: managers[:guardian_manager].create_relationship(record),
-      # enroll_program: managers[:enrollment_manager].enroll_program(patient_id, record),
+      enroll_program: managers[:enrollment_manager].enroll_program(patient_id, record),
       save_lab_orders_data: managers[:lab_data_manager].save_lab_orders_data(patient_id, record),
       save_lab_results_data: managers[:lab_data_manager].save_lab_results_data(patient_id, record),
       void_lab_order: managers[:lab_data_manager].void_lab_order(patient_id, record),
