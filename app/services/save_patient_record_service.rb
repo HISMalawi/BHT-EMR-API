@@ -216,6 +216,8 @@ class SavePatientRecordService
       end
     end
     
+    patient_data[:MedicationOrder] = BuildPatientRecordService.build_medication_data(patient_id)
+    allowed_encounter_types << get_encounter_id('TREATMENT') 
     # Rebuild observations for collected encounter types
     rebuild_all_observations(patient_id, patient_data, allowed_encounter_types)
     

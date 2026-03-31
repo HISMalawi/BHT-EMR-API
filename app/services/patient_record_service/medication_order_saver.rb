@@ -12,7 +12,9 @@ module PatientRecordService
       begin
         ActiveRecord::Base.transaction do
           orders_unsaved.each do |order|
-            next unless order
+            order_data = normalize_hash(order)
+            next unless order_data
+
             encounter_type = EncounterType.find_by_name(ENCOUNTER_TYPE_MAPPING[:treatment])
             encounter_id = create_encounter(patient_id, encounter_type.id, record)
             encounter = Encounter.find(encounter_id)
@@ -21,8 +23,8 @@ module PatientRecordService
               Rails.logger.warn("Unexpected encounter type: #{encounter.type.name} for encounter ##{encounter.encounter_id}")
               next
             end
-            saved_drug_orders =DrugOrderService.create_drug_orders(encounter: encounter, drug_orders: [order])
-            save_dispensation_data(patient_id, record, saved_drug_orders[0][:order_id], order[:dispensation])
+            saved_drug_orders = DrugOrderService.create_drug_orders(encounter: encounter, drug_orders: [order_data])
+            save_dispensation_data(patient_id, record, saved_drug_orders[0][:order_id], order_data[:dispensation])
           end
         end
         return true
@@ -59,9 +61,13 @@ module PatientRecordService
       return [] unless unsaved_data&.any?
 
       unsaved_data.flat_map do |dispensation_params|
-        next [] unless dispensation_params[:dispensation]
+        medication_data = normalize_hash(dispensation_params)
+        next [] unless medication_data
 
-        dispensation_params[:dispensation].map do |dispensation|
+        dispensation_entries = normalize_dispensation_data(medication_data[:dispensation])
+        next [] if dispensation_entries.empty?
+
+        dispensation_entries.map do |dispensation|
           {
             provider_id: dispensation[:provider_id],
             program_id: dispensation[:program_id],
@@ -79,18 +85,38 @@ module PatientRecordService
     end
 
     def build_single_dispensation(patient_id, order_id, dispensation_data)
-      return [] if dispensation_data.nil?
-      
-      [{
-        provider_id: dispensation_data[:provider_id],
-        program_id: dispensation_data[:program_id],
-        patient_id: patient_id,
-        dispensations: [{
-          drug_order_id: order_id,
-          date: dispensation_data[:date],
-          quantity: dispensation_data[:quantity]
-        }]
-      }]
+      dispensation_entries = normalize_dispensation_data(dispensation_data)
+      return [] if dispensation_entries.empty?
+
+      dispensation_entries.map do |dispensation|
+        {
+          provider_id: dispensation[:provider_id],
+          program_id: dispensation[:program_id],
+          patient_id: patient_id,
+          dispensations: [{
+            drug_order_id: order_id || dispensation[:drug_order_id],
+            date: dispensation[:date],
+            quantity: dispensation[:quantity]
+          }]
+        }
+      end
+    end
+
+    def normalize_dispensation_data(dispensation_data)
+      Array.wrap(dispensation_data).filter_map do |entry|
+        normalize_hash(entry)
+      end
+    end
+
+    def normalize_hash(data)
+      if data.respond_to?(:to_unsafe_h)
+        data.to_unsafe_h.deep_symbolize_keys
+      elsif data.is_a?(Hash)
+        data.deep_symbolize_keys
+      else
+        Rails.logger.warn("Unexpected dispensation payload type: #{data.class}")
+        nil
+      end
     end
 
     def process_dispensations(permitted_data, record)
