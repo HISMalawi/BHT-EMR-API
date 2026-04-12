@@ -17,7 +17,9 @@ class EncounterService
 
   def create(type:, patient:, program:, encounter_datetime: nil, provider: nil,  location_id: nil)
     encounter_datetime ||= Time.now
-    provider ||= User.current.person
+    current_user = User.current
+    provider ||= current_user&.person
+    current_user ||= User.find_by(person_id: provider.person_id) if provider.respond_to?(:person_id)
     
     # TODO To be refactored in future
     unless program.program_id.to_i == Program.find_by_name('IMMUNIZATION PROGRAM').program_id.to_i
@@ -25,14 +27,14 @@ class EncounterService
                                 encounter_datetime:, program:)
       if type.id == EncounterType.find_by(name: 'LAB ORDERS')&.id
         PatientProgramService.new.create(patient:, program: Program.find_by(name: 'Laboratory program'),
-                                        date_enrolled: encounter_datetime,location_id: location_id, user: provider )
+                                        date_enrolled: encounter_datetime, location_id:, user: current_user)
       end
       return encounter if encounter
     end
     Encounter.create(
       type:, patient:, provider:,
       encounter_datetime:, program:,
-      location_id: location_id || User.current.location_id
+      location_id: location_id || current_user&.location_id
     )
   end
 

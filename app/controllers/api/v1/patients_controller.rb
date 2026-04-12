@@ -80,8 +80,9 @@ module Api
       end
 
       def save_patient_record
-        patient_record =SavePatientRecordService.new.create_patient_record(params[:record])
+        patient_record = SavePatientRecordService.new.create_patient_record(params[:record])
         Sync::BatchPatientSyncJob.perform_async
+        broadcast_patient_record_saved(patient_record)
         render json: patient_record
       end
 
@@ -510,6 +511,37 @@ module Api
 
       def tb_prevention_service
         @tb_prevention_service ||= ArtService::Reports::Pepfar::TptStatus
+      end
+
+      def broadcast_patient_record_saved(patient_record)
+        record = patient_record.respond_to?(:with_indifferent_access) ? patient_record.with_indifferent_access : {}
+
+        params_location_id = params.dig(:record, :location_id)
+        record_location_id = record[:location_id]
+        user_location_id = User.current&.location_id
+
+        location_channels = [params_location_id, record_location_id, user_location_id]
+                            .compact
+                            .map(&:to_s)
+                            .reject(&:blank?)
+                            .uniq
+        return if location_channels.empty?
+
+        payload = {
+          event: 'patient_record_saved',
+          data: {
+            location_id: (params_location_id.presence || record_location_id.presence || user_location_id.presence).to_s,
+            patient_id: record[:patientID] || record[:patient_id],
+            identifier: record[:ID] || record[:identifier],
+            timestamp: Time.current.iso8601
+          }
+        }
+
+        location_channels.each do |location_channel|
+          ActionCable.server.broadcast("client_details_channel_#{location_channel}", payload)
+        end
+      rescue StandardError => e
+        Rails.logger.error("Failed to broadcast patient_record_saved: #{e.message}")
       end
 
       def tb_lab_order_params
