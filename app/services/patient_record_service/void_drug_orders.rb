@@ -33,7 +33,7 @@ module PatientRecordService
         
         return true
       rescue StandardError => e
-        Rails.logger.error "Error in VoidDrugOrders: #{e.message}"
+        log_error("Error in void drug orders", e)
         false
       end
     end

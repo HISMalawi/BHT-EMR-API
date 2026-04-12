@@ -7,6 +7,15 @@ class SavePatientRecordService
   RequiredFields = Struct.new(:program_id, :provider_id, :location_id, :encounter_datetime)
   # Defines expected ID fields and their keys within the record hash.
   PatientIds = Struct.new(:national_id, :ichis_id, :birth_id)
+  OperationResult = Struct.new(:success, :errors, keyword_init: true) do
+    def success?
+      success
+    end
+
+    def failed?
+      !success
+    end
+  end
 
   ENCOUNTER_TYPE_MAPPING = {
     lab_orders: 'LAB ORDERS',
@@ -44,13 +53,10 @@ class SavePatientRecordService
       ActiveRecord::Base.transaction do
         operation_results = execute_patient_operations(patient_id, record, managers)
 
-        # Determine overall status based on operation_results (assuming any false means partial_failed)
-        if operation_results.value?(false)
-          failed_ops_list = operation_results.select { |_k, v| v == false }.keys.join(', ')
+        if operation_results.any? { |_k, result| result.failed? }
+          failed_ops_list = operation_results.select { |_k, result| result.failed? }.keys.join(', ')
           Rails.logger.error("Overall record saving for patient #{patient_id} had failures in: #{failed_ops_list}")
           overall_sync_status = 'partial_failed'
-          # If you want to force a rollback on *any* failure among these, uncomment the line below:
-          # raise ActiveRecord::Rollback
         else
           Rails.logger.info("All sub-operations successfully processed for patient #{patient_id}.")
         end
@@ -114,23 +120,79 @@ class SavePatientRecordService
 
   def execute_patient_operations(patient_id, record, managers)
     {
-      update_person_info: managers[:identity_manager].update_person_information(patient_id, record),
-      manage_guardian: managers[:guardian_manager].manage_guardian(patient_id, record),
-      create_relationship: managers[:guardian_manager].create_relationship(record),
-      enroll_program: managers[:enrollment_manager].enroll_program(patient_id, record),
-      save_lab_orders_data: managers[:lab_data_manager].save_lab_orders_data(patient_id, record),
-      save_lab_results_data: managers[:lab_data_manager].save_lab_results_data(patient_id, record),
-      void_lab_order: managers[:lab_data_manager].void_lab_order(patient_id, record),
-      save_vaccines: managers[:vaccine_manager].save_vaccines(patient_id, record),
-      send_sms: managers[:sms_manager].send_sms(patient_id, record),
-      void_vaccine: managers[:vaccine_manager].void_vaccine(patient_id, record),
-      save_medication_order: managers[:medication_order_saver].save_medication_order(patient_id, record),
-      create_ncd_identifier: managers[:identity_manager].create_ncd_identifier(patient_id, record),
-      save_dispensation_data: managers[:medication_order_saver].save_dispensation_data(patient_id, record),
-      save_all_observations: managers[:observation_saver].save_all_observations(patient_id, record),
-      void_encounters: managers[:void_encounters].void_encounters(record),
-      void_drug_orders: managers[:void_drug_orders].void_drug_orders(patient_id, record)
+      update_person_info: run_operation(managers[:identity_manager], "Failed to update person information") do
+        managers[:identity_manager].update_person_information(patient_id, record)
+      end,
+      manage_guardian: run_operation(managers[:guardian_manager], "Failed to manage guardian information") do
+        managers[:guardian_manager].manage_guardian(patient_id, record)
+      end,
+      create_relationship: run_operation(managers[:guardian_manager], "Failed to create guardian relationship") do
+        managers[:guardian_manager].create_relationship(record)
+      end,
+      enroll_program: run_operation(managers[:enrollment_manager], "Failed to enroll patient into selected program") do
+        managers[:enrollment_manager].enroll_program(patient_id, record)
+      end,
+      save_lab_orders_data: run_operation(managers[:lab_data_manager], "Failed to save lab orders") do
+        managers[:lab_data_manager].save_lab_orders_data(patient_id, record)
+      end,
+      save_lab_results_data: run_operation(managers[:lab_data_manager], "Failed to save lab results") do
+        managers[:lab_data_manager].save_lab_results_data(patient_id, record)
+      end,
+      void_lab_order: run_operation(managers[:lab_data_manager], "Failed to void lab order") do
+        managers[:lab_data_manager].void_lab_order(patient_id, record)
+      end,
+      save_vaccines: run_operation(managers[:vaccine_manager], "Failed to save vaccine administration") do
+        managers[:vaccine_manager].save_vaccines(patient_id, record)
+      end,
+      send_sms: run_operation(managers[:sms_manager], "Failed to queue appointment SMS") do
+        managers[:sms_manager].send_sms(patient_id, record)
+      end,
+      void_vaccine: run_operation(managers[:vaccine_manager], "Failed to void vaccine order") do
+        managers[:vaccine_manager].void_vaccine(patient_id, record)
+      end,
+      save_medication_order: run_operation(managers[:medication_order_saver], "Failed to save medication order") do
+        managers[:medication_order_saver].save_medication_order(patient_id, record)
+      end,
+      create_ncd_identifier: run_operation(managers[:identity_manager], "Failed to create NCD identifier") do
+        managers[:identity_manager].create_ncd_identifier(patient_id, record)
+      end,
+      save_dispensation_data: run_operation(managers[:medication_order_saver], "Failed to save dispensation data") do
+        managers[:medication_order_saver].save_dispensation_data(patient_id, record)
+      end,
+      save_all_observations: run_operation(managers[:observation_saver], "Failed to save observations") do
+        managers[:observation_saver].save_all_observations(patient_id, record)
+      end,
+      void_encounters: run_operation(managers[:void_encounters], "Failed to void one or more encounters") do
+        managers[:void_encounters].void_encounters(record)
+      end,
+      void_drug_orders: run_operation(managers[:void_drug_orders], "Failed to void one or more drug orders") do
+        managers[:void_drug_orders].void_drug_orders(patient_id, record)
+      end
     }
+  end
+
+  def run_operation(manager, fallback_error)
+    manager.clear_errors! if manager.respond_to?(:clear_errors!)
+
+    operation_outcome = yield
+    manager_errors = manager.respond_to?(:errors) ? Array(manager.errors).compact : []
+
+    return failure_result(manager_errors) if manager_errors.any?
+    return success_result if operation_outcome == false || operation_outcome.nil?
+
+    success_result
+  rescue StandardError => e
+    manager_errors = manager.respond_to?(:errors) ? Array(manager.errors).compact : []
+    manager_errors << "#{fallback_error}: #{e.message}" if manager_errors.empty?
+    failure_result(manager_errors)
+  end
+
+  def success_result
+    OperationResult.new(success: true, errors: [])
+  end
+
+  def failure_result(errors)
+    OperationResult.new(success: false, errors: Array(errors))
   end
 
   def build_and_save_patient_record(patient_id, patient_data, operation_results, overall_sync_status)
@@ -154,8 +216,8 @@ class SavePatientRecordService
     allowed_encounter_types = []
     
     # Update specific sections based on successful operations
-    operation_results.each do |key, success|
-      next unless success
+    operation_results.each do |key, result|
+      next unless result.success?
 
       case key
       when :update_person_info
@@ -221,6 +283,11 @@ class SavePatientRecordService
     # Rebuild observations for collected encounter types
     rebuild_all_observations(patient_id, patient_data, allowed_encounter_types)
     
+    patient_data[:operation_errors] = operation_results
+      .select { |_key, result| result.failed? && result.errors.any? }
+      .transform_values(&:errors)
+      .as_json
+
     # Return the patient data as JSON
     patient_data.as_json
   end

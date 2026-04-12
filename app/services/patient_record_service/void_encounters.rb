@@ -25,10 +25,10 @@ module PatientRecordService
           voided_count += 1
         rescue ActiveRecord::RecordNotFound => e
           errors << { id: encounter_id, error: "Encounter not found: #{e.message}" }
-          Rails.logger.error("Failed to void encounter #{encounter_id}: #{e.message}")
+          log_error("Failed to void encounter #{encounter_id}", e)
         rescue StandardError => e
           errors << { id: encounter_id, error: e.message }
-          Rails.logger.error("Failed to void encounter #{encounter_id}: #{e.message}")
+          log_error("Failed to void encounter #{encounter_id}", e)
         end
       end
 
@@ -37,8 +37,9 @@ module PatientRecordService
         Rails.logger.error("Failed to void #{errors.size}/#{data.size} encounters. Errors: #{errors.to_json}")
       end
 
-      # Return true only if ALL encounters were voided successfully
-      voided_count > 0 
+      return false if errors.any?
+
+      voided_count > 0
     end
 
     private
