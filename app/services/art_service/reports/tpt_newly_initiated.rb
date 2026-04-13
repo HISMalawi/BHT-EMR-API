@@ -21,6 +21,7 @@ module ArtService
 
       def find_report
         report = init_report
+        all_patient_tpt_start_dates = {}
         newly_initiated_on_tpt.each do |tpt, patients|
           patients.each do |patient|
             patient_id = patient['patient_id']
@@ -35,8 +36,8 @@ module ArtService
             SQL
             age_group = person['age_group']
             gender = person['gender']&.strip&.first&.upcase || 'Unknown'
+            all_patient_tpt_start_dates[patient_id.to_i] = patient['tpt_start_date']
             # course = patient_on_3hp?(patient) ? '3HP' : '6H'
-
             report[age_group][tpt][gender] << {
               patient_id: person['person_id'],
               birthdate: person['birthdate'],
@@ -48,6 +49,7 @@ module ArtService
             }
           end
         end
+        append_tx_new_clients(report, all_patient_tpt_start_dates)
         report['Location'] = Location.current.city_village
         report
       end
@@ -91,6 +93,7 @@ module ArtService
       def init_report
         AGE_GROUPS.each_with_object({}) do |age_group, report|
           report[age_group] = {
+            'tx_new' => { 'M' => [], 'F' => [], 'Unknown' => [] },
             '3HP_new' => { 'M' => [], 'F' => [], 'Unknown' => [] },
             '6H_new' => { 'M' => [], 'F' => [], 'Unknown' => [] },
             '3HP_prev' => { 'M' => [], 'F' => [], 'Unknown' => [] },
@@ -99,6 +102,43 @@ module ArtService
         end
       end
 
+      def append_tx_new_clients(report, all_patient_tpt_start_dates)
+        tx_new_clients = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT e.patient_id,
+                 e.date_enrolled,
+                 e.earliest_start_date,
+                 disaggregated_age_group(e.birthdate, DATE('#{end_date.to_date}')) AS age_group,
+                 patient_identifier.identifier AS arv_number,
+                 person.*
+          FROM temp_earliest_start_date e
+          INNER JOIN person ON person.person_id = e.patient_id
+          LEFT JOIN patient_identifier ON patient_identifier.patient_id = e.patient_id
+            AND patient_identifier.identifier_type IN (SELECT patient_identifier_type_id FROM patient_identifier_type
+            WHERE name = 'ARV Number') AND patient_identifier.voided = 0
+          WHERE e.date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+            AND e.date_enrolled = e.earliest_start_date
+        SQL
+
+        tx_new_clients.each do |client|
+          age_group = client['age_group']
+          gender = client['gender']&.strip&.first&.upcase || 'Unknown'
+          next unless report.key?(age_group)
+
+          report[age_group]['tx_new'][gender] << {
+            patient_id: client['patient_id'],
+            birthdate: client['birthdate'],
+            arv_number: client['arv_number'],
+            gender:,
+            tpt_start_date: all_patient_tpt_start_dates[client['patient_id'].to_i],
+            art_start_date: client['earliest_start_date']
+          }
+        end
+      end
+
+      def append_tpt_eligible_clients
+
+      end
+  
       def patient_on_3hp?(patient)
         patient['drug_concepts'].split(',').collect(&:to_i).include?(rifapentine_concept.concept_id)
       end
