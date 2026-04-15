@@ -18,7 +18,7 @@ class ApplicationController < ActionController::API
 
   # Map of clients to their allowed versions
   CLIENT_VERSION_CONFIGURATION = {
-    'EMASTERCARD' => 'v2025.Q4.R6',
+    'EMASTERCARD' => 'v2025.Q4.R6-streaming',
     'POC' => 'v2025.Q4.R5'
   }
 
