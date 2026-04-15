@@ -21,6 +21,7 @@ module ArtService
 
       def find_report
         report = init_report
+        patient_tpt_data = {}
         newly_initiated_on_tpt.each do |tpt, patients|
           patients.each do |patient|
             patient_id = patient['patient_id']
@@ -35,19 +36,25 @@ module ArtService
             SQL
             age_group = person['age_group']
             gender = person['gender']&.strip&.first&.upcase || 'Unknown'
-            # course = patient_on_3hp?(patient) ? '3HP' : '6H'
+            tpt_dispensation_date = dispensation_date(patient_id, patient['drug_concepts'])
 
+            patient_tpt_data[patient_id.to_i] = {
+              start_date: patient['tpt_start_date'],
+              dispensation_date: tpt_dispensation_date
+            }
+            # course = patient_on_3hp?(patient) ? '3HP' : '6H'
             report[age_group][tpt][gender] << {
               patient_id: person['person_id'],
               birthdate: person['birthdate'],
               arv_number: person['arv_number'],
               gender:,
-              dispensation_date: dispensation_date(patient_id, patient['drug_concepts']),
+              dispensation_date: tpt_dispensation_date,
               art_start_date: patient['earliest_start_date'],
               tpt_start_date: patient['tpt_start_date']
             }
           end
         end
+        append_tx_new_and_tpt_eligibility(report, patient_tpt_data)
         report['Location'] = Location.current.city_village
         report
       end
@@ -91,6 +98,8 @@ module ArtService
       def init_report
         AGE_GROUPS.each_with_object({}) do |age_group, report|
           report[age_group] = {
+            'tx_new' => { 'M' => [], 'F' => [], 'Unknown' => [] },
+            'tx_new_eligible_for_tpt' => { 'M' => [], 'F' => [], 'Unknown' => [] },
             '3HP_new' => { 'M' => [], 'F' => [], 'Unknown' => [] },
             '6H_new' => { 'M' => [], 'F' => [], 'Unknown' => [] },
             '3HP_prev' => { 'M' => [], 'F' => [], 'Unknown' => [] },
@@ -99,6 +108,81 @@ module ArtService
         end
       end
 
+      def append_tx_new_and_tpt_eligibility(report, tpt_data)
+        tx_new_clients = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT e.patient_id,
+                 e.date_enrolled,
+                 e.earliest_start_date,
+                 disaggregated_age_group(e.birthdate, DATE('#{end_date.to_date}')) AS age_group,
+                 patient_identifier.identifier AS arv_number,
+                 person.*,
+                 tb_obs.person_id AS on_tb_treatment,
+                 tpt_complete.person_id AS completed_tpt,
+                 preg_obs.person_id AS pregnant,
+                 bf_obs.person_id AS breastfeeding
+          FROM temp_earliest_start_date e
+          INNER JOIN person ON person.person_id = e.patient_id
+          LEFT JOIN patient_identifier ON patient_identifier.patient_id = e.patient_id
+            AND patient_identifier.identifier_type IN (SELECT patient_identifier_type_id FROM patient_identifier_type
+            WHERE name = 'ARV Number') AND patient_identifier.voided = 0
+          /* On TB treatment or suspected/confirmed TB */
+          LEFT JOIN obs tb_obs ON tb_obs.person_id = e.patient_id
+            AND tb_obs.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
+            AND tb_obs.value_coded IN (
+              #{ConceptName.find_by_name('Confirmed TB on treatment').concept_id},
+              #{ConceptName.find_by_name('TB Suspected').concept_id},
+              #{ConceptName.find_by_name('Confirmed TB NOT on treatment').concept_id}
+            )
+            AND tb_obs.obs_datetime BETWEEN '#{start_date.to_date}' AND DATE('#{end_date.to_date}') + INTERVAL 1 DAY
+            AND tb_obs.voided = 0
+          /* Completed TPT */
+          LEFT JOIN obs tpt_complete ON tpt_complete.person_id = e.patient_id
+            AND tpt_complete.concept_id = #{ConceptName.find_by_name('Previous TB treatment history').concept_id}
+            AND tpt_complete.value_text IN ('Complete course of 3HP in the past (3 months RFP+INH)', 'Complete course of IPT in the past (min. 6 months of INH)')
+            AND tpt_complete.obs_datetime <= DATE('#{end_date.to_date}') + INTERVAL 1 DAY
+            AND tpt_complete.voided = 0
+          /* Pregnant */
+          LEFT JOIN obs preg_obs ON preg_obs.person_id = e.patient_id
+            AND preg_obs.concept_id = #{ConceptName.find_by_name('Is patient pregnant?').concept_id}
+            AND preg_obs.value_coded = #{ConceptName.find_by_name('Yes').concept_id}
+            AND preg_obs.obs_datetime BETWEEN '#{start_date.to_date}' AND DATE('#{end_date.to_date}') + INTERVAL 1 DAY
+            AND preg_obs.voided = 0
+          /* Breastfeeding */
+          LEFT JOIN obs bf_obs ON bf_obs.person_id = e.patient_id
+            AND bf_obs.concept_id = #{ConceptName.find_by_name('Breastfeeding').concept_id}
+            AND bf_obs.value_coded = #{ConceptName.find_by_name('Yes').concept_id}
+            AND bf_obs.obs_datetime BETWEEN '#{start_date.to_date}' AND DATE('#{end_date.to_date}') + INTERVAL 1 DAY
+            AND bf_obs.voided = 0
+          WHERE e.date_enrolled BETWEEN '#{start_date.to_date}' AND '#{end_date.to_date}'
+            AND e.date_enrolled = e.earliest_start_date
+          GROUP BY e.patient_id
+        SQL
+
+        tx_new_clients.each do |client|
+          age_group = client['age_group']
+          gender = client['gender']&.strip&.first&.upcase || 'Unknown'
+          next unless report.key?(age_group)
+
+          patient_tpt = tpt_data[client['patient_id'].to_i]
+          client_data = {
+            patient_id: client['patient_id'],
+            birthdate: client['birthdate'],
+            arv_number: client['arv_number'],
+            gender:,
+            dispensation_date: patient_tpt&.dig(:dispensation_date),
+            tpt_start_date: patient_tpt&.dig(:start_date),
+            art_start_date: client['earliest_start_date']
+          }
+
+          report[age_group]['tx_new'][gender] << client_data
+
+          if client['on_tb_treatment'].nil? && client['completed_tpt'].nil? &&
+             client['pregnant'].nil? && client['breastfeeding'].nil?
+            report[age_group]['tx_new_eligible_for_tpt'][gender] << client_data
+          end
+        end
+      end
+  
       def patient_on_3hp?(patient)
         patient['drug_concepts'].split(',').collect(&:to_i).include?(rifapentine_concept.concept_id)
       end
