@@ -12,6 +12,7 @@ Table of Contents
     - [Setting up Production mode](#setting-up-production-mode)
     - [Setting up Streaming](#setting-up-streaming)
       - [Pre-requisites](#pre-requisites)
+      - [Streaming Commands](#streaming-commands)
       - [Database](#database)
         - [Using an existing database](#using-an-existing-database)
         - [Using an empty database](#using-an-empty-database)
@@ -123,6 +124,42 @@ bash bin/setup_streaming.sh
 ```
 
 Done !! You can now test the streaming by going to `http://localhost:3000/streaming/`
+
+#### Streaming Commands
+
+The following rake tasks are available for managing streaming:
+
+**Stream incomplete visits for a date range:**
+
+```bash
+rails streaming:incomplete start_date=YYYY-MM-DD end_date=YYYY-MM-DD
+```
+
+This fetches patients with incomplete visits in the given date range using the Data Cleaning Tool and enqueues a streaming job for each patient/date combination.
+
+**Retry all failed streaming jobs:**
+
+```bash
+rails streaming:failed
+```
+
+This retries all failed jobs in SolidQueue using the built-in retry mechanism.
+
+**View current streaming stats:**
+
+```bash
+rails streaming:stats
+```
+
+Displays the current SolidQueue job counts (done, failed, pending, scheduled).
+
+**Check CDR configuration and connectivity:**
+
+```bash
+rails streaming:ping
+```
+
+Validates the CDR configuration in `application.yml` and pings the CDR URL to verify it is reachable.
 
 #### Database
 
