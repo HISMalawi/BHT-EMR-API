@@ -6,6 +6,8 @@ class DrugIngredient < ActiveRecord::Base
   self.table_name = 'drug_ingredient'
   self.primary_keys = %i[ingredient_id concept_id]
 
+  include Locatable
+
   belongs_to :concept, foreign_key: :concept_id
   belongs_to :ingredient, foreign_key: :ingredient_id, class_name: 'Concept'
 

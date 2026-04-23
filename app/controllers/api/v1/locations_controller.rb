@@ -34,7 +34,7 @@ module Api
       #
       # GET /locations/:id
       def show
-        render json: Facility.find_by(code: params[:id])
+        render json: Location.find(params[:id])
       end
 
       # Retrieve the current configured facility

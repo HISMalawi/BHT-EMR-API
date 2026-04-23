@@ -247,7 +247,8 @@ module UserService
   end
 
   def self.login(username, password)
-    user = User.where(username:).first
+    user = User.unscoped.where(username:).first
+    Location.current = Location.find(user.location_id)
     unless user&.active? && \
            (bart_authenticate(user, password) || \
             new_arch_authenticate(user, password))

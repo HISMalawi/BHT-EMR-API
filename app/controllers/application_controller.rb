@@ -38,11 +38,12 @@ class ApplicationController < ActionController::API
     end
 
     User.current = user
+    Location.current = user.location
     true
   end
 
   def check_location
-    location_id = GlobalProperty.where(property: CURRENT_LOCATION_PROPERTY).first.property_value
+    location_id = GlobalProperty.unscoped.where(property: CURRENT_LOCATION_PROPERTY).first.property_value
     unless location_id
       render json: { errors: ['Current location not set'] }, status: :service_unavailable
       return false
