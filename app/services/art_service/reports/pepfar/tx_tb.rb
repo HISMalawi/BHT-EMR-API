@@ -96,7 +96,19 @@ module ArtService
               AND patient_present.concept_id = #{ConceptName.find_by_name('Patient present').concept_id}
               AND patient_present.value_coded = #{ConceptName.find_by_name('Yes').concept_id}
               AND patient_present.voided = 0
-            LEFT JOIN obs screen_method ON screen_method.concept_id = #{ConceptName.find_by_name('TB screening method used').concept_id} AND screen_method.voided = 0 AND screen_method.person_id = o.person_id AND DATE(screen_method.obs_datetime) = DATE(current_obs.obs_datetime)
+            LEFT JOIN (
+              SELECT 
+                sm.obs_datetime as obs_datetime,
+                sm.person_id as person_id,
+                sm.voided as voided,
+                sm.concept_id as concept_id,
+                sm.value_coded as value_coded
+              FROM obs sm
+              INNER JOIN obs child_group ON child_group.obs_group_id = sm.obs_id
+              WHERE sm.concept_id = #{ConceptName.find_by_name('TB screening method used').concept_id}
+              AND sm.voided = 0
+              AND child_group.value_coded IN (SELECT concept_id FROM concept_name WHERE name IN ('Negative', 'Positive') AND voided = 0)
+            ) screen_method ON screen_method.person_id = o.person_id  AND DATE(screen_method.obs_datetime) = DATE(current_obs.obs_datetime)
             LEFT JOIN concept_name vcn ON vcn.concept_id = screen_method.value_coded AND vcn.voided = 0 AND vcn.name IN ('Chest x-ray', 'MWRD')
             WHERE o.concept_id = #{ConceptName.find_by_name('TB status').concept_id}
             AND o.voided = 0 #{@report_type == 'moh' ? '' : "AND o.person_id IN (#{@tx_curr.join(',')})"}
