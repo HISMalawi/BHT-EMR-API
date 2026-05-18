@@ -120,7 +120,7 @@ module ArtService
                 AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
                 AND concept_name.voided = 0
               WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
-                AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(start_date)}) - INTERVAL 12 MONTH
+                AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
                 AND orders.voided = 0
               GROUP BY orders.patient_id
             ) AS latest_patient_order_date
@@ -131,7 +131,7 @@ module ArtService
               AND patient_identifier.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
               AND patient_identifier.voided = 0
             WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
-              AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(start_date)}) - INTERVAL 12 MONTH
+              AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
               AND orders.voided = 0
               AND orders.patient_id IN (#{clients.push(0).join(',')})
             GROUP BY orders.patient_id
