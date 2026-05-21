@@ -24,8 +24,7 @@ namespace :art do
       # NOTE: 56 IDs are listed below. Add the remaining IDs from the full list of 66
       #       to complete the investigation.
       patient_ids = [
-        269, 1159, 1288, 2044, 4911, 5379, 6127, 6379, 6813, 6933, 7184, 7466, 7736, 7934, 8281, 8411, 8724, 8990, 9047, 9790, 10217, 13325, 15025, 15148, 16028, 21338, 290458, 512824, 515591, 520885, 523674, 531705, 552947, 567725, 569209, 570723, 583984, 592422, 592567, 592568, 595083, 596653, 597506, 599107, 600586, 600832, 600932, 602740, 605513, 606184, 606680, 606724, 607085, 607103, 607122, 607516
-        # ADD remaining IDs here to reach 66 total
+          192, 315, 1159, 1288, 2044, 4641, 5379, 6127, 6138, 6379, 6407, 6813, 7184, 7466, 7736, 7934, 8281, 8411, 8724, 8799, 9047, 9790, 10217, 10474, 10621, 13325, 15025, 15148, 15519, 15601, 16028, 21338, 512824, 515591, 523674, 529748, 552947, 559842, 567725, 592422, 592567, 595083, 596403, 599107, 600586, 600832, 602740, 605513, 606018, 606097, 606184, 606680, 606724, 607085, 607103, 607122, 607516        # ADD remaining IDs here to reach 66 total
       ].freeze
 
       # ─── Argument parsing ─────────────────────────────────────────────────────
@@ -124,6 +123,7 @@ namespace :art do
       vl_results_by_id = conn.select_all(<<~SQL).index_by { |r| r['patient_id'].to_i }
         SELECT
           o.patient_id,
+          cn.name AS latest_vl_result_specimen,
           CONCAT(
             COALESCE(result.value_modifier, ''),
             COALESCE(CAST(result.value_numeric AS CHAR), result.value_text, '')
@@ -165,6 +165,59 @@ namespace :art do
           GROUP BY o2.patient_id
         ) latest ON latest.patient_id = o.patient_id AND latest.max_date = o.start_date
         WHERE o.patient_id IN (#{patient_ids.join(',')}) AND o.voided = 0
+          AND o.start_date >= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
+          AND o.start_date  < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
+        GROUP BY o.patient_id
+      SQL
+
+      # Latest VL order per patient exactly as the report consumes it. This may
+      # differ from latest_vl_result when the newest sample has no result yet.
+      vl_report_sample_by_id = conn.select_all(<<~SQL).index_by { |r| r['patient_id'].to_i }
+        SELECT
+          o.patient_id,
+          o.order_id AS report_latest_order_id,
+          cn.name AS report_latest_specimen,
+          DATE(o.start_date) AS report_latest_order_date,
+          DATE(COALESCE(o.discontinued_date, o.start_date)) AS report_latest_sample_draw_date,
+          CONCAT(
+            COALESCE(result.value_modifier, ''),
+            COALESCE(CAST(result.value_numeric AS CHAR), result.value_text, '')
+          ) AS report_latest_vl_result
+        FROM orders o
+        INNER JOIN order_type ot
+          ON ot.order_type_id = o.order_type_id
+          AND ot.name = 'Lab'
+          AND ot.retired = 0
+        INNER JOIN concept_name cn
+          ON cn.concept_id = o.concept_id
+          AND cn.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
+          AND cn.voided = 0
+        LEFT JOIN obs result
+          ON result.order_id = o.order_id
+          AND result.concept_id IN (
+            SELECT concept_id FROM concept_name WHERE name LIKE 'HIV Viral load' AND voided = 0
+          )
+          AND result.voided = 0
+          AND (result.value_text IS NOT NULL OR result.value_numeric IS NOT NULL)
+        INNER JOIN (
+          SELECT o2.patient_id, MAX(o2.start_date) AS max_date
+          FROM orders o2
+          INNER JOIN order_type ot2
+            ON ot2.order_type_id = o2.order_type_id
+            AND ot2.name = 'Lab'
+            AND ot2.retired = 0
+          INNER JOIN concept_name cn2
+            ON cn2.concept_id = o2.concept_id
+            AND cn2.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
+            AND cn2.voided = 0
+          WHERE o2.patient_id IN (#{patient_ids.join(',')})
+            AND o2.voided = 0
+            AND o2.start_date >= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
+            AND o2.start_date  < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
+          GROUP BY o2.patient_id
+        ) latest ON latest.patient_id = o.patient_id AND latest.max_date = o.start_date
+        WHERE o.patient_id IN (#{patient_ids.join(',')})
+          AND o.voided = 0
           AND o.start_date >= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
           AND o.start_date  < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
         GROUP BY o.patient_id
@@ -289,6 +342,7 @@ namespace :art do
         art    = patients_on_art[patient_id]
         vl_act = vl_orders_by_id[patient_id]
         vl_res = vl_results_by_id[patient_id]
+        vl_rep = vl_report_sample_by_id[patient_id]
 
         art_start_d        = (art&.dig('art_start_date') || raw&.dig('earliest_start_date'))&.to_date
         months_on_art      = art_start_d ? ((end_date.year * 12 + end_date.month) - (art_start_d.year * 12 + art_start_d.month)) : nil
@@ -311,7 +365,14 @@ namespace :art do
           days_since_last_vl_order:     days_since_last_vl,
           vl_order_in_reporting_period: vl_act&.dig('vl_order_date_in_period').present? ? 'YES' : 'NO',
           vl_order_date_in_period:      vl_act&.dig('vl_order_date_in_period'),
+          report_latest_order_id:       vl_rep&.dig('report_latest_order_id'),
+          report_latest_specimen:       vl_rep&.dig('report_latest_specimen') || '-',
+          report_latest_order_date:     vl_rep&.dig('report_latest_order_date'),
+          report_sample_draw_date:      vl_rep&.dig('report_latest_sample_draw_date'),
+          report_latest_vl_result:      vl_rep&.dig('report_latest_vl_result').presence || '-',
+          report_result_present:        vl_rep&.dig('report_latest_vl_result').presence ? 'YES' : 'NO',
           vl_due_date:                  nil,
+          latest_vl_result_specimen:    vl_res&.dig('latest_vl_result_specimen') || '-',
           latest_vl_result:             vl_res&.dig('latest_vl_result').presence || '-',
           latest_vl_result_date:        vl_res&.dig('latest_vl_result_order_date'),
           current_regimen:              art&.dig('current_regimen') || '-',

@@ -108,7 +108,7 @@ module ArtService
               AND result.voided = 0
               AND (result.value_text IS NOT NULL OR result.value_numeric IS NOT NULL)
             INNER JOIN (
-              /* Get the latest order dates for each patient */
+              /* Get the latest order dates for each patient that have VL results */
               SELECT orders.patient_id, MAX(orders.start_date) AS start_date
               FROM orders
               INNER JOIN order_type
@@ -119,6 +119,11 @@ module ArtService
                 ON concept_name.concept_id = orders.concept_id
                 AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
                 AND concept_name.voided = 0
+              INNER JOIN obs result
+                ON result.order_id = orders.order_id
+                AND result.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'HIV Viral load' AND voided = 0)
+                AND result.voided = 0
+                AND (result.value_text IS NOT NULL OR result.value_numeric IS NOT NULL)
               WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
                 AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
                 AND orders.voided = 0
