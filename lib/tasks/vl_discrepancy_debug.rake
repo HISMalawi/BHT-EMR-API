@@ -240,7 +240,7 @@ namespace :art do
           INNER JOIN concept_name
             ON concept_name.concept_id = ab.concept_id
             AND concept_name.name IN (
-              'Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', '50:50 Normal Plasma'
+              'Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma'
             )
             AND concept_name.voided = 0
           LEFT OUTER JOIN orders b
@@ -257,9 +257,9 @@ namespace :art do
         WHERE cum.step > 0
           AND e.date_enrolled < DATE(#{q_end}) + INTERVAL 1 DAY
           AND (
-            (cum.pepfar_cum_outcome != 'On antiretrovirals'
-              AND cum.pepfar_outcome_date >= DATE(#{q_end}) - INTERVAL 12 MONTH)
-            OR cum.pepfar_cum_outcome = 'On antiretrovirals'
+            cum.pepfar_cum_outcome = 'On antiretrovirals'
+            OR (cum.pepfar_cum_outcome != 'On antiretrovirals' AND cum.pepfar_outcome_date >= DATE(#{q_end}) - INTERVAL 12 MONTH)
+            OR (cum.pepfar_cum_outcome != 'On antiretrovirals' AND current_order.start_date >= DATE(#{q_end}) - INTERVAL 12 MONTH)
           )
           AND cum.patient_id IN (#{ids_clause})
         GROUP BY cum.patient_id
@@ -338,9 +338,11 @@ namespace :art do
                      "date_enrolled (#{raw['date_enrolled']}) is after end_date — enrolled too late"
                    elsif raw['pepfar_cum_outcome'] != 'On antiretrovirals' &&
                          raw['pepfar_outcome_date'] &&
-                         raw['pepfar_outcome_date'].to_date < end_date - 12.months
+                         raw['pepfar_outcome_date'].to_date < end_date - 12.months &&
+                         (vl_orders_by_id[patient_id]&.dig('latest_vl_order_date').nil? ||
+                          vl_orders_by_id[patient_id]['latest_vl_order_date'].to_date < end_date - 12.months)
                      "adverse outcome '#{raw['pepfar_cum_outcome']}' on #{raw['pepfar_outcome_date']} "\
-                     "is more than 12 months before end_date"
+                     "is more than 12 months before end_date and no recent lab order found"
                    elsif !in_max_state.include?(patient_id)
                      'No record in temp_max_patient_state — missing from INNER JOIN'
                    elsif !in_medication.include?(patient_id)
@@ -368,14 +370,6 @@ namespace :art do
                             'FBf'
                           end
         base[:maternal_status] = maternal_status
-
-        if !defaulter_date.nil? && defaulter_date < end_date - 12.months
-          next base.merge(
-            exclusion_gate:   'G2',
-            exclusion_reason: "defaulter_date (#{defaulter_date}) is > 12 months before end_date — "\
-                              "patient defaulted too long ago"
-          )
-        end
 
         if art_start_date.nil?
           next base.merge(exclusion_gate: 'G2', exclusion_reason: 'art_start_date is blank')

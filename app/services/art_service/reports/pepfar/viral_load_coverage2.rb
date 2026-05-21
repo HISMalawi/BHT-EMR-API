@@ -154,7 +154,6 @@ module ArtService
             else
               (@maternal_status[:FBf].include?(patient['patient_id']) ? 'FBf' : nil)
             end
-          return if !patient['defaulter_date'].blank? && (patient['defaulter_date'] < end_date - 12.months)
           return if patient['art_start_date'].blank?
           return if patient['art_start_date'].to_date > end_date - 6.months
           return if remove_adverse_outcome_patient?(patient)
@@ -331,7 +330,7 @@ module ArtService
               FROM orders ab
               INNER JOIN concept_name
                 ON concept_name.concept_id = ab.concept_id
-                AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', '50:50 Normal Plasma')
+                AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
                 AND concept_name.voided = 0
               LEFT OUTER JOIN orders b ON ab.patient_id = b.patient_id
                 AND ab.order_id = b.order_id
@@ -341,7 +340,11 @@ module ArtService
               GROUP BY ab.patient_id
             ) current_order ON current_order.patient_id = cum.patient_id
             WHERE cum.step > 0 AND e.date_enrolled < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
-              AND ((cum.pepfar_cum_outcome != 'On antiretrovirals' AND cum.pepfar_outcome_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH)) OR cum.pepfar_cum_outcome = 'On antiretrovirals')
+              AND (
+                cum.pepfar_cum_outcome = 'On antiretrovirals'
+                OR (cum.pepfar_cum_outcome != 'On antiretrovirals' AND cum.pepfar_outcome_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH))
+                OR (cum.pepfar_cum_outcome != 'On antiretrovirals' AND current_order.start_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH))
+              )
             GROUP BY cum.patient_id
           SQL
         end
