@@ -96,8 +96,8 @@ class ReportService
     engine(@program).ipt_coverage(start_date, end_date)
   end
 
-  def cohort_report_drill_down(id)
-    engine(@program).cohort_report_drill_down(id)
+  def cohort_report_drill_down(id, start_date, end_date)
+    engine(@program).cohort_report_drill_down(id, start_date, end_date)
   end
 
   def regimen_switch(start_date, end_date, pepfar, **kwargs)

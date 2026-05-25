@@ -95,13 +95,21 @@ module ArtService
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
           AND i.voided = 0 AND i.identifier_type = 4
           LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-          LEFT JOIN obs tb_start ON tb_start.person_id = p.person_id
-            AND tb_start.concept_id = (
-              SELECT concept_id 
-              FROM concept_name 
-              WHERE name = 'TB status' 
-              LIMIT 1
-            )
+          LEFT JOIN obs tb_start ON tb_start.obs_id = (
+            SELECT o.obs_id
+            FROM obs o
+            WHERE o.person_id = p.person_id
+              AND o.voided = 0
+              AND o.obs_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY
+              AND o.concept_id = (
+                SELECT concept_id
+                FROM concept_name
+                WHERE name = 'TB status'
+                LIMIT 1
+              )
+            ORDER BY o.obs_datetime DESC, o.date_created DESC, o.obs_id DESC
+            LIMIT 1
+          )
           WHERE c.reporting_report_design_resource_id = #{id}
           GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
         SQL

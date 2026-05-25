@@ -143,7 +143,10 @@ module Api
       end
 
       def cohort_report_drill_down
-        render json: service.cohort_report_drill_down(params[:id])
+        start_date = params[:start_date].presence&.to_date || Date.today
+        end_date = params[:end_date].presence&.to_date || Date.today
+
+        render json: service.cohort_report_drill_down(params[:id], start_date, end_date)
       end
 
       def regimen_switch
