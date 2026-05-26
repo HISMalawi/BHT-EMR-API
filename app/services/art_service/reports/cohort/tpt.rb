@@ -58,6 +58,18 @@ class ArtService::Reports::Cohort::Tpt
     @three_hp_concept ||= ConceptName.find_by!(name: 'Isoniazid/Rifapentine')
   end
 
+  def drug_order_type_id
+    @drug_order_type_id ||= OrderType.find_by!(name: 'Drug order').order_type_id
+  end
+
+  def treatment_encounter_type_id
+    @treatment_encounter_type_id ||= EncounterType.find_by!(name: 'Treatment').encounter_type_id
+  end
+
+  def hiv_program_id
+    @hiv_program_id ||= Program.find_by!(name: 'HIV Program').program_id
+  end
+
   def processed_tpt_clients
     @processed_tpt_clients ||= process_tpt_clients
   end
@@ -119,7 +131,7 @@ class ArtService::Reports::Cohort::Tpt
       #{dsd_query(dsd: @dsd, model: 'cohort_patients') if @dsd}
       INNER JOIN orders
         ON orders.patient_id = cohort_patients.patient_id
-        AND orders.order_type_id = (SELECT order_type_id FROM order_type WHERE name = 'Drug order' LIMIT 1)
+        AND orders.order_type_id = #{drug_order_type_id}
         AND orders.start_date >= #{start_date}
         AND orders.start_date < DATE(#{end_date}) + INTERVAL 1 DAY
         AND orders.voided = 0
@@ -133,8 +145,8 @@ class ArtService::Reports::Cohort::Tpt
       INNER JOIN encounter
         /* Ensure we are dealing with ART prescriptions (Treatment encounter) */
         ON encounter.encounter_id = orders.encounter_id
-        AND encounter.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment' LIMIT 1)
-        AND encounter.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program' LIMIT 1)
+        AND encounter.encounter_type = #{treatment_encounter_type_id}
+        AND encounter.program_id = #{hiv_program_id}
         AND encounter.voided = 0
       LEFT JOIN obs tpt_transfer_in_obs
         ON tpt_transfer_in_obs.person_id = orders.patient_id
@@ -156,7 +168,7 @@ class ArtService::Reports::Cohort::Tpt
         INNER JOIN orders o ON o.patient_id = temp_earliest_start_date.patient_id
         INNER JOIN concept_name AS tpt_drug_concepts ON tpt_drug_concepts.concept_id = o.concept_id AND tpt_drug_concepts.name IN ('Rifapentine', 'Isoniazid', 'Isoniazid/Rifapentine') AND tpt_drug_concepts.voided = 0
         INNER JOIN drug_order AS drug_orders ON drug_orders.order_id = o.order_id AND drug_orders.quantity > 0
-        INNER JOIN encounter ON encounter.encounter_id = o.encounter_id AND encounter.encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Treatment' LIMIT 1) AND encounter.program_id = (SELECT program_id FROM program WHERE name = 'HIV Program' LIMIT 1) AND encounter.voided = 0
+        INNER JOIN encounter ON encounter.encounter_id = o.encounter_id AND encounter.encounter_type = #{treatment_encounter_type_id} AND encounter.program_id = #{hiv_program_id} AND encounter.voided = 0
         WHERE o.voided = 0
         AND o.start_date < #{start_date}
         GROUP BY o.patient_id

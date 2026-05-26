@@ -69,6 +69,12 @@ module ArtService
 
         def denormalize(start: false)
           tag = "denormalize(start=#{start})"
+          # TODO(cohort-optimisation): For the start=true pass, patients with a terminal
+          # state (died, TO, stopped) as-of start_date don't need drug order denormalization
+          # since their outcome is already determined by load_max_patient_state.
+          # Reordering to: load_max_patient_state → load_patient_current_state → decide terminal
+          # patients → skip load_max_drug_orders for those patients would save ~30s per pass.
+          # Requires pipeline reorder and snapshot validation before implementing.
           measure("#{tag}: load_max_drug_orders") { load_max_drug_orders(start:) }
           measure("#{tag}: update_max_drug_orders") { update_max_drug_orders(start:) }
           measure("#{tag}: load_patient_current_medication") { load_patient_current_medication(start:) }
@@ -179,7 +185,9 @@ module ArtService
               SUM(do.quantity) quantity,
               DATE(mdo.start_date) start_date, null, null, null, null
             FROM temp_max_drug_orders#{start ? '_start' : ''} mdo
-            INNER JOIN orders o ON o.patient_id = mdo.patient_id AND o.order_type_id = 1 AND DATE(o.start_date) = DATE(mdo.start_date) AND o.voided = 0
+            INNER JOIN orders o ON o.patient_id = mdo.patient_id AND o.order_type_id = 1
+              AND o.start_date >= DATE(mdo.start_date) AND o.start_date < DATE(mdo.start_date) + INTERVAL 1 DAY
+              AND o.voided = 0
             INNER JOIN drug_order do ON do.order_id = o.order_id AND do.quantity > 0 AND do.drug_inventory_id IN (#{arv_drug})
             INNER JOIN drug d ON d.drug_id = do.drug_inventory_id
             GROUP BY mdo.patient_id, do.drug_inventory_id HAVING quantity < 6000
@@ -204,14 +212,19 @@ module ArtService
                   ELSE 0
                 END) quantity
               FROM obs ob
-              INNER JOIN temp_current_medication#{start ? '_start' : ''} cm ON cm.patient_id = ob.person_id AND cm.start_date = DATE(ob.obs_datetime)
+              INNER JOIN temp_current_medication#{start ? '_start' : ''} cm ON cm.patient_id = ob.person_id
+                AND ob.obs_datetime >= cm.start_date AND ob.obs_datetime < cm.start_date + INTERVAL 1 DAY
               INNER JOIN orders o ON o.order_id = ob.order_id AND o.voided = 0
               INNER JOIN drug_order do ON do.order_id = o.order_id AND do.drug_inventory_id = cm.drug_id
               WHERE ob.concept_id = 2540 AND ob.voided = 0
               GROUP BY ob.person_id, cm.drug_id
             ) first_ob ON first_ob.person_id = cm.patient_id AND first_ob.drug_id = cm.drug_id
-            LEFT JOIN obs second_ob ON second_ob.person_id = cm.patient_id AND second_ob.concept_id = cm.concept_id AND DATE(second_ob.obs_datetime) = cm.start_date AND second_ob.voided = 0
-            LEFT JOIN obs third_ob ON third_ob.person_id = cm.patient_id AND third_ob.concept_id = 2540 AND third_ob.value_drug = cm.drug_id AND third_ob.voided = 0 AND DATE(third_ob.obs_datetime) = cm.start_date
+            LEFT JOIN obs second_ob ON second_ob.person_id = cm.patient_id AND second_ob.concept_id = cm.concept_id
+              AND second_ob.obs_datetime >= cm.start_date AND second_ob.obs_datetime < cm.start_date + INTERVAL 1 DAY
+              AND second_ob.voided = 0
+            LEFT JOIN obs third_ob ON third_ob.person_id = cm.patient_id AND third_ob.concept_id = 2540
+              AND third_ob.value_drug = cm.drug_id AND third_ob.voided = 0
+              AND third_ob.obs_datetime >= cm.start_date AND third_ob.obs_datetime < cm.start_date + INTERVAL 1 DAY
             GROUP BY cm.patient_id, cm.drug_id
             ON DUPLICATE KEY UPDATE pill_count = VALUES(pill_count), expiry_date = VALUES(expiry_date), pepfar_defaulter_date = VALUES(pepfar_defaulter_date), moh_defaulter_date = VALUES(moh_defaulter_date);
           SQL
