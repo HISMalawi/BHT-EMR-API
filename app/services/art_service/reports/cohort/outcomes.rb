@@ -53,28 +53,30 @@ module ArtService
         #  Data Management Region
         # ===================================
         def process_data(start: false)
-          denormalize(start:)
+          tag = "outcomes(start=#{start})"
+          measure("#{tag}: denormalize") { denormalize(start:) }
           # HIC SUNT DRACONIS: The order of the operations below matters,
           # do not change it unless you know what you are doing!!!
-          load_patients_who_died(start:)
-          load_other_patient_who_died(start:)
-          load_patients_who_stopped_treatment(start:)
-          load_patients_without_drug_orders(start:)
-          load_patient_calculated_outcomes(start:)
-          load_outcome_using_functions(start:)
+          measure("#{tag}: load_patients_who_died") { load_patients_who_died(start:) }
+          measure("#{tag}: load_other_patient_who_died") { load_other_patient_who_died(start:) }
+          measure("#{tag}: load_patients_who_stopped_treatment") { load_patients_who_stopped_treatment(start:) }
+          measure("#{tag}: load_patients_without_drug_orders") { load_patients_without_drug_orders(start:) }
+          measure("#{tag}: load_patient_calculated_outcomes") { load_patient_calculated_outcomes(start:) }
+          measure("#{tag}: load_outcome_using_functions") { load_outcome_using_functions(start:) }
         end
 
         # rubocop:disable Metrics/MethodLength
 
         def denormalize(start: false)
-          load_max_drug_orders(start:)
-          update_max_drug_orders(start:)
-          load_patient_current_medication(start:)
-          update_patient_current_medication(start:)
-          load_min_auto_expire_date(start:)
-          load_max_patient_state(start:)
-          load_patient_current_state(start:)
-          update_patient_current_state(start:)
+          tag = "denormalize(start=#{start})"
+          measure("#{tag}: load_max_drug_orders") { load_max_drug_orders(start:) }
+          measure("#{tag}: update_max_drug_orders") { update_max_drug_orders(start:) }
+          measure("#{tag}: load_patient_current_medication") { load_patient_current_medication(start:) }
+          measure("#{tag}: update_patient_current_medication") { update_patient_current_medication(start:) }
+          measure("#{tag}: load_min_auto_expire_date") { load_min_auto_expire_date(start:) }
+          measure("#{tag}: load_max_patient_state") { load_max_patient_state(start:) }
+          measure("#{tag}: load_patient_current_state") { load_patient_current_state(start:) }
+          measure("#{tag}: update_patient_current_state") { update_patient_current_state(start:) }
         end
 
         def load_max_drug_orders(start: false)
@@ -332,6 +334,16 @@ module ArtService
 
         def arv_drug
           @arv_drug ||= ::Drug.arv_drugs.map(&:drug_id).join(',')
+        end
+
+        COHORT_PERF_LOGGER = ArtService::Reports::CohortBuilder::COHORT_PERF_LOGGER
+
+        def measure(label)
+          t = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          result = yield
+          elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - t).round(3)
+          COHORT_PERF_LOGGER.info("[COHORT PERF] #{label}: #{elapsed}s")
+          result
         end
       end
       # rubocop:enable Metrics/ClassLength

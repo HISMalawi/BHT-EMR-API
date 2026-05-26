@@ -31,12 +31,13 @@ module ArtService
 
       def build(cohort_struct, start_date, end_date, occupation)
         # load_tmp_patient_table(cohort_struct)
-        prepare_tables
-        load_temp_other_patient_types(end_date)
-        load_temp_register_start_date_table(end_date)
-        load_temp_order_details(end_date)
-        load_art_start_date(end_date)
-        load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
+        build_start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        measure('setup: prepare_tables') { prepare_tables }
+        measure('setup: load_temp_other_patient_types') { load_temp_other_patient_types(end_date) }
+        measure('setup: load_temp_register_start_date_table') { load_temp_register_start_date_table(end_date) }
+        measure('setup: load_temp_order_details') { load_temp_order_details(end_date) }
+        measure('setup: load_art_start_date') { load_art_start_date(end_date) }
+        measure('setup: load_data_into_temp_earliest_start_date') { load_data_into_temp_earliest_start_date(end_date.to_date, occupation) }
 
         # create_tmp_patient_table_2(end_date)
 
@@ -46,9 +47,11 @@ module ArtService
         quarter_start_date = start_date.to_date
 
         # Get earliest date enrolled
-        cum_start_date = get_cum_start_date
+        cum_start_date = measure('get_cum_start_date') { get_cum_start_date }
 
         cum_start_date = start_date if cum_start_date.blank?
+
+        _indicators_start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
         # Total registeres
         cohort_struct.total_registered = total_registered(start_date, end_date)
@@ -291,10 +294,12 @@ module ArtService
         cohort_struct.cum_kaposis_sarcoma = kaposis_sarcoma(cum_start_date, end_date)
         cohort_struct.quarterly_kaposis_sarcoma = kaposis_sarcoma(quarter_start_date, end_date)
 
+        COHORT_PERF_LOGGER.info("[COHORT PERF] indicators: all pre-outcome indicators: #{(Process.clock_gettime(Process::CLOCK_MONOTONIC) - _indicators_start).round(3)}s")
+
         # From this point going down: we update temp_earliest_start_date cum_outcome field to have the latest Cumulative outcome
-        update_cum_outcome(start_date: quarter_start_date, end_date:)
-        update_tb_status(end_date)
-        update_patient_side_effects(end_date)
+        measure('CRITICAL: update_cum_outcome') { update_cum_outcome(start_date: quarter_start_date, end_date:) }
+        measure('CRITICAL: update_tb_status') { update_tb_status(end_date) }
+        measure('CRITICAL: update_patient_side_effects') { update_patient_side_effects(end_date) }
 
         # Total Alive and On ART
         # Unique PatientProgram entries at the current location for those patients with at least one state
@@ -315,7 +320,7 @@ module ArtService
         # Alive and On ART and Value Coded of the latest 'Regimen Category' Observation
         # of each patient that is linked to the Dispensing encounter in the reporting period
 
-        prescriptions = cal_regimem_category(cohort_struct.total_alive_and_on_art, end_date)
+        prescriptions = measure('cal_regimem_category') { cal_regimem_category(cohort_struct.total_alive_and_on_art, end_date) }
 
         # concepts = ->(names) { ConceptName.where(name: names).select(:concept_id) }
         # drugs = ->(concepts) { Drug.where(concept: concepts).select(:drug_id).collect(&:drug_id) }
@@ -362,7 +367,7 @@ module ArtService
         # Total patients with side effects:
         # Alive and On ART patients with DRUG INDUCED observations during their last HIV CLINIC CONSULTATION encounter up to the reporting period
 
-        with_se, without_se, se_unknowns = patients_side_effects_status(cohort_struct.total_alive_and_on_art, end_date)
+        with_se, without_se, se_unknowns = measure('patients_side_effects_status') { patients_side_effects_status(cohort_struct.total_alive_and_on_art, end_date) }
         cohort_struct.total_patients_with_side_effects = with_se
         cohort_struct.total_patients_without_side_effects = without_se
         cohort_struct.unknown_side_effects = se_unknowns
@@ -371,14 +376,15 @@ module ArtService
         # Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
         # or 'TB confirmed and on Treatment', or 'TB confirmed and not on Treatment' or 'Unknown TB status'
         # during their latest HIV Clinic Consultaiton encounter in the reporting period
-        write_tb_status_indicators(cohort_struct, cohort_struct.total_alive_and_on_art, start_date, end_date)
+        measure('write_tb_status_indicators') { write_tb_status_indicators(cohort_struct, cohort_struct.total_alive_and_on_art, start_date, end_date) }
 
         # ART adherence
         #
         # Alive and On ART with value of their 'Drug order adherence" observation during their latest Adherence
         # encounter in the reporting period  between 95 and 105
-        adherent, not_adherent, unknown_adherence = latest_art_adherence(cohort_struct.total_alive_and_on_art,
-                                                                         start_date, end_date)
+        adherent, not_adherent, unknown_adherence = measure('latest_art_adherence') do
+          latest_art_adherence(cohort_struct.total_alive_and_on_art, start_date, end_date)
+        end
         cohort_struct.patients_with_0_6_doses_missed_at_their_last_visit = adherent
         cohort_struct.patients_with_7_plus_doses_missed_at_their_last_visit = not_adherent
         cohort_struct.patients_with_unknown_adhrence = unknown_adherence
@@ -392,39 +398,47 @@ module ArtService
                                                                   cohort_struct.total_breastfeeding_women, cohort_struct.total_pregnant_women)
 
         # Patients with CPT dispensed at least once before end of quarter and on ARVs
-        cohort_struct.total_patients_on_arvs_and_cpt = total_patients_on_arvs_and_cpt(
-          cohort_struct.total_alive_and_on_art, start_date, end_date
-        )
+        cohort_struct.total_patients_on_arvs_and_cpt = measure('total_patients_on_arvs_and_cpt') do
+          total_patients_on_arvs_and_cpt(cohort_struct.total_alive_and_on_art, start_date, end_date)
+        end
 
         # Patients with IPT dispensed at least once before end of quarter and on ARVS
-        cohort_struct.total_patients_on_arvs_and_ipt = total_patients_on_arvs_and_ipt(
-          cohort_struct.total_alive_and_on_art, start_date, end_date
-        )
+        cohort_struct.total_patients_on_arvs_and_ipt = measure('total_patients_on_arvs_and_ipt') do
+          total_patients_on_arvs_and_ipt(cohort_struct.total_alive_and_on_art, start_date, end_date)
+        end
 
         # Patients on family planning methods at least once before end of quarter and on ARVs
-        cohort_struct.total_patients_on_family_planning = total_patients_on_family_planning(
-          cohort_struct.total_alive_and_on_art, quarter_start_date, end_date
-        )
+        cohort_struct.total_patients_on_family_planning = measure('total_patients_on_family_planning') do
+          total_patients_on_family_planning(cohort_struct.total_alive_and_on_art, quarter_start_date, end_date)
+        end
 
         # Patients whose BP was screened and are above 30 years least once before end of quarter and on ARVs
-        cohort_struct.total_patients_with_screened_bp = total_patients_with_screened_bp(
-          total_patients_alive_and_on_art_above_30_years(cohort_struct.total_alive_and_on_art,
-                                                         end_date), start_date, end_date
-        )
+        cohort_struct.total_patients_with_screened_bp = measure('total_patients_with_screened_bp') do
+          total_patients_with_screened_bp(
+            total_patients_alive_and_on_art_above_30_years(cohort_struct.total_alive_and_on_art, end_date),
+            start_date, end_date
+          )
+        end
 
         # Patients who started TPT in current reporting period
         tpt = Cohort::Tpt.new(start_date, end_date)
         # tpt newly initiated has a property last_tpt_start_date we need to use that to get those clients
-        cohort_struct.newly_initiated_on_3hp = tpt.newly_initiated_on_3hp.select do |hash|
-          hash['last_tpt_start_date'].nil?
+        measure('tpt: newly_initiated_on_3hp') do
+          cohort_struct.newly_initiated_on_3hp = tpt.newly_initiated_on_3hp.select do |hash|
+            hash['last_tpt_start_date'].nil?
+          end
         end
-        cohort_struct.newly_initiated_on_ipt = tpt.newly_initiated_on_ipt.select do |hash|
-          hash['last_tpt_start_date'].nil?
+        measure('tpt: newly_initiated_on_ipt') do
+          cohort_struct.newly_initiated_on_ipt = tpt.newly_initiated_on_ipt.select do |hash|
+            hash['last_tpt_start_date'].nil?
+          end
         end
 
         time_ended = Time.now.strftime('%Y-%m-%d %H:%M:%S')
+        total_elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - build_start).round(2)
         puts "Started at: #{time_started}. Finished at: #{time_ended}. Total time in minutes: #{(Time.parse(time_ended) - Time.parse(time_started)) / 60}"
         Rails.logger.info "Started at: #{time_started}. Finished at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}. Total time in minutes: #{(Time.parse(time_ended) - Time.parse(time_started)) / 60}"
+        COHORT_PERF_LOGGER.info("[COHORT PERF] ===== TOTAL BUILD TIME: #{total_elapsed}s (#{(total_elapsed / 60.0).round(2)} min) =====")
         cohort_struct
       end
 
@@ -837,6 +851,20 @@ module ArtService
 
       private
 
+      COHORT_PERF_LOGGER = Logger.new(Rails.root.join('log', 'cohort_performance.log')).tap do |l|
+        l.formatter = proc { |_sev, time, _prog, msg| "#{time.strftime('%Y-%m-%d %H:%M:%S')} #{msg}\n" }
+      end
+
+      # Wraps a block, writes its elapsed time to log/cohort_performance.log, and returns the result.
+      # Usage: result = measure('label') { some_expensive_call() }
+      def measure(label)
+        t = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        result = yield
+        elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - t).round(3)
+        COHORT_PERF_LOGGER.info("[COHORT PERF] #{label}: #{elapsed}s")
+        result
+      end
+
       def load_temp_latest_tb_status(end_date)
         ActiveRecord::Base.connection.select_all <<~SQL
           INSERT INTO temp_latest_tb_status
@@ -938,7 +966,7 @@ module ArtService
         SQL
 
         begin
-          ((results.count.to_f / patient_list.count) * 100).to_i
+          ((results.count.to_f / patient_list.count) * 100).to_is
         rescue StandardError
           0
         end
