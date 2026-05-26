@@ -16,9 +16,9 @@ module ArtTempTablesUtils
   # rubocop:disable Metrics/CyclomaticComplexity
   def prepare_cohort_tables
     create_temp_cohort_members_table unless check_if_table_exists('temp_cohort_members')
-    drop_temp_cohort_members_table unless count_table_columns('temp_cohort_members') == 12
+    drop_temp_cohort_members_table unless count_table_columns('temp_cohort_members') == 13
     create_tmp_patient_table unless check_if_table_exists('temp_earliest_start_date')
-    drop_tmp_patient_table unless count_table_columns('temp_earliest_start_date') == 11
+    drop_tmp_patient_table unless count_table_columns('temp_earliest_start_date') == 12
     create_temp_other_patient_types unless check_if_table_exists('temp_other_patient_types')
     drop_temp_other_patient_types unless count_table_columns('temp_other_patient_types') == 1
     create_temp_register_start_date_table unless check_if_table_exists('temp_register_start_date')
@@ -124,7 +124,8 @@ module ArtTempTablesUtils
         age_at_initiation INT DEFAULT NULL,
         age_in_days INT DEFAULT NULL,
         reason_for_starting_art INT DEFAULT NULL,
-        occupation VARCHAR(255) DEFAULT NULL
+        occupation VARCHAR(255) DEFAULT NULL,
+        earliest_start_date_by_enrollment DATE DEFAULT NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
     SQL
     create_temp_cohort_members_index
@@ -177,7 +178,8 @@ module ArtTempTablesUtils
          gender VARCHAR(32),
          age_at_initiation INT DEFAULT NULL,
          age_in_days INT DEFAULT NULL,
-         reason_for_starting_art INT DEFAULT NULL
+         reason_for_starting_art INT DEFAULT NULL,
+         earliest_start_date_by_enrollment DATE DEFAULT NULL
       )
     SQL
     create_tmp_patient_table_indexes

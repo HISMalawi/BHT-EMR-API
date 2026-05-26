@@ -641,7 +641,7 @@ module ArtService
         load_data_into_temp_cohort_members_table(end_date)
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO temp_earliest_start_date
-          SELECT patient_id, date_enrolled, earliest_start_date, recorded_start_date, birthdate, birthdate_estimated, death_date, gender, age_at_initiation, age_in_days, reason_for_starting_art
+          SELECT patient_id, date_enrolled, earliest_start_date, recorded_start_date, birthdate, birthdate_estimated, death_date, gender, age_at_initiation, age_in_days, reason_for_starting_art, earliest_start_date_by_enrollment
           FROM temp_cohort_members #{occupation_filter(occupation:, field_name: 'occupation')}
         SQL
       end
@@ -672,7 +672,8 @@ module ArtService
                   WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
                   AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
                   ORDER BY obs_datetime DESC, date_created DESC LIMIT 1) AS reason_for_starting_art,
-                 pa.value AS occupation
+                 pa.value AS occupation,
+                 date_antiretrovirals_started(patient_program.patient_id, DATE(MIN(art_order.start_date))) AS earliest_start_date_by_enrollment
           FROM patient_program
           INNER JOIN person ON person.person_id = patient_program.patient_id AND person.voided = 0
           LEFT JOIN (#{current_occupation_query}) pa ON pa.person_id = patient_program.patient_id
@@ -1896,6 +1897,9 @@ module ArtService
                 `pe`.`birthdate`,
                 date_antiretrovirals_started(`p`.`patient_id`, min(`s`.`start_date`)) AS `earliest_start_date`,
                 cast(patient_date_enrolled(`p`.`patient_id`) as date) AS `date_enrolled`,
+                -- Pre-computed equivalent of date_antiretrovirals_started(patient_id, date_enrolled).
+                -- Avoids calling the function per-row at query time (e.g. in cohort drill-down).
+                date_antiretrovirals_started(`p`.`patient_id`, cast(patient_date_enrolled(`p`.`patient_id`) as date)) AS `earliest_start_date_by_enrollment`,
                 `person`.`death_date` AS `death_date`,
                 (select timestampdiff(year, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_at_initiation`,
                 (select timestampdiff(day, `pe`.`birthdate`, min(`s`.`start_date`))) AS `age_in_days`
