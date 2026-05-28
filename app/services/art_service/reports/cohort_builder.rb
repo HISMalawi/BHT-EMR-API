@@ -25,6 +25,8 @@ module ArtService
         load_temp_register_start_date_table(end_date)
         load_temp_order_details(end_date)
         load_art_start_date(end_date)
+        load_temp_reason_for_starting_art(end_date)
+        load_temp_art_start_date_by_enrollment(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
         update_cum_outcome(start_date:, end_date:)
       end
@@ -36,6 +38,8 @@ module ArtService
         load_temp_register_start_date_table(end_date)
         load_temp_order_details(end_date)
         load_art_start_date(end_date)
+        load_temp_reason_for_starting_art(end_date)
+        load_temp_art_start_date_by_enrollment(end_date)
         load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
 
         # create_tmp_patient_table_2(end_date)
@@ -668,12 +672,9 @@ module ArtService
                  LEFT(person.gender, 1) gender,
                  IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(YEAR, person.birthdate,  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date)))), NULL) AS age_at_initiation,
                  IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(DAY, person.birthdate,  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date)))), NULL) AS age_in_days,
-                 (SELECT value_coded FROM obs
-                  WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
-                  AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
-                  ORDER BY obs_datetime DESC, date_created DESC LIMIT 1) AS reason_for_starting_art,
+                 rfsa.reason_for_starting_art,
                  pa.value AS occupation,
-                 date_antiretrovirals_started(patient_program.patient_id, DATE(MIN(art_order.start_date))) AS earliest_start_date_by_enrollment
+                 tasdbe.earliest_start_date_by_enrollment
           FROM patient_program
           INNER JOIN person ON person.person_id = patient_program.patient_id AND person.voided = 0
           LEFT JOIN (#{current_occupation_query}) pa ON pa.person_id = patient_program.patient_id
@@ -681,6 +682,10 @@ module ArtService
             ON outcome.patient_program_id = patient_program.patient_program_id
           LEFT JOIN temp_art_start_date AS art_start_date_obs
             ON art_start_date_obs.patient_id = patient_program.patient_id
+          LEFT JOIN temp_reason_for_starting_art AS rfsa
+            ON rfsa.patient_id = patient_program.patient_id
+          LEFT JOIN temp_art_start_date_by_enrollment AS tasdbe
+            ON tasdbe.patient_id = patient_program.patient_id
            /* TODO: Re-enable the following condition. Has been removed because LLH and PIH
               were noted to be dropping patients because of it. Seems these sites may have orders
               without corresponding encounters. Adding this condition bumps up performance a bit. */
@@ -775,6 +780,85 @@ module ArtService
           WHERE pp.program_id = 1
           AND pp.voided = 0
           GROUP BY patient_id
+        SQL
+      end
+
+      def load_temp_reason_for_starting_art(end_date)
+        end_date = ActiveRecord::Base.connection.quote(end_date)
+        
+        ActiveRecord::Base.connection.execute <<~SQL
+          INSERT INTO temp_reason_for_starting_art (patient_id, reason_for_starting_art)
+          SELECT person_id, value_coded
+          FROM (
+            SELECT person_id, value_coded,
+                   ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY obs_datetime DESC, date_created DESC) AS rn
+            FROM obs
+            WHERE concept_id = 7563 
+              AND voided = 0
+              AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+          ) ranked
+          WHERE rn = 1
+        SQL
+      end
+
+      def load_temp_art_start_date_by_enrollment(end_date)
+        arv_concept_id = concept('ANTIRETROVIRAL DRUGS').concept_id
+        dispension_concept_id = concept('AMOUNT DISPENSED').concept_id
+        art_start_date_concept_id = 2516  # ART start date concept
+        
+        # Step 1: Get the recorded ART start dates (value_datetime)
+        ActiveRecord::Base.connection.execute <<~SQL
+          INSERT INTO temp_art_start_date_by_enrollment (patient_id, earliest_start_date_by_enrollment)
+          SELECT 
+            person_id AS patient_id,
+            DATE(MIN(value_datetime)) AS earliest_start_date_by_enrollment
+          FROM obs 
+          WHERE concept_id = #{art_start_date_concept_id}
+            AND encounter_id > 0
+            AND value_datetime IS NOT NULL
+            AND value_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
+            AND voided = 0
+          GROUP BY person_id
+        SQL
+        
+        # Step 2: Handle estimated dates (value_text with durations)
+        ActiveRecord::Base.connection.execute <<~SQL
+          INSERT IGNORE INTO temp_art_start_date_by_enrollment (patient_id, earliest_start_date_by_enrollment)
+          SELECT 
+            person_id AS patient_id,
+            CASE 
+              WHEN value_text = '6 months' THEN DATE_SUB(obs_datetime, INTERVAL 6 MONTH)
+              WHEN value_text = '12 months' THEN DATE_SUB(obs_datetime, INTERVAL 12 MONTH)
+              WHEN value_text = '18 months' THEN DATE_SUB(obs_datetime, INTERVAL 18 MONTH)
+              WHEN value_text = '24 months' THEN DATE_SUB(obs_datetime, INTERVAL 24 MONTH)
+              WHEN value_text = '48 months' THEN DATE_SUB(obs_datetime, INTERVAL 48 MONTH)
+              WHEN value_text = 'Over 2 years' THEN DATE_SUB(obs_datetime, INTERVAL 60 MONTH)
+              ELSE NULL
+            END AS earliest_start_date_by_enrollment
+          FROM obs
+          WHERE concept_id = #{art_start_date_concept_id}
+            AND encounter_id > 0
+            AND value_text IS NOT NULL
+            AND obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
+            AND voided = 0
+          GROUP BY person_id
+          HAVING earliest_start_date_by_enrollment IS NOT NULL
+        SQL
+        
+        # Step 3: Fallback to earliest ARV dispensation (patient_start_date logic)
+        ActiveRecord::Base.connection.execute <<~SQL
+          INSERT IGNORE INTO temp_art_start_date_by_enrollment (patient_id, earliest_start_date_by_enrollment)
+          SELECT 
+            o.person_id AS patient_id,
+            DATE(MIN(o.obs_datetime)) AS earliest_start_date_by_enrollment
+          FROM obs o
+          INNER JOIN drug d ON o.value_drug = d.drug_id
+          INNER JOIN concept_set cs ON d.concept_id = cs.concept_id
+          WHERE o.concept_id = #{dispension_concept_id}
+            AND cs.concept_set = #{arv_concept_id}
+            AND o.obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
+            AND o.voided = 0
+          GROUP BY o.person_id
         SQL
       end
 
@@ -1094,12 +1178,37 @@ module ArtService
       #       [patients whose adherence rate is unknown]
       #    ]
       def latest_art_adherence(patients_alive_and_on_art, _start_date, end_date)
-        patients_alive_and_on_art = Set.new(patients_alive_and_on_art.map { |patient| patient['patient_id'] })
+        patient_ids = patients_alive_and_on_art.map { |patient| patient['patient_id'] }
+        return [[], [], patient_ids] if patient_ids.empty?
+
         end_date = ActiveRecord::Base.connection.quote(end_date)
         load_tmp_max_adherence(end_date)
 
-        not_adherent = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT adherence.person_id
+        # Single optimized query to categorize all patients at once
+        results = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT 
+            adherence.person_id,
+            CASE
+              WHEN (
+                (adherence.value_numeric IS NOT NULL 
+                 AND adherence.value_numeric >= #{MIN_ART_ADHERENCE_THRESHOLD}
+                 AND adherence.value_numeric <= #{MAX_ART_ADHERENCE_THRESHOLD})
+                OR 
+                (adherence.value_text IS NOT NULL 
+                 AND CAST(adherence.value_text AS SIGNED INTEGER) >= #{MIN_ART_ADHERENCE_THRESHOLD}
+                 AND CAST(adherence.value_text AS SIGNED INTEGER) <= #{MAX_ART_ADHERENCE_THRESHOLD})
+              ) THEN 'adherent'
+              WHEN (
+                (adherence.value_numeric IS NOT NULL 
+                 AND (adherence.value_numeric < #{MIN_ART_ADHERENCE_THRESHOLD}
+                      OR adherence.value_numeric > #{MAX_ART_ADHERENCE_THRESHOLD}))
+                OR 
+                (adherence.value_text IS NOT NULL 
+                 AND (CAST(adherence.value_text AS SIGNED INTEGER) < #{MIN_ART_ADHERENCE_THRESHOLD}
+                      OR CAST(adherence.value_text AS SIGNED INTEGER) > #{MAX_ART_ADHERENCE_THRESHOLD}))
+              ) THEN 'not_adherent'
+              ELSE 'unknown'
+            END AS adherence_status
           FROM obs AS adherence
           INNER JOIN tmp_max_adherence AS max_adherence
             ON max_adherence.person_id = adherence.person_id
@@ -1108,57 +1217,61 @@ module ArtService
           INNER JOIN orders
             ON orders.order_id = adherence.order_id
             AND orders.order_type_id = #{drug_order_type.order_type_id}
-            AND orders.concept_id IN (#{arv_drug_concepts.to_sql})
             AND orders.voided = 0
+          INNER JOIN (SELECT concept_id FROM concept_set WHERE concept_set = 1085) AS order_arv_concepts
+            ON order_arv_concepts.concept_id = orders.concept_id
           WHERE adherence.concept_id = #{drug_order_adherence_concept.concept_id}
-            AND ((adherence.value_numeric < #{MIN_ART_ADHERENCE_THRESHOLD}
-                  OR adherence.value_numeric > #{MAX_ART_ADHERENCE_THRESHOLD})
-                 OR (CAST(adherence.value_text AS SIGNED INTEGER) < #{MIN_ART_ADHERENCE_THRESHOLD}
-                     OR CAST(adherence.value_text AS SIGNED INTEGER) > #{MAX_ART_ADHERENCE_THRESHOLD}))
             AND adherence.voided = 0
           GROUP BY adherence.person_id
         SQL
 
-        not_adherent = not_adherent.empty? ? [] : not_adherent.map { |row| row['person_id'] }
+        # Categorize results
+        adherent = []
+        not_adherent = []
+        patients_with_adherence = Set.new
 
-        adherent = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT adherence.person_id
-          FROM obs AS adherence
-          INNER JOIN tmp_max_adherence AS max_adherence
-            ON max_adherence.person_id = adherence.person_id
-            AND adherence.obs_datetime >= max_adherence.visit_date
-            AND adherence.obs_datetime < (max_adherence.visit_date + INTERVAL 1 DAY)
-            AND max_adherence.person_id NOT IN (#{not_adherent.blank? ? 0 : not_adherent.join(',')})
-          INNER JOIN orders
-            ON orders.order_id = adherence.order_id
-            AND orders.order_type_id = #{drug_order_type.order_type_id}
-            AND orders.concept_id IN (#{arv_drug_concepts.to_sql})
-            AND orders.voided = 0
-          WHERE adherence.concept_id = #{drug_order_adherence_concept.concept_id}
-            AND ((adherence.value_numeric >= #{MIN_ART_ADHERENCE_THRESHOLD}
-                  OR adherence.value_numeric <= #{MAX_ART_ADHERENCE_THRESHOLD})
-                 OR (CAST(adherence.value_text AS SIGNED INTEGER) >= #{MIN_ART_ADHERENCE_THRESHOLD}
-                     OR CAST(adherence.value_text AS SIGNED INTEGER) <= #{MAX_ART_ADHERENCE_THRESHOLD}))
-            AND adherence.voided = 0
-          GROUP BY adherence.person_id
-        SQL
+        results.each do |row|
+          person_id = row['person_id']
+          patients_with_adherence.add(person_id)
+          
+          case row['adherence_status']
+          when 'adherent'
+            adherent << person_id
+          when 'not_adherent'
+            not_adherent << person_id
+          end
+        end
 
-        adherent = adherent.map { |row| row['person_id'] }
-        unknown_adherence = Set.new(patients_alive_and_on_art) - adherent - not_adherent
+        # Patients without adherence records
+        unknown_adherence = patient_ids - patients_with_adherence.to_a
 
         [adherent, not_adherent, unknown_adherence]
       end
 
       def load_tmp_max_adherence(end_date)
+        # Materialize ARV drug concepts into temp table for better performance
+        ActiveRecord::Base.connection.execute <<~SQL
+          CREATE TEMPORARY TABLE IF NOT EXISTS temp_arv_drug_concepts (
+            concept_id INT PRIMARY KEY
+          ) ENGINE=MEMORY;
+        SQL
+
+        ActiveRecord::Base.connection.execute <<~SQL
+          INSERT IGNORE INTO temp_arv_drug_concepts (concept_id)
+          SELECT concept_id FROM concept_set WHERE concept_set = 1085;
+        SQL
+
+        # Now use the materialized temp table for much faster joins
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO tmp_max_adherence
           SELECT obs.person_id, DATE(MAX(obs.obs_datetime)) AS visit_date
             FROM obs
             INNER JOIN orders
               ON orders.order_id = obs.order_id
-              AND orders.concept_id IN (SELECT `concept_set`.`concept_id` FROM `concept_set` WHERE `concept_set`.`concept_set` = 1085)
               AND orders.order_type_id = 1
               AND orders.voided = 0
+            INNER JOIN temp_arv_drug_concepts
+              ON temp_arv_drug_concepts.concept_id = orders.concept_id
             INNER JOIN temp_patient_outcomes
               ON temp_patient_outcomes.patient_id = obs.person_id
               AND temp_patient_outcomes.moh_cum_outcome = 'On antiretrovirals'

@@ -60,8 +60,7 @@ module ArtService
           load_other_patient_who_died(start:)
           load_patients_who_stopped_treatment(start:)
           load_patients_without_drug_orders(start:)
-          load_patient_calculated_outcomes(start:)
-          load_outcome_using_functions(start:)
+          load_patient_calculated_outcomes_optimized(start:)
         end
 
         # rubocop:disable Metrics/MethodLength
@@ -177,7 +176,9 @@ module ArtService
               SUM(do.quantity) quantity,
               DATE(mdo.start_date) start_date, null, null, null, null
             FROM temp_max_drug_orders#{start ? '_start' : ''} mdo
-            INNER JOIN orders o ON o.patient_id = mdo.patient_id AND o.order_type_id = 1 AND DATE(o.start_date) = DATE(mdo.start_date) AND o.voided = 0
+            INNER JOIN orders o ON o.patient_id = mdo.patient_id AND o.order_type_id = 1
+              AND o.start_date >= mdo.start_date AND o.start_date < mdo.start_date + INTERVAL 1 DAY
+              AND o.voided = 0
             INNER JOIN drug_order do ON do.order_id = o.order_id AND do.quantity > 0 AND do.drug_inventory_id IN (#{arv_drug})
             INNER JOIN drug d ON d.drug_id = do.drug_inventory_id
             GROUP BY mdo.patient_id, do.drug_inventory_id HAVING quantity < 6000
@@ -195,21 +196,28 @@ module ArtService
             DATE_ADD(DATE_ADD(cm.start_date, INTERVAL (cm.quantity + COALESCE(first_ob.quantity, 0) + COALESCE(SUM(second_ob.value_numeric),0) + COALESCE(SUM(third_ob.value_numeric),0)) / cm.daily_dose DAY), INTERVAL 60 DAY)
             FROM temp_current_medication#{start ? '_start' : ''} cm
             LEFT JOIN (
-              SELECT ob.person_id, cm.drug_id,
+              SELECT cm2.patient_id, cm2.drug_id,
                 SUM(ob.value_numeric) + SUM(CASE
                   WHEN ob.value_text is null then 0
                   WHEN ob.value_text REGEXP '^[0-9]+(\.[0-9]+)?$' then ob.value_text
                   ELSE 0
                 END) quantity
-              FROM obs ob
-              INNER JOIN temp_current_medication#{start ? '_start' : ''} cm ON cm.patient_id = ob.person_id AND cm.start_date = DATE(ob.obs_datetime)
+              FROM temp_current_medication#{start ? '_start' : ''} cm2
+              INNER JOIN obs ob FORCE INDEX (idx_obs_fast_lookup)
+                ON ob.person_id = cm2.patient_id AND ob.concept_id = 2540 AND ob.voided = 0
+                AND ob.obs_datetime >= cm2.start_date AND ob.obs_datetime < cm2.start_date + INTERVAL 1 DAY
               INNER JOIN orders o ON o.order_id = ob.order_id AND o.voided = 0
-              INNER JOIN drug_order do ON do.order_id = o.order_id AND do.drug_inventory_id = cm.drug_id
-              WHERE ob.concept_id = 2540 AND ob.voided = 0
-              GROUP BY ob.person_id, cm.drug_id
-            ) first_ob ON first_ob.person_id = cm.patient_id AND first_ob.drug_id = cm.drug_id
-            LEFT JOIN obs second_ob ON second_ob.person_id = cm.patient_id AND second_ob.concept_id = cm.concept_id AND DATE(second_ob.obs_datetime) = cm.start_date AND second_ob.voided = 0
-            LEFT JOIN obs third_ob ON third_ob.person_id = cm.patient_id AND third_ob.concept_id = 2540 AND third_ob.value_drug = cm.drug_id AND third_ob.voided = 0 AND DATE(third_ob.obs_datetime) = cm.start_date
+              INNER JOIN drug_order do ON do.order_id = o.order_id AND do.drug_inventory_id = cm2.drug_id
+              GROUP BY cm2.patient_id, cm2.drug_id
+            ) first_ob ON first_ob.patient_id = cm.patient_id AND first_ob.drug_id = cm.drug_id
+            LEFT JOIN obs second_ob FORCE INDEX (idx_obs_fast_lookup)
+              ON second_ob.person_id = cm.patient_id AND second_ob.concept_id = cm.concept_id
+              AND second_ob.obs_datetime >= cm.start_date AND second_ob.obs_datetime < cm.start_date + INTERVAL 1 DAY
+              AND second_ob.voided = 0
+            LEFT JOIN obs third_ob FORCE INDEX (idx_obs_drug_lookup)
+              ON third_ob.person_id = cm.patient_id AND third_ob.concept_id = 2540 AND third_ob.value_drug = cm.drug_id
+              AND third_ob.voided = 0
+              AND third_ob.obs_datetime >= cm.start_date AND third_ob.obs_datetime < cm.start_date + INTERVAL 1 DAY
             GROUP BY cm.patient_id, cm.drug_id
             ON DUPLICATE KEY UPDATE pill_count = VALUES(pill_count), expiry_date = VALUES(expiry_date), pepfar_defaulter_date = VALUES(pepfar_defaulter_date), moh_defaulter_date = VALUES(moh_defaulter_date);
           SQL
@@ -277,7 +285,10 @@ module ArtService
           SQL
         end
 
-        def load_patient_calculated_outcomes(start: false)
+        # Optimized version that handles all remaining patients without expensive function calls
+        # This replaces both load_patient_calculated_outcomes and load_outcome_using_functions
+        def load_patient_calculated_outcomes_optimized(start: false)
+          # First, handle patients WITH medication data (have entries in temp_min_auto_expire_date)
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
             SELECT patients.patient_id,
@@ -291,22 +302,33 @@ module ArtService
             WHERE patients.patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3))
             ON DUPLICATE KEY UPDATE moh_cum_outcome = VALUES(moh_cum_outcome), moh_outcome_date = VALUES(moh_outcome_date), pepfar_cum_outcome = VALUES(pepfar_cum_outcome), pepfar_outcome_date = VALUES(pepfar_outcome_date), step = VALUES(step)
           SQL
-        end
 
-        # Load defaulters
-        def load_outcome_using_functions(start: false)
-          function_date = start ? "'#{start_date.to_date - 1.day}'" : end_date
+          # Then handle remaining patients WITHOUT medication data
+          # These are edge cases - patients enrolled but with no drug orders in temp_min_auto_expire_date
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
-            SELECT patient_id,
-                   patient_outcome(patient_id, #{function_date}),
-                   current_defaulter_date(patient_id, #{function_date}),
-                   pepfar_patient_outcome(patient_id, #{function_date}),
-                   current_pepfar_defaulter_date(patient_id, #{function_date}),
+            SELECT tesd.patient_id,
+                   CASE
+                     WHEN cs.cum_outcome IN ('Patient died', 'Patient transferred out', 'Treatment stopped') THEN cs.cum_outcome
+                     ELSE 'Unknown'
+                   END AS moh_outcome,
+                   CASE
+                     WHEN cs.cum_outcome IN ('Patient died', 'Patient transferred out', 'Treatment stopped') THEN cs.outcome_date
+                     ELSE NULL
+                   END AS moh_outcome_date,
+                   CASE
+                     WHEN cs.cum_outcome IN ('Patient died', 'Patient transferred out', 'Treatment stopped') THEN cs.cum_outcome
+                     ELSE 'Unknown'
+                   END AS pepfar_outcome,
+                   CASE
+                     WHEN cs.cum_outcome IN ('Patient died', 'Patient transferred out', 'Treatment stopped') THEN cs.outcome_date
+                     ELSE NULL
+                   END AS pepfar_outcome_date,
                    5
-            FROM temp_earliest_start_date
-            WHERE date_enrolled < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY
-              AND (patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3, 4))
+            FROM temp_earliest_start_date tesd
+            LEFT JOIN temp_current_state#{start ? '_start' : ''} AS cs ON cs.patient_id = tesd.patient_id AND cs.outcomes = 1
+            WHERE tesd.date_enrolled < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY
+              AND tesd.patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3, 4))
             ON DUPLICATE KEY UPDATE moh_cum_outcome = VALUES(moh_cum_outcome), moh_outcome_date = VALUES(moh_outcome_date), pepfar_cum_outcome = VALUES(pepfar_cum_outcome), pepfar_outcome_date = VALUES(pepfar_outcome_date), step = VALUES(step)
           SQL
         end
