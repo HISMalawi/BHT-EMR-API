@@ -101,10 +101,13 @@ module ArtService
                          end_date: end_date.to_date).ipt_coverage
     end
 
-    def cohort_report_drill_down(id)
+    def cohort_report_drill_down(id, start_date, end_date)
+      start_date = start_date.presence || Date.today
+      end_date = end_date.presence || Date.today
+
       REPORTS['COHORT'].new(type: 'drill_down',
-                            name: 'drill_down', start_date: Date.today,
-                            end_date: Date.today).cohort_report_drill_down(id)
+                            name: 'drill_down', start_date: start_date.to_date,
+                            end_date: end_date.to_date).cohort_report_drill_down(id)
     end
 
     def regimen_switch(start_date, end_date, pepfar, **kwargs)

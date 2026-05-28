@@ -22,12 +22,14 @@ module ArtService
         clients = potential_get_clients
         return [] if clients.blank?
 
+        maternal_statuses = maternal_status_for_clients(clients)
         clients_due_list = []
 
         clients.each do |person|
           vl_details = get_vl_due_details(person) # person[:patient_id], person[:appointment_date], person[:start_date])
           next if vl_details.blank?
 
+          vl_details[:maternal_status] = maternal_statuses[person[:patient_id]]
           clients_due_list << vl_details
         end
 
@@ -288,6 +290,73 @@ module ArtService
       def get_vl_due_info(patient_id, appointment_date)
         vl_info = ArtService::VlReminder.new(patient_id:, date: appointment_date)
         vl_info.vl_reminder_info
+      end
+
+      def maternal_status_for_clients(clients)
+        status_map = {}
+
+        female_clients = clients.select { |p| p[:gender]&.upcase&.start_with?('F') }
+        clients.each { |p| status_map[p[:patient_id]] = 'M' unless p[:gender]&.upcase&.start_with?('F') }
+
+        return status_map if female_clients.empty?
+
+        female_ids = female_clients.map { |p| p[:patient_id] }
+        pregnant_concepts = ConceptName.where(name: ['Is patient pregnant?']).select(:concept_id)
+        breastfeeding_concepts = ConceptName.where(
+          name: ['Is patient breast feeding?']
+        ).select(:concept_id)
+        yes_concept_id = ConceptName.find_by(name: 'Yes')&.concept_id
+
+        pregnant_ids = ActiveRecord::Base.connection.select_all(<<~SQL
+          SELECT obs.person_id
+          FROM obs
+          INNER JOIN (
+            SELECT person_id, MAX(obs_datetime) AS obs_datetime
+            FROM obs
+            WHERE concept_id IN (#{pregnant_concepts.to_sql})
+              AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+              AND voided = 0
+              AND person_id IN (#{female_ids.join(',')})
+            GROUP BY person_id
+          ) latest ON latest.person_id = obs.person_id AND latest.obs_datetime = obs.obs_datetime
+          WHERE obs.concept_id IN (#{pregnant_concepts.to_sql})
+            AND obs.voided = 0
+            AND obs.value_coded = #{yes_concept_id}
+            AND obs.person_id IN (#{female_ids.join(',')})
+          GROUP BY obs.person_id
+        SQL
+        ).map { |row| row['person_id'].to_i }
+
+        pregnant_ids.each { |id| status_map[id] = 'FP' }
+
+        non_pregnant_ids = female_ids - pregnant_ids
+        (non_pregnant_ids).each { |id| status_map[id] = 'FNP' }
+
+        return status_map if non_pregnant_ids.empty?
+
+        breastfeeding_ids = ActiveRecord::Base.connection.select_all(<<~SQL
+          SELECT obs.person_id
+          FROM obs
+          INNER JOIN (
+            SELECT person_id, MAX(obs_datetime) AS obs_datetime
+            FROM obs
+            WHERE concept_id IN (#{breastfeeding_concepts.to_sql})
+              AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+              AND voided = 0
+              AND person_id IN (#{non_pregnant_ids.join(',')})
+            GROUP BY person_id
+          ) latest ON latest.person_id = obs.person_id AND latest.obs_datetime = obs.obs_datetime
+          WHERE obs.concept_id IN (#{breastfeeding_concepts.to_sql})
+            AND obs.voided = 0
+            AND obs.value_coded = #{yes_concept_id}
+            AND obs.person_id IN (#{non_pregnant_ids.join(',')})
+          GROUP BY obs.person_id
+        SQL
+        ).map { |row| row['person_id'].to_i }
+
+        breastfeeding_ids.each { |id| status_map[id] = 'FBf' }
+
+        status_map
       end
     end
   end

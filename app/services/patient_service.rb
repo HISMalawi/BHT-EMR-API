@@ -700,7 +700,7 @@ class PatientService
   #   * bp_concepts: An array of 'SBP' and 'DBP' concepts in that order
   def visit_bp_readings_trail(readings, patient, bp_concepts)
     readings.each_with_object({}) do |reading, trail|
-      date = reading.obs_datetime.to_date
+      date = reading.obs_datetime
       visit = trail[date] || { date:, sbp: nil, dbp: nil,
                                drugs: bp_drugs_received(patient, date),
                                note: bp_note_received(patient, date) }
