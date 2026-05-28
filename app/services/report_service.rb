@@ -218,8 +218,8 @@ class ReportService
     engine(@program).vl_postponed_drill_down(start_date, end_date, patient_ids)
   end
 
-  def dispensations_drill_down(start_date, end_date, patient_ids, creator)
-    engine(@program).dispensations_drill_down(start_date, end_date, patient_ids, creator)
+  def dispensations_drill_down(start_date, end_date, patient_ids)
+    engine(@program).dispensations_drill_down(start_date, end_date, patient_ids)
   end
 
   private

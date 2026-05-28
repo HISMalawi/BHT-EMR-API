@@ -24,15 +24,16 @@ module ArtService
           mentorship_report
         end
 
-        def dispensations_drill_down(creator)
+        def dispensations_drill_down
+          return [] if patient_ids.blank?
+
           #arv_number, patient_id, visit_date, regimen, quantity
           ActiveRecord::Base.connection.select_all <<~SQL
             SELECT o.patient_id, 
                    DATE(encounter_datetime) visit_date, 
                    patient_current_regimen(o.patient_id, DATE(encounter_datetime)) regimen, 
                    quantity,
-                   pi.identifier arv_number,
-                   e.creator 
+                   pi.identifier arv_number
             FROM orders o
               INNER JOIN drug_order d ON d.order_id = o.order_id
               INNER JOIN drug dr ON dr.drug_id = d.drug_inventory_id
@@ -46,12 +47,13 @@ module ArtService
               AND o.start_date BETWEEN '#{@start_date}' AND '#{@end_date}'
               AND o.order_type_id = #{OrderType.find_by_name('Drug order').id}
               AND d.quantity > 0
-              AND dr.concept_id IN (#{Drug.arv_drugs.pluck(:concept_id).join(',')})
-              AND e.creator = #{creator};
+              AND dr.concept_id IN (#{Drug.arv_drugs.pluck(:concept_id).join(',')});
           SQL
         end
 
         def vl_postponed_drill_down
+          return [] if patient_ids.blank?
+
           # art_number, visit_date, vl due date, next milestone
           due_dates = load_vl_due_dates(patient_ids)
           arv_numbers = arv_numbers(patient_ids)
