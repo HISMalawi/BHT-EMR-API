@@ -305,10 +305,12 @@ module ArtService
         # ON ARVs and earliest start date of the 'ON ARVs' state less than or equal to end date of quarter
         # and latest state is ON ARVs  (Excluding defaulters)
         cohort_struct.total_alive_and_on_art                      = get_outcome('On antiretrovirals')
-        cohort_struct.died_within_the_1st_month_of_art_initiation = died_in('1st month')
-        cohort_struct.died_within_the_2nd_month_of_art_initiation = died_in('2nd month')
-        cohort_struct.died_within_the_3rd_month_of_art_initiation = died_in('3rd month')
-        cohort_struct.died_after_the_3rd_month_of_art_initiation  = died_in('4+ months')
+        # Single query replaces 4 separate calls to died_in() stored function (per-row sub-queries).
+        died_in_buckets = all_died_in_buckets
+        cohort_struct.died_within_the_1st_month_of_art_initiation = died_in_buckets['1st month'] || []
+        cohort_struct.died_within_the_2nd_month_of_art_initiation = died_in_buckets['2nd month'] || []
+        cohort_struct.died_within_the_3rd_month_of_art_initiation = died_in_buckets['3rd month'] || []
+        cohort_struct.died_after_the_3rd_month_of_art_initiation  = died_in_buckets['4+ months'] || []
         cohort_struct.died_total                                  = get_outcome('Patient died')
         cohort_struct.defaulted                                   = get_outcome('Defaulted')
         cohort_struct.stopped_art                                 = get_outcome('Treatment stopped')
@@ -1001,24 +1003,31 @@ module ArtService
         family_planning_action_to_take_concept_id = concept('Family planning, action to take').concept_id
         none_concept_id = [concept('None').concept_id, concept('No').concept_id]
 
+        # Pre-aggregate max obs date per person as a derived table to eliminate the
+        # correlated subquery (previously O(n) lookups) and avoid DATE() on the indexed
+        # obs_datetime column. The derived table is computed once and then joined.
         results = ActiveRecord::Base.connection.select_all <<~SQL
           SELECT o.person_id
           FROM obs o
           INNER JOIN encounter e ON e.encounter_id = o.encounter_id
             AND e.encounter_type = #{hiv_clinic_consultation_encounter_type_id} AND e.voided = 0
             AND e.patient_id IN (#{patient_list.join(',')})
+          INNER JOIN (
+            SELECT person_id, MAX(DATE(obs_datetime)) AS max_obs_date
+            FROM obs
+            WHERE voided = 0
+              AND concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id})
+              AND obs_datetime >= '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
+              AND obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
+            GROUP BY person_id
+          ) max_fp ON max_fp.person_id = o.person_id
+            AND DATE(o.obs_datetime) = max_fp.max_obs_date
           WHERE o.voided = 0
           AND o.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id})
           AND o.value_coded NOT IN (#{none_concept_id.join(',')})
           AND o.person_id IN (#{patient_list.join(',')})
           AND o.obs_datetime >= '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
           AND o.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-          AND DATE(o.obs_datetime) = (SELECT max(date(obs.obs_datetime)) FROM obs obs
-            WHERE obs.voided = 0
-            AND (obs.concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id}))
-            AND obs.obs_datetime >= '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
-            AND obs.obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
-            AND obs.person_id = o.person_id)
           GROUP BY o.person_id
         SQL
 
@@ -1092,24 +1101,24 @@ module ArtService
                                             .select(:concept_id)
 
         ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT obs.person_id, obs.value_coded
-          FROM obs
+          SELECT tpo.patient_id AS person_id, obs.value_coded
+          FROM temp_patient_outcomes tpo
+          INNER JOIN temp_earliest_start_date e
+            ON e.patient_id = tpo.patient_id
+            AND LEFT(e.gender, 1) = 'F'
+            AND e.patient_id NOT IN (#{total_pregnant_women.join(',')})
+          INNER JOIN temp_max_drug_orders max_obs ON max_obs.patient_id = tpo.patient_id
+          INNER JOIN obs ON obs.person_id = tpo.patient_id
+            AND obs.voided = 0
+            AND obs.concept_id IN (#{breastfeeding_concepts.to_sql})
+            AND obs.obs_datetime >= DATE(max_obs.start_date)
+            AND obs.obs_datetime < DATE(max_obs.start_date) + INTERVAL 1 DAY
           INNER JOIN encounter enc
             ON enc.encounter_id = obs.encounter_id
             AND enc.voided = 0
             AND enc.encounter_type IN (#{encounter_types.to_sql})
-            AND obs.voided = 0 AND obs.concept_id IN (#{breastfeeding_concepts.to_sql})
-          INNER JOIN temp_earliest_start_date e
-            ON e.patient_id = enc.patient_id
-            AND LEFT(e.gender, 1) = 'F'
-            AND e.patient_id NOT IN (#{total_pregnant_women.join(',')})
-          INNER JOIN temp_patient_outcomes
-            ON temp_patient_outcomes.patient_id = e.patient_id
-            AND temp_patient_outcomes.moh_cum_outcome = 'On antiretrovirals'
-          INNER JOIN temp_max_drug_orders AS max_obs ON max_obs.patient_id = obs.person_id
-            AND DATE(max_obs.start_date) = DATE(obs.obs_datetime)
-          WHERE obs.person_id = e.patient_id
-          GROUP BY obs.person_id
+          WHERE tpo.moh_cum_outcome = 'On antiretrovirals'
+          GROUP BY tpo.patient_id
           HAVING value_coded = 1065
           ORDER BY obs.obs_datetime DESC;
         SQL
@@ -1123,22 +1132,23 @@ module ArtService
                                        .select(:concept_id)
 
         ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT obs.person_id, obs.value_coded
-          FROM obs obs
+          SELECT tpo.patient_id AS person_id, obs.value_coded
+          FROM temp_patient_outcomes tpo
+          INNER JOIN temp_earliest_start_date e
+            ON e.patient_id = tpo.patient_id
+            AND LEFT(e.gender, 1) = 'F'
+          INNER JOIN temp_max_drug_orders max_obs ON max_obs.patient_id = tpo.patient_id
+          INNER JOIN obs ON obs.person_id = tpo.patient_id
+            AND obs.voided = 0
+            AND obs.concept_id IN (#{pregnant_concepts.to_sql})
+            AND obs.obs_datetime >= DATE(max_obs.start_date)
+            AND obs.obs_datetime < DATE(max_obs.start_date) + INTERVAL 1 DAY
           INNER JOIN encounter enc
             ON enc.encounter_id = obs.encounter_id
             AND enc.voided = 0
             AND enc.encounter_type IN (#{encounter_types.to_sql})
-            AND obs.voided = 0 AND obs.concept_id IN (#{pregnant_concepts.to_sql})
-          INNER JOIN temp_earliest_start_date e
-            ON e.patient_id = enc.patient_id
-            AND LEFT(e.gender, 1) = 'F'
-          INNER JOIN temp_patient_outcomes
-            ON temp_patient_outcomes.patient_id = e.patient_id
-            AND temp_patient_outcomes.moh_cum_outcome = 'On antiretrovirals'
-          INNER JOIN temp_max_drug_orders AS max_obs ON max_obs.patient_id = obs.person_id
-            AND DATE(max_obs.start_date) = DATE(obs.obs_datetime)
-          GROUP BY obs.person_id
+          WHERE tpo.moh_cum_outcome = 'On antiretrovirals'
+          GROUP BY tpo.patient_id
           HAVING value_coded = 1065
           ORDER BY obs.obs_datetime DESC;
         SQL
@@ -1249,37 +1259,38 @@ module ArtService
       end
 
       def load_tmp_max_adherence(end_date)
-        # Materialize ARV drug concepts into temp table for better performance
+        # Materialize ARV drug concept IDs once — avoids re-evaluating the subquery per row
         ActiveRecord::Base.connection.execute <<~SQL
           CREATE TEMPORARY TABLE IF NOT EXISTS temp_arv_drug_concepts (
             concept_id INT PRIMARY KEY
-          ) ENGINE=MEMORY;
+          ) ENGINE=MEMORY
         SQL
-
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT IGNORE INTO temp_arv_drug_concepts (concept_id)
-          SELECT concept_id FROM concept_set WHERE concept_set = 1085;
+          SELECT concept_id FROM concept_set WHERE concept_set = 1085
         SQL
 
-        # Now use the materialized temp table for much faster joins
+        # Drive from the ~2500 active patients rather than scanning 2M adherence obs rows.
+        # idx_obs_fast_lookup (person_id, concept_id, voided, obs_datetime) gives a tight range
+        # scan per patient instead of a full concept-6987 table scan.
         ActiveRecord::Base.connection.execute <<~SQL
           INSERT INTO tmp_max_adherence
-          SELECT obs.person_id, DATE(MAX(obs.obs_datetime)) AS visit_date
-            FROM obs
+          SELECT tpo.patient_id, DATE(MAX(obs.obs_datetime)) AS visit_date
+            FROM temp_patient_outcomes tpo
+            INNER JOIN obs FORCE INDEX (idx_obs_fast_lookup)
+              ON obs.person_id = tpo.patient_id
+              AND obs.concept_id = 6987
+              AND obs.voided = 0
+              AND obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
+              AND (obs.value_numeric IS NOT NULL OR obs.value_text IS NOT NULL)
             INNER JOIN orders
               ON orders.order_id = obs.order_id
               AND orders.order_type_id = 1
               AND orders.voided = 0
             INNER JOIN temp_arv_drug_concepts
               ON temp_arv_drug_concepts.concept_id = orders.concept_id
-            INNER JOIN temp_patient_outcomes
-              ON temp_patient_outcomes.patient_id = obs.person_id
-              AND temp_patient_outcomes.moh_cum_outcome = 'On antiretrovirals'
-            WHERE obs.concept_id = 6987
-              AND obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
-              AND (obs.value_numeric IS NOT NULL OR obs.value_text IS NOT NULL)
-              AND obs.voided = 0
-            GROUP BY obs.person_id;
+            WHERE tpo.moh_cum_outcome = 'On antiretrovirals'
+            GROUP BY tpo.patient_id;
         SQL
       end
 
@@ -1418,29 +1429,38 @@ module ArtService
         end
       end
 
+      # Replaces 4 separate calls to the died_in() stored function with one set-based query.
+      # The stored function fetches COALESCE(death_date, moh_outcome_date) and runs
+      # TIMESTAMPDIFF per row — this inlines that logic using a CASE expression.
+      def all_died_in_buckets
+        data = ActiveRecord::Base.connection.select_all <<~SQL
+          SELECT
+            o.patient_id,
+            CASE
+              WHEN COALESCE(t.death_date, o.moh_outcome_date) IS NULL THEN 'Unknown'
+              WHEN TIMESTAMPDIFF(DAY, DATE(t.earliest_start_date), DATE(COALESCE(t.death_date, o.moh_outcome_date))) <= 30  THEN '1st month'
+              WHEN TIMESTAMPDIFF(DAY, DATE(t.earliest_start_date), DATE(COALESCE(t.death_date, o.moh_outcome_date))) <= 60  THEN '2nd month'
+              WHEN TIMESTAMPDIFF(DAY, DATE(t.earliest_start_date), DATE(COALESCE(t.death_date, o.moh_outcome_date))) <= 91  THEN '3rd month'
+              ELSE '4+ months'
+            END AS died_in_bucket
+          FROM temp_patient_outcomes o
+          INNER JOIN temp_earliest_start_date t USING(patient_id)
+          WHERE o.moh_cum_outcome = 'Patient died'
+          GROUP BY o.patient_id
+        SQL
+
+        buckets = Hash.new { |h, k| h[k] = [] }
+        (data || []).each do |row|
+          bucket = row['died_in_bucket']
+          # 'Unknown' maps into the 4+ months bucket to preserve previous behaviour
+          bucket = '4+ months' if bucket == 'Unknown'
+          buckets[bucket] << row['patient_id']
+        end
+        buckets
+      end
+
       def died_in(month_str)
-        registered = []
-        if month_str == '4+ months'
-          data = ActiveRecord::Base.connection.select_all(
-            "SELECT patient_id, died_in(t.patient_id, moh_cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
-            INNER JOIN temp_earliest_start_date t USING(patient_id)
-            WHERE moh_cum_outcome = 'Patient died' GROUP BY patient_id
-            HAVING died_in IN ('4+ months', 'Unknown')"
-          )
-        else
-          data = ActiveRecord::Base.connection.select_all(
-            "SELECT patient_id, died_in(t.patient_id, moh_cum_outcome, earliest_start_date) died_in FROM temp_patient_outcomes o
-            INNER JOIN temp_earliest_start_date t USING(patient_id)
-            WHERE moh_cum_outcome = 'Patient died' GROUP BY patient_id
-            HAVING died_in = '#{month_str}'"
-          )
-        end
-
-        (data || []).each do |patient|
-          registered << patient['patient_id']
-        end
-
-        registered
+        all_died_in_buckets[month_str] || []
       end
 
       def get_outcome(outcome)
@@ -1466,7 +1486,7 @@ module ArtService
           FROM temp_earliest_start_date t
           INNER JOIN obs ON t.patient_id = obs.person_id
             AND ((value_coded = #{concept_id} AND concept_id = #{who_stages_criteria}) OR (concept_id = #{concept_id}) AND value_coded = #{yes_concept_id} )
-            AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled)
+            AND voided = 0 AND obs_datetime < DATE(date_enrolled) + INTERVAL 1 DAY
           WHERE date_enrolled >= '#{start_date}' AND date_enrolled <= '#{end_date}'
           GROUP BY patient_id
         SQL
@@ -1487,7 +1507,7 @@ module ArtService
           INNER JOIN obs ON t.patient_id = obs.person_id
           AND ( (value_coded IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id}) AND concept_id = #{who_stages_criteria} )
             OR (concept_id IN (#{eptb_concept_id}, #{pulmonary_tb_concept_id}, #{current_ptb_concept_id}) AND value_coded = #{yes_concept_id}))
-          AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled)
+          AND voided = 0 AND obs_datetime < DATE(date_enrolled) + INTERVAL 1 DAY
           WHERE date_enrolled >= '#{start_date}' AND date_enrolled <= '#{end_date}'
           GROUP BY patient_id
         SQL
@@ -1516,7 +1536,7 @@ module ArtService
             AND concept_id = #{who_stages_criteria})
             OR (concept_id IN (#{pulmonary_tb_within_last_2yrs_concept_id}, #{ptb_within_the_past_two_yrs_concept_id}) AND value_coded = #{yes_concept_id}))
             AND patient_id NOT IN (#{patients_with_current_tb_episode.join(',')})
-            AND voided = 0 AND DATE(obs_datetime) <= DATE(date_enrolled) GROUP BY patient_id"
+            AND voided = 0 AND obs_datetime < DATE(date_enrolled) + INTERVAL 1 DAY GROUP BY patient_id"
         )
       end
 
@@ -1791,16 +1811,60 @@ module ArtService
 
         pregnant_at_initiation_ids = [0] if pregnant_at_initiation_ids.blank?
 
+        # Inline replacement for re_initiated_check() stored function.
+        # The function runs patient_date_enrolled() (a per-row sub-query) plus 2-3 obs lookups
+        # for every patient. Replaced with a single set-based JOIN that mirrors the same logic:
+        # a patient is "re-initiated" when the gap between their last-taken ART date and the
+        # registration obs datetime is > 14 days (check_one in the stored function).
+        # We use earliest_start_date_by_enrollment from the temp table instead of calling
+        # patient_date_enrolled() again — it was pre-computed in load_temp_art_start_date_by_enrollment.
+        date_art_last_taken_concept_id = ConceptName.find_by(name: 'DATE ART LAST TAKEN')&.concept_id
+        yes_concept_id_for_reg = ConceptName.find_by(name: 'Yes', voided: false)&.concept_id
+        ever_registered_concept_id = 7937
+
+        re_initiated_ids = if date_art_last_taken_concept_id && yes_concept_id_for_reg
+                             re_initiated_rows = ActiveRecord::Base.connection.select_all <<~SQL
+                               SELECT tesd.patient_id
+                               FROM temp_earliest_start_date tesd
+                               INNER JOIN temp_art_start_date_by_enrollment tasdbe
+                                 ON tasdbe.patient_id = tesd.patient_id
+                               INNER JOIN encounter cre ON cre.patient_id = tesd.patient_id
+                                 AND cre.encounter_type = (
+                                   SELECT encounter_type_id FROM encounter_type WHERE name = 'Registration' LIMIT 1
+                                 )
+                                 AND cre.voided = 0
+                               INNER JOIN obs ero ON ero.encounter_id = cre.encounter_id
+                                 AND ero.concept_id = #{ever_registered_concept_id}
+                                 AND ero.value_coded = #{yes_concept_id_for_reg}
+                                 AND ero.voided = 0
+                               INNER JOIN obs last_taken ON last_taken.encounter_id = cre.encounter_id
+                                 AND last_taken.concept_id = #{date_art_last_taken_concept_id}
+                                 AND last_taken.voided = 0
+                               WHERE tesd.date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
+                                 AND tesd.date_enrolled != tesd.earliest_start_date
+                                 AND (tesd.gender = 'F' OR tesd.gender = 'Female')
+                                 AND tesd.patient_id IN (#{pregnant_at_initiation_ids.join(',')})
+                                 AND TIMESTAMPDIFF(DAY, last_taken.value_datetime, last_taken.obs_datetime) > 14
+                               GROUP BY tesd.patient_id
+                             SQL
+                             re_initiated_rows.map { |r| r['patient_id'].to_i }.to_set
+                           else
+                             Set.new
+                           end
+
         transfer_ins_women = ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT patient_id, re_initiated_check(patient_id, date_enrolled) re_initiated
+          SELECT patient_id
           FROM temp_earliest_start_date
           WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
-            AND DATE(date_enrolled) != DATE(earliest_start_date)
+            AND date_enrolled != earliest_start_date
             AND (gender = 'F' OR gender = 'Female')
             AND patient_id IN (#{pregnant_at_initiation_ids.join(',')})
           GROUP BY patient_id
-          HAVING re_initiated != 'Re-initiated'
         SQL
+
+        transfer_ins_women = transfer_ins_women.select do |row|
+          !re_initiated_ids.include?(row['patient_id'].to_i)
+        end
 
         transfer_ins_preg_women = []
         all_pregnant_females = []
