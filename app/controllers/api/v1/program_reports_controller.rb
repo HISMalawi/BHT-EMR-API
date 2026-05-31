@@ -27,6 +27,19 @@ module Api
         end
       end
 
+      # GET /api/v1/programs/:program_id/reports/cohort_progress?name=Q3+2024
+      def cohort_progress
+        name = params.require(:name)
+        job_key = CohortProgress.key(name)
+        data = CohortProgress.read(job_key)
+
+        if data
+          render json: data
+        else
+          render json: { step: 'queued', label: 'Waiting to start…', pct: 0, done: false, elapsed_seconds: 0 }
+        end
+      end
+
       private
 
       def service

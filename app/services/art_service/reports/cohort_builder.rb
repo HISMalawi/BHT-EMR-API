@@ -26,10 +26,13 @@ module ArtService
         update_cum_outcome(start_date:, end_date:)
       end
 
-      def build(cohort_struct, start_date, end_date, occupation)
+      def build(cohort_struct, start_date, end_date, occupation, progress_key: nil)
         # load_tmp_patient_table(cohort_struct)
+        CohortProgress.step!(progress_key, :prepare) if progress_key
         prepare_tables
+        CohortProgress.step!(progress_key, :phase1) if progress_key
         load_phase1_parallel(end_date)
+        CohortProgress.step!(progress_key, :enroll) if progress_key
         load_data_into_temp_earliest_start_date(end_date.to_date, occupation)
 
         # create_tmp_patient_table_2(end_date)
@@ -75,6 +78,7 @@ module ArtService
         cohort_struct.cum_all_males = males(cum_start_date, end_date)
         cohort_struct.quarterly_all_males = males(quarter_start_date, end_date)
 
+        CohortProgress.step!(progress_key, :demographics) if progress_key
         # Pregnant females (all ages)
         load_temp_pregnant_obs(cum_start_date, end_date)
         cohort_struct.pregnant_females_all_ages = pregnant_females_all_ages(start_date, end_date)
@@ -295,12 +299,14 @@ module ArtService
         end
 
         # From this point going down: we update temp_earliest_start_date cum_outcome field to have the latest Cumulative outcome
+        CohortProgress.step!(progress_key, :cum_outcome) if progress_key
         update_cum_outcome(start_date: quarter_start_date, end_date:)
 
         # Pre-load tmp_max_adherence in a background thread while the remaining indicator
         # queries run. This overlaps the cold-buffer-pool obs I/O (~391s) with ~165s of
         # indicator computation, saving ~146s wall time on a cold database.
         # temp_patient_outcomes (just populated by update_cum_outcome) is required.
+        CohortProgress.step!(progress_key, :preloads) if progress_key
         _quoted_end_for_adherence = ActiveRecord::Base.connection.quote(end_date)
         @adherence_preload_thread = Thread.new do
           ActiveRecord::Base.connection_pool.with_connection { load_tmp_max_adherence(_quoted_end_for_adherence) }
@@ -322,6 +328,7 @@ module ArtService
           Thread.new { ActiveRecord::Base.connection_pool.with_connection { update_patient_side_effects(end_date) } }
         ].each(&:join)
 
+        CohortProgress.step!(progress_key, :outcomes) if progress_key
         # Total Alive and On ART
         # Unique PatientProgram entries at the current location for those patients with at least one state
         # ON ARVs and earliest start date of the 'ON ARVs' state less than or equal to end date of quarter
@@ -345,7 +352,7 @@ module ArtService
 
         prescriptions = cal_regimem_category(cohort_struct.total_alive_and_on_art, end_date)
 
-        # concepts = ->(names) { ConceptName.where(name: names).select(:concept_id) }
+        CohortProgress.step!(progress_key, :regimens) if progress_key
         # drugs = ->(concepts) { Drug.where(concept: concepts).select(:drug_id).collect(&:drug_id) }
 
         # lpv_granules = drugs[concepts[['LPV/r Pellets', 'LPV/r Granules']]]
@@ -395,6 +402,7 @@ module ArtService
         cohort_struct.total_patients_without_side_effects = without_se
         cohort_struct.unknown_side_effects = se_unknowns
 
+        CohortProgress.step!(progress_key, :side_effects) if progress_key
         # TB Status
         # Alive and On ART with 'TB Status' observation value of 'TB not Suspected' or 'TB Suspected'
         # or 'TB confirmed and on Treatment', or 'TB confirmed and not on Treatment' or 'Unknown TB status'
@@ -410,6 +418,8 @@ module ArtService
         cohort_struct.patients_with_0_6_doses_missed_at_their_last_visit = adherent
         cohort_struct.patients_with_7_plus_doses_missed_at_their_last_visit = not_adherent
         cohort_struct.patients_with_unknown_adhrence = unknown_adherence
+
+        CohortProgress.step!(progress_key, :adherence) if progress_key
 
         # Pregnant and breastfeeding status during Consultation.
         # total_pregnant_women joins @obs_last_visit_thread internally (waits for preload).
@@ -432,10 +442,12 @@ module ArtService
         cohort_struct.total_other_patients = total_other_patients(cohort_struct.total_alive_and_on_art,
                                                                   cohort_struct.total_breastfeeding_women, cohort_struct.total_pregnant_women)
 
+        CohortProgress.step!(progress_key, :preg_bf) if progress_key
         # Collect CPT/IPT results (threads started before the obs_last_visit join-wait above)
         cohort_struct.total_patients_on_arvs_and_cpt = cpt_thread.value
         cohort_struct.total_patients_on_arvs_and_ipt = ipt_thread.value
 
+        CohortProgress.step!(progress_key, :tpt_fp_bp) if progress_key
         # Family planning and BP screening — run in parallel (obs-based, independent date ranges)
         fp_thread = Thread.new do
           ActiveRecord::Base.connection_pool.with_connection do
