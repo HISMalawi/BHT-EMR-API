@@ -24,13 +24,19 @@ module ArtService
       end
 
       def build_report
+        progress_key = CohortProgress.key(@name)
         with_lock(LOCK_FILE, blocking: false) do
-          @cohort_builder.build(@cohort_struct, @start_date, @end_date, @occupation)
+          CohortProgress.start!(progress_key)
+          @cohort_builder.build(@cohort_struct, @start_date, @end_date, @occupation, progress_key:)
           clear_drill_down
           save_report
+          CohortProgress.done!(progress_key)
         end
       rescue FailedToAcquireLock => e
         Rails.logger.warn("ART#Cohort report is locked by another process: #{e}")
+      rescue StandardError => e
+        CohortProgress.error!(progress_key, e.message) rescue nil
+        raise
       end
 
       def find_report

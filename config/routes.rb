@@ -218,7 +218,11 @@ Rails.application.routes.draw do
         get '/lab_tests/measures' => 'lab_test_types#measures'
         get '/labs/:resource', to: 'lab#dispatch_request'
         get '/patient_state', to: 'patient_states#patient_state'
-        resources :program_reports, path: 'reports'
+        resources :program_reports, path: 'reports' do
+          collection do
+            get :cohort_progress
+          end
+        end
       end
 
       namespace :pharmacy do
