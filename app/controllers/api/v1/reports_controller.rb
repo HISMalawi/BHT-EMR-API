@@ -128,6 +128,29 @@ module Api
         render json: stats
       end
 
+      def high_risk_defaulters
+        patients = Patient.where.not(defaulter_risk_score: nil)
+                          .where('defaulter_risk_score >= 0.1')
+                          .order(defaulter_risk_score: :desc)
+                          .limit(200)
+        
+        formatted_patients = patients.map do |p|
+          name = p.person&.names&.first
+          {
+            patient_id: p.patient_id,
+            age: p.age,
+            art_start_date: p.art_start_date,
+            defaulter_risk_score: p.defaulter_risk_score,
+            risk_assessed_at: p.risk_assessed_at,
+            given_name: name&.given_name || 'Unknown',
+            family_name: name&.family_name || 'Unknown',
+            gender: p.gender,
+            national_id: p.national_id_with_dashes
+          }
+        end
+        render json: formatted_patients
+      end
+
       def missed_appointments
         start_date, end_date = params.require %i[start_date end_date]
         stats = service.missed_appointments(start_date, end_date, occupation: params[:occupation], dsd: params[:dsd])

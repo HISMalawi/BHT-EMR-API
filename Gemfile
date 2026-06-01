@@ -82,3 +82,5 @@ gem 'concurrent-ruby', '= 1.3.4'
 gem 'roo', '~> 2.8'
 
 gem 'stringio', '~> 3.1.7'
+
+gem 'sidekiq'
