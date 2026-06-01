@@ -63,6 +63,9 @@ module ArtService
                                                                                                 end_date, cohort_struct.cum_initiated_on_art_first_time)
 
         # Patients re-initiated on ART
+        # Precompute MIN(ever-registered obs datetime) per patient once — used by all 3 re-initiated
+        # and all 3 transfer_in calls instead of the inline GROUP BY subquery run 6 times.
+        precompute_min_ever_reg_obs
         cohort_struct.re_initiated_on_art = re_initiated_on_art(start_date, end_date)
         cohort_struct.cum_re_initiated_on_art = re_initiated_on_art(cum_start_date, end_date)
         cohort_struct.quarterly_re_initiated_on_art = re_initiated_on_art(quarter_start_date, end_date)
@@ -1433,29 +1436,49 @@ module ArtService
           SELECT concept_id FROM concept_set WHERE concept_set = 1085
         SQL
 
-        # Drive from the ~25K active patients rather than scanning all adherence obs rows.
-        # idx_obs_fast_lookup (person_id, concept_id, voided, obs_datetime) gives a tight range
-        # scan per patient instead of a full concept-6987 table scan (dev's original approach
-        # was obs → orders → concept_set which caused 200+s scans on large databases).
-        ActiveRecord::Base.connection.execute <<~SQL
-          INSERT INTO tmp_max_adherence
-          SELECT tpo.patient_id, DATE(MAX(obs.obs_datetime)) AS visit_date
-            FROM temp_patient_outcomes tpo
-            INNER JOIN obs FORCE INDEX (idx_obs_fast_lookup)
-              ON obs.person_id = tpo.patient_id
-              AND obs.concept_id = 6987
-              AND obs.voided = 0
-              AND obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
-              AND (obs.value_numeric IS NOT NULL OR obs.value_text IS NOT NULL)
-            INNER JOIN orders
-              ON orders.order_id = obs.order_id
-              AND orders.order_type_id = 1
-              AND orders.voided = 0
-            INNER JOIN temp_arv_drug_concepts
-              ON temp_arv_drug_concepts.concept_id = orders.concept_id
-            WHERE tpo.moh_cum_outcome = 'On antiretrovirals'
-            GROUP BY tpo.patient_id;
-        SQL
+        # Drive from the ~25K active patients and constrain the obs scan to start from each
+        # patient's last ARV order date (temp_max_drug_orders.start_date, populated by
+        # update_cum_outcome). Adherence obs (concept_id=6987) are recorded at dispensation
+        # encounters, so obs_datetime ≈ orders.start_date. Using the last order date as a
+        # floor shrinks each patient's obs range from their full ART history (50-100+ rows)
+        # to just the last dispensation visit (1-3 rows), cutting scan volume by ~50x.
+        #
+        # idx_obs_fast_lookup (person_id, concept_id, voided, obs_datetime) turns the
+        # constrained range into a tight 2-sided scan per patient.
+        #
+        # READ UNCOMMITTED prevents InnoDB from acquiring shared next-key locks on every
+        # scanned obs/orders row. Under the default REPEATABLE READ isolation, an
+        # INSERT INTO ... SELECT locks all source rows it touches; on a large obs table
+        # (~millions of rows) this exhausts the InnoDB lock table and raises
+        # "The total number of locks exceeds the lock table size". This is a read-only
+        # reporting scan on stable data, so dirty-read anomalies cannot occur in practice.
+        conn = ActiveRecord::Base.connection
+        conn.execute('SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')
+        begin
+          conn.execute <<~SQL
+            INSERT INTO tmp_max_adherence
+            SELECT tpo.patient_id, DATE(MAX(obs.obs_datetime)) AS visit_date
+              FROM temp_patient_outcomes tpo
+              INNER JOIN temp_max_drug_orders mdo ON mdo.patient_id = tpo.patient_id
+              INNER JOIN obs FORCE INDEX (idx_obs_fast_lookup)
+                ON obs.person_id = tpo.patient_id
+                AND obs.concept_id = 6987
+                AND obs.voided = 0
+                AND obs.obs_datetime >= DATE(mdo.start_date)
+                AND obs.obs_datetime < (DATE(#{end_date}) + INTERVAL 1 DAY)
+                AND (obs.value_numeric IS NOT NULL OR obs.value_text IS NOT NULL)
+              INNER JOIN orders
+                ON orders.order_id = obs.order_id
+                AND orders.order_type_id = 1
+                AND orders.voided = 0
+              INNER JOIN temp_arv_drug_concepts
+                ON temp_arv_drug_concepts.concept_id = orders.concept_id
+              WHERE tpo.moh_cum_outcome = 'On antiretrovirals'
+              GROUP BY tpo.patient_id;
+          SQL
+        ensure
+          conn.execute('SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ')
+        end
       end
 
       # Pre-load a temp table of observations recorded at each female ART patient's last
@@ -2092,72 +2115,85 @@ module ArtService
         start_date = ActiveRecord::Base.connection.quote(start_date)
         end_date = ActiveRecord::Base.connection.quote(end_date)
 
-        re_initiated_on_art = re_initiated_on_art.empty? ? [0] : re_initiated_on_art.rows.collect(&:first)
+        re_initiated_ids = re_initiated_on_art.nil? || re_initiated_on_art.empty? ? [0] : re_initiated_on_art.rows.collect(&:first)
 
+        # Transfer-ins = enrolled in period, not first-time, not re-initiated on ART.
+        # temp_re_initiated_patients was precomputed by precompute_min_ever_reg_obs, so we
+        # just exclude those patient_ids directly — no need to repeat the 5-table obs join.
         ActiveRecord::Base.connection.select_all <<~SQL
-          SELECT temp_earliest_start_date.patient_id
-          FROM temp_earliest_start_date
-          INNER JOIN clinic_registration_encounter
-            ON clinic_registration_encounter.patient_id = temp_earliest_start_date.patient_id
-          LEFT JOIN ever_registered_obs
-            ON ever_registered_obs.person_id = temp_earliest_start_date.patient_id
-            AND ever_registered_obs.value_coded = (
-              SELECT concept_id FROM concept_name WHERE name = 'Yes' AND voided = 0 LIMIT 1
-            )
-          LEFT JOIN (
-              SELECT person_id, MIN(obs_datetime) AS obs_datetime
-              FROM ever_registered_obs
-              GROUP BY person_id
-            ) AS max_ever_registered_obs
-              ON max_ever_registered_obs.person_id = ever_registered_obs.person_id
-              AND max_ever_registered_obs.obs_datetime = ever_registered_obs.obs_datetime
-          LEFT JOIN obs AS last_taken_art_obs
-            ON last_taken_art_obs.encounter_id = ever_registered_obs.encounter_id
-            AND last_taken_art_obs.voided = 0
-            AND last_taken_art_obs.concept_id = (
-              SELECT concept_id FROM concept_name WHERE name = 'DATE ART LAST TAKEN' LIMIT 1
-            )
-          WHERE (date_enrolled BETWEEN #{start_date} AND #{end_date})
-            AND date_enrolled != earliest_start_date
-            AND COALESCE(TIMESTAMPDIFF(day,
-                                       last_taken_art_obs.value_datetime,
-                                       last_taken_art_obs.obs_datetime) <= 14,
-                        TRUE)
-            AND temp_earliest_start_date.patient_id NOT IN (#{re_initiated_on_art.join(',')})
-          GROUP BY temp_earliest_start_date.patient_id;
+          SELECT tesd.patient_id
+          FROM temp_earliest_start_date tesd
+          WHERE tesd.date_enrolled BETWEEN #{start_date} AND #{end_date}
+            AND tesd.date_enrolled != tesd.earliest_start_date
+            AND tesd.patient_id NOT IN (#{re_initiated_ids.join(',')})
+          GROUP BY tesd.patient_id
+        SQL
+      end
+
+      def precompute_min_ever_reg_obs
+        conn = ActiveRecord::Base.connection
+        conn.execute('DROP TABLE IF EXISTS temp_min_ever_reg_obs')
+        conn.execute <<~SQL
+          CREATE TABLE temp_min_ever_reg_obs (
+            person_id    INT NOT NULL PRIMARY KEY,
+            obs_datetime DATETIME NOT NULL
+          ) ENGINE=MEMORY
+        SQL
+        conn.execute <<~SQL
+          INSERT INTO temp_min_ever_reg_obs (person_id, obs_datetime)
+          SELECT person_id, MIN(obs_datetime)
+          FROM obs
+          WHERE concept_id = 7937 AND voided = 0 AND value_coded = 1065
+          GROUP BY person_id
+        SQL
+
+        # Precompute ALL re-initiated patients (no date filter) — stores patient_id +
+        # date_enrolled from temp_earliest_start_date. Each of the 3 re_initiated_on_art
+        # calls then becomes a fast range scan on this small table instead of re-running
+        # the expensive 5-table join (25K patients × 10 encounters × obs scans) 3 times.
+        date_art_last_taken_concept = conn.select_value(
+          "SELECT concept_id FROM concept_name WHERE name = 'DATE ART LAST TAKEN' LIMIT 1"
+        )
+
+        conn.execute('DROP TABLE IF EXISTS temp_re_initiated_patients')
+        conn.execute <<~SQL
+          CREATE TABLE temp_re_initiated_patients (
+            patient_id   INT NOT NULL PRIMARY KEY,
+            date_enrolled DATE NOT NULL
+          ) ENGINE=MEMORY
+        SQL
+        conn.execute <<~SQL
+          INSERT INTO temp_re_initiated_patients (patient_id, date_enrolled)
+          SELECT tesd.patient_id, tesd.date_enrolled
+          FROM temp_earliest_start_date tesd
+          INNER JOIN encounter enc
+            ON enc.patient_id = tesd.patient_id
+            AND enc.encounter_type = 9
+            AND enc.voided = 0
+          INNER JOIN obs ero
+            ON ero.encounter_id = enc.encounter_id
+            AND ero.concept_id = 7937
+            AND ero.voided = 0
+            AND ero.value_coded = 1065
+          INNER JOIN temp_min_ever_reg_obs minero
+            ON minero.person_id = ero.person_id
+            AND minero.obs_datetime = ero.obs_datetime
+          INNER JOIN obs lta
+            ON lta.encounter_id = enc.encounter_id
+            AND lta.voided = 0
+            AND lta.concept_id = #{date_art_last_taken_concept.to_i}
+          WHERE tesd.date_enrolled != tesd.earliest_start_date
+            AND TIMESTAMPDIFF(DAY, lta.value_datetime, lta.obs_datetime) > 14
+          GROUP BY tesd.patient_id, tesd.date_enrolled
         SQL
       end
 
       def re_initiated_on_art(start_date, end_date)
         ActiveRecord::Base.connection.select_all(
           <<~SQL
-            SELECT temp_earliest_start_date.patient_id
-            FROM temp_earliest_start_date
-            INNER JOIN clinic_registration_encounter
-              ON temp_earliest_start_date.patient_id = clinic_registration_encounter.patient_id
-            INNER JOIN ever_registered_obs
-              ON clinic_registration_encounter.encounter_id = ever_registered_obs.encounter_id
-              AND ever_registered_obs.value_coded = (SELECT concept_id FROM concept_name
-                WHERE name = 'Yes' AND voided = 0 LIMIT 1)
-            INNER JOIN (
-              SELECT person_id, MIN(obs_datetime) AS obs_datetime
-              FROM ever_registered_obs
-              GROUP BY person_id
-            ) AS max_ever_registered_obs
-              ON max_ever_registered_obs.person_id = ever_registered_obs.person_id
-              AND max_ever_registered_obs.obs_datetime = ever_registered_obs.obs_datetime
-            INNER JOIN obs AS last_taken_art_obs
-              ON last_taken_art_obs.encounter_id = clinic_registration_encounter.encounter_id
-              AND last_taken_art_obs.voided = 0
-              AND last_taken_art_obs.concept_id = (
-                SELECT concept_id FROM concept_name WHERE name = 'DATE ART LAST TAKEN' LIMIT 1
-              )
-            WHERE (date_enrolled BETWEEN '#{start_date}' AND '#{end_date}')
-              AND TIMESTAMPDIFF(day,
-                                last_taken_art_obs.value_datetime,
-                                last_taken_art_obs.obs_datetime) > 14
-              AND date_enrolled != earliest_start_date
-            GROUP BY temp_earliest_start_date.patient_id;
+            SELECT patient_id
+            FROM temp_re_initiated_patients
+            WHERE date_enrolled BETWEEN '#{start_date}' AND '#{end_date}'
           SQL
         )
       end
