@@ -16,6 +16,7 @@ fi
 set -x # turns on stacktrace mode which gives useful debug information
 
 export RAILS_ENV=$ENV
+export DISABLE_SPRING=1
 rails db:environment:set RAILS_ENV=$ENV
 
 whenever --update-crontab
@@ -28,11 +29,11 @@ PORT=`ruby -ryaml -e "puts YAML.safe_load(File.read('config/database.yml'), alia
 
 # Only update metadata if migration is successful
 rails db:migrate && {
-  mysql --host=$HOST --port=$PORT --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/openmrs_metadata_1_7.sql
-  mysql --host=$HOST --port=$PORT --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/bart2_views_schema_additions.sql
-  mysql --host=$HOST --port=$PORT --user=$USERNAME --password=$PASSWORD $DATABASE < db/initial_setup/anc2_schema_additions.sql
-  mysql --host=$HOST --port=$PORT --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/moh_regimens_v2025.sql
-  mysql --host=$HOST --port=$PORT --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/drug_cms_metadata.sql
-  mysql --host=$HOST --port=$PORT --user=$USERNAME --password=$PASSWORD $DATABASE < db/sql/ntp_regimens.sql
+  MYSQL_PWD=$PASSWORD mysql --host=$HOST --port=$PORT --user=$USERNAME $DATABASE < db/sql/openmrs_metadata_1_7.sql
+  MYSQL_PWD=$PASSWORD mysql --host=$HOST --port=$PORT --user=$USERNAME $DATABASE < db/sql/bart2_views_schema_additions.sql
+  MYSQL_PWD=$PASSWORD mysql --host=$HOST --port=$PORT --user=$USERNAME $DATABASE < db/initial_setup/anc2_schema_additions.sql
+  MYSQL_PWD=$PASSWORD mysql --host=$HOST --port=$PORT --user=$USERNAME $DATABASE < db/sql/moh_regimens_v2025.sql
+  MYSQL_PWD=$PASSWORD mysql --host=$HOST --port=$PORT --user=$USERNAME $DATABASE < db/sql/drug_cms_metadata.sql
+  MYSQL_PWD=$PASSWORD mysql --host=$HOST --port=$PORT --user=$USERNAME $DATABASE < db/sql/ntp_regimens.sql
 }
 
