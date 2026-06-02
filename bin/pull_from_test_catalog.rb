@@ -64,28 +64,58 @@ def fetch_test_catalog
 end
 
 def add_to_concept_attributes(concept, name, code)
-  ConceptAttribute.find_or_create_by!(
-    concept:,
+  # Find or create test catalogue name attribute
+  name_attr = ConceptAttribute.find_or_initialize_by(
+    concept: concept,
     attribute_type: nlims_test_catalogue_name,
-    value_reference: name,
-    creator: User.current.user_id,
-    date_created: Time.now,
-    uuid: SecureRandom.uuid
+    value_reference: name
   )
 
-  ConceptAttribute.find_or_create_by!(
-    concept:,
+  if name_attr.new_record?
+    name_attr.creator = User.current.user_id
+    name_attr.date_created = Time.now
+    name_attr.uuid = SecureRandom.uuid
+    name_attr.save!
+  end
+
+  # Find or create NLIMS code attribute
+  code_attr = ConceptAttribute.find_or_initialize_by(
+    concept: concept,
     attribute_type: nlims_code_attribute_type,
-    value_reference: code,
-    creator: User.current.user_id,
-    date_created: Time.now,
-    uuid: SecureRandom.uuid
+    value_reference: code
   )
+
+  if code_attr.new_record?
+    code_attr.creator = User.current.user_id
+    code_attr.date_created = Time.now
+    code_attr.uuid = SecureRandom.uuid
+    code_attr.save!
+  end
 
   concept
 end
 
 def find_concept(name, code)
+  # First, try to find by NLIMS code to ensure uniqueness
+  existing_by_code = ConceptAttribute.where(
+    attribute_type: nlims_code_attribute_type,
+    value_reference: code
+  ).first&.concept
+
+  if existing_by_code.present?
+    # Ensure this concept also has the test catalogue name attribute
+    add_to_concept_attributes(existing_by_code, name, code)
+
+    # Ensure preferred name is set
+    preffered = ConceptName.where(concept: existing_by_code, locale_preferred: 1).count
+    if preffered == 0
+      concept_name = ConceptName.where(concept: existing_by_code).first
+      concept_name.update_column(:locale_preferred, 1) if concept_name
+    end
+
+    return existing_by_code
+  end
+
   # Handle special case where LIMS uses "Viral Load" but we want to map it to "HIV Viral Load"
   if name.downcase == 'viral load'
     # Find the HIV Viral Load concept
@@ -129,7 +159,7 @@ def find_concept(name, code)
     end
   end
 
-  # First, try to find by name (scoped to current locale by default_scope)
+  # Try to find by name (scoped to current locale by default_scope)
   concept = ConceptName.find_by(name: name)&.concept
 
   if concept.present?
@@ -251,7 +281,7 @@ def lab_test_result_indicator_concept
 end
 
 def save_specimen_types(nlims_code, test_name, specimen_types)
-  concept ||= find_concept(test_name, nlims_code)
+  concept = find_concept(test_name, nlims_code)
 
   specimen_type_id = specimen_type_concept.concept_id
   test_type_id     = test_type_concept.concept_id
@@ -268,25 +298,22 @@ def save_specimen_types(nlims_code, test_name, specimen_types)
     )
   end
 
-  # delete old specimen types
+  # Delete all existing specimen type associations for this test type before adding new ones
+  # This removes: Test Type -> Specimen links (where Specimen is a Specimen Type)
+  specimen_concept_ids = ConceptSet.where(concept_set: specimen_type_id).pluck(:concept_id)
   ConceptSet.where(
-    concept_id: ConceptSet.where(
-      concept_set: specimen_type_id
-    ).pluck(:concept_id),
-    concept_set: ConceptSet.where(
-      concept_set: test_type_id,
-      concept_id: concept.concept_id
-    ).select(:concept_id)
-  ).each(&:delete)
+    concept_set: concept.concept_id,
+    concept_id: specimen_concept_ids
+  ).delete_all
 
-  # Link specimens to test types: Specimen → Test Type
+  # Link specimens to test types: Test Type -> Specimen Type
   specimen_types.each do |specimen_type|
     specimen_type_name = specimen_type['name']
     specimen_type_nlims_code = specimen_type['nlims_code']
 
     specimen_concept = find_concept(specimen_type_name, specimen_type_nlims_code)
 
-    # Add specimen to "Specimen Type" concept set
+    # Add specimen to "Specimen Type" concept set if not already there
     cs = ConceptSet.find_or_initialize_by(
       concept_set: specimen_type_id,
       concept_id: specimen_concept.concept_id
@@ -298,7 +325,7 @@ def save_specimen_types(nlims_code, test_name, specimen_types)
       cs.save!
     end
 
-    # Link: Specimen contains Test Type
+    # Link: Test Type contains Specimen Type
     scs = ConceptSet.find_or_initialize_by(
       concept_set: concept.concept_id,
       concept_id: specimen_concept.concept_id
@@ -313,11 +340,12 @@ def save_specimen_types(nlims_code, test_name, specimen_types)
 end
 
 def save_measures(nlims_code, test_name, measures)
-  concept ||= find_concept(test_name, nlims_code)
+  concept = find_concept(test_name, nlims_code)
 
   lab_test_result_indicator_id = lab_test_result_indicator_concept.concept_id
   test_type_id = test_type_concept.concept_id
 
+  # Add test type to "Test type" concept set if not already there
   set_exists = ConceptSet.find_by(concept_set: test_type_id, concept_id: concept.concept_id).present?
 
   unless set_exists
@@ -329,26 +357,24 @@ def save_measures(nlims_code, test_name, measures)
     )
   end
 
+  # Delete all existing measure associations for this test type before adding new ones
+  # This removes: Test Type -> Measure links (where Measure is a Lab test result indicator)
+  measure_concept_ids = ConceptSet.where(concept_set: lab_test_result_indicator_id).pluck(:concept_id)
+  ConceptSet.where(
+    concept_set: concept.concept_id,
+    concept_id: measure_concept_ids
+  ).delete_all
+
   measures.each do |measure|
     measure_name = measure['name']
     measure_nlims_code = measure['nlims_code']
 
-    measure_concept_id = find_concept(measure_name, measure_nlims_code).concept_id
+    measure_concept = find_concept(measure_name, measure_nlims_code)
 
-    # remove all measures for this test type
-    sets = ConceptSet.where(
-      concept_set: measure_concept_id,
-      concept_id: ConceptSet.where(
-        concept_set: test_type_id,
-        concept_id: concept.concept_id
-      ).select(:concept_id)
-    ).pluck(:concept_set_id)
-
-    ConceptSet.where(concept_set_id: sets).delete_all
-
+    # Add measure to "Lab test result indicator" concept set if not already there
     lcs = ConceptSet.find_or_initialize_by(
       concept_set: lab_test_result_indicator_id,
-      concept_id: measure_concept_id
+      concept_id: measure_concept.concept_id
     )
 
     if lcs.new_record?
@@ -357,10 +383,10 @@ def save_measures(nlims_code, test_name, measures)
       lcs.save!
     end
 
-    # FIXED: Test type contains measure (not measure contains test type)
+    # Link: Test type contains measure
     mcs = ConceptSet.find_or_initialize_by(
       concept_set: concept.concept_id,
-      concept_id: measure_concept_id
+      concept_id: measure_concept.concept_id
     )
 
     next unless mcs.new_record?
