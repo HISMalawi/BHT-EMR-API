@@ -47,7 +47,7 @@ def fetch_test_catalog
     'Accept' => 'application/json'
   }
 
-  consolelog 'Getting test catalog from LIMS'
+  consolelog "Getting test catalog from LIMS - Catalog Version: #{TEST_CATALOG_VERSION}"
 
   uri = URI(url + "/v2/test_catalog/#{TEST_CATALOG_VERSION}")
 
@@ -86,27 +86,91 @@ def add_to_concept_attributes(concept, name, code)
 end
 
 def find_concept(name, code)
-  # FIRST: Try to find by NLIMS code - if concept already has this code, reuse it
-  existing_concept = ConceptAttribute.joins(:concept)
-                                     .where(attribute_type: nlims_code_attribute_type, value_reference: code)
-                                     .first&.concept
+  # Handle special case where LIMS uses "Viral Load" but we want to map it to "HIV Viral Load"
+  if name.downcase == 'viral load'
+    # Find the HIV Viral Load concept
+    hiv_vl_concept = ConceptName.find_by(name: 'HIV Viral Load')&.concept
 
-  if existing_concept.present?
-    # Update the TEST_CATALOGUE_NAME attribute to include this new name
-    add_to_concept_attributes(existing_concept, name, code)
-    return existing_concept
+    if hiv_vl_concept.present?
+      # Check if a "Viral Load" concept name already exists
+      viral_load_concept_name = ConceptName.unscoped.find_by(name: 'Viral Load', voided: 0)
+
+      if viral_load_concept_name.present?
+        # Update its concept_id to point to HIV Viral Load concept
+        viral_load_concept_name.update!(concept_id: hiv_vl_concept.concept_id)
+      else
+        # Create "Viral Load" concept name that points to HIV Viral Load concept
+        ConceptName.create!(
+          concept: hiv_vl_concept,
+          name: 'Viral Load',
+          locale: 'en',
+          concept_name_type: 'SYNONYM',
+          creator: User.current.id,
+          date_created: Time.now,
+          uuid: SecureRandom.uuid
+        )
+      end
+
+      # Delete any "Viral Load" concept attributes that are not associated with HIV Viral Load concept
+      viral_load_concepts = ConceptName.unscoped.where('LOWER(name) = ?',
+                                                       'viral load').where(voided: 0).pluck(:concept_id).uniq
+      wrong_concept_ids = viral_load_concepts - [hiv_vl_concept.concept_id]
+
+      ConceptAttribute.where(concept_id: wrong_concept_ids).delete_all if wrong_concept_ids.any?
+
+      # Ensure preferred name is set
+      preffered = ConceptName.where(concept: hiv_vl_concept, locale_preferred: 1).count
+      if preffered == 0
+        concept_name = ConceptName.where(concept: hiv_vl_concept).first
+        concept_name.update_column(:locale_preferred, 1) if concept_name
+      end
+
+      return add_to_concept_attributes(hiv_vl_concept, name, code)
+    end
   end
 
-  # SECOND: Try to find as a synonym (different concept_name, same concept)
-  all_names = ConceptName.unscoped.where('LOWER(name) = ?', name.downcase).where(voided: 0)
-  return unless all_names.any?
+  # First, try to find by name (scoped to current locale by default_scope)
+  concept = ConceptName.find_by(name: name)&.concept
 
-  concept = all_names.first.concept
+  if concept.present?
+    preffered = ConceptName.where(concept:, locale_preferred: 1).count
+    if preffered == 0
+      concept_name = ConceptName.where(concept:).first
+      concept_name.update_column(:locale_preferred, 1) if concept_name
+    end
+
+    return add_to_concept_attributes(concept, name, code)
+  end
+
+  # Try to find by name without locale scope (in case it exists in a different locale)
+  concept = ConceptName.unscoped.find_by(name:, voided: 0)&.concept
+  return add_to_concept_attributes(concept, name, code) if concept.present?
+
+  # Try to find by short_name
+  concept = Concept.where(short_name: name).first
+  return add_to_concept_attributes(concept, name, code) if concept.present?
+
+  # Create new concept and concept name
+  concept = Concept.create!(
+    short_name: name,
+    creator: User.current.id,
+    date_created: Time.now,
+    concept_class: ConceptClass.find_by_name('Test'),
+    concept_datatype: ConceptDatatype.find_by_name('Coded')
+  )
+
+  ConceptName.create!(
+    concept:,
+    name:,
+    locale_preferred: 1,
+    locale: 'en',
+    concept_name_type: 'FULLY_SPECIFIED',
+    creator: User.current.id,
+    date_created: Time.now,
+    uuid: SecureRandom.uuid
+  )
+
   add_to_concept_attributes(concept, name, code)
-  concept
-
-  # Rest of the existing logic...
-  # (existing code for exact match, short_name, creating new concept)
 end
 
 def nlims_code_attribute_type
