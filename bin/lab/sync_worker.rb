@@ -3,4 +3,4 @@
 ##
 # Rails runner script that runs/manages processes that push/pull data to/from LIMS.
 
-Lab::Lims::Worker.start
+Lab::Lims::Worker.start(start_date: 6.months.ago)
