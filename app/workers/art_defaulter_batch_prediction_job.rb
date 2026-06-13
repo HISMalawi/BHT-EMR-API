@@ -25,9 +25,8 @@ class ArtDefaulterBatchPredictionJob
     payload_patients = []
     
     # Pre-fetch concepts out of the loop
-    side_effect_names = ['Drug side effect', 'ART side effect', 'Malaria severity', 'Symptom present']
+    side_effect_names = ['Malawi ART side effects', 'Other side effect', 'Drug side effect', 'ART side effect', 'Malaria severity', 'Symptom present']
     side_effect_concept = ConceptName.where(name: side_effect_names).first&.concept_id
-    psych_concept = ConceptName.find_by_name('Mental status')&.concept_id
     appointment_concept_id = ConceptName.find_by_name('Appointment date')&.concept_id
 
     obs_model = defined?(Observation) ? Observation : Obs
@@ -47,7 +46,7 @@ class ArtDefaulterBatchPredictionJob
       visit_count = recent_encounters.count.to_i
       side_effects = side_effect_concept ? recent_obs.where(concept_id: side_effect_concept).count.to_i : 0
       concurrent_drugs = recent_orders.count.to_i
-      psychological_symptoms = psych_concept ? recent_obs.where(concept_id: psych_concept).count.to_i : 0
+
 
       days_overdue = 0.0
       if appointment_concept_id
@@ -67,7 +66,6 @@ class ArtDefaulterBatchPredictionJob
         visit_count: visit_count,
         side_effects: side_effects,
         concurrent_drugs: concurrent_drugs,
-        psychological_symptoms: psychological_symptoms,
         days_overdue: days_overdue
       }
     end

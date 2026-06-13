@@ -64,9 +64,8 @@ def extract_patients
   dataset = []
 
   # Map generic concepts for features
-  side_effect_names = ['Drug side effect', 'ART side effect', 'Malaria severity', 'Symptom present']
+  side_effect_names = ['Malawi ART side effects', 'Other side effect', 'Drug side effect', 'ART side effect', 'Malaria severity', 'Symptom present']
   side_effect_concept = ConceptName.where(name: side_effect_names).first&.concept_id
-  psych_concept = ConceptName.find_by_name('Mental status')&.concept_id
 
   # Appointment date concept — used to calculate days_overdue feature
   appointment_concept_id = ConceptName.find_by_name('Appointment date')&.concept_id
@@ -89,12 +88,12 @@ def extract_patients
     # Prevent Target Leakage and Training-Serving Skew:
     # Instead of shifting the cutoff date by a fixed 90 days (which forces days_overdue
     # to always be negative for defaulted patients), we simulate realistic clinical snapshots.
-    # A patient is declared a defaulter 30 days after their scheduled return date.
-    # We choose a random cutoff date around their scheduled return date (from 30 days before to 25 days after)
-    # to evaluate their features at the time of risk.
+    # A patient is declared a defaulter 60 days after their scheduled return date (MoH Malawi definition).
+    # We choose a random cutoff date around their scheduled return date (from 30 days before to 55 days after)
+    # to evaluate their features at the time of risk, before they actually default.
     if is_defaulted == 1.0 && defaulter_dates[patient.id]
-      scheduled_return = defaulter_dates[patient.id] - 30.days
-      cutoff_date = scheduled_return + rand(-30..25).days
+      scheduled_return = defaulter_dates[patient.id] - 60.days
+      cutoff_date = scheduled_return + rand(-30..55).days
     else
       # For active patients, we simulate evaluating them at a random time in the last 2 months
       # to ensure they have a realistic distribution of overdue/not-yet-due days.
@@ -119,7 +118,7 @@ def extract_patients
     visit_consistency = recent_encounters.count.to_f
     side_effects = side_effect_concept ? recent_obs.where(concept_id: side_effect_concept).count.to_f : 0.0
     concurrent_drugs = recent_orders.count.to_f
-    psychological_symptoms = psych_concept ? recent_obs.where(concept_id: psych_concept).count.to_f : 0.0
+
 
     # 5. MMD-AWARE SCHEDULING SIGNAL (Calculated relative to historical cutoff)
     # This prevents punishing stable patients on 3-6 month dispensing cycles.
@@ -143,7 +142,6 @@ def extract_patients
       visit_count: visit_consistency,
       side_effects: side_effects,
       concurrent_drugs: concurrent_drugs,
-      psychological_symptoms: psychological_symptoms,
       days_overdue: days_overdue,
       label_defaulted: is_defaulted
     }
