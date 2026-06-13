@@ -86,13 +86,19 @@ def extract_patients
     # 1. Determine the exact outcome using the stored function classification
     is_defaulted = defaulted_sample.include?(patient.id) ? 1.0 : 0.0
 
-    # Prevent Data Leakage: 
-    # If they defaulted, we shift the "window" back by 90 days from the actual default date.
-    # If active, the window ends today.
+    # Prevent Target Leakage and Training-Serving Skew:
+    # Instead of shifting the cutoff date by a fixed 90 days (which forces days_overdue
+    # to always be negative for defaulted patients), we simulate realistic clinical snapshots.
+    # A patient is declared a defaulter 30 days after their scheduled return date.
+    # We choose a random cutoff date around their scheduled return date (from 30 days before to 25 days after)
+    # to evaluate their features at the time of risk.
     if is_defaulted == 1.0 && defaulter_dates[patient.id]
-      cutoff_date = defaulter_dates[patient.id] - 90.days
+      scheduled_return = defaulter_dates[patient.id] - 30.days
+      cutoff_date = scheduled_return + rand(-30..25).days
     else
-      cutoff_date = Date.today
+      # For active patients, we simulate evaluating them at a random time in the last 2 months
+      # to ensure they have a realistic distribution of overdue/not-yet-due days.
+      cutoff_date = Date.today - rand(0..60).days
     end
 
     # Define a strict 6-month observation window leading up to that cutoff
@@ -134,7 +140,7 @@ def extract_patients
 
     dataset << {
       age: age,
-      forgot_appointments: visit_consistency,
+      visit_count: visit_consistency,
       side_effects: side_effects,
       concurrent_drugs: concurrent_drugs,
       psychological_symptoms: psychological_symptoms,

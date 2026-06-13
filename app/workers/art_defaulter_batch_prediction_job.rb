@@ -44,7 +44,7 @@ class ArtDefaulterBatchPredictionJob
       recent_orders = patient.orders.where(start_date: start_window.beginning_of_day..cutoff_date.end_of_day)
       recent_obs = obs_model.where(person_id: patient.id, obs_datetime: start_window.beginning_of_day..cutoff_date.end_of_day)
 
-      forgot_appointments = recent_encounters.count.to_i
+      visit_count = recent_encounters.count.to_i
       side_effects = side_effect_concept ? recent_obs.where(concept_id: side_effect_concept).count.to_i : 0
       concurrent_drugs = recent_orders.count.to_i
       psychological_symptoms = psych_concept ? recent_obs.where(concept_id: psych_concept).count.to_i : 0
@@ -64,7 +64,7 @@ class ArtDefaulterBatchPredictionJob
       payload_patients << {
         patient_id: patient.id,
         age: age,
-        forgot_appointments: forgot_appointments,
+        visit_count: visit_count,
         side_effects: side_effects,
         concurrent_drugs: concurrent_drugs,
         psychological_symptoms: psychological_symptoms,
