@@ -867,11 +867,14 @@ module ArtService
           FROM patient_program pp
           INNER JOIN temp_other_patient_types tmp ON tmp.patient_id = pp.patient_id
           INNER JOIN obs o ON pp.patient_id = o.person_id AND o.concept_id = #{type_of_patient_concept}
+          JOIN encounter e
+          ON o.encounter_id = e.encounter_id
           AND o.value_coded = #{new_patient_concept}
           AND o.voided = 0
           AND o.obs_datetime < DATE('#{end_date}') + INTERVAL 1 DAY
           WHERE pp.program_id = 1
           AND pp.voided = 0
+          AND e.program_id = 1
           GROUP BY patient_id
         SQL
       end
@@ -1138,8 +1141,12 @@ module ArtService
           INNER JOIN (
             SELECT person_id, MAX(DATE(obs_datetime)) AS max_obs_date
             FROM obs
-            WHERE voided = 0
+            JOIN encounter e
+            ON obs.encounter_id = e.encounter_id
+            WHERE obs.voided = 0
               AND concept_id IN (#{family_planning_action_to_take_concept_id}, #{method_of_family_planning_concept_id})
+              AND e.encounter_type = #{hiv_clinic_consultation_encounter_type_id}
+              AND e.program_id = 1
               AND obs_datetime >= '#{start_date.to_date.strftime('%Y-%m-%d 00:00:00')}'
               AND obs_datetime <= '#{end_date.to_date.strftime('%Y-%m-%d 23:59:59')}'
             GROUP BY person_id
@@ -1155,7 +1162,9 @@ module ArtService
         SQL
 
         begin
-          ((results.count.to_f / patient_list.count) * 100).to_i
+          pct = ((results.count.to_f / patient_list.count) * 100).to_i
+          Rails.logger.info("FP DEBUG BHT: num=#{results.count}, denom=#{patient_list.count}, pct=#{pct}")
+          pct
         rescue StandardError
           0
         end
