@@ -8,7 +8,7 @@ Rails.logger = Logger.new($stdout)
 ActiveRecord::Base.logger = Rails.logger
 user = User.find_by(username: 'admin')
 User.current = user.present? ? user : User.unscoped.where(retired: 0).first
-TEST_CATALOG_VERSION = 'v14'
+TEST_CATALOG_VERSION = 'v16'
 
 def consolelog(text)
   puts "\n=======================================================\n"
@@ -298,13 +298,8 @@ def save_specimen_types(nlims_code, test_name, specimen_types)
     )
   end
 
-  # Delete all existing specimen type associations for this test type before adding new ones
-  # This removes: Test Type -> Specimen links (where Specimen is a Specimen Type)
-  specimen_concept_ids = ConceptSet.where(concept_set: specimen_type_id).pluck(:concept_id)
-  ConceptSet.where(
-    concept_set: concept.concept_id,
-    concept_id: specimen_concept_ids
-  ).delete_all
+  # NOTE: All existing links are deleted in the main loop before calling this method
+  # to prevent interference between specimen and measure processing
 
   # Link specimens to test types: Test Type -> Specimen Type
   specimen_types.each do |specimen_type|
@@ -357,13 +352,8 @@ def save_measures(nlims_code, test_name, measures)
     )
   end
 
-  # Delete all existing measure associations for this test type before adding new ones
-  # This removes: Test Type -> Measure links (where Measure is a Lab test result indicator)
-  measure_concept_ids = ConceptSet.where(concept_set: lab_test_result_indicator_id).pluck(:concept_id)
-  ConceptSet.where(
-    concept_set: concept.concept_id,
-    concept_id: measure_concept_ids
-  ).delete_all
+  # NOTE: All existing links are deleted in the main loop before calling this method
+  # to prevent interference between specimen and measure processing
 
   measures.each do |measure|
     measure_name = measure['name']
@@ -484,6 +474,13 @@ ActiveRecord::Base.transaction do
     specimen_types = test_type['specimen_types']
     nlims_code = test_type['nlims_code']
     test_name = test_type['name']
+
+    # Find the test concept first
+    test_concept = find_concept(test_name, nlims_code)
+
+    # Delete ALL existing links for this test to avoid interference
+    # between specimen and measure processing (concepts can be in multiple sets)
+    ConceptSet.where(concept_set: test_concept.concept_id).delete_all
 
     save_specimen_types(nlims_code, test_name, specimen_types)
     save_measures(nlims_code, test_name, measures)
