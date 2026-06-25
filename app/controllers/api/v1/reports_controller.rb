@@ -143,7 +143,10 @@ module Api
       end
 
       def cohort_report_drill_down
-        render json: service.cohort_report_drill_down(params[:id])
+        start_date = params[:start_date].presence&.to_date || Date.today
+        end_date = params[:end_date].presence&.to_date || Date.today
+
+        render json: service.cohort_report_drill_down(params[:id], start_date, end_date)
       end
 
       def regimen_switch
@@ -282,6 +285,14 @@ module Api
       def sc_arvdisp
         render json: service.sc_arvdisp(params[:start_date],
                                         params[:end_date], (params[:rebuild_outcome] == 'true'), params[:dsd])
+      end
+
+      def mentorship_vl_postponed_drill_down
+        render json: service.vl_postponed_drill_down(params[:start_date], params[:end_date], params[:patient_ids])
+      end
+
+      def mentorship_dispensations_drill_down
+        render json: service.dispensations_drill_down(params[:start_date], params[:end_date], params[:patient_ids])
       end
 
       private

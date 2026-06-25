@@ -108,7 +108,7 @@ module ArtService
               AND result.voided = 0
               AND (result.value_text IS NOT NULL OR result.value_numeric IS NOT NULL)
             INNER JOIN (
-              /* Get the latest order dates for each patient */
+              /* Get the latest order dates for each patient that have VL results */
               SELECT orders.patient_id, MAX(orders.start_date) AS start_date
               FROM orders
               INNER JOIN order_type
@@ -119,8 +119,13 @@ module ArtService
                 ON concept_name.concept_id = orders.concept_id
                 AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
                 AND concept_name.voided = 0
+              INNER JOIN obs result
+                ON result.order_id = orders.order_id
+                AND result.concept_id IN (SELECT concept_id FROM concept_name WHERE name LIKE 'HIV Viral load' AND voided = 0)
+                AND result.voided = 0
+                AND (result.value_text IS NOT NULL OR result.value_numeric IS NOT NULL)
               WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
-                AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(start_date)}) - INTERVAL 12 MONTH
+                AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
                 AND orders.voided = 0
               GROUP BY orders.patient_id
             ) AS latest_patient_order_date
@@ -131,7 +136,7 @@ module ArtService
               AND patient_identifier.identifier_type IN (#{pepfar_patient_identifier_type.to_sql})
               AND patient_identifier.voided = 0
             WHERE orders.start_date < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
-              AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(start_date)}) - INTERVAL 12 MONTH
+              AND orders.start_date >= DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH
               AND orders.voided = 0
               AND orders.patient_id IN (#{clients.push(0).join(',')})
             GROUP BY orders.patient_id
@@ -154,7 +159,6 @@ module ArtService
             else
               (@maternal_status[:FBf].include?(patient['patient_id']) ? 'FBf' : nil)
             end
-          return if !patient['defaulter_date'].blank? && (patient['defaulter_date'] < end_date - 12.months)
           return if patient['art_start_date'].blank?
           return if patient['art_start_date'].to_date > end_date - 6.months
           return if remove_adverse_outcome_patient?(patient)
@@ -326,7 +330,7 @@ module ArtService
               FROM orders ab
               INNER JOIN concept_name
                 ON concept_name.concept_id = ab.concept_id
-                AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', '50:50 Normal Plasma')
+                AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
                 AND concept_name.voided = 0
               LEFT OUTER JOIN orders b ON ab.patient_id = b.patient_id
                 AND ab.order_id = b.order_id
@@ -336,7 +340,11 @@ module ArtService
               GROUP BY ab.patient_id
             ) current_order ON current_order.patient_id = cum.patient_id
             WHERE cum.step > 0 AND e.date_enrolled < DATE(#{ActiveRecord::Base.connection.quote(end_date)}) + INTERVAL 1 DAY
-              AND ((cum.pepfar_cum_outcome != 'On antiretrovirals' AND cum.pepfar_outcome_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH)) OR cum.pepfar_cum_outcome = 'On antiretrovirals')
+              AND (
+                cum.pepfar_cum_outcome = 'On antiretrovirals'
+                OR (cum.pepfar_cum_outcome != 'On antiretrovirals' AND cum.pepfar_outcome_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH))
+                OR (cum.pepfar_cum_outcome != 'On antiretrovirals' AND current_order.start_date >= (DATE(#{ActiveRecord::Base.connection.quote(end_date)}) - INTERVAL 12 MONTH))
+              )
             GROUP BY cum.patient_id
           SQL
         end

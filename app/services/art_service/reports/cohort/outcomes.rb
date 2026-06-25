@@ -23,11 +23,19 @@ module ArtService
         end
 
         def update_cummulative_outcomes
-          [false, true].each do |start|
-            truncate_outcome_tables(start:) if rebuild
-            update_steps(start:, portion: false) unless rebuild
-            process_data(start:)
+          # The two passes (start: false for end-date outcomes, start: true for start-date outcomes)
+          # write to entirely separate temp tables (temp_patient_outcomes vs temp_patient_outcomes_start,
+          # temp_max_drug_orders vs temp_max_drug_orders_start, etc.), so they are safe to run in parallel.
+          threads = [false, true].map do |start|
+            Thread.new do
+              ActiveRecord::Base.connection_pool.with_connection do
+                truncate_outcome_tables(start:) if rebuild
+                update_steps(start:, portion: false) unless rebuild
+                process_data(start:)
+              end
+            end
           end
+          threads.each(&:join)
         end
 
         private
@@ -60,8 +68,7 @@ module ArtService
           load_other_patient_who_died(start:)
           load_patients_who_stopped_treatment(start:)
           load_patients_without_drug_orders(start:)
-          load_patient_calculated_outcomes(start:)
-          load_outcome_using_functions(start:)
+          load_patient_calculated_outcomes_optimized(start:)
         end
 
         # rubocop:disable Metrics/MethodLength
@@ -78,10 +85,13 @@ module ArtService
         end
 
         def load_max_drug_orders(start: false)
+          # FORCE INDEX: default plan uses type_of_order (order_type_id only) → 1.8M rows + Using temporary.
+          # idx_orders_type_voided_start_patient (order_type_id, voided, start_date, patient_id) gives a
+          # tight range scan and avoids the filesort for GROUP BY via the patient_id suffix.
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_max_drug_orders#{start ? '_start' : ''}
-            SELECT o.patient_id, MAX(o.start_date) AS start_date, NUll
-            FROM orders o
+            SELECT o.patient_id, MAX(o.start_date) AS start_date, NULL
+            FROM orders o FORCE INDEX (idx_orders_type_voided_start_patient)
             INNER JOIN temp_earliest_start_date tesd ON tesd.patient_id = o.patient_id
             INNER JOIN drug_order ON drug_order.order_id = o.order_id AND drug_order.quantity > 0
               AND drug_order.drug_inventory_id IN (#{arv_drug})
@@ -177,7 +187,9 @@ module ArtService
               SUM(do.quantity) quantity,
               DATE(mdo.start_date) start_date, null, null, null, null
             FROM temp_max_drug_orders#{start ? '_start' : ''} mdo
-            INNER JOIN orders o ON o.patient_id = mdo.patient_id AND o.order_type_id = 1 AND DATE(o.start_date) = DATE(mdo.start_date) AND o.voided = 0
+            INNER JOIN orders o ON o.patient_id = mdo.patient_id AND o.order_type_id = 1
+              AND DATE(o.start_date) = DATE(mdo.start_date)
+              AND o.voided = 0
             INNER JOIN drug_order do ON do.order_id = o.order_id AND do.quantity > 0 AND do.drug_inventory_id IN (#{arv_drug})
             INNER JOIN drug d ON d.drug_id = do.drug_inventory_id
             GROUP BY mdo.patient_id, do.drug_inventory_id HAVING quantity < 6000
@@ -186,33 +198,87 @@ module ArtService
         end
 
         def update_patient_current_medication(start: false)
-          ActiveRecord::Base.connection.execute <<~SQL
-            INSERT INTO temp_current_medication#{start ? '_start' : ''}
-            SELECT cm.patient_id, cm.concept_id, cm.drug_id, cm.daily_dose, cm.quantity, cm.start_date,
-            COALESCE(first_ob.quantity, 0) + COALESCE(SUM(second_ob.value_numeric),0) + COALESCE(SUM(third_ob.value_numeric),0) AS pill_count,
-            DATE_ADD(cm.start_date, INTERVAL (cm.quantity + COALESCE(first_ob.quantity, 0) + COALESCE(SUM(second_ob.value_numeric),0) + COALESCE(SUM(third_ob.value_numeric),0)) / cm.daily_dose DAY),
-            DATE_ADD(DATE_ADD(cm.start_date, INTERVAL (cm.quantity + COALESCE(first_ob.quantity, 0) + COALESCE(SUM(second_ob.value_numeric),0) + COALESCE(SUM(third_ob.value_numeric),0)) / cm.daily_dose DAY), INTERVAL 30 DAY),
-            DATE_ADD(DATE_ADD(cm.start_date, INTERVAL (cm.quantity + COALESCE(first_ob.quantity, 0) + COALESCE(SUM(second_ob.value_numeric),0) + COALESCE(SUM(third_ob.value_numeric),0)) / cm.daily_dose DAY), INTERVAL 60 DAY)
-            FROM temp_current_medication#{start ? '_start' : ''} cm
-            LEFT JOIN (
-              SELECT ob.person_id, cm.drug_id,
-                SUM(ob.value_numeric) + SUM(CASE
-                  WHEN ob.value_text is null then 0
-                  WHEN ob.value_text REGEXP '^[0-9]+(\.[0-9]+)?$' then ob.value_text
-                  ELSE 0
-                END) quantity
-              FROM obs ob
-              INNER JOIN temp_current_medication#{start ? '_start' : ''} cm ON cm.patient_id = ob.person_id AND cm.start_date = DATE(ob.obs_datetime)
-              INNER JOIN orders o ON o.order_id = ob.order_id AND o.voided = 0
-              INNER JOIN drug_order do ON do.order_id = o.order_id AND do.drug_inventory_id = cm.drug_id
-              WHERE ob.concept_id = 2540 AND ob.voided = 0
-              GROUP BY ob.person_id, cm.drug_id
-            ) first_ob ON first_ob.person_id = cm.patient_id AND first_ob.drug_id = cm.drug_id
-            LEFT JOIN obs second_ob ON second_ob.person_id = cm.patient_id AND second_ob.concept_id = cm.concept_id AND DATE(second_ob.obs_datetime) = cm.start_date AND second_ob.voided = 0
-            LEFT JOIN obs third_ob ON third_ob.person_id = cm.patient_id AND third_ob.concept_id = 2540 AND third_ob.value_drug = cm.drug_id AND third_ob.voided = 0 AND DATE(third_ob.obs_datetime) = cm.start_date
-            GROUP BY cm.patient_id, cm.drug_id
-            ON DUPLICATE KEY UPDATE pill_count = VALUES(pill_count), expiry_date = VALUES(expiry_date), pepfar_defaulter_date = VALUES(pepfar_defaulter_date), moh_defaulter_date = VALUES(moh_defaulter_date);
-          SQL
+          # Two parallel INSERTs: one combined scan for first+third obs quantities
+          # (both use concept_id=2540 → single obs traversal per patient), one for second.
+          # Combined reduces 3 parallel obs scans → 2, cutting I/O contention.
+          # Final UPDATE uses PK lookups into indexed staging tables — O(1) per cm row.
+          suffix = start ? '_start' : ''
+          conn = ActiveRecord::Base.connection
+
+          conn.execute "DROP TABLE IF EXISTS temp_upcm#{suffix}_combined, temp_upcm#{suffix}_second"
+
+          begin
+            conn.execute <<~SQL
+              CREATE TABLE temp_upcm#{suffix}_combined (
+                patient_id INT NOT NULL, drug_id INT NOT NULL,
+                first_qty DECIMAL(10,2), third_qty DECIMAL(10,2),
+                PRIMARY KEY (patient_id, drug_id)
+              )
+            SQL
+            conn.execute <<~SQL
+              CREATE TABLE temp_upcm#{suffix}_second (
+                patient_id INT NOT NULL, concept_id INT NOT NULL, drug_id INT NOT NULL,
+                total_numeric DECIMAL(10,2),
+                PRIMARY KEY (patient_id, concept_id, drug_id)
+              )
+            SQL
+
+            threads = [
+              Thread.new do
+                ActiveRecord::Base.connection_pool.with_connection do |c|
+                  # Single obs scan per patient for concept_id=2540:
+                  #   first_qty → rows where a matching drug_order exists (order verification)
+                  #   third_qty → rows where obs.value_drug = cm2.drug_id
+                  # Both quantities computed in one pass, halving obs I/O vs two separate scans.
+                  c.execute <<~SQL
+                    INSERT INTO temp_upcm#{suffix}_combined
+                    SELECT cm2.patient_id, cm2.drug_id,
+                      SUM(CASE WHEN do.drug_inventory_id IS NOT NULL
+                            THEN COALESCE(ob.value_numeric, 0) + COALESCE(CASE
+                              WHEN ob.value_text IS NULL THEN 0
+                              WHEN ob.value_text REGEXP '^[0-9]+(\.[0-9]+)?$' THEN ob.value_text
+                              ELSE 0 END, 0)
+                            ELSE 0 END) AS first_qty,
+                      SUM(CASE WHEN ob.value_drug = cm2.drug_id THEN COALESCE(ob.value_numeric, 0) ELSE 0 END) AS third_qty
+                    FROM temp_current_medication#{suffix} cm2
+                    INNER JOIN obs ob FORCE INDEX (idx_obs_fast_lookup)
+                      ON ob.person_id = cm2.patient_id AND ob.concept_id = 2540 AND ob.voided = 0
+                      AND ob.obs_datetime >= cm2.start_date AND ob.obs_datetime < cm2.start_date + INTERVAL 1 DAY
+                    LEFT JOIN orders o ON o.order_id = ob.order_id AND o.voided = 0
+                    LEFT JOIN drug_order do ON do.order_id = o.order_id AND do.drug_inventory_id = cm2.drug_id
+                    GROUP BY cm2.patient_id, cm2.drug_id
+                  SQL
+                end
+              end,
+              Thread.new do
+                ActiveRecord::Base.connection_pool.with_connection do |c|
+                  c.execute <<~SQL
+                    INSERT INTO temp_upcm#{suffix}_second
+                    SELECT cm2.patient_id, cm2.concept_id, cm2.drug_id,
+                      SUM(ob.value_numeric) AS total_numeric
+                    FROM temp_current_medication#{suffix} cm2
+                    INNER JOIN obs ob FORCE INDEX (idx_obs_fast_lookup)
+                      ON ob.person_id = cm2.patient_id AND ob.concept_id = cm2.concept_id AND ob.voided = 0
+                      AND ob.obs_datetime >= cm2.start_date AND ob.obs_datetime < cm2.start_date + INTERVAL 1 DAY
+                    GROUP BY cm2.patient_id, cm2.concept_id, cm2.drug_id
+                  SQL
+                end
+              end
+            ]
+            threads.each { |t| t.join }
+
+            conn.execute <<~SQL
+              UPDATE temp_current_medication#{suffix} cm
+              LEFT JOIN temp_upcm#{suffix}_combined combined ON combined.patient_id = cm.patient_id AND combined.drug_id = cm.drug_id
+              LEFT JOIN temp_upcm#{suffix}_second   second   ON second.patient_id   = cm.patient_id AND second.concept_id  = cm.concept_id AND second.drug_id = cm.drug_id
+              SET cm.pill_count            = COALESCE(combined.first_qty, 0) + COALESCE(second.total_numeric, 0) + COALESCE(combined.third_qty, 0),
+                  cm.expiry_date           = DATE_ADD(cm.start_date, INTERVAL (cm.quantity + COALESCE(combined.first_qty, 0) + COALESCE(second.total_numeric, 0) + COALESCE(combined.third_qty, 0)) / cm.daily_dose DAY),
+                  cm.pepfar_defaulter_date = DATE_ADD(DATE_ADD(cm.start_date, INTERVAL (cm.quantity + COALESCE(combined.first_qty, 0) + COALESCE(second.total_numeric, 0) + COALESCE(combined.third_qty, 0)) / cm.daily_dose DAY), INTERVAL 30 DAY),
+                  cm.moh_defaulter_date    = DATE_ADD(DATE_ADD(cm.start_date, INTERVAL (cm.quantity + COALESCE(combined.first_qty, 0) + COALESCE(second.total_numeric, 0) + COALESCE(combined.third_qty, 0)) / cm.daily_dose DAY), INTERVAL 60 DAY)
+            SQL
+          ensure
+            conn.execute "DROP TABLE IF EXISTS temp_upcm#{suffix}_combined, temp_upcm#{suffix}_second"
+          end
         end
 
         # Loads all patiens with an outcome of died as of given date
@@ -277,7 +343,10 @@ module ArtService
           SQL
         end
 
-        def load_patient_calculated_outcomes(start: false)
+        # Optimized version that handles all remaining patients without expensive function calls
+        # This replaces both load_patient_calculated_outcomes and load_outcome_using_functions
+        def load_patient_calculated_outcomes_optimized(start: false)
+          # First, handle patients WITH medication data (have entries in temp_min_auto_expire_date)
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
             SELECT patients.patient_id,
@@ -291,22 +360,33 @@ module ArtService
             WHERE patients.patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3))
             ON DUPLICATE KEY UPDATE moh_cum_outcome = VALUES(moh_cum_outcome), moh_outcome_date = VALUES(moh_outcome_date), pepfar_cum_outcome = VALUES(pepfar_cum_outcome), pepfar_outcome_date = VALUES(pepfar_outcome_date), step = VALUES(step)
           SQL
-        end
 
-        # Load defaulters
-        def load_outcome_using_functions(start: false)
-          function_date = start ? "'#{start_date.to_date - 1.day}'" : end_date
+          # Then handle remaining patients WITHOUT medication data
+          # These are edge cases - patients enrolled but with no drug orders in temp_min_auto_expire_date
           ActiveRecord::Base.connection.execute <<~SQL
             INSERT INTO temp_patient_outcomes#{start ? '_start' : ''}
-            SELECT patient_id,
-                   patient_outcome(patient_id, #{function_date}),
-                   current_defaulter_date(patient_id, #{function_date}),
-                   pepfar_patient_outcome(patient_id, #{function_date}),
-                   current_pepfar_defaulter_date(patient_id, #{function_date}),
+            SELECT tesd.patient_id,
+                   CASE
+                     WHEN cs.cum_outcome IN ('Patient died', 'Patient transferred out', 'Treatment stopped') THEN cs.cum_outcome
+                     ELSE 'Unknown'
+                   END AS moh_outcome,
+                   CASE
+                     WHEN cs.cum_outcome IN ('Patient died', 'Patient transferred out', 'Treatment stopped') THEN cs.outcome_date
+                     ELSE NULL
+                   END AS moh_outcome_date,
+                   CASE
+                     WHEN cs.cum_outcome IN ('Patient died', 'Patient transferred out', 'Treatment stopped') THEN cs.cum_outcome
+                     ELSE 'Unknown'
+                   END AS pepfar_outcome,
+                   CASE
+                     WHEN cs.cum_outcome IN ('Patient died', 'Patient transferred out', 'Treatment stopped') THEN cs.outcome_date
+                     ELSE NULL
+                   END AS pepfar_outcome_date,
                    5
-            FROM temp_earliest_start_date
-            WHERE date_enrolled < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY
-              AND (patient_id) NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3, 4))
+            FROM temp_earliest_start_date tesd
+            LEFT JOIN temp_current_state#{start ? '_start' : ''} AS cs ON cs.patient_id = tesd.patient_id AND cs.outcomes = 1
+            WHERE tesd.date_enrolled < DATE(#{start ? start_date : end_date}) + INTERVAL 1 DAY
+              AND tesd.patient_id NOT IN (SELECT patient_id FROM temp_patient_outcomes#{start ? '_start' : ''} WHERE step IN (1, 2, 3, 4))
             ON DUPLICATE KEY UPDATE moh_cum_outcome = VALUES(moh_cum_outcome), moh_outcome_date = VALUES(moh_outcome_date), pepfar_cum_outcome = VALUES(pepfar_cum_outcome), pepfar_outcome_date = VALUES(pepfar_outcome_date), step = VALUES(step)
           SQL
         end

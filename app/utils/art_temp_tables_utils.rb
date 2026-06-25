@@ -16,9 +16,9 @@ module ArtTempTablesUtils
   # rubocop:disable Metrics/CyclomaticComplexity
   def prepare_cohort_tables
     create_temp_cohort_members_table unless check_if_table_exists('temp_cohort_members')
-    drop_temp_cohort_members_table unless count_table_columns('temp_cohort_members') == 12
+    drop_temp_cohort_members_table unless count_table_columns('temp_cohort_members') == 13
     create_tmp_patient_table unless check_if_table_exists('temp_earliest_start_date')
-    drop_tmp_patient_table unless count_table_columns('temp_earliest_start_date') == 11
+    drop_tmp_patient_table unless count_table_columns('temp_earliest_start_date') == 12
     create_temp_other_patient_types unless check_if_table_exists('temp_other_patient_types')
     drop_temp_other_patient_types unless count_table_columns('temp_other_patient_types') == 1
     create_temp_register_start_date_table unless check_if_table_exists('temp_register_start_date')
@@ -27,6 +27,10 @@ module ArtTempTablesUtils
     drop_temp_order_details unless count_table_columns('temp_order_details') == 2
     create_art_start_date unless check_if_table_exists('temp_art_start_date')
     drop_art_start_date unless count_table_columns('temp_art_start_date') == 2
+    create_temp_reason_for_starting_art unless check_if_table_exists('temp_reason_for_starting_art')
+    drop_temp_reason_for_starting_art unless count_table_columns('temp_reason_for_starting_art') == 2
+    create_temp_art_start_date_by_enrollment unless check_if_table_exists('temp_art_start_date_by_enrollment')
+    drop_temp_art_start_date_by_enrollment unless count_table_columns('temp_art_start_date_by_enrollment') == 2
     create_temp_patient_tb_status unless check_if_table_exists('temp_patient_tb_status')
     drop_temp_patient_tb_status unless count_table_columns('temp_patient_tb_status') == 2
     create_temp_latest_tb_status unless check_if_table_exists('temp_latest_tb_status')
@@ -124,7 +128,8 @@ module ArtTempTablesUtils
         age_at_initiation INT DEFAULT NULL,
         age_in_days INT DEFAULT NULL,
         reason_for_starting_art INT DEFAULT NULL,
-        occupation VARCHAR(255) DEFAULT NULL
+        occupation VARCHAR(255) DEFAULT NULL,
+        earliest_start_date_by_enrollment DATE DEFAULT NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
     SQL
     create_temp_cohort_members_index
@@ -177,7 +182,8 @@ module ArtTempTablesUtils
          gender VARCHAR(32),
          age_at_initiation INT DEFAULT NULL,
          age_in_days INT DEFAULT NULL,
-         reason_for_starting_art INT DEFAULT NULL
+         reason_for_starting_art INT DEFAULT NULL,
+         earliest_start_date_by_enrollment DATE DEFAULT NULL
       )
     SQL
     create_tmp_patient_table_indexes
@@ -289,6 +295,50 @@ module ArtTempTablesUtils
 
   def create_art_start_date_indexes
     ActiveRecord::Base.connection.execute 'CREATE INDEX tasd_date ON temp_art_start_date (value_datetime)'
+  end
+
+  def drop_temp_reason_for_starting_art
+    ActiveRecord::Base.connection.execute <<~SQL
+      DROP TABLE IF EXISTS temp_reason_for_starting_art
+    SQL
+    create_temp_reason_for_starting_art
+  end
+
+  def create_temp_reason_for_starting_art
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_reason_for_starting_art (
+        patient_id INT(11) NOT NULL,
+        reason_for_starting_art INT(11),
+        PRIMARY KEY (patient_id)
+      )
+    SQL
+    create_temp_reason_for_starting_art_indexes
+  end
+
+  def create_temp_reason_for_starting_art_indexes
+    ActiveRecord::Base.connection.execute 'CREATE INDEX trfsa_reason ON temp_reason_for_starting_art (reason_for_starting_art)'
+  end
+
+  def drop_temp_art_start_date_by_enrollment
+    ActiveRecord::Base.connection.execute <<~SQL
+      DROP TABLE IF EXISTS temp_art_start_date_by_enrollment
+    SQL
+    create_temp_art_start_date_by_enrollment
+  end
+
+  def create_temp_art_start_date_by_enrollment
+    ActiveRecord::Base.connection.execute <<~SQL
+      CREATE TABLE temp_art_start_date_by_enrollment (
+        patient_id INT(11) NOT NULL,
+        earliest_start_date_by_enrollment DATE,
+        PRIMARY KEY (patient_id)
+      )
+    SQL
+    create_temp_art_start_date_by_enrollment_indexes
+  end
+
+  def create_temp_art_start_date_by_enrollment_indexes
+    ActiveRecord::Base.connection.execute 'CREATE INDEX tasdbe_date ON temp_art_start_date_by_enrollment (earliest_start_date_by_enrollment)'
   end
 
   def drop_temp_patient_tb_status
@@ -634,6 +684,8 @@ module ArtTempTablesUtils
     ActiveRecord::Base.connection.execute('TRUNCATE temp_register_start_date')
     ActiveRecord::Base.connection.execute('TRUNCATE temp_order_details')
     ActiveRecord::Base.connection.execute('TRUNCATE temp_art_start_date')
+    ActiveRecord::Base.connection.execute('TRUNCATE temp_reason_for_starting_art')
+    ActiveRecord::Base.connection.execute('TRUNCATE temp_art_start_date_by_enrollment')
     ActiveRecord::Base.connection.execute('TRUNCATE temp_patient_tb_status')
     ActiveRecord::Base.connection.execute('TRUNCATE temp_latest_tb_status')
     ActiveRecord::Base.connection.execute('TRUNCATE tmp_max_adherence')

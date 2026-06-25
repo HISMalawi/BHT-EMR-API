@@ -24,13 +24,19 @@ module ArtService
       end
 
       def build_report
+        progress_key = CohortProgress.key(@name)
         with_lock(LOCK_FILE, blocking: false) do
-          @cohort_builder.build(@cohort_struct, @start_date, @end_date, @occupation)
+          CohortProgress.start!(progress_key)
+          @cohort_builder.build(@cohort_struct, @start_date, @end_date, @occupation, progress_key:)
           clear_drill_down
           save_report
+          CohortProgress.done!(progress_key)
         end
       rescue FailedToAcquireLock => e
         Rails.logger.warn("ART#Cohort report is locked by another process: #{e}")
+      rescue StandardError => e
+        CohortProgress.error!(progress_key, e.message) rescue nil
+        raise
       end
 
       def find_report
@@ -85,7 +91,8 @@ module ArtService
         ActiveRecord::Base.connection.select_all <<~SQL
           SELECT i.identifier arv_number, p.birthdate,
                  p.gender, n.given_name, n.family_name, p.person_id person_id,
-                 outcomes.moh_cum_outcome AS outcome, tesd.earliest_start_date art_start_date,
+                 outcomes.moh_cum_outcome AS outcome,
+                 tesd.earliest_start_date_by_enrollment art_start_date,
                  DATE(tb_start.obs_datetime) tb_observation_date
           FROM person p
           INNER JOIN cohort_drill_down c ON c.patient_id = p.person_id
@@ -95,13 +102,21 @@ module ArtService
           LEFT JOIN patient_identifier i ON i.patient_id = p.person_id
           AND i.voided = 0 AND i.identifier_type = 4
           LEFT JOIN person_name n ON n.person_id = p.person_id AND n.voided = 0
-          LEFT JOIN obs tb_start ON tb_start.person_id = p.person_id
-            AND tb_start.concept_id = (
-              SELECT concept_id 
-              FROM concept_name 
-              WHERE name = 'TB status' 
-              LIMIT 1
-            )
+          LEFT JOIN obs tb_start ON tb_start.obs_id = (
+            SELECT o.obs_id
+            FROM obs o
+            WHERE o.person_id = p.person_id
+              AND o.voided = 0
+              AND o.obs_datetime < DATE('#{@end_date}') + INTERVAL 1 DAY
+              AND o.concept_id = (
+                SELECT concept_id
+                FROM concept_name
+                WHERE name = 'TB status'
+                LIMIT 1
+              )
+            ORDER BY o.obs_datetime DESC, o.date_created DESC, o.obs_id DESC
+            LIMIT 1
+          )
           WHERE c.reporting_report_design_resource_id = #{id}
           GROUP BY p.person_id ORDER BY p.person_id, p.date_created;
         SQL

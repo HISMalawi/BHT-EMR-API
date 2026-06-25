@@ -18,8 +18,8 @@ class ApplicationController < ActionController::API
 
   # Map of clients to their allowed versions
   CLIENT_VERSION_CONFIGURATION = {
-    'EMASTERCARD' => 'v2025.Q4.R6-streaming',
-    'POC' => 'v2025.Q4.R5'
+    'EMASTERCARD' => 'v2026.Q2.R2-streaming',
+    'POC' => 'v2026.Q2.R1'
   }
 
   # Required by audited gem

@@ -96,8 +96,8 @@ class ReportService
     engine(@program).ipt_coverage(start_date, end_date)
   end
 
-  def cohort_report_drill_down(id)
-    engine(@program).cohort_report_drill_down(id)
+  def cohort_report_drill_down(id, start_date, end_date)
+    engine(@program).cohort_report_drill_down(id, start_date, end_date)
   end
 
   def regimen_switch(start_date, end_date, pepfar, **kwargs)
@@ -212,6 +212,14 @@ class ReportService
 
   def sc_arvdisp(start_date, end_date, rebuild_outcome, dsd)
     engine(@program).sc_arvdisp(start_date, end_date, rebuild_outcome, dsd)
+  end
+
+  def vl_postponed_drill_down(start_date, end_date, patient_ids)
+    engine(@program).vl_postponed_drill_down(start_date, end_date, patient_ids)
+  end
+
+  def dispensations_drill_down(start_date, end_date, patient_ids)
+    engine(@program).dispensations_drill_down(start_date, end_date, patient_ids)
   end
 
   private
