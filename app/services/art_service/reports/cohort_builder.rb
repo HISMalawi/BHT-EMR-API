@@ -723,7 +723,10 @@ module ArtService
                  LEFT(person.gender, 1) gender,
                  IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(YEAR, person.birthdate,  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date)))), NULL) AS age_at_initiation,
                  IF(person.birthdate IS NOT NULL, TIMESTAMPDIFF(DAY, person.birthdate,  DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date)))), NULL) AS age_in_days,
-                 rfsa.reason_for_starting_art,
+                 (SELECT value_coded FROM obs
+                  WHERE concept_id = 7563 AND person_id = patient_program.patient_id AND voided = 0
+                  AND obs_datetime < DATE(#{end_date}) + INTERVAL 1 DAY
+                  ORDER BY obs_datetime DESC, date_created DESC LIMIT 1) AS reason_for_starting_art,
                  pa.value AS occupation,
                  tasdbe.earliest_start_date_by_enrollment
           FROM patient_program
@@ -733,8 +736,6 @@ module ArtService
             ON outcome.patient_program_id = patient_program.patient_program_id
           LEFT JOIN temp_art_start_date AS art_start_date_obs
             ON art_start_date_obs.patient_id = patient_program.patient_id
-          LEFT JOIN temp_reason_for_starting_art AS rfsa
-            ON rfsa.patient_id = patient_program.patient_id
           LEFT JOIN temp_art_start_date_by_enrollment AS tasdbe
             ON tasdbe.patient_id = patient_program.patient_id
            /* TODO: Re-enable the following condition. Has been removed because LLH and PIH
@@ -805,9 +806,8 @@ module ArtService
           end
         end
 
-        # Thread 2-4: fully independent
+        # Thread 2-3: fully independent (load_temp_reason_for_starting_art removed - using inline subquery instead)
         threads << Thread.new { ActiveRecord::Base.connection_pool.with_connection { load_art_start_date(end_date) } }
-        threads << Thread.new { ActiveRecord::Base.connection_pool.with_connection { load_temp_reason_for_starting_art(end_date) } }
         threads << Thread.new { ActiveRecord::Base.connection_pool.with_connection { load_temp_art_start_date_by_enrollment(end_date) } }
 
         threads.each(&:join)
@@ -1235,7 +1235,8 @@ module ArtService
                          total_pregnant_women.map { |woman| woman['person_id'].to_i }
                        end
 
-        if @obs_last_visit_thread
+        # Check if temp_obs_last_visit was successfully populated by total_pregnant_women
+        if @obs_preload_success
           # Thread already joined (and temp_obs_last_visit populated) by total_pregnant_women.
           breastfeeding_concept_ids = ConceptName.where(name: ['Breast feeding?', 'Breast feeding', 'Breastfeeding'])
                                                  .pluck(:concept_id)
@@ -1280,16 +1281,18 @@ module ArtService
         # Wait for the background pre-load thread (started alongside adherence preload).
         # On success, query the tiny temp_obs_last_visit table (~ms).
         # On failure, fall back to the original per-patient obs scan.
+        @obs_preload_success = false
         if @obs_last_visit_thread
           begin
             @obs_last_visit_thread.join
+            @obs_preload_success = true
           rescue StandardError => e
             Rails.logger.warn("obs_last_visit preload failed (#{e.message}); falling back to obs scan")
             @obs_last_visit_thread = nil
           end
         end
 
-        if @obs_last_visit_thread
+        if @obs_preload_success
           pregnant_concept_ids = ConceptName.where(name: ['Is patient pregnant?', 'patient pregnant'])
                                             .pluck(:concept_id)
           return [] if pregnant_concept_ids.empty?
