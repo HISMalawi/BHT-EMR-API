@@ -225,6 +225,20 @@ Rails.application.routes.draw do
         end
       end
 
+      # FHIR R4 standard routes
+      get '/fhir/metadata', to: 'fhir#metadata'
+      get '/fhir/Patient', to: 'fhir#patients'
+      get '/fhir/Patient/:id', to: 'fhir#show_patient'
+      get '/fhir/ServiceRequest', to: 'fhir#service_requests'
+      get '/fhir/ServiceRequest/:id', to: 'fhir#show_service_request'
+      post '/fhir/ServiceRequest', to: 'fhir#create_service_request'
+      get '/fhir/Observation', to: 'fhir#observations'
+      get '/fhir/Observation/:id', to: 'fhir#show_observation'
+      get '/fhir/DiagnosticReport', to: 'fhir#diagnostic_reports'
+      get '/fhir/DiagnosticReport/:id', to: 'fhir#show_diagnostic_report'
+      post '/fhir/send_order_to_lab', to: 'fhir#send_order_to_lab'
+      get '/fhir/fetch_results_from_lab', to: 'fhir#fetch_results_from_lab'
+
       namespace :pharmacy do
         resource :audit_trail, only: %i[show]
         resource :drug_movement, only: %i[show]
