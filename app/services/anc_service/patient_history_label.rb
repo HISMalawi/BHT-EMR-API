@@ -285,9 +285,9 @@ module AncService
       end)
       label.draw_text((if !@preeclampsia.nil?
         begin
-          (@preeclampsia.upcase == "NO")
+          @preeclampsia.upcase == "NO" ? "NO" : "YES"
         rescue StandardError
-          false ? "NO" : "YES"
+          "-"  
         end
       else
         ""
