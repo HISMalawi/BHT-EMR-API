@@ -198,177 +198,123 @@ module AncService
         rescue StandardError
           0
         end
+        label = ZebraPrinter::Lib::StandardLabel.new
 
-      label = ZebraPrinter::Lib::StandardLabel.new
+              label.draw_text("Obstetric History", 28, 8, 0, 1, 1, 2, false)
+              label.draw_text("Medical History", 400, 8, 0, 1, 1, 2, false)
+              label.draw_text("Refer", 750, 8, 0, 1, 1, 2, true)
+              label.draw_line(25, 39, 172, 1, 0)
+              label.draw_line(400, 39, 152, 1, 0)
 
-      label.draw_text("Obstetric History", 28, 8, 0, 1, 1, 2, false)
-      label.draw_text("Medical History", 400, 8, 0, 1, 1, 2, false)
-      label.draw_text("Refer", 750, 8, 0, 1, 1, 2, true)
-      label.draw_line(25, 39, 172, 1, 0)
-      label.draw_line(400, 39, 152, 1, 0)
-      label.draw_text("Gravida", 28, 59, 0, 2, 1, 1, false)
-      label.draw_text("Asthma", 400, 59, 0, 2, 1, 1, false)
-      label.draw_text("Deliveries", 28, 89, 0, 2, 1, 1, false)
-      label.draw_text("Hypertension", 400, 89, 0, 2, 1, 1, false)
-      label.draw_text("Abortions", 28, 119, 0, 2, 1, 1, false)
-      label.draw_text("Diabetes", 400, 119, 0, 2, 1, 1, false)
-      label.draw_text("Still Births", 28, 149, 0, 2, 1, 1, false)
-      label.draw_text("Epilepsy", 400, 149, 0, 2, 1, 1, false)
-      label.draw_text("Vacuum Extraction", 28, 179, 0, 2, 1, 1, false)
-      label.draw_text("Renal Disease", 400, 179, 0, 2, 1, 1, false)
-      label.draw_text("C/Section", 28, 209, 0, 2, 1, 1, false)
-      label.draw_text("Fistula Repair", 400, 209, 0, 2, 1, 1, false)
-      label.draw_text("Haemorrhage", 28, 239, 0, 2, 1, 1, false)
-      label.draw_text("Leg/Spine Deformation", 400, 239, 0, 2, 1, 1, false)
-      label.draw_text("Pre-Eclampsia", 28, 269, 0, 2, 1, 1, false)
-      label.draw_text("Age", 400, 269, 0, 2, 1, 1, false)
-      label.draw_line(250, 49, 130, 1, 0)
-      label.draw_line(250, 49, 1, 236, 0)
-      label.draw_line(250, 285, 130, 1, 0)
-      label.draw_line(380, 49, 1, 236, 0)
-      label.draw_line(250, 79, 130, 1, 0)
-      label.draw_line(250, 109, 130, 1, 0)
-      label.draw_line(250, 139, 130, 1, 0)
-      label.draw_line(250, 169, 130, 1, 0)
-      label.draw_line(250, 199, 130, 1, 0)
-      label.draw_line(250, 229, 130, 1, 0)
-      label.draw_line(250, 259, 130, 1, 0)
-      label.draw_line(659, 49, 130, 1, 0)
-      label.draw_line(659, 49, 1, 236, 0)
-      label.draw_line(659, 285, 130, 1, 0)
-      label.draw_line(790, 49, 1, 236, 0)
-      label.draw_line(659, 79, 130, 1, 0)
-      label.draw_line(659, 109, 130, 1, 0)
-      label.draw_line(659, 139, 130, 1, 0)
-      label.draw_line(659, 169, 130, 1, 0)
-      label.draw_line(659, 199, 130, 1, 0)
-      label.draw_line(659, 229, 130, 1, 0)
-      label.draw_line(659, 259, 130, 1, 0)
-      label.draw_text(@gravida.to_s, 280, 59, 0, 2, 1, 1, false)
-      label.draw_text(@deliveries.to_s, 280, 89, 0, 2, 1, 1, begin
-        (@deliveries > 4)
-      rescue StandardError
-        false ? true : false
-      end)
-      label.draw_text(@abortions.to_s, 280, 119, 0, 2, 1, 1, (@abortions > 1))
-      label.draw_text((if !@stillbirths.nil?
-        @stillbirths.upcase == "NO" ? "NO" : "YES"
-      else
-        ""
-      end).to_s, 280, 149, 0, 2, 1, 1,
-                      (!@stillbirths.nil? ? @stillbirths.upcase != "NO" : false))
-      label.draw_text((if !@vacuum.nil?
-        @vacuum.positive? ? "YES" : "NO"
-      else
-        ""
-      end).to_s, 280, 179, 0, 2, 1, 1,
-                      (if !@vacuum.nil?
-        @vacuum.positive? ? true : false
-      else
-        false
-      end))
-      label.draw_text((if !@csections.blank?
-        @csections <= 0 ? "NO" : "YES"
-      else
-        ""
-      end).to_s, 280, 209, 0, 2, 1, 1,
-                      (if !@csections.blank?
-        @csections.positive?
-      else
-        false
-      end))
-      label.draw_text(@haemorrhage.to_s, 280, 239, 0, 2, 1, 1,
-                      begin
-        (@haemorrhage.upcase == "PPH")
-      rescue StandardError
-        false ? true : false
-      end)
-      label.draw_text((if !@preeclampsia.nil?
-        begin
-          (@preeclampsia.upcase == "NO")
-        rescue StandardError
-          false ? "NO" : "YES"
-        end
-      else
-        ""
-      end).to_s, 280, 264, 0, 2, 1, 1,
-                      (if !@preeclampsia.nil?
-        @preeclampsia.upcase != "NO"
-      else
-        false
-      end))
-      label.draw_text((if !@asthma.nil?
-        @asthma.upcase == "NO" ? "NO" : "YES"
-      else
-        ""
-      end).to_s, 690, 59, 0, 2, 1, 1,
-                      (if !@asthma.nil?
-        @asthma.upcase != "NO"
-      else
-        false
-      end))
-      label.draw_text((if !@hyper.nil?
-        @hyper.upcase == "NO" ? "NO" : "YES"
-      else
-        ""
-      end).to_s, 690, 89, 0, 2, 1, 1,
-                      (if !@hyper.nil?
-        @hyper.upcase != "NO"
-      else
-        false
-      end))
-      label.draw_text((if !@diabetes.nil?
-        @diabetes.upcase == "NO" ? "NO" : "YES"
-      else
-        ""
-      end).to_s, 690, 119, 0, 2, 1, 1,
-                      (if !@diabetes.nil?
-        @diabetes.upcase != "NO"
-      else
-        false
-      end))
-      label.draw_text((if !@epilepsy.nil?
-        @epilepsy.upcase == "NO" ? "NO" : "YES"
-      else
-        ""
-      end).to_s, 690, 149, 0, 2, 1, 1,
-                      (if !@epilepsy.nil?
-        @epilepsy.upcase != "NO"
-      else
-        false
-      end))
-      label.draw_text((if !@renal.nil?
-        @renal.upcase == "NO" ? "NO" : "YES"
-      else
-        ""
-      end).to_s, 690, 179, 0, 2, 1, 1,
-                      (if !@renal.nil?
-        @renal != "NO"
-      else
-        false
-      end))
-      label.draw_text((if !@fistula.nil?
-        @fistula.upcase == "NO" ? "NO" : "YES"
-      else
-        ""
-      end).to_s, 690, 209, 0, 2, 1, 1,
-                      (if !@fistula.nil?
-        @fistula.upcase != "NO"
-      else
-        false
-      end))
-      label.draw_text((if !@deform.nil?
-        @deform.upcase == "NO" ? "NO" : "YES"
-      else
-        ""
-      end).to_s, 690, 239, 0, 2, 1, 1,
-                      (if !@deform.nil?
-        @deform != "NO"
-      else
-        false
-      end))
-      label.draw_text(@age.to_s, 690, 264, 0, 2, 1, 1,
-                      ((@age.positive? && @age < 16) || (@age > 40) ? true : false))
+              label.draw_text("Gravida", 28, 59, 0, 1, 1, 1, false)
+              label.draw_text("Asthma", 400, 59, 0, 1, 1, 1, false)
+              label.draw_text("Deliveries", 28, 81, 0, 1, 1, 1, false)
+              label.draw_text("Hypertension", 400, 81, 0, 1, 1, 1, false)
+              label.draw_text("Abortions", 28, 103, 0, 1, 1, 1, false)
+              label.draw_text("Diabetes", 400, 103, 0, 1, 1, 1, false)
+              label.draw_text("Still Births", 28, 125, 0, 1, 1, 1, false)
+              label.draw_text("Epilepsy", 400, 125, 0, 1, 1, 1, false)
+              label.draw_text("Vacuum", 28, 149, 0, 1, 1, 1, false)
+              label.draw_text("Extraction", 28, 171, 0, 1, 1, 1, false)
+              label.draw_text("Renal Disease", 400, 147, 0, 1, 1, 1, false)
+              label.draw_text("C/Section", 28, 191, 0, 1, 1, 1, false)
+              label.draw_text("Fistula Repair", 400, 169, 0, 1, 1, 1, false)
+              label.draw_text("Haemorrhage", 28, 213, 0, 1, 1, 1, false)
+              label.draw_text("Leg/Spine", 400, 193, 0, 1, 1, 1, false)
+              label.draw_text("Deformation", 400, 215, 0, 1, 1, 1, false)
+              label.draw_text("Pre-Eclampsia", 28, 235, 0, 1, 1, 1, false)
+              label.draw_text("Age", 400, 235, 0, 1, 1, 1, false)
+
+              label.draw_line(250, 49, 1, 198, 0)
+              label.draw_line(380, 49, 1, 198, 0)
+              label.draw_line(659, 49, 1, 198, 0)
+              label.draw_line(790, 49, 1, 198, 0)
+
+              label.draw_line(250, 49, 130, 1, 0)
+              label.draw_line(250, 71, 130, 1, 0)
+              label.draw_line(250, 93, 130, 1, 0)
+              label.draw_line(250, 115, 130, 1, 0)
+              label.draw_line(250, 137, 130, 1, 0)
+              label.draw_line(250, 181, 130, 1, 0)
+              label.draw_line(250, 203, 130, 1, 0)
+              label.draw_line(250, 225, 130, 1, 0)
+              label.draw_line(250, 247, 130, 1, 0)
+
+              label.draw_line(659, 49, 130, 1, 0)
+              label.draw_line(659, 71, 130, 1, 0)
+              label.draw_line(659, 93, 130, 1, 0)
+              label.draw_line(659, 115, 130, 1, 0)
+              label.draw_line(659, 137, 130, 1, 0)
+              label.draw_line(659, 159, 130, 1, 0)
+              label.draw_line(659, 181, 130, 1, 0)
+              label.draw_line(659, 225, 130, 1, 0)
+              label.draw_line(659, 247, 130, 1, 0)
+
+              label.draw_text(@gravida.to_s, 280, 59, 0, 1, 1, 1, false)
+              label.draw_text(@deliveries.to_s, 280, 81, 0, 1, 1, 1, false)
+              label.draw_text(@abortions.to_s, 280, 103, 0, 1, 1, 1, false)
+              label.draw_text((if !@stillbirths.nil?
+                @stillbirths.upcase == "NO" ? "NO" : "YES"
+              else
+                ""
+              end).to_s, 280, 125, 0, 1, 1, 1, false)
+              label.draw_text((if !@vacuum.nil?
+                @vacuum.positive? ? "YES" : "NO"
+              else
+                ""
+              end).to_s, 280, 149, 0, 1, 1, 1, false)
+              label.draw_text((if !@csections.blank?
+                @csections <= 0 ? "NO" : "YES"
+              else
+                ""
+              end).to_s, 280, 191, 0, 1, 1, 1, false)
+              label.draw_text(@haemorrhage.to_s, 280, 213, 0, 1, 1, 1, false)
+              label.draw_text((if !@preeclampsia.nil?
+                @preeclampsia.upcase == "NO" ? "NO" : "YES"
+              else
+                ""
+              end).to_s, 280, 235, 0, 1, 1, 1,
+                              (if !@preeclampsia.nil?
+                @preeclampsia.upcase != "NO"
+              else
+                false
+              end))
+              label.draw_text((if !@asthma.nil?
+                @asthma.upcase == "NO" ? "NO" : "YES"
+              else
+                ""
+              end).to_s, 690, 59, 0, 1, 1, 1, false)
+              label.draw_text((if !@hyper.nil?
+                @hyper.upcase == "NO" ? "NO" : "YES"
+              else
+                ""
+              end).to_s, 690, 81, 0, 1, 1, 1, false)
+              label.draw_text((if !@diabetes.nil?
+                @diabetes.upcase == "NO" ? "NO" : "YES"
+              else
+                ""
+              end).to_s, 690, 103, 0, 1, 1, 1, false)
+              label.draw_text((if !@epilepsy.nil?
+                @epilepsy.upcase == "NO" ? "NO" : "YES"
+              else
+                ""
+              end).to_s, 690, 125, 0, 1, 1, 1, false)
+              label.draw_text((if !@renal.nil?
+                @renal.upcase == "NO" ? "NO" : "YES"
+              else
+                ""
+              end).to_s, 690, 147, 0, 1, 1, 1, false)
+              label.draw_text((if !@fistula.nil?
+                @fistula.upcase == "NO" ? "NO" : "YES"
+              else
+                ""
+              end).to_s, 690, 169, 0, 1, 1, 1, false)
+              label.draw_text((if !@deform.nil?
+                @deform.upcase == "NO" ? "NO" : "YES"
+              else
+                ""
+              end).to_s, 690, 215, 0, 1, 1, 1, false)
+              label.draw_text(@age.to_s, 690, 235, 0, 1, 1, 1, false)
 
       detailed_obstetric_history = PatientVisitLabel.new(@patient, @date)
                                                     .detailed_obstetric_history_label(@date)
