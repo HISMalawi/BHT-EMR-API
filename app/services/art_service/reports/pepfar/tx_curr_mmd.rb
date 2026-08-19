@@ -49,7 +49,7 @@ module ArtService
             GROUP BY tesd.patient_id
           SQL
 
-          return {} if patients.blank?
+          return @report if patients.blank?
 
           threads = ENV.fetch('RAILS_MAX_THREADS', 5).to_i
           mutex = Mutex.new
