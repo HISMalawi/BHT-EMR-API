@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'digest'
 require 'socket'
 
 class StreamingService
@@ -35,7 +36,7 @@ class StreamingService
     )
   end
 
-  def stream_visit
+  def stream_visit(ledger: nil)
     payload = to_compressed_json(
       {
         meta: {
@@ -54,11 +55,25 @@ class StreamingService
       }
     )
 
+    payload_hash = Digest::SHA256.hexdigest(payload.to_json)
+    if ledger
+      StreamingLedgerService.mark_sent!(ledger, payload_hash:, response_code: nil)
+    end
+
     Rails.logger.info("Sending stream data for #{patient.name} on #{date} to #{config['url']}")
 
-    client.post(payload.to_json)
+    response = client.post(payload.to_json)
+
+    if ledger
+      StreamingLedgerService.mark_acknowledged!(ledger, response_code: response.code)
+    end
+
+    response
   rescue RestClient::ExceptionWithResponse, RestClient::ServerBrokeConnection => e
     Rails.logger.error("Failed to send stream data #{e&.message}")
+    if ledger
+      StreamingLedgerService.mark_failed!(ledger, error_message: e.message, response_code: e.respond_to?(:http_code) ? e.http_code : nil)
+    end
     raise e
   end
 
