@@ -7,6 +7,8 @@ ruby '~> 3.2.0'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 7.0.6'
+# Rails 7.0 passes `quirks_mode`, which json >= 2.10 no longer accepts
+gem 'json', '< 2.10'
 # Use sqlite3 as the database for Active Record
 gem 'mysql2'
 # Use Puma as the app server
