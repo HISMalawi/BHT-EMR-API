@@ -89,7 +89,7 @@ module ArtService
       def initiated_on_art
         ActiveRecord::Base.connection.execute <<~SQL
           CREATE TABLE temp_initiated_on_art
-          SELECT pop.patient_id, coalesce(o.value_datetime, min(art_order.start_date)) art_start_date, p.gender, disaggregated_age_group(p.birthdate, DATE('#{raw_end_date}')) age_group
+          SELECT pop.patient_id, coalesce(o.value_datetime, min(art_order.start_date)) art_start_date, #{gender_sql} gender, disaggregated_age_group(p.birthdate, DATE('#{raw_end_date}')) age_group
           FROM patient_program pop
           INNER JOIN person p ON p.person_id = pop.patient_id AND p.voided = 0
           INNER JOIN patient_state pos ON pos.patient_program_id = pop.patient_program_id AND pos.voided = 0 AND pos.state = 7 -- ON ART
@@ -132,7 +132,7 @@ module ArtService
           SELECT
             pop.patient_id,
             coalesce(tpt_transfer_in_obs.value_datetime, min(tpt_order.start_date)) start_date,
-            p.gender, disaggregated_age_group(p.birthdate, DATE('#{raw_end_date}')) age_group,
+            #{gender_sql} gender, disaggregated_age_group(p.birthdate, DATE('#{raw_end_date}')) age_group,
             patient_outcome(p.person_id, DATE('#{@raw_end_date}')) AS outcome,
             DATE(COALESCE(art_start_date_obs.value_datetime, MIN(art_order.start_date))) AS earliest_start_date,
             GROUP_CONCAT(DISTINCT tpt_order.concept_id SEPARATOR ',') AS drug_concepts,
@@ -193,6 +193,11 @@ module ArtService
           AND pop.program_id = 1 #{%w[Military Civilian].include?(@occupation) ? 'AND' : ''} #{occupation_filter(occupation: @occupation, field_name: 'value', table_name: 'a', include_clause: false)}
           GROUP BY pop.patient_id
         SQL
+      end
+
+      # Reduces M/F and Male/Female (as saved by the NID integration) to M or F
+      def gender_sql
+        'UPPER(LEFT(TRIM(p.gender), 1))'
       end
 
       def drop_tables

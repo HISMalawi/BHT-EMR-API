@@ -16,6 +16,8 @@ module ArtService
         include Utils
         include CommonSqlQueryUtils
 
+        SPECIMEN_TYPES = ['DBS 70ml', 'Venous Whole Blood', 'Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma'].freeze
+
         def initialize(start_date:, end_date:, **kwargs)
           super(start_date:, end_date:, **kwargs)
           @dsd = kwargs[:dsd]
@@ -93,7 +95,7 @@ module ArtService
               AND order_type.retired = 0
             INNER JOIN concept_name
               ON concept_name.concept_id = orders.concept_id
-              AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
+              AND concept_name.name IN (#{specimen_types_sql})
               AND concept_name.voided = 0
             LEFT JOIN obs AS reason_for_test
               ON reason_for_test.order_id = orders.order_id
@@ -117,7 +119,7 @@ module ArtService
                 AND order_type.retired = 0
               INNER JOIN concept_name
                 ON concept_name.concept_id = orders.concept_id
-                AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
+                AND concept_name.name IN (#{specimen_types_sql})
                 AND concept_name.voided = 0
               INNER JOIN obs result
                 ON result.order_id = orders.order_id
@@ -330,7 +332,7 @@ module ArtService
               FROM orders ab
               INNER JOIN concept_name
                 ON concept_name.concept_id = ab.concept_id
-                AND concept_name.name IN ('Blood', 'DBS (Free drop to DBS card)', 'DBS (Using capillary tube)', 'Plasma')
+                AND concept_name.name IN (#{specimen_types_sql})
                 AND concept_name.voided = 0
               LEFT OUTER JOIN orders b ON ab.patient_id = b.patient_id
                 AND ab.order_id = b.order_id
@@ -384,6 +386,10 @@ module ArtService
             end_date:,
             occupation:
           )
+        end
+
+        def specimen_types_sql
+          @specimen_types_sql ||= SPECIMEN_TYPES.map { |name| ActiveRecord::Base.connection.quote(name) }.join(', ')
         end
       end
       # rubocop:enable Metrics/ClassLength
